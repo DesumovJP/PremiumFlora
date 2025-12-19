@@ -1,0 +1,189 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Product } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { Sparkles } from "lucide-react";
+
+type ProductCardProps = {
+  product: Product;
+  className?: string;
+  variant?: "grid" | "list";
+};
+
+export function ProductCard({ product, className, variant = "grid" }: ProductCardProps) {
+  // Безпечна обробка варіантів
+  const variants = product.variants || [];
+  
+  if (variants.length === 0) {
+    return (
+      <Card className={cn("overflow-hidden border-slate-200/80 bg-white shadow-sm", className)}>
+        <CardContent className="p-4">
+          <div className="text-center text-sm text-slate-500">
+            <p className="font-semibold">{product.name}</p>
+            <p className="mt-1 text-xs">Немає варіантів</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const prices = variants.map((v) => v?.price ?? 0).filter((p) => p > 0);
+  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+  const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+  const priceRange = minPrice === maxPrice ? `${minPrice} грн` : `${minPrice} - ${maxPrice} грн`;
+  
+  // Check if product has many variants (popular)
+  const isPopular = variants.length >= 4;
+  
+  // Get available sizes count
+  const availableSizes = variants.length;
+
+  if (variant === "list") {
+    return (
+      <Link href={`/catalog/${product.id}`} className="h-full">
+        <Card
+          className={cn(
+            "group flex h-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-lg",
+            className
+          )}
+        >
+          <div className="flex w-full flex-col lg:flex-row">
+            {/* Image Container - Horizontal */}
+            <div className="relative w-full lg:w-64 lg:flex-shrink-0 aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[180px] overflow-hidden bg-slate-50">
+              {product.image ? (
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  sizes="(max-width: 1024px) 100vw, 256px"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-slate-400">
+                  <span className="text-xs">Без фото</span>
+                </div>
+              )}
+              
+              {/* Popular Badge */}
+              {isPopular && (
+                <div className="absolute top-2 left-2 z-10">
+                  <Badge className="flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200/70 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-500/40 backdrop-blur-sm">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span className="sr-only">Популярне</span>
+                  </Badge>
+                </div>
+              )}
+            </div>
+
+            {/* Content - Horizontal */}
+            <CardContent className="flex flex-1 flex-col justify-between p-4 lg:p-5 transition-colors group-hover:bg-emerald-50/30">
+              <div className="flex-1">
+                {/* Product Name */}
+                <h3 className="mb-2 line-clamp-2 text-sm lg:text-base font-semibold leading-tight text-slate-900 transition-colors group-hover:text-emerald-700">
+                  {product.name}
+                </h3>
+
+                {/* Variants/Sizes - Показуємо всі варіанти */}
+                <div className="mb-3 flex flex-wrap items-center gap-1.5">
+                  {variants
+                    .filter((v) => v != null)
+                    .map((v) => (
+                      <span
+                        key={v.size || Math.random()}
+                        className="rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-medium leading-tight text-slate-600"
+                      >
+                        {v.size || "N/A"}
+                      </span>
+                    ))}
+                </div>
+              </div>
+
+              {/* Price and Info */}
+              <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                <div className="text-lg lg:text-xl font-semibold text-slate-900">
+                  {priceRange}
+                </div>
+                <div className="flex items-center text-xs font-medium text-slate-500 transition-colors group-hover:text-emerald-600">
+                  <span>Детальніше</span>
+                  <span className="ml-1 inline-block transition-transform group-hover:translate-x-0.5">→</span>
+                </div>
+              </div>
+            </CardContent>
+          </div>
+        </Card>
+      </Link>
+    );
+  }
+
+  // Grid view (default) - М9: Hover ефект стиль
+  return (
+    <Link href={`/catalog/${product.id}`} className="h-full">
+      <Card
+        className={cn(
+          "group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-lg",
+          className
+        )}
+      >
+        {/* Popular Badge */}
+        {isPopular && (
+          <div className="absolute top-2 left-2 z-10">
+            <Badge className="flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200/70 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-500/40 backdrop-blur-sm">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span className="sr-only">Популярне</span>
+            </Badge>
+          </div>
+        )}
+
+        {/* Image Container */}
+        <div className="relative aspect-[4/3] w-full flex-shrink-0 overflow-hidden bg-slate-50">
+          {product.image ? (
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-110"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-slate-400">
+              <span className="text-xs">Без фото</span>
+            </div>
+          )}
+        </div>
+
+        <CardContent className="flex flex-1 flex-col p-3.5 transition-colors group-hover:bg-emerald-50/20">
+          {/* Product Name */}
+          <h3 className="mb-2 line-clamp-2 text-sm font-semibold leading-tight text-slate-900 transition-colors group-hover:text-emerald-700">
+            {product.name}
+          </h3>
+
+          {/* Variants/Sizes */}
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {variants
+              .filter((v) => v != null)
+              .map((v) => (
+                <span
+                  key={v.size || Math.random()}
+                  className="rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-medium leading-tight text-slate-600"
+                >
+                  {v.size || "N/A"}
+                </span>
+              ))}
+          </div>
+
+          {/* Price - вирівнюємо вниз */}
+          <div className="mt-auto text-sm font-semibold text-slate-900">{priceRange}</div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
+
+
