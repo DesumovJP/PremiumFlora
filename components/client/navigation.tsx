@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X, Leaf, Phone } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -18,11 +18,11 @@ export function Navigation() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-200/60 dark:border-admin-border bg-white/95 dark:bg-admin-surface/95 backdrop-blur-lg shadow-sm">
+    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8 lg:py-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group">
-          <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-500/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-emerald-500/40">
+          <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md">
             <Leaf className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
           <div className="flex flex-col">
@@ -41,7 +41,7 @@ export function Navigation() {
             <Link
               key={link.href}
               href={link.href}
-              className="relative rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-admin-text-secondary transition-all duration-200 hover:bg-emerald-50/80 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-400 active:scale-95"
+              className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-admin-text-secondary transition-colors duration-150 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-400"
             >
               {link.label}
             </Link>
@@ -83,8 +83,9 @@ export function Navigation() {
           </SheetTrigger>
           <SheetContent
             side="right"
-            className="w-[320px] sm:w-[380px] border-l border-slate-200/60 dark:border-admin-border px-0 bg-white/95 dark:bg-admin-surface/95 backdrop-blur-lg"
+            className="w-[320px] sm:w-[380px] border-l border-slate-200/60 dark:border-admin-border px-0 bg-white dark:bg-[#161b22]"
           >
+            <SheetTitle className="sr-only">Навігаційне меню</SheetTitle>
             <div className="flex h-full flex-col">
               {/* Header / Title */}
               <div className="border-b border-slate-100 dark:border-admin-border px-4 py-4">

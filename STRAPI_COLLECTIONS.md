@@ -371,3 +371,4 @@ Order (N) >──< (1) Client
 - JSON поля дозволяють гнучко зберігати структуровані дані без створення окремих колекцій
 - Single Type колекції (SiteSettings, ContactInfo, PageContent) мають тільки один запис
 
+

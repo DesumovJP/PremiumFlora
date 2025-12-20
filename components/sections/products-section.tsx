@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { StatPill } from "@/components/ui/stat-pill";
 import { Product, Variant } from "@/lib/types";
-import { AlertTriangle, CheckCircle2, Trash, PackageMinus, Plus, X, Pencil, Eye, Download } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Trash, PackageMinus, Plus, X, Pencil, Eye, Download, Package } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { ImportModal } from "@/components/ui/import-modal";
 import { useState, useMemo, useEffect } from "react";
@@ -179,7 +179,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
     }));
   };
 
-  const updateVariant = (id: string, field: "length" | "price" | "stock", value: string) => {
+  const updateDraftVariant = (id: string, field: "length" | "price" | "stock", value: string) => {
     setDraft((prev) => ({
       ...prev,
       variants: prev.variants.map((v) =>
@@ -857,9 +857,9 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                         {product.variants.map((variant) => (
                           <Badge
                             key={variant.size}
-                            className={cn("text-xs px-2.5 py-1 w-auto", stockTone(variant.stock))}
+                            className={cn("text-xs px-2.5 py-1 w-auto flex items-center gap-1", stockTone(variant.stock))}
                           >
-                            {variant.size} · {variant.price} грн · {variant.stock} шт
+                            {variant.size} · {variant.price} грн · <Package className="h-3 w-3 shrink-0" /> {variant.stock} шт
                           </Badge>
                         ))}
                       </div>
@@ -1114,7 +1114,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                         placeholder="Довжина (см)"
                         value={variant.length}
                         onChange={(e) =>
-                          updateVariant(variant.id, "length", e.target.value)
+                          updateDraftVariant(variant.id, "length", e.target.value)
                         }
                         className="flex-1"
               />
@@ -1123,7 +1123,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                 placeholder="Ціна, грн"
                         value={variant.price}
                         onChange={(e) =>
-                          updateVariant(variant.id, "price", e.target.value)
+                          updateDraftVariant(variant.id, "price", e.target.value)
                         }
                         className="flex-1"
               />
@@ -1132,7 +1132,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                         placeholder="Кількість"
                         value={variant.stock}
                         onChange={(e) =>
-                          updateVariant(variant.id, "stock", e.target.value)
+                          updateDraftVariant(variant.id, "stock", e.target.value)
                         }
                         className="flex-1"
                       />

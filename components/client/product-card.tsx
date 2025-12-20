@@ -44,30 +44,39 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
 
   if (variant === "list") {
     return (
-      <Link href={`/catalog/${product.id}`} className="h-full">
+      <Link href={`/catalog/${product.id}`} className="h-full gpu-accelerated">
         <Card
           className={cn(
-            "group flex h-full overflow-hidden rounded-2xl border border-slate-200/80 dark:border-admin-border bg-white dark:bg-admin-surface shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-lg",
+            "group flex h-full overflow-hidden rounded-2xl card-premium hover-lift-3d transform-3d",
             className
           )}
         >
           <div className="flex w-full flex-col lg:flex-row">
-            {/* Image Container - Horizontal */}
-            <div className="relative w-full lg:w-64 lg:flex-shrink-0 aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[180px] overflow-hidden bg-slate-50 dark:bg-admin-surface">
-              {product.image ? (
+            {/* Image Container - Horizontal - Optimized */}
+            <div className="relative w-full lg:w-64 lg:flex-shrink-0 aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[180px] overflow-hidden bg-slate-50 dark:bg-admin-surface gpu-accelerated">
+              {product.image && product.image.trim() !== "" ? (
                 <Image
                   src={product.image}
                   alt={product.name}
                   fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="object-cover image-optimized transition-transform duration-700 ease-out group-hover:scale-110"
                   sizes="(max-width: 1024px) 100vw, 256px"
                   loading="lazy"
+                  quality={85}
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                  unoptimized={false}
                 />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-slate-400 dark:text-admin-text-muted">
-                  <span className="text-xs">Без фото</span>
-                </div>
-              )}
+          ) : (
+            <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
+              <div className="absolute inset-0 bg-[url('/bg.webp')] bg-cover bg-center opacity-30" />
+              <div className="relative z-10 flex items-center justify-center text-slate-400 dark:text-admin-text-muted">
+                <svg className="h-8 w-8 sm:h-10 sm:w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+            </div>
+          )}
               
               {/* Popular Badge */}
               {isPopular && (
@@ -81,7 +90,7 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
             </div>
 
             {/* Content - Horizontal */}
-            <CardContent className="flex flex-1 flex-col justify-between p-4 lg:p-5 transition-colors group-hover:bg-emerald-50/30 dark:group-hover:bg-emerald-900/10">
+            <CardContent className="flex flex-1 flex-col justify-between p-4 lg:p-5 transition-premium group-hover:bg-gradient-emerald/10">
               <div className="flex-1">
                 {/* Product Name */}
                 <h3 className="mb-2 line-clamp-2 text-sm lg:text-base font-semibold leading-tight text-slate-900 dark:text-admin-text-primary transition-colors group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
@@ -120,12 +129,12 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
     );
   }
 
-  // Grid view (default) - М9: Hover ефект стиль
+  // Grid view (default) - Premium 3D Style
   return (
-    <Link href={`/catalog/${product.id}`} className="h-full">
+    <Link href={`/catalog/${product.id}`} className="h-full gpu-accelerated">
       <Card
           className={cn(
-            "group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 dark:border-admin-border bg-white dark:bg-admin-surface shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-lg",
+            "group relative flex h-full flex-col overflow-hidden rounded-2xl card-premium hover-lift-3d transform-3d",
             className
           )}
       >
@@ -139,27 +148,36 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
           </div>
         )}
 
-        {/* Image Container */}
-        <div className="relative aspect-[4/3] w-full flex-shrink-0 overflow-hidden bg-slate-50 dark:bg-admin-surface">
-          {product.image ? (
+        {/* Image Container - Optimized */}
+        <div className="relative aspect-[4/3] w-full flex-shrink-0 overflow-hidden bg-slate-50 dark:bg-admin-surface gpu-accelerated">
+          {product.image && product.image.trim() !== "" ? (
             <Image
               src={product.image}
               alt={product.name}
               fill
-              className="object-cover transition-transform duration-500 group-hover:scale-110"
+              className="object-cover image-optimized transition-transform duration-700 ease-out group-hover:scale-110"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
               loading="lazy"
+              quality={85}
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+              unoptimized={false}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-slate-400">
-              <span className="text-xs">Без фото</span>
+            <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
+              <div className="absolute inset-0 bg-[url('/bg.webp')] bg-cover bg-center opacity-30" />
+              <div className="relative z-10 flex items-center justify-center text-slate-400 dark:text-admin-text-muted">
+                <svg className="h-8 w-8 sm:h-10 sm:w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
             </div>
           )}
         </div>
 
-        <CardContent className="flex flex-1 flex-col p-3.5 transition-colors group-hover:bg-emerald-50/20 dark:group-hover:bg-emerald-900/10">
+        <CardContent className="flex flex-1 flex-col p-3.5 transition-premium group-hover:bg-gradient-emerald/10">
           {/* Product Name */}
-          <h3 className="mb-2 line-clamp-2 text-sm font-semibold leading-tight text-slate-900 dark:text-admin-text-primary transition-colors group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
+          <h3 className="mb-2 line-clamp-2 text-sm font-semibold leading-tight text-slate-900 dark:text-admin-text-primary transition-premium group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
             {product.name}
           </h3>
 

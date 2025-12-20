@@ -22,29 +22,73 @@ function blocksToText(blocks: StrapiBlock[]): string {
     .join("\n");
 }
 
-// Конвертуємо дані Strapi у формат який очікує frontend
-function convertFlowerToProduct(flower: StrapiFlower): Product {
-  // Формуємо повний URL зображення (Strapi повертає відносний шлях)
-  let imageUrl = "";
-  if (flower.image) {
-    // Strapi v5 може повертати image як об'єкт з url або як масив
-    const imageData = Array.isArray(flower.image) ? flower.image[0] : flower.image;
-    if (imageData?.url) {
-      // Якщо URL вже повний (починається з http/https), використовуємо як є
-      // Інакше додаємо базовий URL Strapi
-      const url = imageData.url;
-      imageUrl = url.startsWith("http") 
-        ? url 
-        : `${STRAPI_URL}${url.startsWith("/") ? url : `/${url}`}`;
+// Helper функція для отримання URL зображення з різних форматів Strapi
+function extractImageUrl(image: any): string {
+  if (!image) return "";
+
+  // Strapi v5 може повертати image у різних форматах
+  let imageData: any = null;
+
+  // Формат 1: масив зображень
+  if (Array.isArray(image)) {
+    imageData = image[0];
+  }
+  // Формат 2: об'єкт з полем data (старий Strapi формат)
+  else if (image.data) {
+    imageData = Array.isArray(image.data) ? image.data[0] : image.data;
+    // Якщо є attributes, використовуємо їх
+    if (imageData?.attributes) {
+      imageData = imageData.attributes;
     }
   }
-  
-  // Діагностика: логуємо якщо зображення відсутнє
-  if (!imageUrl && flower.name) {
+  // Формат 3: прямий об'єкт з url (Strapi v5)
+  else {
+    imageData = image;
+  }
+
+  if (!imageData) return "";
+
+  // Отримуємо URL - перевіряємо різні можливі місця
+  let url = imageData.url;
+
+  // Якщо немає прямого url, шукаємо в formats
+  if (!url && imageData.formats) {
+    url = imageData.formats.large?.url ||
+          imageData.formats.medium?.url ||
+          imageData.formats.small?.url ||
+          imageData.formats.thumbnail?.url;
+  }
+
+  // Якщо є attributes (Strapi v4 формат)
+  if (!url && imageData.attributes) {
+    url = imageData.attributes.url;
+    if (!url && imageData.attributes.formats) {
+      url = imageData.attributes.formats.large?.url ||
+            imageData.attributes.formats.medium?.url ||
+            imageData.attributes.formats.small?.url;
+    }
+  }
+
+  if (!url) return "";
+
+  // Якщо URL вже повний, використовуємо як є
+  // Інакше додаємо базовий URL Strapi
+  return url.startsWith("http")
+    ? url
+    : `${STRAPI_URL}${url.startsWith("/") ? url : `/${url}`}`;
+}
+
+// Конвертуємо дані Strapi у формат який очікує frontend
+function convertFlowerToProduct(flower: StrapiFlower): Product {
+  // Формуємо повний URL зображення
+  const imageUrl = extractImageUrl(flower.image);
+
+  // Діагностика: логуємо якщо зображення відсутнє (тільки в development)
+  if (!imageUrl && flower.name && process.env.NODE_ENV === 'development') {
     console.warn(`No image for flower: ${flower.name}`, {
       hasImage: !!flower.image,
       imageType: typeof flower.image,
-      imageValue: flower.image,
+      imageValue: JSON.stringify(flower.image),
     });
   }
   
@@ -118,10 +162,11 @@ export async function getFlowers(options?: { fresh?: boolean }): Promise<Product
 export async function getFlowerBySlug(slug: string): Promise<Product | null> {
   try {
     // Фільтруємо тільки опубліковані записи
+    // Використовуємо populate=* для отримання всіх полів включаючи зображення
     const response = await fetch(
       `${API_URL}/flowers?filters[slug][$eq]=${slug}&filters[publishedAt][$notNull]=true&publicationState=live&populate=*`,
       {
-        next: { revalidate: 60 },
+        cache: "no-store", // Вимикаємо кеш для діагностики
       }
     );
 
@@ -135,7 +180,18 @@ export async function getFlowerBySlug(slug: string): Promise<Product | null> {
       return null;
     }
 
-    return convertFlowerToProduct(data.data[0]);
+    const product = convertFlowerToProduct(data.data[0]);
+    
+    // Діагностика для відлагодження
+    if (!product.image && data.data[0].name) {
+      console.warn(`⚠️ Product "${data.data[0].name}" has no image:`, {
+        hasImageField: !!data.data[0].image,
+        imageValue: data.data[0].image,
+        slug: slug,
+      });
+    }
+    
+    return product;
   } catch (error) {
     console.error("Error fetching flower:", error);
     return null;

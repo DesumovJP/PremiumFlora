@@ -254,7 +254,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
 
   return (
     <>
-    <Card className="admin-card border-none bg-white/90 dark:bg-admin-surface shadow-md">
+    <Card className="admin-card border border-slate-100 dark:border-[#30363d] bg-white/90 dark:bg-admin-surface shadow-md">
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <CardTitle className="text-2xl">Клієнти</CardTitle>
@@ -300,7 +300,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <CardTitle className="text-emerald-900">Історія замовлень</CardTitle>
-                    <CardDescription className="text-emerald-800">{selected.name}</CardDescription>
+                    <CardDescription className="text-emerald-800">{selected?.name}</CardDescription>
                   </div>
                   <button
                     onClick={() => setSelected(null)}
@@ -313,23 +313,23 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2 rounded-2xl bg-white dark:bg-admin-surface p-3 text-sm text-slate-700 dark:text-admin-text-secondary">
-                  <p className="font-semibold text-slate-900 dark:text-admin-text-primary">{selected.name}</p>
-                  <p className="text-slate-500 dark:text-admin-text-tertiary">{selected.city}</p>
+                  <p className="font-semibold text-slate-900 dark:text-admin-text-primary">{selected?.name}</p>
+                  <p className="text-slate-500 dark:text-admin-text-tertiary">{selected?.city}</p>
                   <div className="space-y-1 pt-2">
                     <p className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-emerald-600" />
-                      {selected.contact}
+                      {selected?.contact}
                     </p>
                     <p className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-emerald-600" />
-                      {selected.email}
+                      {selected?.email}
                     </p>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-sm">
-                  <MetricBox label="Замовлень" value={selected.orders.toString()} />
-                  <MetricBox label="Витрачено" value={`${selected.spent.toLocaleString("uk-UA")} грн`} />
-                  <MetricBox label="Останнє" value={selected.lastOrder} />
+                  <MetricBox label="Замовлень" value={selected?.orders?.toString() ?? '0'} />
+                  <MetricBox label="Витрачено" value={`${selected?.spent?.toLocaleString("uk-UA") ?? 0} грн`} />
+                  <MetricBox label="Останнє" value={selected?.lastOrder ?? ''} />
                 </div>
                 <ScrollArea className="max-h-[20rem] pr-2">
                   {isLoadingTransactions ? (
@@ -419,8 +419,8 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
               <Card
                 key={client.id}
                 className={cn(
-                  "admin-card border-slate-100 cursor-pointer hover-lift animate-fade-in",
-                  selected?.id === client.id ? "border-emerald-300 shadow-md ring-2 ring-emerald-200" : ""
+                  "admin-card border-slate-100 dark:border-[#30363d] cursor-pointer hover-lift animate-fade-in",
+                  selected?.id === client.id ? "border-emerald-300 dark:border-emerald-500 shadow-md ring-2 ring-emerald-200 dark:ring-emerald-500/30" : ""
                 )}
                 onClick={() => handleSelect(client)}
               >

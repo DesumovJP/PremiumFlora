@@ -1,5 +1,9 @@
+"use client";
+
 import { Package, Truck, Shield, Users, Calendar, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { useIntersection } from "@/hooks/use-intersection";
+import { useEffect } from "react";
 
 const benefits = [
   {
@@ -29,11 +33,22 @@ const benefits = [
 ];
 
 export function BenefitsSection() {
+  const { ref, isVisible } = useIntersection({ threshold: 0.1, triggerOnce: true });
+
+  useEffect(() => {
+    if (ref.current && isVisible) {
+      ref.current.classList.add("visible");
+    }
+  }, [isVisible, ref]);
+
   return (
-    <section className="relative bg-white dark:bg-admin-surface section-padding-sm">
+    <section 
+      ref={ref as React.RefObject<HTMLElement>}
+      className="relative bg-white dark:bg-admin-surface section-padding-sm fade-in-up-animate"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="mb-12 sm:mb-16 text-center">
+        <div className="mb-12 sm:mb-16 text-center fade-in-up">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 dark:bg-emerald-900/30 px-4 py-1.5 text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-400">
             <Sparkles className="h-4 w-4" />
             <span>Переваги</span>
@@ -46,21 +61,21 @@ export function BenefitsSection() {
           </p>
         </div>
 
-        {/* Benefits Grid */}
+        {/* Benefits Grid - Premium Cards */}
         <div className="grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {benefits.map((benefit, index) => {
             const Icon = benefit.icon;
             return (
               <Card 
                 key={index} 
-                className="group relative flex h-full flex-col overflow-hidden border-0 bg-gradient-to-br from-white to-slate-50/50 dark:from-admin-surface dark:to-admin-surface shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:shadow-emerald-500/10 dark:hover:shadow-emerald-500/20"
+                className="group relative flex h-full flex-col overflow-hidden card-premium hover-lift-3d fade-in-up"
               >
                 {/* Gradient accent */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${benefit.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-5`} />
+                <div className={`absolute inset-0 bg-gradient-to-br ${benefit.gradient} opacity-0 transition-premium group-hover:opacity-5`} />
                 
-                <CardContent className="relative flex flex-1 flex-col items-center p-3 text-center sm:p-6">
-                  {/* Icon with gradient background */}
-                  <div className={`mb-2 sm:mb-4 inline-flex h-8 w-8 sm:h-12 sm:w-12 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br ${benefit.gradient} text-white shadow-lg shadow-black/5 transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl`}>
+                <CardContent className="relative flex flex-1 flex-col items-center p-3 text-center sm:p-6 gpu-accelerated">
+                  {/* Icon with gradient background - Premium */}
+                  <div className={`mb-2 sm:mb-4 inline-flex h-8 w-8 sm:h-12 sm:w-12 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br ${benefit.gradient} text-white shadow-colored-emerald transition-premium hover-scale-3d`}>
                     <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
                   </div>
                   

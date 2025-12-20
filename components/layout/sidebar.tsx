@@ -88,11 +88,11 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
       </nav>
       <div className="mt-auto">
         <Card
-          className="border-dashed border-emerald-100 dark:border-emerald-900 bg-emerald-50/60 dark:bg-emerald-900/20 cursor-pointer transition hover:border-emerald-200 dark:hover:border-emerald-700"
+          className="border-dashed border-emerald-100 dark:border-[#30363d] bg-emerald-50/60 dark:bg-emerald-900/20 cursor-pointer transition hover:border-emerald-200 dark:hover:border-emerald-500"
           onClick={onOpenSupply}
         >
           <CardHeader className="space-y-2">
-            <CardTitle className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300">
+            <CardTitle className="flex items-center justify-center gap-2 text-emerald-800 dark:text-emerald-300">
               <SupplyIcon className="h-4 w-4" />
               {supplyCard.title}
             </CardTitle>
@@ -105,7 +105,7 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 justify-center px-2 text-xs dark:bg-admin-surface dark:border-admin-border dark:text-admin-text-secondary"
+            className="flex-1 justify-center px-2 text-xs dark:bg-admin-surface dark:border-[#30363d] dark:text-admin-text-secondary dark:hover:border-emerald-500"
             onClick={toggleTheme}
             title={theme === "light" ? "Світла тема" : "Темна тема"}
           >
@@ -114,7 +114,7 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 justify-center px-2 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+            className="flex-1 justify-center px-2 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:bg-admin-surface dark:border-[#30363d] dark:text-rose-400 dark:hover:bg-rose-900/20 dark:hover:border-rose-500"
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />

@@ -8,7 +8,7 @@ type KpiCardProps = {
 
 export function KpiCard({ item }: KpiCardProps) {
   return (
-    <Card className="border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface">
+    <Card className="border-slate-100 dark:border-[#30363d] bg-white/90 dark:bg-admin-surface">
       <CardContent className="space-y-2 p-4">
         <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-admin-text-tertiary">{item.label}</p>
         <p className="text-lg font-semibold text-slate-900 dark:text-admin-text-primary">{item.value}</p>

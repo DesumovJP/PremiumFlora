@@ -4,9 +4,9 @@ import { ArrowRight, Sparkles, CheckCircle2, TrendingUp } from "lucide-react";
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden section-padding">
-      {/* Video Background */}
-      <div className="absolute inset-0 z-0">
+    <section className="relative overflow-hidden section-padding min-h-[90vh] flex items-center">
+      {/* Video Background - Optimized */}
+      <div className="absolute inset-0 z-0 gpu-accelerated">
         <video
           autoPlay
           loop
@@ -14,29 +14,32 @@ export function HeroSection() {
           playsInline
           className="absolute inset-0 h-full w-full object-cover"
           poster="/hero-video-poster.jpg"
+          style={{ willChange: 'transform' }}
         >
           <source src="/hero-video.mp4" type="video/mp4" />
           <source src="/hero-video.webm" type="video/webm" />
           {/* Fallback gradient if video doesn't load */}
         </video>
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-white/40 to-blue-50/50 dark:from-emerald-900/20 dark:via-admin-bg/40 dark:to-blue-900/20" />
-        <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_10%_10%,rgba(236,248,241,0.3),transparent),radial-gradient(1400px_circle_at_90%_20%,rgba(238,242,255,0.3),transparent)] dark:bg-[radial-gradient(1200px_circle_at_10%_10%,rgba(13,17,23,0.5),transparent),radial-gradient(1400px_circle_at_90%_20%,rgba(22,27,34,0.3),transparent)]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-white/50 dark:from-transparent dark:via-admin-bg/20 dark:to-admin-bg/50" />
+        {/* Premium Overlay with Glassmorphism */}
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/60 via-white/50 to-blue-50/60 dark:from-emerald-900/30 dark:via-admin-bg/50 dark:to-blue-900/30" />
+        <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_10%_10%,rgba(236,248,241,0.4),transparent),radial-gradient(1400px_circle_at_90%_20%,rgba(238,242,255,0.4),transparent)] dark:bg-[radial-gradient(1200px_circle_at_10%_10%,rgba(13,17,23,0.6),transparent),radial-gradient(1400px_circle_at_90%_20%,rgba(22,27,34,0.4),transparent)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/30 to-white/60 dark:from-transparent dark:via-admin-bg/30 dark:to-admin-bg/60" />
+        {/* Glass overlay for depth */}
+        <div className="absolute inset-0 glass-soft opacity-30" />
       </div>
       
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          {/* Badge with animation */}
-          <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 dark:border-emerald-800/50 bg-white/90 dark:bg-admin-surface/90 px-3.5 py-1.5 text-xs sm:text-[13px] font-semibold text-emerald-700 dark:text-emerald-400 shadow-sm backdrop-blur-md transition-all hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 gpu-accelerated">
+        <div className="mx-auto max-w-4xl text-center fade-in-up">
+          {/* Premium Badge with Glassmorphism */}
+          <div className="mb-6 inline-flex items-center gap-1.5 rounded-full glass glass-soft px-3.5 py-1.5 text-xs sm:text-[13px] font-semibold text-emerald-700 dark:text-emerald-400 shadow-premium transition-premium hover-lift-3d animate-float">
             <Sparkles className="h-3 w-3 animate-pulse" />
             <span className="leading-none">Преміальні квіти для вашого бізнесу</span>
           </div>
           
           {/* Main headline - Premium SaaS style */}
-          <h1 className="mb-6 text-display font-extrabold tracking-tight text-slate-900 dark:text-admin-text-primary">
+          <h1 className="mb-6 text-display font-extrabold tracking-tight text-slate-900 dark:text-admin-text-primary gpu-accelerated">
             Оптовий магазин
-            <span className="block bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 bg-clip-text text-transparent">
+            <span className="block text-gradient-premium">
               Premium Flora
             </span>
           </h1>
@@ -59,15 +62,15 @@ export function HeroSection() {
             </div>
           </div>
           
-          {/* CTA Buttons */}
+          {/* Premium CTA Buttons */}
           <div className="mb-10 sm:mb-12 flex flex-col gap-3 sm:gap-4 sm:flex-row sm:justify-center">
-            <Button asChild size="lg" className="group h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-semibold shadow-xl shadow-emerald-500/20 transition-all hover:shadow-2xl hover:shadow-emerald-500/30">
+            <Button asChild size="lg" className="group btn-premium h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-semibold shadow-colored-emerald transition-premium hover-lift-3d gpu-accelerated">
               <Link href="/catalog">
                 Переглянути каталог
                 <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-semibold border-2">
+            <Button asChild variant="outline" size="lg" className="h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-semibold border-2 glass glass-soft btn-premium hover-lift-3d gpu-accelerated">
               <Link href="/about#contact">Зв'язатися з нами</Link>
             </Button>
           </div>

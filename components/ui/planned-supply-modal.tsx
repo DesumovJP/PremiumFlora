@@ -30,6 +30,40 @@ const stockBadgeClass = (stock: number) => {
   return "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-100 dark:ring-emerald-800/50";
 };
 
+// Тип для згрупованих товарів
+type GroupedSupplyItem = {
+  flowerName: string;
+  flowerId?: number;
+  items: PlannedSupplyItem[];
+  totalPlanned: number;
+  hasNewItems: boolean;
+};
+
+// Функція групування товарів за назвою квітки
+function groupSupplyItems(items: PlannedSupplyItem[]): GroupedSupplyItem[] {
+  const groups: Record<string, GroupedSupplyItem> = {};
+
+  items.forEach((item) => {
+    const key = item.flowerName;
+    if (!groups[key]) {
+      groups[key] = {
+        flowerName: item.flowerName,
+        flowerId: item.flowerId,
+        items: [],
+        totalPlanned: 0,
+        hasNewItems: false,
+      };
+    }
+    groups[key].items.push(item);
+    groups[key].totalPlanned += item.plannedQuantity;
+    if (item.isNew) {
+      groups[key].hasNewItems = true;
+    }
+  });
+
+  return Object.values(groups);
+}
+
 interface PlannedSupplyModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -348,7 +382,7 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
                       <button
                         key={`${flower.id}-${variant.id}`}
                         onClick={() => addVariantFromSearch(flower, variant)}
-                        className="w-full rounded-lg border border-slate-100 dark:border-admin-border bg-white dark:bg-admin-surface p-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-admin-surface-elevated"
+                        className="w-full rounded-lg border border-slate-100 dark:border-admin-border bg-white dark:bg-slate-800/50 p-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50"
                       >
                         <div className="font-semibold text-slate-900 dark:text-admin-text-primary">{flower.name}</div>
                         <div className="text-xs text-slate-600 dark:text-admin-text-secondary">
@@ -373,90 +407,125 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
           )}
         </div>
 
-        {/* Список товарів */}
+        {/* Список товарів (згрупований) */}
         {items.length > 0 && (
           <div className="space-y-2">
             <p className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary">
-              Позиції поставки ({items.length})
+              Позиції поставки ({items.length} варіантів, {groupSupplyItems(items).length} квіток)
             </p>
-            <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
-              {items.map((item) => (
+            <div className="max-h-96 overflow-y-auto space-y-3 pr-1">
+              {groupSupplyItems(items).map((group) => (
                 <div
-                  key={item.id}
-                  className="flex items-center gap-3 rounded-xl border border-slate-100 dark:border-admin-border bg-white/80 dark:bg-admin-surface p-3"
+                  key={group.flowerName}
+                  className="rounded-2xl border border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface-elevated shadow-sm overflow-hidden"
                 >
-                  <div className="flex-1">
-                    {item.isNew ? (
-                      <div className="space-y-2">
-                        <Input
-                          type="text"
-                          value={item.flowerName}
-                          onChange={(e) => updateNewItem(item.id, "flowerName", e.target.value)}
-                          placeholder="Назва квітки"
-                          className="text-sm font-semibold"
-                        />
-                        <Input
-                          type="number"
-                          value={item.length}
-                          onChange={(e) =>
-                            updateNewItem(item.id, "length", parseInt(e.target.value) || 0)
-                          }
-                          placeholder="Довжина (см)"
-                          className="text-xs"
-                        />
+                  {/* Заголовок групи */}
+                  <div className="flex items-center justify-between gap-3 p-3 pb-2 border-b border-slate-100 dark:border-[#30363d] bg-slate-50/50 dark:bg-slate-800/50">
+                    <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-admin-surface">
+                      <div className="flex h-full w-full items-center justify-center text-slate-400 dark:text-admin-text-muted">
+                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
                       </div>
-                    ) : (
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold text-slate-900 dark:text-admin-text-primary">{item.flowerName}</p>
-                          {!item.isNew && getStockStatus(item.currentStock) !== 'good' && (
-                            <Badge
-                              className={cn("text-xs px-2 py-0.5", stockBadgeClass(item.currentStock))}
-                            >
-                              {getStockStatus(item.currentStock) === 'critical' ? (
-                                <span className="flex items-center gap-1">
-                                  <AlertTriangle className="h-3 w-3" />
-                                  Критично
-                                </span>
-                              ) : (
-                                <span className="flex items-center gap-1">
-                                  <AlertCircle className="h-3 w-3" />
-                                  Низько
-                                </span>
-                              )}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-600 dark:text-admin-text-secondary">
-                          {item.length} см • Залишок: {item.currentStock}
-                          {item.isManual && <span className="ml-2 text-emerald-600">(додано вручну)</span>}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold text-slate-900 dark:text-admin-text-primary truncate">
+                          {group.flowerName}
+                        </h4>
+                        {group.hasNewItems && (
+                          <Badge className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                            Новий
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-admin-text-tertiary">
+                        {group.items.length} {group.items.length === 1 ? 'варіант' : group.items.length < 5 ? 'варіанти' : 'варіантів'}
+                      </p>
+                    </div>
+                    {group.totalPlanned > 0 && (
+                      <div className="text-right">
+                        <p className="text-xs text-slate-500 dark:text-admin-text-tertiary">Разом</p>
+                        <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                          {group.totalPlanned} шт
                         </p>
                       </div>
                     )}
                   </div>
 
-                  {/* Кількість */}
-                  <div className="w-32">
-                    <label className="mb-1 block text-xs text-slate-600 dark:text-admin-text-secondary">Кількість</label>
-                    <Input
-                      type="number"
-                      value={item.plannedQuantity}
-                      onChange={(e) =>
-                        updatePlannedQuantity(item.id, parseInt(e.target.value) || 0)
-                      }
-                      min="0"
-                      step="25"
-                      className="text-sm"
-                    />
-                  </div>
+                  {/* Варіанти */}
+                  <div className="divide-y divide-slate-100 dark:divide-[#30363d]">
+                    {group.items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center gap-2 px-3 py-2.5 dark:bg-slate-800/30"
+                      >
+                        {item.isNew ? (
+                          // Новий товар - редаговані поля
+                          <div className="flex-1 space-y-2">
+                            <Input
+                              type="text"
+                              value={item.flowerName}
+                              onChange={(e) => updateNewItem(item.id, "flowerName", e.target.value)}
+                              placeholder="Назва квітки"
+                              className="text-sm font-semibold h-8"
+                            />
+                            <Input
+                              type="number"
+                              value={item.length}
+                              onChange={(e) =>
+                                updateNewItem(item.id, "length", parseInt(e.target.value) || 0)
+                              }
+                              placeholder="Довжина (см)"
+                              className="text-xs h-8"
+                            />
+                          </div>
+                        ) : (
+                          // Існуючий товар
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <Badge tone="outline" className="shrink-0 text-xs px-2 py-0.5">
+                              {item.length} см
+                            </Badge>
+                            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-admin-text-tertiary">
+                              <span>Залишок: {item.currentStock}</span>
+                              {getStockStatus(item.currentStock) === 'critical' && (
+                                <AlertTriangle className="h-3 w-3 text-rose-500" />
+                              )}
+                              {getStockStatus(item.currentStock) === 'low' && (
+                                <AlertCircle className="h-3 w-3 text-amber-500" />
+                              )}
+                              {item.isManual && (
+                                <span className="text-emerald-600">(вручну)</span>
+                              )}
+                            </div>
+                          </div>
+                        )}
 
-                  {/* Видалити */}
-                  <button
-                    onClick={() => removeItem(item.id)}
-                    className="text-slate-400 dark:text-admin-text-muted hover:text-red-600 dark:hover:text-red-400"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+                        {/* Кількість */}
+                        <div className="flex items-center gap-1.5">
+                          <Input
+                            type="number"
+                            value={item.plannedQuantity}
+                            onChange={(e) =>
+                              updatePlannedQuantity(item.id, parseInt(e.target.value) || 0)
+                            }
+                            min="0"
+                            step="25"
+                            className="w-20 h-8 text-sm text-center"
+                          />
+                          <span className="text-xs text-slate-400 dark:text-admin-text-muted">шт</span>
+                        </div>
+
+                        {/* Видалити */}
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          className="p-1 text-slate-400 dark:text-admin-text-muted hover:text-rose-500 dark:hover:text-rose-400"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

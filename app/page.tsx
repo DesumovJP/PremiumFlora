@@ -1,21 +1,29 @@
 import { Navigation } from "@/components/client/navigation";
 import { Footer } from "@/components/client/footer";
-import { HeroSection } from "@/components/client/hero-section";
+import { HeroSectionPremium } from "@/components/client/hero-section-premium";
+import { ValueStackingSection } from "@/components/client/value-stacking";
 import { FeaturedProducts } from "@/components/client/featured-products";
-import { BenefitsSection } from "@/components/client/benefits-section";
-import { StatsSection } from "@/components/client/stats-section";
 import { BlogSection } from "@/components/client/blog-section";
-import { products, blogPosts } from "@/lib/mock-data";
+import { blogPosts } from "@/lib/mock-data";
+import { getFlowers } from "@/lib/strapi";
 
-export default function Home() {
+export default async function Home() {
+  const products = await getFlowers();
+
   return (
     <>
       <Navigation />
       <main>
-        <HeroSection />
-        <StatsSection />
+        {/* Hero з value proposition */}
+        <HeroSectionPremium />
+
+        {/* Чому обирають нас */}
+        <ValueStackingSection />
+
+        {/* Каталог товарів */}
         <FeaturedProducts products={products} />
-        <BenefitsSection />
+
+        {/* Блог */}
         <BlogSection posts={blogPosts} />
       </main>
       <Footer />

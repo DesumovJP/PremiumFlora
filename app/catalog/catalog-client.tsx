@@ -70,12 +70,12 @@ export function CatalogClient({ products }: CatalogClientProps) {
 
   return (
     <main className="min-h-screen">
-      {/* Header */}
+      {/* Header - Premium Glassmorphism */}
       <section className="relative overflow-hidden border-b border-slate-100 py-8 sm:py-10">
-        {/* Background image with softer blurred overlay */}
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="h-full w-full bg-[url('/bg.webp')] bg-cover bg-center" />
-          <div className="absolute inset-0 bg-white/70 backdrop-blur-md" />
+        {/* Background image with premium glass overlay */}
+        <div className="pointer-events-none absolute inset-0 -z-10 gpu-accelerated">
+          <div className="h-full w-full bg-[url('/bg.webp')] bg-cover bg-center image-optimized" />
+          <div className="absolute inset-0 glass glass-soft" />
         </div>
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -118,10 +118,10 @@ export function CatalogClient({ products }: CatalogClientProps) {
         </div>
       </section>
 
-      {/* Search and Filters */}
-      <section className="sticky top-[88px] z-40 border-b border-slate-100 bg-white/95 backdrop-blur-sm py-2.5 sm:py-3.5 shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-2.5 sm:px-4 sm:py-3">
+      {/* Search and Filters - Premium Glass */}
+      <section className="sticky top-[88px] z-40 border-b border-slate-100 glass glass-strong py-2.5 sm:py-3.5 shadow-premium">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 gpu-accelerated">
+          <div className="rounded-2xl glass glass-soft px-3 py-2.5 sm:px-4 sm:py-3 transition-premium">
             {/* Search, Variety, Sort and View in one row */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               {/* Search Bar + mobile view toggle */}
@@ -133,7 +133,7 @@ export function CatalogClient({ products }: CatalogClientProps) {
                     placeholder="Пошук за назвою"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-10 sm:h-11 pl-10 pr-10 text-sm sm:text-base border-slate-200 bg-white/80 placeholder:text-slate-400 focus:border-emerald-300 focus:ring-0"
+                    className="h-10 sm:h-11 pl-10 pr-10 text-sm sm:text-base glass glass-soft border-slate-200/50 placeholder:text-slate-400 focus:border-emerald-300 focus:ring-0 transition-premium"
                   />
                   {searchQuery && (
                     <button
@@ -147,7 +147,7 @@ export function CatalogClient({ products }: CatalogClientProps) {
                 </div>
 
                 {/* View Mode Toggle - mobile (right of search) */}
-                <div className="flex items-center gap-1 rounded-2xl border border-slate-100 bg-white/80 p-1 shadow-sm sm:hidden">
+                <div className="flex items-center gap-1 rounded-2xl glass glass-soft p-1 shadow-premium sm:hidden">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -211,7 +211,7 @@ export function CatalogClient({ products }: CatalogClientProps) {
                 </Select>
 
                 {/* View Mode Toggle - tablet/desktop */}
-                <div className="hidden sm:flex items-center gap-1 rounded-xl border border-slate-200 bg-white/80 p-1">
+                <div className="hidden sm:flex items-center gap-1 rounded-xl glass glass-soft p-1 shadow-premium">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -272,10 +272,10 @@ export function CatalogClient({ products }: CatalogClientProps) {
             </div>
           </div>
 
-          {/* Products Grid/List */}
+          {/* Products Grid/List - Smooth Transitions */}
           {filteredProducts.length > 0 ? (
             <div className={cn(
-              "grid gap-4 sm:gap-6",
+              "grid gap-4 sm:gap-6 transition-premium",
               viewMode === "grid"
                 ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 auto-rows-fr"
                 : "grid-cols-1 lg:grid-cols-2 auto-rows-fr"
@@ -285,7 +285,7 @@ export function CatalogClient({ products }: CatalogClientProps) {
               ))}
             </div>
           ) : (
-            <Card className="border-dashed border-2 border-slate-200">
+            <Card className="border-dashed border-2 border-slate-200 glass glass-soft">
               <CardContent className="py-20 text-center">
                 <div className="mx-auto max-w-md">
                   <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">

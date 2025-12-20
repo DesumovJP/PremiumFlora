@@ -1,21 +1,34 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { StickyCTA } from "@/components/client/sticky-cta";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
+  fallback: ["system-ui", "arial"],
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
-  title: "Premium Flora",
+  title: "Premium Flora — Оптові поставки квітів",
   description:
-    "Premium Flora — головний сайт і адмін-панель з POS, товарами, клієнтами та аналітикою.",
+    "Преміальні оптові поставки свіжих квітів для флористів, готелів та івент-агентств. Холодний ланцюг -20°C, доставка 24/48h по Україні.",
+  keywords: ["оптові квіти", "флористика", "доставка квітів", "Київ", "Україна", "premium flora"],
+  openGraph: {
+    title: "Premium Flora — Оптові поставки квітів",
+    description: "Преміальні оптові поставки свіжих квітів для флористів, готелів та івент-агентств.",
+    locale: "uk_UA",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -26,9 +39,17 @@ export default function RootLayout({
   return (
     <html lang="uk" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-[radial-gradient(1200px_circle_at_10%_10%,#ecf8f1,transparent),radial-gradient(1400px_circle_at_90%_20%,#eef2ff,transparent),linear-gradient(180deg,#f9fbfa_0%,#f4f7f6_40%,#f7faf9_100%)] dark:bg-[radial-gradient(1200px_circle_at_10%_10%,rgba(13,17,23,0.5),transparent),radial-gradient(1400px_circle_at_90%_20%,rgba(22,27,34,0.3),transparent),linear-gradient(180deg,#0d1117_0%,#161b22_40%,#0d1117_100%)] text-slate-900 dark:text-[var(--admin-text-primary)]`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-[#f9fbfa] dark:bg-[#0d1117] text-slate-900 dark:text-[var(--admin-text-primary)]`}
       >
-        <div className="min-h-screen">{children}</div>
+        {/* Skip to main content link for accessibility */}
+        <a href="#main-content" className="skip-link">
+          Перейти до основного контенту
+        </a>
+        <div id="main-content" className="min-h-screen gpu-accelerated">
+          {children}
+        </div>
+        {/* Sticky CTA - appears on scroll */}
+        <StickyCTA />
       </body>
     </html>
   );

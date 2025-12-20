@@ -18,11 +18,11 @@ import { CartLine, Product, Variant } from "@/lib/types";
 import { useEffect, useLayoutEffect, useMemo, useState, useCallback } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PlannedSupplyModal } from "@/components/ui/planned-supply-modal";
-import { ShoppingBag, Download } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
+import { exportProducts, exportClients, exportAnalytics } from "@/lib/export";
 import { useAlerts } from "@/hooks/use-alerts";
 import { generateOperationId } from "@/lib/uuid";
 import {
@@ -47,7 +47,6 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   const [selectedClient, setSelectedClient] = useState<string>();
   const [cart, setCart] = useState<CartLine[]>([]);
   const [supplyOpen, setSupplyOpen] = useState(false);
-  const [exportModalOpen, setExportModalOpen] = useState(false);
   const [discount, setDiscount] = useState<number>(0);
   const [paymentStatus, setPaymentStatus] = useState<'paid' | 'expected'>('expected');
 
@@ -341,11 +340,115 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
     );
   }
 
+  // Desktop Tabs Content (shared between layouts)
+  const tabsContent = (
+    <Tabs value={tab} onValueChange={setTab} className="flex flex-col gap-5" suppressHydrationWarning>
+      <TabsList className="hidden">
+        {navItems.map((item) => (
+          <TabsTrigger key={item.id} value={item.id}>
+            {item.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+
+      <div className="space-y-5">
+        <TabsContent value="pos" className="space-y-5">
+          <PosSection
+            products={filteredProducts}
+            clients={clientsForPos}
+            search={search}
+            onSearch={setSearch}
+            selectedClient={selectedClient}
+            onClientChange={setSelectedClient}
+            cart={cart}
+            onAdd={addToCart}
+            onUpdateQty={updateQty}
+            onRemove={removeLine}
+            cartTotal={cartTotal}
+            onCheckout={handleCheckout}
+            isCheckingOut={isCheckingOut}
+            paymentStatus={paymentStatus}
+            onPaymentStatusChange={setPaymentStatus}
+            hideDesktopCart
+          />
+        </TabsContent>
+
+        <TabsContent value="products" className="space-y-5">
+          <ProductsSection
+            summary={summary}
+            products={products}
+            onOpenSupply={() => setSupplyOpen(true)}
+            onOpenExport={() => exportProducts(products)}
+            onWriteOff={handleWriteOff}
+            onRefresh={refreshProducts}
+          />
+        </TabsContent>
+
+        <TabsContent value="clients" className="space-y-5">
+          <ClientsSection
+            customers={customers}
+            isLoading={isLoadingCustomers}
+            onOpenExport={() => exportClients(customers)}
+            onAddCustomer={handleAddCustomer}
+            onDeleteCustomer={handleDeleteCustomer}
+          />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-5">
+          <AnalyticsSection
+            data={analyticsData}
+            isLoading={isLoadingAnalytics}
+            onRefresh={fetchAnalytics}
+            onOpenExport={() => {
+              if (analyticsData) {
+                exportAnalytics(analyticsData);
+              }
+            }}
+          />
+        </TabsContent>
+      </div>
+    </Tabs>
+  );
+
+  // Cart Panel for desktop (only shown on POS tab)
+  const desktopCartPanel = tab === "pos" && (
+    <aside className="h-full overflow-y-auto border-l border-slate-100 dark:border-[#30363d] bg-white/95 dark:bg-admin-surface-elevated">
+      <PosSection
+        products={filteredProducts}
+        clients={clientsForPos}
+        search={search}
+        onSearch={setSearch}
+        selectedClient={selectedClient}
+        onClientChange={setSelectedClient}
+        cart={cart}
+        onAdd={addToCart}
+        onUpdateQty={updateQty}
+        onRemove={removeLine}
+        cartTotal={cartTotal}
+        onCheckout={handleCheckout}
+        isCheckingOut={isCheckingOut}
+        renderOnlyCart
+        paymentStatus={paymentStatus}
+        onPaymentStatusChange={setPaymentStatus}
+      />
+    </aside>
+  );
+
+  // Визначаємо чи показувати кошик (тільки на POS вкладці)
+  const showCart = tab === "pos";
+
   return (
-    <div className="admin-panel flex min-h-screen w-full">
-      {/* Фіксований сайдбар на планшеті/ПК */}
-      <aside className="admin-surface fixed left-0 top-0 hidden h-screen w-64 border-r sm:flex admin-optimized">
-        <div className="h-full w-full overflow-y-auto p-4">
+    <div className="admin-panel h-screen h-[100dvh] overflow-hidden">
+      {/* ===================== DESKTOP LAYOUT ===================== */}
+      <div
+        className={`hidden h-full sm:grid ${
+          showCart
+            ? "sm:grid-cols-[16rem_1fr] lg:grid-cols-[16rem_1fr_20rem] xl:grid-cols-[16rem_1fr_22.5rem]"
+            : "sm:grid-cols-[16rem_1fr]"
+        }`}
+      >
+        {/* Sidebar */}
+        <aside className="admin-surface h-full overflow-y-auto border-r border-slate-100 dark:border-[#30363d] p-4">
           <Sidebar
             navItems={navItems}
             active={tab}
@@ -354,12 +457,25 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             supplyCard={supplyCard}
             onOpenSupply={() => setSupplyOpen(true)}
           />
-        </div>
-      </aside>
+        </aside>
 
-      <div className="flex min-h-screen w-full flex-col gap-5 px-3 py-4 sm:ml-64 sm:px-6 lg:px-8">
-        {/* Мобільний хедер з меню і кошиком */}
-        <div className="flex items-center justify-between sm:hidden">
+        {/* Main Content - scrollable */}
+        <main className="h-full overflow-y-auto px-6 py-4 lg:px-8">
+          {tabsContent}
+        </main>
+
+        {/* Cart Panel (desktop, only on POS tab and lg+) */}
+        {showCart && (
+          <div className="hidden lg:block h-full">
+            {desktopCartPanel}
+          </div>
+        )}
+      </div>
+
+      {/* ===================== MOBILE LAYOUT ===================== */}
+      <div className="flex h-full flex-col sm:hidden">
+        {/* Mobile Header */}
+        <header className="flex items-center justify-between px-2 py-2 border-b border-slate-100 dark:border-[#30363d]">
           <Sheet>
             <SheetTrigger asChild>
               <MobileMenuButton />
@@ -381,10 +497,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
 
           <Sheet>
             <SheetTrigger asChild>
-              <Button
-                size="sm"
-                className="relative rounded-full"
-              >
+              <Button size="sm" className="relative rounded-full">
                 <ShoppingBag className="mr-2 h-4 w-4" />
                 Кошик
                 {cartCount > 0 && (
@@ -418,103 +531,15 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
               />
             </SheetContent>
           </Sheet>
-        </div>
+        </header>
 
-        <Tabs value={tab} onValueChange={setTab} className="flex flex-col gap-5" suppressHydrationWarning>
-          <TabsList className="hidden sm:hidden">
-            {navItems.map((item) => (
-              <TabsTrigger key={item.id} value={item.id}>
-                {item.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          <div className="space-y-5">
-            <TabsContent value="pos" className="space-y-5">
-              <PosSection
-                products={filteredProducts}
-                clients={clientsForPos}
-                search={search}
-                onSearch={setSearch}
-                selectedClient={selectedClient}
-                onClientChange={setSelectedClient}
-                cart={cart}
-                onAdd={addToCart}
-                onUpdateQty={updateQty}
-                onRemove={removeLine}
-                cartTotal={cartTotal}
-                onCheckout={handleCheckout}
-                isCheckingOut={isCheckingOut}
-                paymentStatus={paymentStatus}
-                onPaymentStatusChange={setPaymentStatus}
-              />
-            </TabsContent>
-
-            <TabsContent value="products" className="space-y-5">
-              <ProductsSection
-                summary={summary}
-                products={products}
-                onOpenSupply={() => setSupplyOpen(true)}
-                onOpenExport={() => setExportModalOpen(true)}
-                onWriteOff={handleWriteOff}
-                onRefresh={refreshProducts}
-              />
-            </TabsContent>
-
-            <TabsContent value="clients" className="space-y-5">
-              <ClientsSection
-                customers={customers}
-                isLoading={isLoadingCustomers}
-                onOpenExport={() => setExportModalOpen(true)}
-                onAddCustomer={handleAddCustomer}
-                onDeleteCustomer={handleDeleteCustomer}
-              />
-            </TabsContent>
-
-            <TabsContent value="analytics" className="space-y-5">
-              <AnalyticsSection
-                data={analyticsData}
-                isLoading={isLoadingAnalytics}
-                onRefresh={fetchAnalytics}
-                onOpenExport={() => setExportModalOpen(true)}
-              />
-            </TabsContent>
-          </div>
-        </Tabs>
+        {/* Mobile Content - scrollable */}
+        <main className="flex-1 overflow-y-auto px-2 py-2">
+          {tabsContent}
+        </main>
       </div>
 
       <PlannedSupplyModal open={supplyOpen} onOpenChange={setSupplyOpen} />
-
-      <Modal
-        open={exportModalOpen}
-        onOpenChange={setExportModalOpen}
-        title="Експорт даних"
-        description="Виберіть формат, щоб експортувати поточну вкладку."
-        size="sm"
-        footer={
-          <>
-            <Button variant="outline" onClick={() => setExportModalOpen(false)}>
-              Закрити
-            </Button>
-            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setExportModalOpen(false)}>
-              <Download className="mr-2 h-4 w-4" />
-              Експортувати
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-3">
-          <p className="text-sm text-slate-600">Оберіть формат файлу:</p>
-          <div className="grid gap-2 sm:grid-cols-3">
-            <Button variant="outline">CSV</Button>
-            <Button variant="outline">XLSX</Button>
-            <Button variant="outline">PDF</Button>
-          </div>
-          <p className="text-xs text-slate-500">
-            Дані експортуються для поточної вкладки (POS / Товари / Клієнти / Аналітика).
-          </p>
-        </div>
-      </Modal>
 
       {/* Alert Toast Notifications */}
       <AlertToast alerts={alerts} onDismiss={dismiss} />

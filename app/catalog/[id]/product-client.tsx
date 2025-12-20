@@ -55,8 +55,13 @@ export function ProductPageClient({ product }: { product: Product }) {
                     priority
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-slate-400">
-                    <span className="text-sm">Без фото</span>
+                  <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-[url('/bg.webp')] bg-cover bg-center opacity-30" />
+                    <div className="relative z-10 flex items-center justify-center text-slate-400 dark:text-admin-text-muted">
+                      <svg className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
                   </div>
                 )}
               </div>
@@ -103,9 +108,6 @@ export function ProductPageClient({ product }: { product: Product }) {
                             <CheckCircle2 className="absolute right-1.5 top-1.5 h-3.5 w-3.5 text-emerald-600 sm:right-2 sm:top-2 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                           )}
                           <div className="mb-1 text-xs font-semibold text-slate-900 sm:text-sm md:mb-2 md:text-base">{variant.size}</div>
-                          <div className="mb-1 text-[10px] text-slate-500 sm:text-xs">
-                            {variant.stock || 0} шт на складі
-                          </div>
                           <div className="text-sm font-bold text-emerald-600 sm:text-base md:text-lg">
                             {variant.price} грн
                           </div>

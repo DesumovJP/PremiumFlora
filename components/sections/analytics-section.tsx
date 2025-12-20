@@ -56,6 +56,7 @@ const emptyData: DashboardData = {
   stockLevels: [],
   writeOffSummary: { totalWriteOffs: 0, totalItems: 0, byReason: {}, recentWriteOffs: [] },
   topCustomers: [],
+  supplyPlan: { nextDate: '', recommended: '', currentStock: 0, forecast: '' },
 };
 
 export function AnalyticsSection({
@@ -117,7 +118,7 @@ export function AnalyticsSection({
   const currentYear = currentDate.getFullYear();
 
   return (
-    <Card className="admin-card border-none bg-white/90 dark:bg-admin-surface shadow-md">
+    <Card className="admin-card border border-slate-100 dark:border-[#30363d] bg-white/90 dark:bg-admin-surface shadow-md">
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <CardTitle className="text-2xl">Аналітика продажів</CardTitle>
@@ -148,7 +149,7 @@ export function AnalyticsSection({
           ))}
         </div>
 
-        <Card className="border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface">
+        <Card className="border-slate-100 dark:border-[#30363d] bg-white/90 dark:bg-admin-surface">
           <CardHeader className="pb-2">
             <CardTitle>Дохід</CardTitle>
           </CardHeader>
@@ -181,12 +182,12 @@ export function AnalyticsSection({
         </Card>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="border-slate-100 dark:border-admin-border">
+          <Card className="border-slate-100 dark:border-[#30363d]">
             <CardHeader className="pb-2">
               <CardTitle className="text-slate-800 dark:text-admin-text-primary">Виручка по тижнях · {currentMonth}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="h-56 rounded-2xl bg-white dark:bg-admin-surface p-2 border border-slate-100 dark:border-admin-border">
+              <div className="h-56 rounded-2xl bg-white dark:bg-admin-surface p-2 border border-slate-100 dark:border-[#30363d]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={revenueChart} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-admin-border" />
@@ -213,7 +214,7 @@ export function AnalyticsSection({
             </CardContent>
           </Card>
 
-          <Card className="border-slate-100 dark:border-admin-border">
+          <Card className="border-slate-100 dark:border-[#30363d]">
             <CardHeader className="pb-2">
               <CardTitle className="text-slate-800 dark:text-admin-text-primary">Розподіл продажів по категоріях</CardTitle>
             </CardHeader>
@@ -301,7 +302,7 @@ export function AnalyticsSection({
                   {pieData.map((entry) => (
                     <div
                       key={entry.name}
-                      className="flex items-center justify-between rounded-xl border border-slate-100 dark:border-admin-border bg-slate-50/60 dark:bg-admin-surface px-3 py-2 text-sm"
+                      className="flex items-center justify-between rounded-xl border border-slate-100 dark:border-admin-border bg-slate-50/60 dark:bg-slate-800/50 px-3 py-2 text-sm"
                     >
                       <div className="flex items-center gap-2">
                         <span 
@@ -356,10 +357,10 @@ export function AnalyticsSection({
         </div>
 
         <Card className="border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 pl-6 pr-5 pt-5">
             <CardTitle className="dark:text-admin-text-primary">Календар продажів по днях · {currentMonth} {currentYear}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pl-6 pr-5">
             {/* Мобільний варіант без горизонтального скролу */}
             <div className="grid gap-3 sm:hidden">
               {dailySales.map((item) => (
@@ -426,25 +427,25 @@ export function AnalyticsSection({
               <table className="min-w-full text-sm text-slate-700 dark:text-admin-text-secondary">
                 <thead>
                   <tr className="text-left text-xs uppercase text-slate-400 dark:text-admin-text-muted">
-                    <th className="py-2 pr-4">Дата</th>
-                    <th className="py-2 pr-4">День</th>
-                    <th className="py-2 pr-4">Замовлень</th>
-                    <th className="py-2 pr-4">Виручка (грн)</th>
-                    <th className="py-2 pr-4">Середній чек</th>
-                    <th className="py-2 pr-4">Статус</th>
+                    <th className="py-2 pl-4 pr-4">Дата</th>
+                    <th className="py-2 pl-4 pr-4">День</th>
+                    <th className="py-2 pl-4 pr-4">Замовлень</th>
+                    <th className="py-2 pl-4 pr-4">Виручка (грн)</th>
+                    <th className="py-2 pl-4 pr-4">Середній чек</th>
+                    <th className="py-2 pl-4 pr-4">Статус</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 table-divider-dark">
                   {dailySales.map((item) => (
                     <tr key={item.date} className="hover:bg-slate-50/70 table-hover-dark transition-colors duration-150 cursor-pointer">
-                      <td className="py-2 pr-4 font-semibold text-slate-900 dark:text-admin-text-primary">{item.date}</td>
-                      <td className="py-2 pr-4 text-slate-700 dark:text-admin-text-secondary">{item.day}</td>
-                      <td className="py-2 pr-4 text-slate-700 dark:text-admin-text-secondary">{item.orders}</td>
-                      <td className="py-2 pr-4 font-semibold text-slate-900 dark:text-admin-text-primary">
+                      <td className="py-2 pl-4 pr-4 font-semibold text-slate-900 dark:text-admin-text-primary">{item.date}</td>
+                      <td className="py-2 pl-4 pr-4 text-slate-700 dark:text-admin-text-secondary">{item.day}</td>
+                      <td className="py-2 pl-4 pr-4 text-slate-700 dark:text-admin-text-secondary">{item.orders}</td>
+                      <td className="py-2 pl-4 pr-4 font-semibold text-slate-900 dark:text-admin-text-primary">
                         {item.revenue.toLocaleString("uk-UA")}
                       </td>
-                      <td className="py-2 pr-4 text-slate-700 dark:text-admin-text-secondary">{item.avg.toLocaleString("uk-UA")}</td>
-                      <td className="py-2 pr-4">
+                      <td className="py-2 pl-4 pr-4 text-slate-700 dark:text-admin-text-secondary">{item.avg.toLocaleString("uk-UA")}</td>
+                      <td className="py-2 pl-4 pr-4">
                         <span
                           className={cn(
                             "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold",

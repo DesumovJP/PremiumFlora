@@ -11,14 +11,33 @@ const nextConfig: NextConfig = {
         protocol: "http",
         hostname: "localhost",
         port: "1337",
-        pathname: "/uploads/**",
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+        port: "1337",
       },
       {
         protocol: "https",
         hostname: "**",
-        pathname: "/uploads/**",
+      },
+      {
+        protocol: "http",
+        hostname: "**",
       },
     ],
+    formats: ["image/avif", "image/webp"],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60,
+  },
+  // Performance optimizations
+  compress: true,
+  poweredByHeader: false,
+  reactStrictMode: true,
+  // Experimental features for better performance
+  experimental: {
+    optimizeCss: true,
   },
 };
 
