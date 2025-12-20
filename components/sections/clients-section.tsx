@@ -254,7 +254,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
 
   return (
     <>
-    <Card className="admin-card border-none bg-white/90 shadow-md">
+    <Card className="admin-card border-none bg-white/90 dark:bg-admin-surface shadow-md">
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <CardTitle className="text-2xl">Клієнти</CardTitle>
@@ -295,7 +295,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
         {/* Мобільна історія — прибрано, тепер використовується модалка */}
         {false && selected && (
           <div className="sm:hidden">
-            <Card className="border-emerald-200 bg-emerald-50/70 shadow-md shadow-emerald-200/50">
+            <Card className="border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/70 dark:bg-emerald-900/20 shadow-md shadow-emerald-200/50">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -304,7 +304,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                   </div>
                   <button
                     onClick={() => setSelected(null)}
-                    className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
+                    className="rounded-full p-2 text-slate-500 dark:text-admin-text-tertiary transition hover:bg-slate-100 dark:hover:bg-admin-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
                     aria-label="Закрити історію"
                   >
                     <X className="h-4 w-4" />
@@ -312,9 +312,9 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="space-y-2 rounded-2xl bg-white p-3 text-sm text-slate-700">
-                  <p className="font-semibold text-slate-900">{selected.name}</p>
-                  <p className="text-slate-500">{selected.city}</p>
+                <div className="space-y-2 rounded-2xl bg-white dark:bg-admin-surface p-3 text-sm text-slate-700 dark:text-admin-text-secondary">
+                  <p className="font-semibold text-slate-900 dark:text-admin-text-primary">{selected.name}</p>
+                  <p className="text-slate-500 dark:text-admin-text-tertiary">{selected.city}</p>
                   <div className="space-y-1 pt-2">
                     <p className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-emerald-600" />
@@ -343,18 +343,18 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                         return (
                           <div
                             key={transaction.documentId}
-                            className="rounded-xl border border-slate-200 bg-white p-3 text-sm"
+                            className="rounded-xl border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface p-3 text-sm"
                           >
                             <div className="flex items-start justify-between gap-2 mb-2">
                               <div className="flex-1">
-                                <p className="font-semibold text-slate-900">
+                                <p className="font-semibold text-slate-900 dark:text-admin-text-primary">
                                   {new Date(transaction.date).toLocaleDateString('uk-UA', {
                                     day: '2-digit',
                                     month: '2-digit',
                                     year: 'numeric',
                                   })}
                                 </p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-slate-500 dark:text-admin-text-tertiary">
                                   {new Date(transaction.date).toLocaleTimeString('uk-UA', {
                                     hour: '2-digit',
                                     minute: '2-digit',
@@ -387,10 +387,10 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                               <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
                                 {transaction.items.map((item, idx) => (
                                   <div key={idx} className="flex items-start justify-between gap-2 text-xs">
-                                    <span className="text-slate-700 flex-1">
+                                    <span className="text-slate-700 dark:text-admin-text-secondary flex-1">
                                       {item.name} {item.length ? `(${item.length}см)` : ''} × {item.qty}
                                     </span>
-                                    <span className="text-slate-600 font-medium">
+                                    <span className="text-slate-600 dark:text-admin-text-secondary font-medium">
                                       {((item.subtotal || item.price * item.qty) || 0).toLocaleString('uk-UA')} грн
                                     </span>
                                   </div>
@@ -428,7 +428,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-1">
                       <CardTitle>{client.name}</CardTitle>
-                      <CardDescription className="text-slate-600">{client.city}</CardDescription>
+                      <CardDescription className="text-slate-600 dark:text-admin-text-secondary">{client.city}</CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
                       {client.isVip && <Badge tone="success">VIP</Badge>}
@@ -444,7 +444,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2 text-xs text-slate-700 sm:text-sm">
+                  <div className="grid grid-cols-2 gap-2 text-xs text-slate-700 dark:text-admin-text-secondary sm:text-sm">
                     <p className="flex items-center gap-1.5 truncate">
                       <Phone className="h-3.5 w-3.5 shrink-0 text-emerald-600 sm:h-4 sm:w-4" />
                       <span className="truncate">{client.contact}</span>
@@ -481,7 +481,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
             >
               <ScrollArea className="max-h-[calc(100vh-12rem)] pr-2">
                 <div className="space-y-3">
-                  <div className="space-y-2 rounded-2xl bg-white p-3 text-sm text-slate-700">
+                  <div className="space-y-2 rounded-2xl bg-white dark:bg-admin-surface p-3 text-sm text-slate-700 dark:text-admin-text-secondary">
                     <p className="font-semibold text-slate-900">{selected.name}</p>
                     <p className="text-slate-500">{selected.city}</p>
                     <div className="space-y-1 pt-2">
@@ -512,18 +512,18 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                         return (
                           <div
                             key={transaction.documentId}
-                            className="rounded-xl border border-slate-200 bg-white p-3 text-sm"
+                            className="rounded-xl border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface p-3 text-sm"
                           >
                             <div className="flex items-start justify-between gap-2 mb-2">
                               <div className="flex-1">
-                                <p className="font-semibold text-slate-900">
+                                <p className="font-semibold text-slate-900 dark:text-admin-text-primary">
                                   {new Date(transaction.date).toLocaleDateString('uk-UA', {
                                     day: '2-digit',
                                     month: '2-digit',
                                     year: 'numeric',
                                   })}
                                 </p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-slate-500 dark:text-admin-text-tertiary">
                                   {new Date(transaction.date).toLocaleTimeString('uk-UA', {
                                     hour: '2-digit',
                                     minute: '2-digit',
@@ -556,10 +556,10 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                               <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
                                 {transaction.items.map((item, idx) => (
                                   <div key={idx} className="flex items-start justify-between gap-2 text-xs">
-                                    <span className="text-slate-700 flex-1">
+                                    <span className="text-slate-700 dark:text-admin-text-secondary flex-1">
                                       {item.name} {item.length ? `(${item.length}см)` : ''} × {item.qty}
                                     </span>
-                                    <span className="text-slate-600 font-medium">
+                                    <span className="text-slate-600 dark:text-admin-text-secondary font-medium">
                                       {((item.subtotal || item.price * item.qty) || 0).toLocaleString('uk-UA')} грн
                                     </span>
                                   </div>
@@ -677,7 +677,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
         </>
       }
     >
-      <div className="text-sm text-slate-600">
+      <div className="text-sm text-slate-600 dark:text-admin-text-secondary">
         <p>Всі дані про клієнта та його замовлення будуть видалені назавжди.</p>
       </div>
     </Modal>
@@ -698,7 +698,7 @@ function ClientMetric({
   return (
     <div>
       <p className="text-xs uppercase text-slate-400">{label}</p>
-      <p className={`font-semibold ${highlight ? "text-emerald-700" : "text-slate-900"}`}>
+      <p className={`font-semibold ${highlight ? "text-emerald-700 dark:text-emerald-400" : "text-slate-900 dark:text-admin-text-primary"}`}>
         {value}
       </p>
     </div>
@@ -707,9 +707,9 @@ function ClientMetric({
 
 function MetricBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white/80 p-2 sm:p-3">
-      <p className="text-xs uppercase text-slate-400">{label}</p>
-      <p className="text-xs font-semibold text-slate-900 sm:text-sm">{value}</p>
+    <div className="rounded-xl border border-slate-200 dark:border-admin-border bg-white/80 dark:bg-admin-surface p-2 sm:p-3">
+      <p className="text-xs uppercase text-slate-400 dark:text-admin-text-muted">{label}</p>
+      <p className="text-xs font-semibold text-slate-900 dark:text-admin-text-primary sm:text-sm">{value}</p>
     </div>
   );
 }

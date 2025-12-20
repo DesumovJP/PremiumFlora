@@ -29,8 +29,8 @@ const stats = [
 
 export function StatsSection() {
   return (
-    <section className="relative bg-gradient-to-br from-emerald-50 via-white to-blue-50/50 section-padding-sm">
-      <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_50%_50%,rgba(236,248,241,0.4),transparent)]" />
+    <section className="relative bg-gradient-to-br from-emerald-50 via-white to-blue-50/50 dark:from-emerald-900/10 dark:via-admin-surface dark:to-blue-900/10 section-padding-sm">
+      <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_50%_50%,rgba(236,248,241,0.4),transparent)] dark:bg-[radial-gradient(1200px_circle_at_50%_50%,rgba(13,17,23,0.3),transparent)]" />
       
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -39,7 +39,7 @@ export function StatsSection() {
             return (
               <div
                 key={index}
-                className="group relative flex flex-col items-center rounded-xl bg-white/80 p-3 sm:p-6 text-center backdrop-blur-sm transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-emerald-500/10"
+                className="group relative flex flex-col items-center rounded-xl bg-white/80 dark:bg-admin-surface/80 p-3 sm:p-6 text-center backdrop-blur-sm transition-all duration-300 hover:bg-white dark:hover:bg-admin-surface hover:shadow-xl hover:shadow-emerald-500/10 dark:hover:shadow-emerald-500/20"
               >
                 {/* Icon */}
                 <div className="mb-2 sm:mb-3 inline-flex h-8 w-8 sm:h-12 sm:w-12 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/25 transition-transform duration-300 group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-emerald-500/40">
@@ -47,17 +47,17 @@ export function StatsSection() {
                 </div>
                 
                 {/* Value */}
-                <div className="mb-1 sm:mb-1.5 text-xl font-extrabold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
+                <div className="mb-1 sm:mb-1.5 text-xl font-extrabold tracking-tight text-slate-900 dark:text-admin-text-primary sm:text-3xl lg:text-4xl">
                   {stat.value}
                 </div>
                 
                 {/* Label */}
-                <div className="mb-1 sm:mb-1.5 text-xs font-bold text-slate-900 sm:text-base">
+                <div className="mb-1 sm:mb-1.5 text-xs font-bold text-slate-900 dark:text-admin-text-primary sm:text-base">
                   {stat.label}
                 </div>
                 
                 {/* Description */}
-                <p className="text-[9px] sm:text-[11px] text-slate-600 leading-tight">
+                <p className="text-[9px] sm:text-[11px] text-slate-600 dark:text-admin-text-secondary leading-tight">
                   {stat.description}
                 </p>
               </div>
@@ -68,5 +68,6 @@ export function StatsSection() {
     </section>
   );
 }
+
 
 

@@ -18,7 +18,7 @@ export function Navigation() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-200/60 bg-white/95 backdrop-blur-lg shadow-sm">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200/60 dark:border-admin-border bg-white/95 dark:bg-admin-surface/95 backdrop-blur-lg shadow-sm">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8 lg:py-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group">
@@ -26,10 +26,10 @@ export function Navigation() {
             <Leaf className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
           <div className="flex flex-col">
-            <div className="text-base font-bold tracking-tight text-slate-900 sm:text-xl">
+            <div className="text-base font-bold tracking-tight text-slate-900 dark:text-admin-text-primary sm:text-xl">
               Premium Flora
             </div>
-            <div className="text-[10px] font-medium uppercase tracking-[0.16em] text-emerald-600 sm:text-[11px]">
+            <div className="text-[10px] font-medium uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400 sm:text-[11px]">
               Оптовий магазин квітів
             </div>
           </div>
@@ -41,7 +41,7 @@ export function Navigation() {
             <Link
               key={link.href}
               href={link.href}
-              className="relative rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-emerald-50/80 hover:text-emerald-700 active:scale-95"
+              className="relative rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-admin-text-secondary transition-all duration-200 hover:bg-emerald-50/80 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-400 active:scale-95"
             >
               {link.label}
             </Link>
@@ -50,21 +50,21 @@ export function Navigation() {
 
         {/* Contact Button Desktop */}
         <div className="hidden items-center gap-3 md:flex">
-          <div className="hidden lg:block">
-            <div className="flex flex-col gap-1 border-r border-slate-200 pr-3">
+            <div className="hidden lg:block">
+            <div className="flex flex-col gap-1 border-r border-slate-200 dark:border-admin-border pr-3">
               <a
                 href="tel:+380671234567"
-                className="text-xs font-medium text-slate-700 transition-colors hover:text-emerald-600"
+                className="text-xs font-medium text-slate-700 dark:text-admin-text-secondary transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
               >
                 +380 67 123 4567
               </a>
               <a
                 href="tel:+380501234567"
-                className="text-xs font-medium text-slate-700 transition-colors hover:text-emerald-600"
+                className="text-xs font-medium text-slate-700 dark:text-admin-text-secondary transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
               >
                 +380 50 123 4567
               </a>
-              <div className="mt-1 text-[10px] text-slate-500">
+              <div className="mt-1 text-[10px] text-slate-500 dark:text-admin-text-muted">
                 Пн-Нд: 9:00-18:00
               </div>
             </div>
@@ -83,12 +83,12 @@ export function Navigation() {
           </SheetTrigger>
           <SheetContent
             side="right"
-            className="w-[320px] sm:w-[380px] border-l border-slate-200/60 px-0 bg-white/95 backdrop-blur-lg"
+            className="w-[320px] sm:w-[380px] border-l border-slate-200/60 dark:border-admin-border px-0 bg-white/95 dark:bg-admin-surface/95 backdrop-blur-lg"
           >
             <div className="flex h-full flex-col">
               {/* Header / Title */}
-              <div className="border-b border-slate-100 px-4 py-4">
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <div className="border-b border-slate-100 dark:border-admin-border px-4 py-4">
+                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-admin-text-muted">
                   Навігація
                 </span>
               </div>
@@ -100,7 +100,7 @@ export function Navigation() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between rounded-xl px-3.5 py-3 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-emerald-50/80 hover:text-emerald-700 active:scale-[0.98]"
+                    className="flex items-center justify-between rounded-xl px-3.5 py-3 text-sm font-semibold text-slate-700 dark:text-admin-text-secondary transition-all duration-200 hover:bg-emerald-50/80 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-400 active:scale-[0.98]"
                   >
                     <span>{link.label}</span>
                     <span className="text-[10px] uppercase tracking-[0.16em] text-slate-300">
@@ -111,32 +111,32 @@ export function Navigation() {
               </nav>
 
               {/* Contact Section */}
-              <div className="mt-auto border-t border-slate-100 bg-slate-50/80 px-4 py-5">
-                <div className="mb-4 text-center text-[11px] font-semibold text-emerald-700">
+              <div className="mt-auto border-t border-slate-100 dark:border-admin-border bg-slate-50/80 dark:bg-admin-surface/80 px-4 py-5">
+                <div className="mb-4 text-center text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
                   Свіжа поставка щоп'ятниці
                 </div>
-                <div className="mb-3 flex items-center justify-between text-[11px] font-medium uppercase tracking-[0.16em] text-slate-500">
+                <div className="mb-3 flex items-center justify-between text-[11px] font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-admin-text-muted">
                   <span>Контакти</span>
-                  <span className="text-[10px] font-semibold normal-case tracking-normal text-slate-600">
+                  <span className="text-[10px] font-semibold normal-case tracking-normal text-slate-600 dark:text-admin-text-tertiary">
                     Пн-Нд: 9:00-18:00
                   </span>
                 </div>
                 <div className="space-y-2">
                   <a
                     href="tel:+380671234567"
-                    className="flex items-center gap-3 rounded-xl bg-white px-3.5 py-3 text-sm font-medium text-slate-700 shadow-sm transition-all duration-200 hover:shadow-md hover:text-emerald-600"
+                    className="flex items-center gap-3 rounded-xl bg-white dark:bg-admin-surface px-3.5 py-3 text-sm font-medium text-slate-700 dark:text-admin-text-secondary shadow-sm transition-all duration-200 hover:shadow-md hover:text-emerald-600 dark:hover:text-emerald-400"
                   >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
-                      <Phone className="h-4 w-4 text-emerald-600" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/30">
+                      <Phone className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <span>+380 67 123 4567</span>
                   </a>
                   <a
                     href="tel:+380501234567"
-                    className="flex items-center gap-3 rounded-xl bg-white px-3.5 py-3 text-sm font-medium text-slate-700 shadow-sm transition-all duration-200 hover:shadow-md hover:text-emerald-600"
+                    className="flex items-center gap-3 rounded-xl bg-white dark:bg-admin-surface px-3.5 py-3 text-sm font-medium text-slate-700 dark:text-admin-text-secondary shadow-sm transition-all duration-200 hover:shadow-md hover:text-emerald-600 dark:hover:text-emerald-400"
                   >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
-                      <Phone className="h-4 w-4 text-emerald-600" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/30">
+                      <Phone className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <span>+380 50 123 4567</span>
                   </a>

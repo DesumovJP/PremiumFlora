@@ -20,21 +20,21 @@ export function HeroSection() {
           {/* Fallback gradient if video doesn't load */}
         </video>
         {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-white/40 to-blue-50/50" />
-        <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_10%_10%,rgba(236,248,241,0.3),transparent),radial-gradient(1400px_circle_at_90%_20%,rgba(238,242,255,0.3),transparent)]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-white/50" />
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-white/40 to-blue-50/50 dark:from-emerald-900/20 dark:via-admin-bg/40 dark:to-blue-900/20" />
+        <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_10%_10%,rgba(236,248,241,0.3),transparent),radial-gradient(1400px_circle_at_90%_20%,rgba(238,242,255,0.3),transparent)] dark:bg-[radial-gradient(1200px_circle_at_10%_10%,rgba(13,17,23,0.5),transparent),radial-gradient(1400px_circle_at_90%_20%,rgba(22,27,34,0.3),transparent)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-white/50 dark:from-transparent dark:via-admin-bg/20 dark:to-admin-bg/50" />
       </div>
       
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           {/* Badge with animation */}
-          <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-white/90 px-3.5 py-1.5 text-xs sm:text-[13px] font-semibold text-emerald-700 shadow-sm backdrop-blur-md transition-all hover:border-emerald-300 hover:shadow-md">
+          <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 dark:border-emerald-800/50 bg-white/90 dark:bg-admin-surface/90 px-3.5 py-1.5 text-xs sm:text-[13px] font-semibold text-emerald-700 dark:text-emerald-400 shadow-sm backdrop-blur-md transition-all hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md">
             <Sparkles className="h-3 w-3 animate-pulse" />
             <span className="leading-none">Преміальні квіти для вашого бізнесу</span>
           </div>
           
           {/* Main headline - Premium SaaS style */}
-          <h1 className="mb-6 text-display font-extrabold tracking-tight text-slate-900">
+          <h1 className="mb-6 text-display font-extrabold tracking-tight text-slate-900 dark:text-admin-text-primary">
             Оптовий магазин
             <span className="block bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 bg-clip-text text-transparent">
               Premium Flora
@@ -42,13 +42,13 @@ export function HeroSection() {
           </h1>
           
           {/* Subheadline */}
-          <p className="mx-auto mb-4 max-w-2xl text-body-large leading-relaxed text-slate-800 font-semibold sm:font-medium">
+          <p className="mx-auto mb-4 max-w-2xl text-body-large leading-relaxed text-slate-800 dark:text-admin-text-secondary font-semibold sm:font-medium">
             Широкий асортимент свіжих квітів преміальної якості.
             <span className="block sm:inline"> Індивідуальний підхід, чесні оптові ціни та надійна доставка для вашого квіткового бізнесу.</span>
           </p>
           
           {/* Social proof */}
-          <div className="mb-8 sm:mb-10 flex flex-wrap items-center justify-center gap-3 sm:gap-5 text-xs sm:text-sm font-semibold text-slate-800">
+          <div className="mb-8 sm:mb-10 flex flex-wrap items-center justify-center gap-3 sm:gap-5 text-xs sm:text-sm font-semibold text-slate-800 dark:text-admin-text-secondary">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-600" />
               <span className="font-medium">Свіжі поставки щоп'ятниці</span>
@@ -73,7 +73,7 @@ export function HeroSection() {
           </div>
 
           {/* Trust indicators */}
-          <div className="grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-6 text-xs sm:text-[13px] font-medium text-slate-700">
+          <div className="grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-6 text-xs sm:text-[13px] font-medium text-slate-700 dark:text-admin-text-tertiary">
             {/* Left: Гарантія якості та свіжості */}
             <div className="flex items-center gap-1.5">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />

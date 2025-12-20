@@ -11,11 +11,11 @@ const buttonVariants = cva(
         default:
           "bg-emerald-600 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-500",
         outline:
-          "border border-slate-200 bg-white text-slate-900 hover:border-emerald-300 hover:text-emerald-700",
+          "border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface text-slate-900 dark:text-admin-text-primary hover:border-emerald-300 dark:hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400",
         ghost:
           "text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 border border-transparent",
         muted:
-          "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200",
+          "bg-slate-100 dark:bg-admin-surface text-slate-700 dark:text-admin-text-secondary hover:bg-slate-200 dark:hover:bg-admin-surface-elevated border border-slate-200 dark:border-admin-border",
       },
       size: {
         default: "h-11 px-4 py-2",

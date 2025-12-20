@@ -30,18 +30,18 @@ const benefits = [
 
 export function BenefitsSection() {
   return (
-    <section className="relative bg-white section-padding-sm">
+    <section className="relative bg-white dark:bg-admin-surface section-padding-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="mb-12 sm:mb-16 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-1.5 text-xs sm:text-sm font-semibold text-emerald-700">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 dark:bg-emerald-900/30 px-4 py-1.5 text-xs sm:text-sm font-semibold text-emerald-700 dark:text-emerald-400">
             <Sparkles className="h-4 w-4" />
             <span>Переваги</span>
           </div>
-          <h2 className="mb-4 text-display-sm font-extrabold tracking-tight text-slate-900">
+          <h2 className="mb-4 text-display-sm font-extrabold tracking-tight text-slate-900 dark:text-admin-text-primary">
             Чому обирають нас
           </h2>
-          <p className="mx-auto max-w-2xl text-base sm:text-body-large text-slate-600">
+          <p className="mx-auto max-w-2xl text-base sm:text-body-large text-slate-600 dark:text-admin-text-secondary">
             Ми працюємо для успіху вашого квіткового бізнесу
           </p>
         </div>
@@ -53,7 +53,7 @@ export function BenefitsSection() {
             return (
               <Card 
                 key={index} 
-                className="group relative flex h-full flex-col overflow-hidden border-0 bg-gradient-to-br from-white to-slate-50/50 shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:shadow-emerald-500/10"
+                className="group relative flex h-full flex-col overflow-hidden border-0 bg-gradient-to-br from-white to-slate-50/50 dark:from-admin-surface dark:to-admin-surface shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:shadow-emerald-500/10 dark:hover:shadow-emerald-500/20"
               >
                 {/* Gradient accent */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${benefit.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-5`} />
@@ -65,10 +65,10 @@ export function BenefitsSection() {
                   </div>
                   
                   {/* Content */}
-                  <h3 className="benefit-heading mb-1 sm:mb-1.5 text-slate-900">
+                  <h3 className="benefit-heading mb-1 sm:mb-1.5 text-slate-900 dark:text-admin-text-primary">
                     {benefit.title}
                   </h3>
-                  <p className="benefit-text text-slate-600">
+                  <p className="benefit-text text-slate-600 dark:text-admin-text-secondary">
                     {benefit.description}
                   </p>
                 </CardContent>

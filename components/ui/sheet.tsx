@@ -46,7 +46,7 @@ const SheetContent = React.forwardRef<
       )}
       {...props}
     >
-      <SheetClose className="absolute right-4 top-4 rounded-full p-2 text-slate-500 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-200">
+      <SheetClose className="absolute right-4 top-4 rounded-full p-2 text-slate-500 dark:text-admin-text-tertiary transition hover:bg-slate-100 dark:hover:bg-admin-surface focus:outline-none focus:ring-2 focus:ring-emerald-200">
         <X className="h-4 w-4" />
       </SheetClose>
       {children}

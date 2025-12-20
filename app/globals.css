@@ -12,6 +12,11 @@
   --brand: #0f9c6e;
   --brand-soft: #e6f4ef;
   --border: #e2e8f0;
+  
+  /* Surface Colors - Light Theme */
+  --surface: #ffffff;
+  --surface-elevated: rgba(255, 255, 255, 0.95);
+  --surface-overlay: rgba(255, 255, 255, 0.85);
 
   /* Admin Panel Colors - Light Theme */
   --admin-bg: #f9fbfa;
@@ -110,35 +115,57 @@
   --blur-xl: 16px;
 }
 
-/* Dark Theme */
+/* Dark Theme - GitHub Style */
 .dark {
-  --admin-bg: #0f172a;
-  --admin-surface: #1e293b;
-  --admin-surface-elevated: rgba(30, 41, 59, 0.95);
-  --admin-surface-overlay: rgba(30, 41, 59, 0.85);
-  --admin-border: #334155;
-  --admin-border-subtle: #475569;
-  --admin-text-primary: #f1f5f9;
-  --admin-text-secondary: #cbd5e1;
-  --admin-text-tertiary: #94a3b8;
-  --admin-text-muted: #64748b;
+  /* Base Colors - Dark Theme */
+  --background: #0d1117;
+  --foreground: #c9d1d9;
+  --muted: #8b949e;
+  --brand: #10b981;
+  --brand-soft: rgba(16, 185, 129, 0.15);
+  --border: #1c2128;
   
+  /* Surface Colors - Dark Theme (GitHub style) */
+  --surface: #161b22;
+  --surface-elevated: rgba(22, 27, 34, 0.95);
+  --surface-overlay: rgba(22, 27, 34, 0.85);
+  
+  /* Admin Panel Colors - Dark Theme */
+  --admin-bg: #0d1117;
+  --admin-surface: #161b22;
+  --admin-surface-elevated: rgba(22, 27, 34, 0.95);
+  --admin-surface-overlay: rgba(22, 27, 34, 0.85);
+  --admin-border: #1c2128;
+  --admin-border-subtle: #161b22;
+  --admin-text-primary: #c9d1d9;
+  --admin-text-secondary: #b1bac4;
+  --admin-text-tertiary: #8b949e;
+  --admin-text-muted: #6e7681;
+  
+  /* Brand Colors - Dark Theme */
   --brand-primary: #10b981;
   --brand-primary-hover: #059669;
   --brand-primary-light: rgba(16, 185, 129, 0.15);
   --brand-primary-lighter: rgba(16, 185, 129, 0.08);
   
-  --success: #34d399;
-  --success-light: rgba(52, 211, 153, 0.15);
-  --warning: #fbbf24;
-  --warning-light: rgba(251, 191, 36, 0.15);
-  --error: #f87171;
-  --error-light: rgba(248, 113, 113, 0.15);
-  --info: #60a5fa;
-  --info-light: rgba(96, 165, 250, 0.15);
+  /* Status Colors - Dark Theme */
+  --success: #3fb950;
+  --success-light: rgba(63, 185, 80, 0.15);
+  --warning: #d29922;
+  --warning-light: rgba(210, 153, 34, 0.15);
+  --error: #f85149;
+  --error-light: rgba(248, 81, 73, 0.15);
+  --info: #58a6ff;
+  --info-light: rgba(88, 166, 255, 0.15);
   
-  --shadow-neumorphic: 8px 8px 16px rgba(0, 0, 0, 0.3), -8px -8px 16px rgba(46, 58, 78, 0.3);
-  --shadow-neumorphic-inset: inset 2px 2px 4px rgba(0, 0, 0, 0.3), inset -2px -2px 4px rgba(46, 58, 78, 0.3);
+  /* Shadows - Dark Theme */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  --shadow-neumorphic: 8px 8px 16px rgba(0, 0, 0, 0.4), -8px -8px 16px rgba(33, 38, 45, 0.2);
+  --shadow-neumorphic-inset: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(33, 38, 45, 0.2);
 }
 
 @theme inline {
@@ -165,10 +192,10 @@ body {
 }
 
 .dark body {
-  background: radial-gradient(clamp(50rem, 75vw, 75rem) circle at 10% 10%, rgba(15, 23, 42, 0.3), transparent),
-    radial-gradient(clamp(60rem, 87.5vw, 87.5rem) circle at 90% 20%, rgba(30, 41, 59, 0.2), transparent),
-    linear-gradient(180deg, #0f172a 0%, #1e293b 40%, #0f172a 100%);
-  color: var(--admin-text-primary);
+  background: radial-gradient(clamp(50rem, 75vw, 75rem) circle at 10% 10%, rgba(13, 17, 23, 0.5), transparent),
+    radial-gradient(clamp(60rem, 87.5vw, 87.5rem) circle at 90% 20%, rgba(22, 27, 34, 0.3), transparent),
+    linear-gradient(180deg, #0d1117 0%, #161b22 40%, #0d1117 100%);
+  color: var(--foreground);
 }
 
 /* Admin Panel Background */
@@ -181,47 +208,192 @@ body {
   background: var(--admin-bg);
 }
 
-.dark .bg-white,
+/* Dark theme overrides for common background classes */
+.dark .bg-white {
+  background-color: var(--surface) !important;
+}
+
 .dark .bg-white\/80,
 .dark .bg-white\/85,
 .dark .bg-white\/90,
-.dark .bg-white\/95,
-.dark .bg-slate-50\/60,
-.dark .bg-slate-50\/70,
+.dark .bg-white\/95 {
+  background-color: var(--surface-elevated) !important;
+}
+
+.dark .bg-slate-50,
 .dark .bg-slate-50\/80 {
-  background-color: #ffffff !important;
+  background-color: var(--admin-surface) !important;
 }
 
-.dark .border-slate-100,
-.dark .border {
-  border-color: #e2e8f0 !important;
+/* Виняток для ховеру таблиць - темний ховер для кращої читабельності (тільки для таблиць) */
+.dark table tbody tr:hover {
+  background-color: #21262d !important;
 }
 
+.dark .bg-slate-100:not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-rose"]):not([class*="bg-slate-50"]) {
+  background-color: var(--admin-surface) !important;
+}
+
+.dark .bg-slate-200 {
+  background-color: var(--admin-border) !important;
+}
+
+/* Dark theme overrides for borders - тільки для темної теми - менш контрастні та тонші */
+.dark .border-slate-100:not([class*="dark:border"]),
+.dark .border-slate-200:not([class*="dark:border"]),
+.dark .border-admin-border,
+.dark [class*="border-slate-100"],
+.dark [class*="border-slate-200"],
+.dark [class*="border-admin-border"] {
+  border-color: #1c2128 !important;
+  border-width: 0.5px !important;
+}
+
+/* Тонші бордери для всіх стандартних бордерів в темній темі */
+.dark .border:not([class*="border-0"]):not([class*="border-2"]):not([class*="border-4"]):not([class*="border-8"]):not([class*="ring-"]) {
+  border-width: 0.5px !important;
+  border-color: #1c2128 !important;
+}
+
+/* Більш темні лінії для таблиць та карток в темній темі - менш контрастні та тонші */
+.dark table tbody tr {
+  border-color: #1c2128 !important;
+  border-width: 0.5px !important;
+}
+
+.dark .divide-y > * + * {
+  border-top-color: #1c2128 !important;
+  border-top-width: 0.5px !important;
+}
+
+/* Варіанти в картках POS терміналу - світла тема */
+.pos-variant-item {
+  /* Світла тема - використовує border-slate-100 bg-slate-50/60 з className */
+}
+
+/* Темніші варіанти в картках POS терміналу - тільки для темної теми */
+.dark .pos-variant-item {
+  background-color: #161b22 !important;
+  border-color: #1c2128 !important;
+}
+
+/* Ховер ефект для варіантів в POS терміналі - світла тема */
+.pos-variant-item:hover {
+  /* Світла тема - використовує hover:border-emerald-200 hover:bg-emerald-50/60 з className */
+}
+
+/* Ховер ефект для варіантів в POS терміналі - темна тема */
+.dark .pos-variant-item:hover {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  border-color: #10b981 !important;
+}
+
+/* Класи для темної теми таблиць */
+.table-divider-dark {
+  /* Світла тема - використовує divide-slate-100 */
+}
+
+.dark .table-divider-dark {
+  border-top-color: #1c2128 !important;
+  border-top-width: 0.5px !important;
+}
+
+.table-hover-dark {
+  /* Світла тема - використовує hover:bg-slate-50/60 */
+}
+
+.dark .table-hover-dark:hover {
+  background-color: #21262d !important;
+}
+
+.table-border-dark {
+  /* Світла тема - використовує border-slate-100 */
+}
+
+.dark .table-border-dark {
+  border-color: #1c2128 !important;
+  border-width: 0.5px !important;
+}
+
+/* Забезпечення правильних стилів для бейджів у світлій темі - перекриваємо глобальні правила */
+.bg-emerald-50 {
+  background-color: rgb(236 253 245) !important; /* emerald-50 */
+}
+
+.bg-amber-50 {
+  background-color: rgb(255 251 235) !important; /* amber-50 */
+}
+
+.bg-rose-50 {
+  background-color: rgb(255 241 242) !important; /* rose-50 */
+}
+
+/* Забезпечення правильних кольорів тексту для бейджів у світлій темі */
+.text-emerald-700 {
+  color: rgb(4 120 87) !important; /* emerald-700 */
+}
+
+.text-amber-700 {
+  color: rgb(180 83 9) !important; /* amber-700 */
+}
+
+.text-rose-700 {
+  color: rgb(190 18 60) !important; /* rose-700 */
+}
+
+/* Темна тема для бейджів - перекриває світлі стилі */
+.dark .bg-emerald-50 {
+  background-color: rgba(6, 78, 59, 0.3) !important; /* emerald-900/30 */
+}
+
+.dark .bg-amber-50 {
+  background-color: rgba(120, 53, 15, 0.3) !important; /* amber-900/30 */
+}
+
+.dark .bg-rose-50 {
+  background-color: rgba(153, 27, 27, 0.3) !important; /* rose-900/30 */
+}
+
+.dark .text-emerald-700 {
+  color: rgb(52, 211, 153) !important; /* emerald-400 */
+}
+
+.dark .text-amber-700 {
+  color: rgb(251, 191, 36) !important; /* amber-400 */
+}
+
+.dark .text-rose-700 {
+  color: rgb(251, 113, 133) !important; /* rose-400 */
+}
+
+/* Dark theme overrides for text colors */
 .dark .text-slate-900 {
-  color: #0f172a !important;
+  color: var(--admin-text-primary) !important;
 }
 
 .dark .text-slate-800 {
-  color: #1f2937 !important;
+  color: var(--admin-text-primary) !important;
 }
 
 .dark .text-slate-700 {
-  color: #334155 !important;
+  color: var(--admin-text-secondary) !important;
 }
 
 .dark .text-slate-600,
 .dark .text-slate-500 {
-  color: #475569 !important;
+  color: var(--admin-text-tertiary) !important;
+}
+
+.dark .text-slate-400 {
+  color: var(--admin-text-muted) !important;
 }
 
 .dark .text-emerald-700 {
-  color: #047857 !important;
+  color: var(--brand-primary) !important;
 }
 
-.dark .shadow-sm,
-.dark .shadow-md,
-.dark .shadow-lg {
-  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.12) !important;
+.dark .text-emerald-600 {
+  color: var(--brand-primary) !important;
 }
 
 /* Typography Scale - Premium System */
@@ -715,4 +887,27 @@ html {
 }
 .blog-scroll::-webkit-scrollbar {
   height: 0; /* Hide on WebKit (mobile Safari / Chrome) */
+}
+
+/* Section backgrounds - Dark theme support */
+.dark section {
+  background-color: var(--admin-bg);
+  color: var(--admin-text-primary);
+}
+
+.dark section.bg-white {
+  background-color: var(--admin-surface) !important;
+}
+
+.dark section.bg-slate-50 {
+  background-color: var(--admin-surface) !important;
+}
+
+/* Card backgrounds in dark theme */
+.dark .bg-gradient-to-br.from-white.to-slate-50\/50 {
+  background: linear-gradient(to bottom right, var(--admin-surface), var(--admin-surface)) !important;
+}
+
+.dark .bg-gradient-to-br.from-white {
+  background: var(--admin-surface) !important;
 }

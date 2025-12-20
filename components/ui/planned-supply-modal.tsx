@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Modal } from "./modal";
 import { Button } from "./button";
 import { Input } from "./input";
+import { Badge } from "./badge";
+import { cn } from "@/lib/utils";
 import { Plus, X, Search, Download, AlertCircle, AlertTriangle } from "lucide-react";
 import {
   getLowStockVariants,
@@ -23,9 +25,9 @@ const getStockStatus = (stock: number): 'critical' | 'low' | 'good' => {
 };
 
 const stockBadgeClass = (stock: number) => {
-  if (stock < 150) return "bg-rose-50 text-rose-700 ring-1 ring-rose-100";
-  if (stock < 300) return "bg-amber-50 text-amber-700 ring-1 ring-amber-100";
-  return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100";
+  if (stock < 150) return "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 ring-1 ring-rose-100 dark:ring-rose-800/50";
+  if (stock < 300) return "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 ring-1 ring-amber-100 dark:ring-amber-800/50";
+  return "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-100 dark:ring-emerald-800/50";
 };
 
 interface PlannedSupplyModalProps {
@@ -247,7 +249,7 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
         {/* Поріг низьких залишків */}
         <div className="flex items-center gap-3">
           <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-slate-600">
+            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-admin-text-secondary">
               Поріг низьких залишків
             </label>
             <Input
@@ -310,14 +312,14 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
           ) : (
             <div className="rounded-lg border border-emerald-100 bg-emerald-50/30 p-3 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-700">Додати товар</span>
+                <span className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Додати товар</span>
                 <button
                   onClick={() => {
                     setShowManualAdd(false);
                     setSearchQuery("");
                     setSearchResults([]);
                   }}
-                  className="text-slate-400 hover:text-slate-600"
+                  className="text-slate-400 dark:text-admin-text-muted hover:text-slate-600 dark:hover:text-admin-text-secondary"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -325,7 +327,7 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
 
               {/* Пошук існуючих товарів */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-admin-text-muted" />
                 <Input
                   type="text"
                   placeholder="Пошук квітки..."
@@ -346,10 +348,10 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
                       <button
                         key={`${flower.id}-${variant.id}`}
                         onClick={() => addVariantFromSearch(flower, variant)}
-                        className="w-full rounded-lg border border-slate-100 bg-white p-2 text-left text-sm hover:bg-slate-50"
+                        className="w-full rounded-lg border border-slate-100 dark:border-admin-border bg-white dark:bg-admin-surface p-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-admin-surface-elevated"
                       >
-                        <div className="font-semibold text-slate-900">{flower.name}</div>
-                        <div className="text-xs text-slate-600">
+                        <div className="font-semibold text-slate-900 dark:text-admin-text-primary">{flower.name}</div>
+                        <div className="text-xs text-slate-600 dark:text-admin-text-secondary">
                           {variant.length} см • Залишок: {variant.stock}
                         </div>
                       </button>
@@ -359,7 +361,7 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
               )}
 
               {searching && (
-                <div className="text-center text-sm text-slate-500">Пошук...</div>
+                <div className="text-center text-sm text-slate-500 dark:text-admin-text-tertiary">Пошук...</div>
               )}
 
               {/* Додати новий товар */}
@@ -374,14 +376,14 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
         {/* Список товарів */}
         {items.length > 0 && (
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-slate-900">
+            <p className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary">
               Позиції поставки ({items.length})
             </p>
             <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white/80 p-3"
+                  className="flex items-center gap-3 rounded-xl border border-slate-100 dark:border-admin-border bg-white/80 dark:bg-admin-surface p-3"
                 >
                   <div className="flex-1">
                     {item.isNew ? (
@@ -406,9 +408,11 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
                     ) : (
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-semibold text-slate-900">{item.flowerName}</p>
+                          <p className="font-semibold text-slate-900 dark:text-admin-text-primary">{item.flowerName}</p>
                           {!item.isNew && getStockStatus(item.currentStock) !== 'good' && (
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${stockBadgeClass(item.currentStock)}`}>
+                            <Badge
+                              className={cn("text-xs px-2 py-0.5", stockBadgeClass(item.currentStock))}
+                            >
                               {getStockStatus(item.currentStock) === 'critical' ? (
                                 <span className="flex items-center gap-1">
                                   <AlertTriangle className="h-3 w-3" />
@@ -420,10 +424,10 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
                                   Низько
                                 </span>
                               )}
-                            </span>
+                            </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-slate-600">
+                        <p className="text-xs text-slate-600 dark:text-admin-text-secondary">
                           {item.length} см • Залишок: {item.currentStock}
                           {item.isManual && <span className="ml-2 text-emerald-600">(додано вручну)</span>}
                         </p>
@@ -433,7 +437,7 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
 
                   {/* Кількість */}
                   <div className="w-32">
-                    <label className="mb-1 block text-xs text-slate-600">Кількість</label>
+                    <label className="mb-1 block text-xs text-slate-600 dark:text-admin-text-secondary">Кількість</label>
                     <Input
                       type="number"
                       value={item.plannedQuantity}
@@ -449,7 +453,7 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
                   {/* Видалити */}
                   <button
                     onClick={() => removeItem(item.id)}
-                    className="text-slate-400 hover:text-red-600"
+                    className="text-slate-400 dark:text-admin-text-muted hover:text-red-600 dark:hover:text-red-400"
                   >
                     <X className="h-4 w-4" />
                   </button>

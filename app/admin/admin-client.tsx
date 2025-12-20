@@ -388,7 +388,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
                 <ShoppingBag className="mr-2 h-4 w-4" />
                 Кошик
                 {cartCount > 0 && (
-                  <span className="absolute -right-2 -top-2 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-white px-1.5 text-xs font-semibold text-emerald-700 shadow-sm">
+                  <span className="absolute -right-2 -top-2 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-white dark:bg-admin-surface px-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 shadow-sm">
                     {cartCount}
                   </span>
                 )}

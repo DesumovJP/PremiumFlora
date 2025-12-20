@@ -109,7 +109,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
       <div className="space-y-4">
         {/* File upload */}
         <div>
-          <label className="group flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-emerald-200 bg-white px-4 py-3 text-sm text-slate-600 transition hover:border-emerald-300 hover:bg-emerald-50">
+          <label className="group flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-emerald-200 dark:border-emerald-800 bg-white dark:bg-admin-surface px-4 py-3 text-sm text-slate-600 dark:text-admin-text-secondary transition hover:border-emerald-300 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 shadow-sm ring-1 ring-emerald-100">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -127,10 +127,10 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
               </svg>
             </div>
             <div className="flex flex-col">
-              <span className="font-semibold text-slate-900">
+              <span className="font-semibold text-slate-900 dark:text-admin-text-primary">
                 {file ? file.name : "Виберіть файл"}
               </span>
-              <span className="text-xs text-slate-500">xlsx, xls</span>
+              <span className="text-xs text-slate-500 dark:text-admin-text-muted">xlsx, xls</span>
             </div>
             <input
               type="file"
@@ -144,7 +144,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
         {/* Options */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">
+            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-admin-text-secondary">
               Режим залишків
             </label>
             <select
@@ -163,7 +163,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">
+            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-admin-text-secondary">
               Режим цін
             </label>
             <select
@@ -197,7 +197,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
               }
               className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
             />
-            <span className="text-sm font-medium text-slate-700">
+            <span className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">
               Розрахувати ціни (USD → UAH + маржа)
             </span>
           </label>
@@ -205,7 +205,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
           {options.applyPriceCalculation && (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-admin-text-secondary">
                   Курс долара (UAH)
                 </label>
                 <input
@@ -224,7 +224,7 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-admin-text-secondary">
                   Маржа (%)
                 </label>
                 <input

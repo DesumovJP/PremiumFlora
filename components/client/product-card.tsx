@@ -20,9 +20,9 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
   
   if (variants.length === 0) {
     return (
-      <Card className={cn("overflow-hidden border-slate-200/80 bg-white shadow-sm", className)}>
+      <Card className={cn("overflow-hidden border-slate-200/80 dark:border-admin-border bg-white dark:bg-admin-surface shadow-sm", className)}>
         <CardContent className="p-4">
-          <div className="text-center text-sm text-slate-500">
+          <div className="text-center text-sm text-slate-500 dark:text-admin-text-tertiary">
             <p className="font-semibold">{product.name}</p>
             <p className="mt-1 text-xs">Немає варіантів</p>
           </div>
@@ -47,13 +47,13 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
       <Link href={`/catalog/${product.id}`} className="h-full">
         <Card
           className={cn(
-            "group flex h-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-lg",
+            "group flex h-full overflow-hidden rounded-2xl border border-slate-200/80 dark:border-admin-border bg-white dark:bg-admin-surface shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-lg",
             className
           )}
         >
           <div className="flex w-full flex-col lg:flex-row">
             {/* Image Container - Horizontal */}
-            <div className="relative w-full lg:w-64 lg:flex-shrink-0 aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[180px] overflow-hidden bg-slate-50">
+            <div className="relative w-full lg:w-64 lg:flex-shrink-0 aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[180px] overflow-hidden bg-slate-50 dark:bg-admin-surface">
               {product.image ? (
                 <Image
                   src={product.image}
@@ -64,7 +64,7 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
                   loading="lazy"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-slate-400">
+                <div className="flex h-full w-full items-center justify-center text-slate-400 dark:text-admin-text-muted">
                   <span className="text-xs">Без фото</span>
                 </div>
               )}
@@ -81,10 +81,10 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
             </div>
 
             {/* Content - Horizontal */}
-            <CardContent className="flex flex-1 flex-col justify-between p-4 lg:p-5 transition-colors group-hover:bg-emerald-50/30">
+            <CardContent className="flex flex-1 flex-col justify-between p-4 lg:p-5 transition-colors group-hover:bg-emerald-50/30 dark:group-hover:bg-emerald-900/10">
               <div className="flex-1">
                 {/* Product Name */}
-                <h3 className="mb-2 line-clamp-2 text-sm lg:text-base font-semibold leading-tight text-slate-900 transition-colors group-hover:text-emerald-700">
+                <h3 className="mb-2 line-clamp-2 text-sm lg:text-base font-semibold leading-tight text-slate-900 dark:text-admin-text-primary transition-colors group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
                   {product.name}
                 </h3>
 
@@ -95,7 +95,7 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
                     .map((v) => (
                       <span
                         key={v.size || Math.random()}
-                        className="rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-medium leading-tight text-slate-600"
+                        className="rounded-full bg-slate-50 dark:bg-admin-surface-elevated px-2 py-0.5 text-[10px] font-medium leading-tight text-slate-600 dark:text-admin-text-secondary"
                       >
                         {v.size || "N/A"}
                       </span>
@@ -104,11 +104,11 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
               </div>
 
               {/* Price and Info */}
-              <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                <div className="text-lg lg:text-xl font-semibold text-slate-900">
+              <div className="flex items-center justify-between border-t border-slate-100 dark:border-admin-border pt-3">
+                <div className="text-lg lg:text-xl font-semibold text-slate-900 dark:text-admin-text-primary">
                   {priceRange}
                 </div>
-                <div className="flex items-center text-xs font-medium text-slate-500 transition-colors group-hover:text-emerald-600">
+                <div className="flex items-center text-xs font-medium text-slate-500 dark:text-admin-text-tertiary transition-colors group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
                   <span>Детальніше</span>
                   <span className="ml-1 inline-block transition-transform group-hover:translate-x-0.5">→</span>
                 </div>
@@ -124,10 +124,10 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
   return (
     <Link href={`/catalog/${product.id}`} className="h-full">
       <Card
-        className={cn(
-          "group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-lg",
-          className
-        )}
+          className={cn(
+            "group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 dark:border-admin-border bg-white dark:bg-admin-surface shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-lg",
+            className
+          )}
       >
         {/* Popular Badge */}
         {isPopular && (
@@ -140,7 +140,7 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
         )}
 
         {/* Image Container */}
-        <div className="relative aspect-[4/3] w-full flex-shrink-0 overflow-hidden bg-slate-50">
+        <div className="relative aspect-[4/3] w-full flex-shrink-0 overflow-hidden bg-slate-50 dark:bg-admin-surface">
           {product.image ? (
             <Image
               src={product.image}
@@ -157,9 +157,9 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
           )}
         </div>
 
-        <CardContent className="flex flex-1 flex-col p-3.5 transition-colors group-hover:bg-emerald-50/20">
+        <CardContent className="flex flex-1 flex-col p-3.5 transition-colors group-hover:bg-emerald-50/20 dark:group-hover:bg-emerald-900/10">
           {/* Product Name */}
-          <h3 className="mb-2 line-clamp-2 text-sm font-semibold leading-tight text-slate-900 transition-colors group-hover:text-emerald-700">
+          <h3 className="mb-2 line-clamp-2 text-sm font-semibold leading-tight text-slate-900 dark:text-admin-text-primary transition-colors group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
             {product.name}
           </h3>
 
@@ -178,7 +178,7 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
           </div>
 
           {/* Price - вирівнюємо вниз */}
-          <div className="mt-auto text-sm font-semibold text-slate-900">{priceRange}</div>
+          <div className="mt-auto text-sm font-semibold text-slate-900 dark:text-admin-text-primary">{priceRange}</div>
         </CardContent>
       </Card>
     </Link>

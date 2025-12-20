@@ -37,9 +37,9 @@ import { getAuthHeaders } from "@/lib/auth";
 import type { StrapiBlock } from "@/lib/strapi-types";
 
 const stockTone = (stock: number) => {
-  if (stock >= 300) return "bg-emerald-50 text-emerald-700 ring-emerald-100";
-  if (stock >= 150) return "bg-amber-50 text-amber-700 ring-amber-100";
-  return "bg-rose-50 text-rose-700 ring-rose-100";
+  if (stock >= 300) return "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-100 dark:ring-emerald-800/50";
+  if (stock >= 150) return "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 ring-1 ring-amber-100 dark:ring-amber-800/50";
+  return "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 ring-1 ring-rose-100 dark:ring-rose-800/50";
 };
 
 type ProductsSectionProps = {
@@ -705,7 +705,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
   const avgStockPerVariant = totalVariants ? Math.round(summary.stock / totalVariants) : 0;
   return (
     <>
-    <Card className="admin-card border-none bg-white/90 shadow-md">
+    <Card className="admin-card border-none bg-white/90 dark:bg-admin-surface shadow-md">
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <CardTitle className="text-2xl">Управління товарами</CardTitle>
@@ -740,9 +740,9 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
             // Використовуємо стабільний ключ: documentId, slug або комбінацію з індексом
             const key = product.documentId || product.slug || `product-fallback-${index}-${product.name}`;
             return (
-              <Card key={key} className="admin-card border border-slate-100 bg-white/90 animate-fade-in">
+              <Card key={key} className="admin-card border border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface animate-fade-in">
                 <CardContent className="flex gap-3 p-3">
-                  <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                  <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-admin-surface">
                     {product.image ? (
                       <img
                         src={product.image}
@@ -761,8 +761,8 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                   <div className="flex-1 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="text-sm font-semibold text-slate-900">{product.name}</p>
-                        <p className="text-xs text-slate-500">Загальний запас: {total} шт</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary">{product.name}</p>
+                        <p className="text-xs text-slate-500 dark:text-admin-text-tertiary">Загальний запас: {total} шт</p>
                       </div>
                       <div className="flex items-center gap-1">
                         <Button 
@@ -792,7 +792,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                           <PackageMinus className="h-4 w-4 text-amber-600" />
                         </Button>
                         <Button variant="ghost" size="icon" aria-label="Видалити" className="h-8 w-8">
-                          <Trash className="h-4 w-4 text-slate-500" />
+                          <Trash className="h-4 w-4 text-slate-500 dark:text-admin-text-tertiary" />
                         </Button>
                       </div>
                     </div>
@@ -800,8 +800,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                       {product.variants.map((variant) => (
                         <Badge
                           key={variant.size}
-                          className={cn("text-xs px-2.5 py-1 ring-1 w-auto", stockTone(variant.stock))}
-                          tone="neutral"
+                          className={cn("text-xs px-2.5 py-1 w-auto", stockTone(variant.stock))}
                         >
                           {variant.size} · {variant.price} грн · {variant.stock} шт
                         </Badge>
@@ -816,7 +815,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
         {/* Десктопна таблиця */}
         <div className="hidden overflow-x-auto sm:block">
-          <Table className="min-w-[56.25rem] overflow-hidden rounded-2xl border border-slate-100 bg-white">
+          <Table className="min-w-[56.25rem] overflow-hidden rounded-2xl border border-slate-100 table-border-dark bg-white dark:bg-admin-surface">
             <TableHeader>
               <TableRow>
                 <TableHead className="px-4 text-center">Назва</TableHead>
@@ -834,7 +833,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                   <TableRow key={key} className="align-top">
                     <TableCell className="px-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 overflow-hidden rounded-xl bg-slate-100">
+                        <div className="h-10 w-10 overflow-hidden rounded-xl bg-slate-100 dark:bg-admin-surface">
                           {product.image ? (
                             <img
                               src={product.image}
@@ -850,7 +849,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                             </div>
                           )}
                         </div>
-                        <span className="font-semibold text-slate-900">{product.name}</span>
+                        <span className="font-semibold text-slate-900 dark:text-admin-text-primary">{product.name}</span>
                       </div>
                     </TableCell>
                     <TableCell className="space-y-1">
@@ -858,8 +857,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                         {product.variants.map((variant) => (
                           <Badge
                             key={variant.size}
-                            className={cn("ring-1 text-xs px-2.5 py-1 w-auto", stockTone(variant.stock))}
-                            tone="neutral"
+                            className={cn("text-xs px-2.5 py-1 w-auto", stockTone(variant.stock))}
                           >
                             {variant.size} · {variant.price} грн · {variant.stock} шт
                           </Badge>
@@ -905,7 +903,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                           <PackageMinus className="h-4 w-4 text-amber-600" />
                         </Button>
                         <Button variant="ghost" size="icon" aria-label="Видалити" className="h-8 w-8">
-                          <Trash className="h-4 w-4 text-slate-500" />
+                          <Trash className="h-4 w-4 text-slate-500 dark:text-admin-text-tertiary" />
                         </Button>
                       </div>
                     </TableCell>
@@ -916,7 +914,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           </Table>
         </div>
         {hasLowStock && (
-          <Card className="border-amber-100 bg-amber-50/70">
+          <Card className="border-amber-100 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-900/20">
             <CardContent className="flex flex-col gap-2 py-4 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-3">
                 <LowStockIcon className="h-5 w-5 text-amber-500" />
@@ -978,7 +976,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           <div className="space-y-4">
             {/* Вибрати або створити квітку */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Назва/сорт</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Назва/сорт</label>
               <div className="space-y-2">
               <Input
                   placeholder="Введіть назву або виберіть зі списку"
@@ -996,7 +994,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                   }}
                 />
                 {flowerSearchQuery && availableFlowers.length > 0 && (
-                  <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white">
+                  <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface">
                     {availableFlowers.map((flower) => (
                       <button
                         key={flower.id}
@@ -1010,7 +1008,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                           }));
                           setFlowerSearchQuery(flower.name);
                         }}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-admin-surface"
                       >
                         {flower.name}
                       </button>
@@ -1033,7 +1031,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
             {/* Завантаження зображення */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Зображення</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Зображення</label>
               <div className="flex items-center gap-3">
                 {draft.imagePreview ? (
                   <div className="relative">
@@ -1057,7 +1055,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                     </button>
                   </div>
                 ) : (
-                  <label className="group flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 transition hover:border-emerald-300 hover:bg-emerald-50">
+                  <label className="group flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-200 dark:border-admin-border bg-slate-50 dark:bg-admin-surface px-4 py-3 text-sm text-slate-600 dark:text-admin-text-secondary transition hover:border-emerald-300 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 shadow-sm ring-1 ring-emerald-100">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -1074,7 +1072,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                         />
                       </svg>
                     </div>
-                    <span className="font-semibold text-slate-900">Завантажити зображення</span>
+                    <span className="font-semibold text-slate-900 dark:text-admin-text-primary">Завантажити зображення</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -1109,7 +1107,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                   {draft.variants.map((variant) => (
                     <div
                       key={variant.id}
-                      className="flex gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3"
+                      className="flex gap-2 rounded-lg border border-slate-200 dark:border-admin-border bg-slate-50 dark:bg-admin-surface p-3"
                     >
               <Input
                         type="number"
@@ -1154,7 +1152,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
             </div>
           </div>
         ) : (
-          <div className="space-y-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
+          <div className="space-y-3 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/60 dark:bg-emerald-900/20 p-4">
             <div>
               <p className="text-base font-semibold text-slate-900">Імпорт за накладною</p>
               <p className="text-sm text-slate-600">Додайте накладну або таблицю, і ми додамо позиції автоматично.</p>
@@ -1165,7 +1163,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                 setOpen(false);
                 setImportModalOpen(true);
               }}
-              className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-dashed border-emerald-200 bg-white px-4 py-3 text-sm text-slate-600 transition hover:border-emerald-300 hover:bg-emerald-50"
+              className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-dashed border-emerald-200 dark:border-emerald-800 bg-white dark:bg-admin-surface px-4 py-3 text-sm text-slate-600 dark:text-admin-text-secondary transition hover:border-emerald-300 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 shadow-sm ring-1 ring-emerald-100">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1234,9 +1232,9 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
         return (
           <div className="space-y-4">
-            <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+            <div className="rounded-xl border border-slate-100 dark:border-admin-border bg-slate-50/60 dark:bg-admin-surface p-3">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-admin-surface">
                   {writeOffTarget.image ? (
                     <img
                       src={writeOffTarget.image}
@@ -1398,7 +1396,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                   </button>
                 </div>
               ) : (
-                <div className="h-32 w-32 rounded-lg bg-slate-100 flex items-center justify-center">
+                <div className="h-32 w-32 rounded-lg bg-slate-100 dark:bg-admin-surface flex items-center justify-center">
                   <span className="text-sm text-slate-400">Немає зображення</span>
                 </div>
               )}
@@ -1439,7 +1437,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
               value={editData.description}
               onChange={(e) => setEditData((prev) => ({ ...prev, description: e.target.value }))}
               placeholder="Введіть опис квітки..."
-              className="w-full min-h-[100px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              className="w-full min-h-[100px] rounded-lg border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface px-3 py-2 text-sm text-slate-900 dark:text-admin-text-primary focus:border-emerald-300 dark:focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-500/30"
               rows={4}
             />
           </div>

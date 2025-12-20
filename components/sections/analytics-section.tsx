@@ -117,11 +117,11 @@ export function AnalyticsSection({
   const currentYear = currentDate.getFullYear();
 
   return (
-    <Card className="admin-card border-none bg-white/90 shadow-md">
+    <Card className="admin-card border-none bg-white/90 dark:bg-admin-surface shadow-md">
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <CardTitle className="text-2xl">Аналітика продажів</CardTitle>
-          <p className="text-sm text-slate-500">Звіти, статистика та рекомендації</p>
+          <p className="text-sm text-slate-500 dark:text-admin-text-tertiary">Звіти, статистика та рекомендації</p>
         </div>
         <div className="flex items-center gap-2">
           {onRefresh && (
@@ -148,31 +148,31 @@ export function AnalyticsSection({
           ))}
         </div>
 
-        <Card className="border-slate-100 bg-white/90">
+        <Card className="border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface">
           <CardHeader className="pb-2">
             <CardTitle>Дохід</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
-              <p className="text-2xl font-bold text-slate-900">{income.toLocaleString("uk-UA")} грн</p>
-              <p className="text-sm text-slate-600">≈30% від виручки</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-admin-text-primary">{income.toLocaleString("uk-UA")} грн</p>
+              <p className="text-sm text-slate-600 dark:text-admin-text-secondary">≈30% від виручки</p>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-sm text-slate-700 sm:grid-cols-3">
-              <div className="rounded-xl bg-emerald-50 px-3 py-2">
+            <div className="grid grid-cols-2 gap-2 text-sm text-slate-700 dark:text-admin-text-secondary sm:grid-cols-3">
+              <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2">
                 <p className="text-xs uppercase text-emerald-700">Макс тиждень</p>
                 <p className="font-semibold text-emerald-800">
                   {Math.max(...weeklyRevenue).toLocaleString("uk-UA")} грн
                 </p>
               </div>
-              <div className="rounded-xl bg-slate-50 px-3 py-2">
-                <p className="text-xs uppercase text-slate-500">Мін тиждень</p>
-                <p className="font-semibold text-slate-800">
+              <div className="rounded-xl bg-slate-50 dark:bg-admin-surface px-3 py-2">
+                <p className="text-xs uppercase text-slate-500 dark:text-admin-text-muted">Мін тиждень</p>
+                <p className="font-semibold text-slate-800 dark:text-admin-text-primary">
                   {Math.min(...weeklyRevenue).toLocaleString("uk-UA")} грн
                 </p>
               </div>
-              <div className="rounded-xl bg-slate-50 px-3 py-2 sm:col-span-1 col-span-2">
-                <p className="text-xs uppercase text-slate-500">Середнє / тиждень</p>
-                <p className="font-semibold text-slate-800">
+              <div className="rounded-xl bg-slate-50 dark:bg-admin-surface px-3 py-2 sm:col-span-1 col-span-2">
+                <p className="text-xs uppercase text-slate-500 dark:text-admin-text-muted">Середнє / тиждень</p>
+                <p className="font-semibold text-slate-800 dark:text-admin-text-primary">
                   {Math.round(totalRevenue / Math.max(weeklyRevenue.length, 1)).toLocaleString("uk-UA")} грн
                 </p>
               </div>
@@ -181,48 +181,55 @@ export function AnalyticsSection({
         </Card>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="border-slate-100">
+          <Card className="border-slate-100 dark:border-admin-border">
             <CardHeader className="pb-2">
-              <CardTitle className="text-slate-800">Виручка по тижнях · {currentMonth}</CardTitle>
+              <CardTitle className="text-slate-800 dark:text-admin-text-primary">Виручка по тижнях · {currentMonth}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="h-56 rounded-2xl bg-gradient-to-br from-emerald-50 via-white to-emerald-50 p-2">
+              <div className="h-56 rounded-2xl bg-white dark:bg-admin-surface p-2 border border-slate-100 dark:border-admin-border">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={revenueChart} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="week" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} dot />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-admin-border" />
+                    <XAxis dataKey="week" tick={{ fontSize: 12, fill: "currentColor" }} className="dark:text-admin-text-tertiary" />
+                    <YAxis tick={{ fontSize: 12, fill: "currentColor" }} className="dark:text-admin-text-tertiary" />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: "var(--admin-surface)",
+                        border: "1px solid var(--admin-border)",
+                        borderRadius: "0.75rem",
+                        color: "var(--admin-text-primary)"
+                      }}
+                    />
+                    <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} dot={{ fill: "#10b981" }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex items-center gap-3 rounded-xl bg-slate-100 p-3 text-sm">
-                <TrendingUp className="h-4 w-4 text-emerald-600" />
-                <span className="text-slate-800">
+              <div className="flex items-center gap-3 rounded-xl bg-slate-100 dark:bg-admin-surface p-3 text-sm">
+                <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-slate-800 dark:text-admin-text-primary">
                   Середнє зростання +12.5% на тиждень, піковий тиждень 3 — 520 000 грн.
                 </span>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-100">
+          <Card className="border-slate-100 dark:border-admin-border">
             <CardHeader className="pb-2">
-              <CardTitle className="text-slate-800">Розподіл продажів по категоріях</CardTitle>
+              <CardTitle className="text-slate-800 dark:text-admin-text-primary">Розподіл продажів по категоріях</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {categorySplit.map((item) => (
                 <div key={item.name} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm font-semibold text-slate-800">
+                  <div className="flex items-center justify-between text-sm font-semibold text-slate-800 dark:text-admin-text-primary">
                     <div className="flex items-center gap-2">
                       <span className={cn("h-2.5 w-2.5 rounded-full", item.color)} />
                       {item.name}
                     </div>
-                    <span className="text-slate-700">{item.value}%</span>
+                    <span className="text-slate-700 dark:text-admin-text-secondary">{item.value}%</span>
                   </div>
-                  <div className="h-2 rounded-full bg-slate-200">
+                  <div className="h-2 rounded-full bg-slate-200 dark:bg-admin-border">
                     <div 
-                      className={cn("h-full rounded-full", item.color)} 
+                      className={cn("h-full rounded-full", item.color)}
                       style={{ width: `${item.value}%` }}
                     />
                   </div>
@@ -233,35 +240,42 @@ export function AnalyticsSection({
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="border-slate-100">
+          <Card className="border-slate-100 dark:border-admin-border">
             <CardHeader className="pb-2">
-              <CardTitle>Кількість замовлень</CardTitle>
+              <CardTitle className="dark:text-admin-text-primary">Кількість замовлень</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 h-full">
-              <div className="h-64 rounded-2xl bg-gradient-to-br from-sky-50 via-white to-sky-50 p-2">
+              <div className="h-64 rounded-2xl bg-white dark:bg-admin-surface p-2 border border-slate-100 dark:border-admin-border">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={ordersChart} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="week" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-admin-border" />
+                    <XAxis dataKey="week" tick={{ fontSize: 12, fill: "currentColor" }} className="dark:text-admin-text-tertiary" />
+                    <YAxis tick={{ fontSize: 12, fill: "currentColor" }} className="dark:text-admin-text-tertiary" />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: "var(--admin-surface)",
+                        border: "1px solid var(--admin-border)",
+                        borderRadius: "0.75rem",
+                        color: "var(--admin-text-primary)"
+                      }}
+                    />
                     <Bar dataKey="value" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex items-center justify-between text-sm text-slate-600">
+              <div className="flex items-center justify-between text-sm text-slate-600 dark:text-admin-text-secondary">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-emerald-600" />
+                  <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   Стабільне зростання на 5–7% протягом місяця.
                 </div>
-                <p className="text-xs text-slate-500">Макс: {maxOrders} зам.</p>
+                <p className="text-xs text-slate-500 dark:text-admin-text-muted">Макс: {maxOrders} зам.</p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-100">
+          <Card className="border-slate-100 dark:border-admin-border">
             <CardHeader className="pb-2">
-              <CardTitle>Топ-5 товарів за продажами</CardTitle>
+              <CardTitle className="dark:text-admin-text-primary">Топ-5 товарів за продажами</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
@@ -287,16 +301,16 @@ export function AnalyticsSection({
                   {pieData.map((entry) => (
                     <div
                       key={entry.name}
-                      className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2 text-sm"
+                      className="flex items-center justify-between rounded-xl border border-slate-100 dark:border-admin-border bg-slate-50/60 dark:bg-admin-surface px-3 py-2 text-sm"
                     >
                       <div className="flex items-center gap-2">
                         <span 
                           className="h-3 w-3 rounded-full" 
                           style={{ backgroundColor: entry.color }}
                         />
-                        <span className="font-semibold text-slate-900">{entry.name}</span>
+                        <span className="font-semibold text-slate-900 dark:text-admin-text-primary">{entry.name}</span>
                       </div>
-                      <span className="text-slate-600">{entry.value}%</span>
+                      <span className="text-slate-600 dark:text-admin-text-secondary">{entry.value}%</span>
                     </div>
                   ))}
                 </div>
@@ -306,9 +320,9 @@ export function AnalyticsSection({
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="border-slate-100">
+          <Card className="border-slate-100 dark:border-admin-border">
             <CardHeader className="pb-2">
-              <CardTitle>Середній чек по тижнях</CardTitle>
+              <CardTitle className="dark:text-admin-text-primary">Середній чек по тижнях</CardTitle>
             </CardHeader>
             <CardContent className="h-56">
               <ResponsiveContainer width="100%" height="100%">
@@ -323,9 +337,9 @@ export function AnalyticsSection({
             </CardContent>
           </Card>
 
-          <Card className="border-slate-100">
+          <Card className="border-slate-100 dark:border-admin-border">
             <CardHeader className="pb-2">
-              <CardTitle>Категорії продажів</CardTitle>
+              <CardTitle className="dark:text-admin-text-primary">Категорії продажів</CardTitle>
             </CardHeader>
             <CardContent className="h-56">
               <ResponsiveContainer width="100%" height="100%">
@@ -341,9 +355,9 @@ export function AnalyticsSection({
           </Card>
         </div>
 
-        <Card className="border-slate-100 bg-white/90">
+        <Card className="border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface">
           <CardHeader className="pb-2">
-            <CardTitle>Календар продажів по днях · {currentMonth} {currentYear}</CardTitle>
+            <CardTitle className="dark:text-admin-text-primary">Календар продажів по днях · {currentMonth} {currentYear}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Мобільний варіант без горизонтального скролу */}
@@ -351,31 +365,31 @@ export function AnalyticsSection({
               {dailySales.map((item) => (
                 <div
                   key={item.date}
-                  className="rounded-2xl border border-slate-100 bg-white/90 p-3 shadow-sm"
+                  className="rounded-2xl border border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface p-3 shadow-sm"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs uppercase text-slate-400">{item.day}</p>
-                      <p className="text-base font-semibold text-slate-900">{item.date}</p>
+                      <p className="text-xs uppercase text-slate-400 dark:text-admin-text-muted">{item.day}</p>
+                      <p className="text-base font-semibold text-slate-900 dark:text-admin-text-primary">{item.date}</p>
                     </div>
                     <span
                       className={cn(
                         "inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold",
                         item.status === "high"
-                          ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
+                          ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-100 dark:ring-emerald-800"
                           : item.status === "mid"
-                          ? "bg-amber-50 text-amber-700 ring-1 ring-amber-100"
-                          : "bg-rose-50 text-rose-700 ring-1 ring-rose-100"
+                          ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 ring-1 ring-amber-100 dark:ring-amber-800"
+                          : "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 ring-1 ring-rose-100 dark:ring-rose-800"
                       )}
                     >
                       <span
                         className={cn(
                           "h-2 w-2 rounded-full",
                           item.status === "high"
-                            ? "bg-emerald-500"
+                            ? "bg-emerald-500 dark:bg-emerald-400"
                             : item.status === "mid"
-                            ? "bg-amber-500"
-                            : "bg-rose-500"
+                            ? "bg-amber-500 dark:bg-amber-400"
+                            : "bg-rose-500 dark:bg-rose-400"
                         )}
                       />
                       {item.status === "high"
@@ -385,20 +399,20 @@ export function AnalyticsSection({
                         : "Низькі продажі"}
                     </span>
                   </div>
-                  <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-slate-600">
-                    <div className="rounded-xl bg-slate-50 px-2 py-1.5 sm:px-3 sm:py-2">
-                      <p className="text-xs uppercase text-slate-400">Замовлень</p>
-                      <p className="text-sm font-semibold text-slate-900">{item.orders}</p>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-slate-600 dark:text-admin-text-secondary">
+                    <div className="rounded-xl bg-slate-50 dark:bg-admin-surface px-2 py-1.5 sm:px-3 sm:py-2">
+                      <p className="text-xs uppercase text-slate-400 dark:text-admin-text-muted">Замовлень</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary">{item.orders}</p>
                     </div>
-                    <div className="rounded-xl bg-slate-50 px-2 py-1.5 sm:px-3 sm:py-2">
-                      <p className="text-xs uppercase text-slate-400">Виручка</p>
-                      <p className="text-sm font-semibold text-slate-900">
+                    <div className="rounded-xl bg-slate-50 dark:bg-admin-surface px-2 py-1.5 sm:px-3 sm:py-2">
+                      <p className="text-xs uppercase text-slate-400 dark:text-admin-text-muted">Виручка</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary">
                         {item.revenue.toLocaleString("uk-UA")} грн
                       </p>
                     </div>
-                    <div className="rounded-xl bg-slate-50 px-2 py-1.5 sm:px-3 sm:py-2">
-                      <p className="text-xs uppercase text-slate-400">Середній чек</p>
-                      <p className="text-sm font-semibold text-slate-900">
+                    <div className="rounded-xl bg-slate-50 dark:bg-admin-surface px-2 py-1.5 sm:px-3 sm:py-2">
+                      <p className="text-xs uppercase text-slate-400 dark:text-admin-text-muted">Середній чек</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary">
                         {item.avg.toLocaleString("uk-UA")} грн
                       </p>
                     </div>
@@ -409,9 +423,9 @@ export function AnalyticsSection({
 
             {/* Десктопна таблиця */}
             <div className="hidden overflow-x-auto sm:block">
-              <table className="min-w-full text-sm text-slate-700">
+              <table className="min-w-full text-sm text-slate-700 dark:text-admin-text-secondary">
                 <thead>
-                  <tr className="text-left text-xs uppercase text-slate-400">
+                  <tr className="text-left text-xs uppercase text-slate-400 dark:text-admin-text-muted">
                     <th className="py-2 pr-4">Дата</th>
                     <th className="py-2 pr-4">День</th>
                     <th className="py-2 pr-4">Замовлень</th>
@@ -420,25 +434,25 @@ export function AnalyticsSection({
                     <th className="py-2 pr-4">Статус</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 table-divider-dark">
                   {dailySales.map((item) => (
-                    <tr key={item.date} className="hover:bg-slate-50/70">
-                      <td className="py-2 pr-4 font-semibold text-slate-900">{item.date}</td>
-                      <td className="py-2 pr-4">{item.day}</td>
-                      <td className="py-2 pr-4">{item.orders}</td>
-                      <td className="py-2 pr-4 font-semibold text-slate-900">
+                    <tr key={item.date} className="hover:bg-slate-50/70 table-hover-dark transition-colors duration-150 cursor-pointer">
+                      <td className="py-2 pr-4 font-semibold text-slate-900 dark:text-admin-text-primary">{item.date}</td>
+                      <td className="py-2 pr-4 text-slate-700 dark:text-admin-text-secondary">{item.day}</td>
+                      <td className="py-2 pr-4 text-slate-700 dark:text-admin-text-secondary">{item.orders}</td>
+                      <td className="py-2 pr-4 font-semibold text-slate-900 dark:text-admin-text-primary">
                         {item.revenue.toLocaleString("uk-UA")}
                       </td>
-                      <td className="py-2 pr-4">{item.avg.toLocaleString("uk-UA")}</td>
+                      <td className="py-2 pr-4 text-slate-700 dark:text-admin-text-secondary">{item.avg.toLocaleString("uk-UA")}</td>
                       <td className="py-2 pr-4">
                         <span
                           className={cn(
                             "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold",
                             item.status === "high"
-                              ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
+                              ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-100 dark:ring-emerald-800/50"
                               : item.status === "mid"
-                              ? "bg-amber-50 text-amber-700 ring-1 ring-amber-100"
-                              : "bg-rose-50 text-rose-700 ring-1 ring-rose-100"
+                              ? "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 ring-1 ring-amber-100 dark:ring-amber-800/50"
+                              : "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 ring-1 ring-rose-100 dark:ring-rose-800/50"
                           )}
                         >
                           <span

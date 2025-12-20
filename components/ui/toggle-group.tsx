@@ -8,7 +8,7 @@ export const ToggleGroup = forwardRef<
 >(({ className, ...props }, ref) => (
   <ToggleGroupPrimitive.Root
     ref={ref}
-    className={cn("inline-flex items-center gap-1 rounded-xl bg-slate-100 p-1", className)}
+    className={cn("inline-flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-admin-surface p-1", className)}
     {...props}
   />
 ));
@@ -21,7 +21,7 @@ export const ToggleGroupItem = forwardRef<
   <ToggleGroupPrimitive.Item
     ref={ref}
     className={cn(
-      "flex items-center justify-center rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition data-[state=on]:bg-white data-[state=on]:text-slate-900 data-[state=on]:shadow",
+      "flex items-center justify-center rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 dark:text-admin-text-secondary transition data-[state=on]:bg-white dark:data-[state=on]:bg-admin-surface-elevated data-[state=on]:text-slate-900 dark:data-[state=on]:text-admin-text-primary data-[state=on]:shadow",
       className
     )}
     {...props}

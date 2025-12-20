@@ -97,7 +97,7 @@ export function PosSection({
   return (
     <div className="flex flex-col gap-4 lg:flex-row">
       <div className="flex-1 space-y-3">
-        <Card className="admin-card border border-slate-100 bg-white/90 shadow-md shadow-emerald-500/5">
+        <Card className="admin-card border border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface shadow-md shadow-emerald-500/5">
           <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex w-full items-center justify-between gap-3">
               <div>
@@ -204,7 +204,7 @@ function CartPanel({
   const canCheckout = selectedClient && cart.length > 0 && !isCheckingOut;
 
   return (
-    <Card className="admin-card flex h-full flex-col border border-slate-100 bg-white/95 shadow-lg shadow-emerald-500/10">
+    <Card className="admin-card flex h-full flex-col border border-slate-100 dark:border-admin-border bg-white/95 dark:bg-admin-surface-elevated shadow-lg shadow-emerald-500/10">
       <CardHeader className="space-y-2 pb-2 sm:space-y-3 sm:pb-3">
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           <CardTitle className="text-base sm:text-lg">Кошик</CardTitle>
@@ -246,11 +246,11 @@ function CartPanel({
         </ScrollArea>
       </CardContent>
       <CardFooter className="flex flex-col gap-2 sm:gap-2.5">
-        <div className="flex w-full items-center justify-between text-xs text-slate-600 sm:text-sm">
+        <div className="flex w-full items-center justify-between text-xs text-slate-600 dark:text-admin-text-secondary sm:text-sm">
           <span>Сума</span>
-          <span className="font-semibold text-slate-900">{cartTotal} грн</span>
+          <span className="font-semibold text-slate-900 dark:text-admin-text-primary">{cartTotal} грн</span>
         </div>
-        <div className="flex w-full items-center justify-between gap-2 text-xs text-slate-600 sm:text-sm">
+        <div className="flex w-full items-center justify-between gap-2 text-xs text-slate-600 dark:text-admin-text-secondary sm:text-sm">
           <span>Знижка</span>
           {!showDiscount ? (
             <Button
@@ -283,7 +283,7 @@ function CartPanel({
         <Separator />
         {onPaymentStatusChange && (
           <div className="w-full">
-            <label className="mb-1.5 block text-xs text-slate-600">Статус оплати</label>
+            <label className="mb-1.5 block text-xs text-slate-600 dark:text-admin-text-secondary">Статус оплати</label>
             <Select value={paymentStatus} onValueChange={onPaymentStatusChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Статус оплати" />
@@ -346,7 +346,7 @@ function ProductCard({
         )}
       >
         <CardContent className="p-3">
-          <div className="text-center text-xs text-slate-500">
+          <div className="text-center text-xs text-slate-500 dark:text-admin-text-tertiary">
             <p className="font-semibold">{product.name}</p>
             <p className="mt-1 text-xs">Немає варіантів</p>
           </div>
@@ -361,12 +361,12 @@ function ProductCard({
   return (
     <Card
       className={cn(
-        "overflow-hidden border-slate-100 shadow-sm shadow-emerald-500/5",
+        "overflow-hidden border-slate-100 dark:border-admin-border shadow-sm shadow-emerald-500/5",
         compact && "text-sm",
         "w-full"
       )}
     >
-      <div className={cn("w-full overflow-hidden bg-slate-100", compact ? "h-16" : "h-24")}>
+      <div className={cn("w-full overflow-hidden bg-slate-100 dark:bg-admin-surface", compact ? "h-16" : "h-24")}>
         {product.image ? (
           <img
             src={product.image}
@@ -375,8 +375,10 @@ function ProductCard({
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-slate-400">
-            <span className="text-xs">Без фото</span>
+          <div className="flex h-full w-full items-center justify-center text-slate-400 dark:text-admin-text-muted">
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
           </div>
         )}
       </div>
@@ -390,7 +392,7 @@ function ProductCard({
           <div className="min-w-0 flex-1">
             <h3 
               className={cn(
-                "font-semibold text-slate-900 line-clamp-2 leading-tight",
+                "font-semibold text-slate-900 dark:text-admin-text-primary line-clamp-2 leading-tight",
                 "text-lg"
               )}
             >
@@ -426,22 +428,22 @@ function ProductCard({
                     "relative flex items-center justify-between rounded-lg border px-2.5 py-1.5 min-w-0",
                     compact && "px-2 py-1 rounded-md",
                     isAdded
-                      ? "border-emerald-500 bg-emerald-100/80 animate-bounce-in"
-                      : "border-slate-100 bg-slate-50/60 hover:border-emerald-200 hover:bg-emerald-50/60",
+                      ? "border-emerald-500 dark:border-emerald-600 bg-emerald-100/80 dark:bg-emerald-900/40 animate-bounce-in"
+                      : "border-slate-100 bg-slate-50/60 hover:border-emerald-200 hover:bg-emerald-50/60 pos-variant-item",
                     "cursor-pointer transition-all duration-200 overflow-hidden hover-scale"
                   )}
                   onClick={() => variant && handleAdd(variant)}
                 >
                   {isAdded && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-emerald-500/90 backdrop-blur-sm animate-fade-in">
-                      <div className="flex items-center justify-center rounded-full bg-white p-1.5 shadow-lg animate-scale-in">
-                        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                      <div className="flex items-center justify-center rounded-full bg-white dark:bg-admin-surface p-1.5 shadow-lg animate-scale-in">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                       </div>
                     </div>
                   )}
                   <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                     <p 
-                      className={cn("font-semibold text-slate-900 truncate", "text-sm sm:text-base")}
+                      className={cn("font-semibold text-slate-900 dark:text-admin-text-primary truncate", "text-sm sm:text-base")}
                     >
                       {size}
                     </p>
@@ -449,10 +451,10 @@ function ProductCard({
                       className={cn(
                         "flex items-center gap-1 shrink-0",
                         stock >= 300
-                          ? "text-emerald-600"
+                          ? "text-emerald-600 dark:text-emerald-400"
                           : stock >= 150
-                          ? "text-amber-600"
-                          : "text-rose-600"
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-rose-600 dark:text-rose-400"
                       )}
                       title={`${stock} шт на складі`}
                     >
@@ -465,7 +467,7 @@ function ProductCard({
                   <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                     <p
                       className={cn(
-                        "font-semibold text-emerald-700 whitespace-nowrap",
+                        "font-semibold text-emerald-700 dark:text-emerald-400 whitespace-nowrap",
                         "text-sm sm:text-base"
                       )}
                     >
@@ -491,11 +493,11 @@ function CartLineItem({
   onUpdateQty: (id: string, delta: number) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white/90 p-3 shadow-sm sm:p-3.5">
+    <div className="rounded-2xl border border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface p-3 shadow-sm sm:p-3.5">
       <div className="flex items-start justify-between gap-2.5 sm:gap-3">
         <div className="flex items-start gap-2 sm:gap-3">
           {line.image && (
-            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:h-14 sm:w-14">
+            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-admin-surface sm:h-14 sm:w-14">
               <img
                 src={line.image}
                 alt={line.name}
@@ -505,7 +507,7 @@ function CartLineItem({
             </div>
           )}
           <div>
-            <h4 className="text-sm font-semibold text-slate-900 sm:text-base">{line.name}</h4>
+            <h4 className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary sm:text-base">{line.name}</h4>
             <p className="text-xs text-emerald-700">{line.size}</p>
           </div>
         </div>
