@@ -401,8 +401,9 @@ export async function updateFlower(
 
     const authHeaders = getAuthHeaders();
 
-    // Strapi v5 REST API: PUT /api/flowers/:documentId
-    const response = await fetch(`${API_URL}/flowers/${documentId}`, {
+    // Strapi v5 REST API: PUT /api/flowers/:documentId?status=published
+    // status=published оновлює published версію напряму (без створення draft)
+    const response = await fetch(`${API_URL}/flowers/${documentId}?status=published`, {
       method: "PUT",
       headers: authHeaders,
       body: JSON.stringify({ data: updateData }),
@@ -418,20 +419,6 @@ export async function updateFlower(
           message: errorData.error?.message || `HTTP ${response.status}`,
         },
       };
-    }
-
-    // Strapi v5: після PUT потрібно опублікувати зміни
-    // POST /api/flowers/:documentId/actions/publish
-    const publishResponse = await fetch(
-      `${API_URL}/flowers/${documentId}/actions/publish`,
-      {
-        method: "POST",
-        headers: authHeaders,
-      }
-    );
-
-    if (!publishResponse.ok) {
-      console.warn("Warning: Could not publish flower after update");
     }
 
     return { success: true };
