@@ -4,7 +4,7 @@ export default ({ env }) => ({
     config: {
       endpoint: '/graphql',
       shadowCRUD: true,
-      playgroundAlways: env('NODE_ENV') !== 'production',
+      landingPage: env('NODE_ENV') !== 'production', // GraphQL Playground only in dev
       defaultLimit: 100,
       maxLimit: 500,
       apolloServer: {
