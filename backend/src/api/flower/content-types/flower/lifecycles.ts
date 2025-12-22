@@ -60,4 +60,46 @@ export default {
       slug: result.slug,
     });
   },
+
+  async beforeDelete(event) {
+    const { where } = event.params;
+
+    // Отримуємо documentId квітки, що видаляється
+    const documentId = where.documentId;
+
+    if (!documentId) {
+      strapi.log.warn('⚠️ Flower delete without documentId, skipping variant cleanup');
+      return;
+    }
+
+    try {
+      // Знаходимо всі варіанти цієї квітки
+      const variants = await strapi.db.query('api::variant.variant').findMany({
+        where: {
+          flower: { documentId },
+        },
+        select: ['id', 'documentId', 'length'],
+      });
+
+      if (variants.length === 0) {
+        strapi.log.info(`🗑️ No variants to delete for flower ${documentId}`);
+        return;
+      }
+
+      strapi.log.info(`🗑️ Deleting ${variants.length} variants for flower ${documentId}`);
+
+      // Видаляємо всі варіанти
+      for (const variant of variants) {
+        await strapi.db.query('api::variant.variant').delete({
+          where: { id: variant.id },
+        });
+        strapi.log.debug(`  ❌ Deleted variant: ${variant.length}cm (id=${variant.id})`);
+      }
+
+      strapi.log.info(`✅ Deleted ${variants.length} variants for flower ${documentId}`);
+    } catch (error) {
+      strapi.log.error(`❌ Error deleting variants for flower ${documentId}:`, error);
+      // Не блокуємо видалення квітки, якщо варіанти не вдалося видалити
+    }
+  },
 };
