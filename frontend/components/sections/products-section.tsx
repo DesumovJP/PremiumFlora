@@ -145,6 +145,11 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
   const [isLoadingEditData, setIsLoadingEditData] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
+  // Delete state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const resetForm = () => {
     setDraft({
       flowerId: null,
@@ -452,6 +457,48 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       }
     } finally {
       setIsWritingOff(false);
+    }
+  };
+
+  const openDeleteModal = (product: Product) => {
+    setDeleteTarget(product);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget?.documentId) return;
+
+    setIsDeleting(true);
+    try {
+      const STRAPI_URL = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337").replace(/\/$/, '');
+      const authHeaders = getAuthHeaders();
+
+      const response = await fetch(`${STRAPI_URL}/api/flowers/${deleteTarget.documentId}`, {
+        method: "DELETE",
+        headers: authHeaders,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Помилка видалення:", errorText);
+        alert("Помилка видалення товару. Спробуйте ще раз.");
+        return;
+      }
+
+      // Оновити список продуктів
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        window.location.reload();
+      }
+
+      setDeleteModalOpen(false);
+      setDeleteTarget(null);
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      alert("Помилка видалення. Спробуйте ще раз.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -778,10 +825,10 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                         >
                           <Pencil className="h-4 w-4 text-emerald-600" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          aria-label="Списати товар" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Списати товар"
                           title="Списати товар"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -791,8 +838,18 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                         >
                           <PackageMinus className="h-4 w-4 text-amber-600" />
                         </Button>
-                        <Button variant="ghost" size="icon" aria-label="Видалити" className="h-8 w-8">
-                          <Trash className="h-4 w-4 text-slate-500 dark:text-admin-text-tertiary" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Видалити товар"
+                          title="Видалити товар"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDeleteModal(product);
+                          }}
+                          className="h-8 w-8"
+                        >
+                          <Trash className="h-4 w-4 text-rose-600" />
                         </Button>
                       </div>
                     </div>
@@ -902,8 +959,15 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                         >
                           <PackageMinus className="h-4 w-4 text-amber-600" />
                         </Button>
-                        <Button variant="ghost" size="icon" aria-label="Видалити" className="h-8 w-8">
-                          <Trash className="h-4 w-4 text-slate-500 dark:text-admin-text-tertiary" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Видалити товар"
+                          title="Видалити товар"
+                          onClick={() => openDeleteModal(product)}
+                          className="h-8 w-8"
+                        >
+                          <Trash className="h-4 w-4 text-rose-600" />
                         </Button>
                       </div>
                     </TableCell>
@@ -1491,6 +1555,61 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           </div>
         </div>
       ) : null}
+    </Modal>
+
+    {/* Delete Confirmation Modal */}
+    <Modal
+      open={deleteModalOpen}
+      onOpenChange={(v) => {
+        if (!isDeleting) {
+          setDeleteModalOpen(v);
+          if (!v) setDeleteTarget(null);
+        }
+      }}
+      title="Видалити товар?"
+      description={deleteTarget ? `Ви впевнені, що хочете видалити "${deleteTarget.name}"? Цю дію не можна скасувати.` : ""}
+      footer={
+        <>
+          <Button variant="outline" onClick={() => setDeleteModalOpen(false)} disabled={isDeleting}>
+            Скасувати
+          </Button>
+          <Button
+            onClick={handleDelete}
+            disabled={isDeleting || !deleteTarget}
+            className="bg-rose-600 hover:bg-rose-700"
+          >
+            {isDeleting ? "Видалення..." : "Видалити"}
+          </Button>
+        </>
+      }
+    >
+      {deleteTarget && (
+        <div className="rounded-xl border border-rose-100 dark:border-rose-900/50 bg-rose-50/60 dark:bg-rose-900/20 p-4">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-admin-surface">
+              {deleteTarget.image ? (
+                <img
+                  src={deleteTarget.image}
+                  alt={deleteTarget.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-slate-400">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900 dark:text-admin-text-primary">{deleteTarget.name}</p>
+              <p className="text-sm text-rose-600">
+                {deleteTarget.variants.length} варіантів буде видалено
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </Modal>
     </>
   );
