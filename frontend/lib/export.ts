@@ -1,42 +1,16 @@
 /**
  * Export Utilities
  *
- * Функції для експорту даних у CSV формат
+ * Функції для експорту даних у XLSX формат з центруванням
  */
 
+import * as XLSX from 'xlsx';
 import type { Product } from "@/lib/types";
 import type { Customer, DashboardData } from "@/lib/api-types";
 
 // ============================================
 // Helper Functions
 // ============================================
-
-/**
- * Escape CSV value (handle commas, quotes, newlines)
- */
-function escapeCSV(value: string | number | undefined | null): string {
-  if (value === null || value === undefined) return '';
-  const str = String(value);
-  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes(';')) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
-
-/**
- * Download file with given content
- */
-function downloadFile(content: string, filename: string): void {
-  const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
 
 /**
  * Generate timestamp for filename
@@ -46,26 +20,63 @@ function getTimestamp(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
+/**
+ * Apply center alignment to all cells in worksheet
+ */
+function applyCenterAlignment(ws: XLSX.WorkSheet): void {
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+
+  for (let R = range.s.r; R <= range.e.r; ++R) {
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+      if (!ws[cellRef]) continue;
+
+      if (!ws[cellRef].s) ws[cellRef].s = {};
+      ws[cellRef].s.alignment = { horizontal: 'center', vertical: 'center' };
+    }
+  }
+}
+
+/**
+ * Set column widths based on content
+ */
+function setColumnWidths(ws: XLSX.WorkSheet, data: (string | number)[][]): void {
+  const colWidths: number[] = [];
+
+  data.forEach(row => {
+    row.forEach((cell, colIndex) => {
+      const cellLength = String(cell).length;
+      colWidths[colIndex] = Math.max(colWidths[colIndex] || 10, cellLength + 2);
+    });
+  });
+
+  ws['!cols'] = colWidths.map(w => ({ wch: Math.min(w, 40) }));
+}
+
+/**
+ * Download workbook as xlsx file
+ */
+function downloadWorkbook(wb: XLSX.WorkBook, filename: string): void {
+  XLSX.writeFile(wb, filename);
+}
+
 // ============================================
 // Products Export
 // ============================================
 
 export function exportProducts(products: Product[]): void {
-  // BOM for UTF-8
-  const BOM = '\uFEFF';
-
   const headers = ['Назва товару', 'Розмір (см)', 'Ціна (грн)', 'Кількість (шт)', 'Загальна вартість (грн)'];
 
-  const rows: string[][] = [];
+  const rows: (string | number)[][] = [];
 
   products.forEach(product => {
     product.variants.forEach(variant => {
       rows.push([
         product.name,
-        String(variant.length),
-        String(variant.price),
-        String(variant.stock),
-        String(variant.price * variant.stock),
+        variant.length,
+        variant.price,
+        variant.stock,
+        variant.price * variant.stock,
       ]);
     });
   });
@@ -74,14 +85,18 @@ export function exportProducts(products: Product[]): void {
   const totalStock = products.reduce((sum, p) => sum + p.variants.reduce((s, v) => s + v.stock, 0), 0);
   const totalValue = products.reduce((sum, p) => sum + p.variants.reduce((s, v) => s + v.price * v.stock, 0), 0);
 
-  rows.push(['РАЗОМ', '', '', String(totalStock), String(totalValue)]);
+  rows.push(['РАЗОМ', '', '', totalStock, totalValue]);
 
-  const csv = BOM + [
-    headers.map(escapeCSV).join(','),
-    ...rows.map(row => row.map(escapeCSV).join(','))
-  ].join('\n');
+  const data = [headers, ...rows];
 
-  downloadFile(csv, `products_${getTimestamp()}.csv`);
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  applyCenterAlignment(ws);
+  setColumnWidths(ws, data);
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Товари');
+
+  downloadWorkbook(wb, `products_${getTimestamp()}.xlsx`);
 }
 
 // ============================================
@@ -89,32 +104,34 @@ export function exportProducts(products: Product[]): void {
 // ============================================
 
 export function exportClients(customers: Customer[]): void {
-  const BOM = '\uFEFF';
-
   const headers = ["Ім'я / Компанія", 'Тип', 'Телефон', 'Email', 'Адреса', 'Замовлень', 'Витрачено (грн)'];
 
-  const rows = customers.map(customer => [
+  const rows: (string | number)[][] = customers.map(customer => [
     customer.name,
     customer.type === 'VIP' ? 'VIP' : customer.type === 'Wholesale' ? 'Оптовий' : 'Звичайний',
     customer.phone || '-',
     customer.email || '-',
     customer.address || '-',
-    String(customer.orderCount),
-    String(customer.totalSpent),
+    customer.orderCount,
+    customer.totalSpent,
   ]);
 
   // Add summary row
   const totalOrders = customers.reduce((sum, c) => sum + c.orderCount, 0);
   const totalSpent = customers.reduce((sum, c) => sum + c.totalSpent, 0);
 
-  rows.push(['РАЗОМ', `${customers.length} клієнтів`, '', '', '', String(totalOrders), String(totalSpent)]);
+  rows.push(['РАЗОМ', `${customers.length} клієнтів`, '', '', '', totalOrders, totalSpent]);
 
-  const csv = BOM + [
-    headers.map(escapeCSV).join(','),
-    ...rows.map(row => row.map(escapeCSV).join(','))
-  ].join('\n');
+  const data = [headers, ...rows];
 
-  downloadFile(csv, `clients_${getTimestamp()}.csv`);
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  applyCenterAlignment(ws);
+  setColumnWidths(ws, data);
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Клієнти');
+
+  downloadWorkbook(wb, `clients_${getTimestamp()}.xlsx`);
 }
 
 // ============================================
@@ -122,16 +139,14 @@ export function exportClients(customers: Customer[]): void {
 // ============================================
 
 export function exportAnalytics(data: DashboardData): void {
-  const BOM = '\uFEFF';
-
   const headers = ['Дата', 'День', 'Замовлень', 'Виручка (грн)', 'Середній чек (грн)', 'Статус продажів'];
 
-  const rows = data.dailySales.map(sale => [
+  const rows: (string | number)[][] = data.dailySales.map(sale => [
     sale.date,
     sale.day,
-    String(sale.orders),
-    String(sale.revenue),
-    String(sale.avg),
+    sale.orders,
+    sale.revenue,
+    sale.avg,
     sale.status === 'high' ? 'Високі' : sale.status === 'mid' ? 'Середні' : 'Низькі',
   ]);
 
@@ -140,12 +155,16 @@ export function exportAnalytics(data: DashboardData): void {
   const totalRevenue = data.dailySales.reduce((sum, s) => sum + s.revenue, 0);
   const avgCheck = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
-  rows.push(['РАЗОМ', '', String(totalOrders), String(totalRevenue), String(avgCheck), '']);
+  rows.push(['РАЗОМ', '', totalOrders, totalRevenue, avgCheck, '']);
 
-  const csv = BOM + [
-    headers.map(escapeCSV).join(','),
-    ...rows.map(row => row.map(escapeCSV).join(','))
-  ].join('\n');
+  const sheetData = [headers, ...rows];
 
-  downloadFile(csv, `analytics_${getTimestamp()}.csv`);
+  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+  applyCenterAlignment(ws);
+  setColumnWidths(ws, sheetData);
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Аналітика');
+
+  downloadWorkbook(wb, `analytics_${getTimestamp()}.xlsx`);
 }

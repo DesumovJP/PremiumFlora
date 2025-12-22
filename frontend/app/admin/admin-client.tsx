@@ -273,7 +273,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   const filteredProducts = useMemo(() => {
     if (!search) return products;
     return products.filter((item) => item.name.toLowerCase().includes(search.toLowerCase()));
-  }, [search]);
+  }, [search, products]);
 
   const summary = useMemo(() => {
     const totalItems = products.length;
@@ -282,7 +282,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
       0
     );
     return { totalItems, stock };
-  }, []);
+  }, [products]);
 
   const cartTotal = useMemo(
     () => cart.reduce((acc, item) => acc + item.price * item.qty, 0),
