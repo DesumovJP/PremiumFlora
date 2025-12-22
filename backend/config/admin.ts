@@ -19,10 +19,13 @@ export default ({ env }) => ({
   },
   // Production cookie settings for Railway proxy
   ...(env('NODE_ENV') === 'production' && {
+    url: env('PUBLIC_URL', env('SERVER_URL')),
+    serveAdminPanel: true,
     session: {
       cookie: {
         secure: true,
         sameSite: 'none',
+        httpOnly: true,
       },
     },
   }),
