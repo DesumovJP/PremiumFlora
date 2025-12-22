@@ -29,7 +29,7 @@ export function Navigation() {
             <div className="text-base font-bold tracking-tight text-slate-900 dark:text-admin-text-primary sm:text-xl">
               Premium Flora
             </div>
-            <div className="text-[10px] font-medium uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400 sm:text-[11px]">
+            <div className="text-[0.625rem] font-medium uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400 sm:text-[0.6875rem]">
               Оптовий магазин квітів
             </div>
           </div>
@@ -64,7 +64,7 @@ export function Navigation() {
               >
                 +380 50 123 4567
               </a>
-              <div className="mt-1 text-[10px] text-slate-500 dark:text-admin-text-muted">
+              <div className="mt-1 text-[0.625rem] text-slate-500 dark:text-admin-text-muted">
                 Пн-Нд: 9:00-18:00
               </div>
             </div>
@@ -83,7 +83,7 @@ export function Navigation() {
           </SheetTrigger>
           <SheetContent
             side="right"
-            className="w-[320px] sm:w-[380px] border-l border-slate-200/60 dark:border-admin-border px-0 bg-white dark:bg-[#161b22]"
+            className="w-[20rem] sm:w-[23.75rem] border-l border-slate-200/60 dark:border-admin-border px-0 bg-white dark:bg-[#161b22]"
           >
             <SheetTitle className="sr-only">Навігаційне меню</SheetTitle>
             <div className="flex h-full flex-col">
@@ -104,7 +104,7 @@ export function Navigation() {
                     className="flex items-center justify-between rounded-xl px-3.5 py-3 text-sm font-semibold text-slate-700 dark:text-admin-text-secondary transition-all duration-200 hover:bg-emerald-50/80 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-400 active:scale-[0.98]"
                   >
                     <span>{link.label}</span>
-                    <span className="text-[10px] uppercase tracking-[0.16em] text-slate-300">
+                    <span className="text-[0.625rem] uppercase tracking-[0.16em] text-slate-300">
                       ↵
                     </span>
                   </Link>
@@ -113,12 +113,12 @@ export function Navigation() {
 
               {/* Contact Section */}
               <div className="mt-auto border-t border-slate-100 dark:border-admin-border bg-slate-50/80 dark:bg-admin-surface/80 px-4 py-5">
-                <div className="mb-4 text-center text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                <div className="mb-4 text-center text-[0.6875rem] font-semibold text-emerald-700 dark:text-emerald-400">
                   Свіжа поставка щоп'ятниці
                 </div>
-                <div className="mb-3 flex items-center justify-between text-[11px] font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-admin-text-muted">
+                <div className="mb-3 flex items-center justify-between text-[0.6875rem] font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-admin-text-muted">
                   <span>Контакти</span>
-                  <span className="text-[10px] font-semibold normal-case tracking-normal text-slate-600 dark:text-admin-text-tertiary">
+                  <span className="text-[0.625rem] font-semibold normal-case tracking-normal text-slate-600 dark:text-admin-text-tertiary">
                     Пн-Нд: 9:00-18:00
                   </span>
                 </div>

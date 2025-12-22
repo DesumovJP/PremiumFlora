@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      // Local development
       {
         protocol: "http",
         hostname: "localhost",
@@ -17,13 +18,15 @@ const nextConfig: NextConfig = {
         hostname: "127.0.0.1",
         port: "1337",
       },
+      // Railway backend - matches any subdomain
       {
         protocol: "https",
-        hostname: "**",
+        hostname: "**.up.railway.app",
       },
+      // DigitalOcean Spaces - matches any region
       {
-        protocol: "http",
-        hostname: "**",
+        protocol: "https",
+        hostname: "**.digitaloceanspaces.com",
       },
     ],
     formats: ["image/avif", "image/webp"],

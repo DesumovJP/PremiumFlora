@@ -372,3 +372,5 @@ Order (N) >──< (1) Client
 - Single Type колекції (SiteSettings, ContactInfo, PageContent) мають тільки один запис
 
 
+
+

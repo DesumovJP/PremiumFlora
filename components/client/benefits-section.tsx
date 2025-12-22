@@ -62,13 +62,13 @@ export function BenefitsSection() {
         </div>
 
         {/* Benefits Grid - Premium Cards */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6">
           {benefits.map((benefit, index) => {
             const Icon = benefit.icon;
             return (
               <Card 
                 key={index} 
-                className="group relative flex h-full flex-col overflow-hidden card-premium hover-lift-3d fade-in-up"
+                className="group relative flex h-full w-full flex-col overflow-hidden card-premium hover-lift-3d fade-in-up"
               >
                 {/* Gradient accent */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${benefit.gradient} opacity-0 transition-premium group-hover:opacity-5`} />

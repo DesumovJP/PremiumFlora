@@ -32,8 +32,8 @@ const schedule = [
 const features = [
   {
     icon: Snowflake,
-    title: 'Холодний ланцюг -20°C',
-    description: 'Температурний контроль весь шлях від плантації до вашого складу',
+    title: 'Свіжість гарантована',
+    description: 'Квіти зберігаються при -20°C від плантації до вашого складу',
   },
   {
     icon: Package,

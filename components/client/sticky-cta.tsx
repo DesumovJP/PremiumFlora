@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { ArrowRight, Phone, X } from 'lucide-react';
+import { Phone, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -15,7 +15,7 @@ export function StickyCTA() {
   const isAdminPage = pathname?.startsWith('/admin');
 
   useEffect(() => {
-    // Don't set up scroll listener on admin pages
+    // Don't set up timer on admin pages
     if (isAdminPage) return;
 
     // Check if already dismissed this session
@@ -25,13 +25,14 @@ export function StickyCTA() {
       return;
     }
 
-    const handleScroll = () => {
-      // Show after scrolling 500px
-      setIsVisible(window.scrollY > 500 && !isDismissed);
-    };
+    // Show after 15 seconds on the site
+    const timer = setTimeout(() => {
+      if (!isDismissed) {
+        setIsVisible(true);
+      }
+    }, 15000);
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => clearTimeout(timer);
   }, [isDismissed, isAdminPage]);
 
   const handleDismiss = () => {
@@ -62,9 +63,9 @@ export function StickyCTA() {
             <X className="w-5 h-5" />
           </button>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 sm:pt-0 pr-10 sm:pr-10">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 pr-8 sm:pr-10">
             <div className="text-center sm:text-left sm:pr-4">
-              <p className="text-lg font-semibold text-slate-900">
+              <p className="text-base sm:text-lg font-semibold text-slate-900">
                 Готові обговорити оптову співпрацю?
               </p>
               <p className="text-sm text-slate-600">
@@ -72,18 +73,12 @@ export function StickyCTA() {
               </p>
             </div>
 
-            <div className="flex gap-3 flex-shrink-0 w-full sm:w-auto">
-              <Button variant="outline" size="lg" asChild className="flex-1 sm:flex-initial">
-                <a href="tel:+380441234567" className="gap-2">
-                  <Phone className="w-5 h-5" />
-                  <span className="hidden sm:inline">Зателефонувати</span>
-                </a>
-              </Button>
-              <Button size="lg" className="gap-2 flex-1 sm:flex-initial">
-                Отримати пропозицію
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-            </div>
+            <Button size="default" asChild className="w-full sm:w-auto">
+              <a href="tel:+380441234567" className="gap-2">
+                <Phone className="w-4 h-4" />
+                Зателефонувати
+              </a>
+            </Button>
           </div>
         </div>
       </div>

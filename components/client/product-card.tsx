@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Sparkles } from "lucide-react";
+import { Heart } from "lucide-react";
 
 type ProductCardProps = {
   product: Product;
@@ -80,10 +80,14 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
               
               {/* Popular Badge */}
               {isPopular && (
-                <div className="absolute top-2 left-2 z-10">
-                  <Badge className="flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200/70 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-500/40 backdrop-blur-sm">
-                    <Sparkles className="h-3.5 w-3.5" />
+                <div className="absolute top-2 right-2 z-10 group/badge">
+                  <Badge className="!p-0 flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200/30 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm cursor-help relative">
+                    <Heart className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
                     <span className="sr-only">Популярне</span>
+                    <span className="absolute bottom-full right-0 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-900 rounded whitespace-nowrap opacity-0 group-hover/badge:opacity-100 transition-opacity pointer-events-none shadow-lg z-20">
+                      Популярний
+                      <span className="absolute top-full right-2 -mt-1 border-4 border-transparent border-t-slate-900"></span>
+                    </span>
                   </Badge>
                 </div>
               )}
@@ -104,7 +108,7 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
                     .map((v) => (
                       <span
                         key={v.size || Math.random()}
-                        className="rounded-full bg-slate-50 dark:bg-admin-surface-elevated px-2 py-0.5 text-[10px] font-medium leading-tight text-slate-600 dark:text-admin-text-secondary"
+                        className="rounded-full bg-slate-50 dark:bg-admin-surface-elevated px-2 py-0.5 text-[0.625rem] font-medium leading-tight text-slate-600 dark:text-admin-text-secondary"
                       >
                         {v.size || "N/A"}
                       </span>
@@ -140,10 +144,14 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
       >
         {/* Popular Badge */}
         {isPopular && (
-          <div className="absolute top-2 left-2 z-10">
-            <Badge className="flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200/70 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-500/40 backdrop-blur-sm">
-              <Sparkles className="h-3.5 w-3.5" />
+          <div className="absolute top-2 right-2 z-10 group/badge">
+            <Badge className="!p-0 flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200/30 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm cursor-help relative">
+              <Heart className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
               <span className="sr-only">Популярне</span>
+              <span className="absolute bottom-full right-0 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-900 rounded whitespace-nowrap opacity-0 group-hover/badge:opacity-100 transition-opacity pointer-events-none shadow-lg z-20">
+                Популярний
+                <span className="absolute top-full right-2 -mt-1 border-4 border-transparent border-t-slate-900"></span>
+              </span>
             </Badge>
           </div>
         )}
@@ -188,7 +196,7 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
               .map((v) => (
                 <span
                   key={v.size || Math.random()}
-                  className="rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-medium leading-tight text-slate-600"
+                  className="rounded-full bg-slate-50 px-2 py-0.5 text-[0.625rem] font-medium leading-tight text-slate-600"
                 >
                   {v.size || "N/A"}
                 </span>

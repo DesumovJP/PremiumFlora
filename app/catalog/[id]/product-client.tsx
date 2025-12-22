@@ -7,10 +7,11 @@ import { Footer } from "@/components/client/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Package, Phone, Send, CheckCircle2 } from "lucide-react";
+import { Package, Phone, Send, CheckCircle2, Heart, Home, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Product, Variant } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 export function ProductPageClient({ product }: { product: Product }) {
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(
@@ -21,21 +22,35 @@ export function ProductPageClient({ product }: { product: Product }) {
 
   const minPrice = Math.min(...product.variants.map((v) => v.price));
   const maxPrice = Math.max(...product.variants.map((v) => v.price));
+  const isPopular = product.variants.length >= 4;
 
   return (
     <>
       <Navigation />
       <main className="min-h-screen">
-        {/* Breadcrumb */}
-        <section className="border-b border-slate-100 bg-white/80 backdrop-blur-sm py-4">
+        {/* Breadcrumb - Premium Style */}
+        <section className="border-b border-slate-100 dark:border-admin-border bg-white/80 dark:bg-admin-surface/80 backdrop-blur-sm py-4">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <Link
-              href="/catalog"
-              className="inline-flex items-center gap-2 text-sm text-slate-600 transition-colors hover:text-emerald-600"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Назад до каталогу
-            </Link>
+            <nav className="flex items-center gap-2 text-sm" aria-label="Breadcrumb">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 text-slate-600 dark:text-admin-text-secondary transition-colors hover:text-emerald-600 dark:hover:text-emerald-400 group"
+              >
+                <Home className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
+                <span className="font-medium">Головна</span>
+              </Link>
+              <ChevronRight className="h-4 w-4 text-slate-400 dark:text-admin-text-tertiary" />
+              <Link
+                href="/catalog"
+                className="text-slate-600 dark:text-admin-text-secondary transition-colors hover:text-emerald-600 dark:hover:text-emerald-400 font-medium"
+              >
+                Каталог
+              </Link>
+              <ChevronRight className="h-4 w-4 text-slate-400 dark:text-admin-text-tertiary" />
+              <span className="text-slate-900 dark:text-admin-text-primary font-semibold truncate max-w-[200px] sm:max-w-none">
+                {product.name}
+              </span>
+            </nav>
           </div>
         </section>
 
@@ -62,6 +77,19 @@ export function ProductPageClient({ product }: { product: Product }) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
+                  </div>
+                )}
+                {/* Popular Badge */}
+                {isPopular && (
+                  <div className="absolute top-2 right-2 z-10 group/badge">
+                    <Badge className="!p-0 flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200/30 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm cursor-help relative">
+                      <Heart className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
+                      <span className="sr-only">Популярне</span>
+                      <span className="absolute bottom-full right-0 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-900 rounded whitespace-nowrap opacity-0 group-hover/badge:opacity-100 transition-opacity pointer-events-none shadow-lg z-20">
+                        Популярний
+                        <span className="absolute top-full right-2 -mt-1 border-4 border-transparent border-t-slate-900"></span>
+                      </span>
+                    </Badge>
                   </div>
                 )}
               </div>
