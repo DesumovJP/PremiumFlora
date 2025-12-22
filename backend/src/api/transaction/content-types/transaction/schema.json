@@ -1,0 +1,66 @@
+{
+  "kind": "collectionType",
+  "collectionName": "transactions",
+  "info": {
+    "singularName": "transaction",
+    "pluralName": "transactions",
+    "displayName": "Transaction"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "date": {
+      "type": "datetime"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "sale",
+        "writeOff"
+      ],
+      "default": "sale"
+    },
+    "operationId": {
+      "type": "string",
+      "unique": true
+    },
+    "paymentStatus": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "paid",
+        "expected",
+        "cancelled"
+      ]
+    },
+    "amount": {
+      "type": "integer"
+    },
+    "items": {
+      "type": "json"
+    },
+    "customer": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::customer.customer",
+      "inversedBy": "transactions"
+    },
+    "paymentDate": {
+      "type": "datetime"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "writeOffReason": {
+      "type": "enumeration",
+      "enum": [
+        "damage",
+        "expiry",
+        "adjustment",
+        "other"
+      ]
+    }
+  }
+}
