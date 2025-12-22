@@ -104,7 +104,17 @@ export function useFlowers(options?: UseFlowersOptions): UseFlowersResult {
         pageSize: 100,
       });
 
-      const products = data.flowers.map(convertFlowerToProduct);
+      // Дедуплікація по documentId (Strapi v5 може повертати кілька версій)
+      const seen = new Set<string>();
+      const uniqueFlowers = data.flowers.filter((flower) => {
+        if (seen.has(flower.documentId)) {
+          return false;
+        }
+        seen.add(flower.documentId);
+        return true;
+      });
+
+      const products = uniqueFlowers.map(convertFlowerToProduct);
       setFlowers(products);
     } catch (err) {
       console.error("Error fetching flowers:", err);

@@ -205,7 +205,17 @@ export async function getFlowers(options?: { fresh?: boolean }): Promise<Product
       pageSize: 100,
     });
 
-    return data.flowers.map(convertFlowerToProduct);
+    // Дедуплікація по documentId (Strapi v5 може повертати кілька версій)
+    const seen = new Set<string>();
+    const uniqueFlowers = data.flowers.filter((flower) => {
+      if (seen.has(flower.documentId)) {
+        return false;
+      }
+      seen.add(flower.documentId);
+      return true;
+    });
+
+    return uniqueFlowers.map(convertFlowerToProduct);
   } catch (error) {
     console.error("Error fetching flowers:", error);
     return [];
