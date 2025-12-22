@@ -535,7 +535,7 @@ export async function updateVariant(
         success: false,
         error: {
           code: "UPDATE_FAILED",
-          message: errorData.error?.message || `HTTP ${response.status}`,
+          message: responseData.error?.message || `HTTP ${response.status}`,
         },
       };
     }
