@@ -20,11 +20,8 @@ import {
   GET_CUSTOMERS,
   GET_CUSTOMER_BY_ID,
   GET_TRANSACTIONS,
-  GET_VARIANT_BY_ID,
 } from "./graphql/queries";
 import {
-  UPDATE_FLOWER,
-  UPDATE_VARIANT,
   CREATE_CUSTOMER,
   DELETE_CUSTOMER,
 } from "./graphql/mutations";
@@ -378,7 +375,8 @@ export async function getFlowerForEdit(documentId: string): Promise<{
 }
 
 /**
- * Оновити квітку
+ * Оновити квітку (REST API для стабільності)
+ * Strapi v5: оновлюємо published версію напряму
  */
 export async function updateFlower(
   documentId: string,
@@ -398,14 +396,43 @@ export async function updateFlower(
       updateData.description = data.description;
     }
     if (data.imageId !== undefined) {
-      updateData.image = data.imageId ? String(data.imageId) : null;
+      updateData.image = data.imageId || null;
     }
 
-    await graphqlRequest(
-      UPDATE_FLOWER,
-      { documentId, data: updateData },
-      true
+    const authHeaders = getAuthHeaders();
+
+    // Strapi v5 REST API: PUT /api/flowers/:documentId
+    const response = await fetch(`${API_URL}/flowers/${documentId}`, {
+      method: "PUT",
+      headers: authHeaders,
+      body: JSON.stringify({ data: updateData }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("Error updating flower via REST:", errorData);
+      return {
+        success: false,
+        error: {
+          code: "UPDATE_FAILED",
+          message: errorData.error?.message || `HTTP ${response.status}`,
+        },
+      };
+    }
+
+    // Strapi v5: після PUT потрібно опублікувати зміни
+    // POST /api/flowers/:documentId/actions/publish
+    const publishResponse = await fetch(
+      `${API_URL}/flowers/${documentId}/actions/publish`,
+      {
+        method: "POST",
+        headers: authHeaders,
+      }
     );
+
+    if (!publishResponse.ok) {
+      console.warn("Warning: Could not publish flower after update");
+    }
 
     return { success: true };
   } catch (error) {
@@ -421,7 +448,8 @@ export async function updateFlower(
 }
 
 /**
- * Оновити варіант квітки
+ * Оновити варіант квітки (REST API для стабільності)
+ * Оновлюємо тільки price і stock - НЕ чіпаємо flower relation!
  */
 export async function updateVariant(
   documentId: string,
@@ -433,32 +461,6 @@ export async function updateVariant(
   console.log("updateVariant called with:", { documentId, data });
 
   try {
-    // Отримуємо поточний варіант
-    const currentData = await graphqlRequest<{
-      variant: {
-        documentId: string;
-        length: number;
-        price: number;
-        stock: number;
-        flower?: { documentId: string };
-      };
-    }>(GET_VARIANT_BY_ID, { documentId }, true);
-
-    if (!currentData.variant) {
-      console.error("Variant not found:", documentId);
-      return {
-        success: false,
-        error: {
-          code: "NOT_FOUND",
-          message: "Variant not found",
-        },
-      };
-    }
-
-    const currentVariant = currentData.variant;
-
-    // НЕ включаємо flower в updateData - ми оновлюємо тільки price і stock!
-    // Включення flower: null або невірного значення відключає варіант від квітки
     const updateData: Record<string, unknown> = {};
 
     if (data.price !== undefined) {
@@ -473,8 +475,6 @@ export async function updateVariant(
         };
       }
       updateData.price = priceValue;
-    } else {
-      updateData.price = currentVariant.price;
     }
 
     if (data.stock !== undefined) {
@@ -489,18 +489,31 @@ export async function updateVariant(
         };
       }
       updateData.stock = stockValue;
-    } else {
-      updateData.stock = currentVariant.stock;
     }
 
-    console.log("Updating variant via GraphQL:", { documentId, updateData });
+    const authHeaders = getAuthHeaders();
 
-    await graphqlRequest(
-      UPDATE_VARIANT,
-      { documentId, data: updateData },
-      true
-    );
+    // REST API: PUT /api/variants/:documentId
+    // Оновлюємо тільки передані поля - flower relation залишається!
+    const response = await fetch(`${API_URL}/variants/${documentId}`, {
+      method: "PUT",
+      headers: authHeaders,
+      body: JSON.stringify({ data: updateData }),
+    });
 
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("Error updating variant via REST:", errorData);
+      return {
+        success: false,
+        error: {
+          code: "UPDATE_FAILED",
+          message: errorData.error?.message || `HTTP ${response.status}`,
+        },
+      };
+    }
+
+    console.log("Variant updated successfully via REST:", { documentId, updateData });
     return { success: true };
   } catch (error) {
     console.error("Error updating variant:", error);
