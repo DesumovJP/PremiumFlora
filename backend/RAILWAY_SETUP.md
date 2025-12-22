@@ -47,3 +47,4 @@ Railway не може знайти директорію `backend` у snapshot п
 3. Start команда: `yarn start`
 4. Healthcheck: `/_health`
 
+

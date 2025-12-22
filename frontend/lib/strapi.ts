@@ -203,7 +203,6 @@ export async function getFlowers(options?: { fresh?: boolean }): Promise<Product
   try {
     const data = await graphqlRequest<FlowersResponse>(GET_FLOWERS, {
       pageSize: 100,
-      status: "LIVE",
     });
 
     return data.flowers.map(convertFlowerToProduct);

@@ -102,7 +102,6 @@ export function useFlowers(options?: UseFlowersOptions): UseFlowersResult {
 
       const data = await graphqlRequest<FlowersResponse>(GET_FLOWERS, {
         pageSize: 100,
-        status: "LIVE",
       });
 
       const products = data.flowers.map(convertFlowerToProduct);

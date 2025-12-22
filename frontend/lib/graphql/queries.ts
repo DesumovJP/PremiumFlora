@@ -75,10 +75,9 @@ export const CUSTOMER_FRAGMENT = gql`
  * Отримати всі опубліковані квіти
  */
 export const GET_FLOWERS = gql`
-  query GetFlowers($pageSize: Int = 100, $status: PublicationStatus = LIVE) {
+  query GetFlowers($pageSize: Int = 100) {
     flowers(
       pagination: { pageSize: $pageSize }
-      status: $status
       filters: { publishedAt: { notNull: true } }
     ) {
       ...FlowerFields
@@ -94,7 +93,6 @@ export const GET_FLOWER_BY_SLUG = gql`
   query GetFlowerBySlug($slug: String!) {
     flowers(
       filters: { slug: { eq: $slug }, publishedAt: { notNull: true } }
-      status: LIVE
     ) {
       ...FlowerFields
     }
