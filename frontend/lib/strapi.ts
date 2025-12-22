@@ -402,12 +402,13 @@ export async function updateFlower(
     }
 
     const authHeaders = getAuthHeaders();
-    const url = `${API_URL}/flowers/${documentId}?status=published`;
+    // Використовуємо кастомний endpoint який використовує Documents API
+    const url = `${API_URL}/flowers/${documentId}/safe-update`;
 
     console.log("🌸 PUT request:", { url, updateData });
 
-    // Strapi v5 REST API: PUT /api/flowers/:documentId?status=published
-    // status=published оновлює published версію напряму (без створення draft)
+    // Custom safe-update endpoint uses Documents API internally
+    // This avoids the draft/publish cycle that breaks variant relations
     const response = await fetch(url, {
       method: "PUT",
       headers: authHeaders,
