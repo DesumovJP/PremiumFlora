@@ -403,17 +403,50 @@ export async function updateVariant(
   }
 ): Promise<ApiResponse<void>> {
   console.log("updateVariant called with:", { documentId, data });
-  
+
   try {
     const authHeaders = getAuthHeaders();
-    console.log("Auth headers:", authHeaders);
-    
-    const updateData: any = {};
+
+    // ВАЖЛИВО: Strapi v5 REST API PUT замінює весь об'єкт
+    // Спочатку отримаємо поточний варіант, щоб зберегти flower relation
+    const currentResponse = await fetch(`${API_URL}/variants/${documentId}?populate=flower`, {
+      headers: authHeaders,
+    });
+
+    if (!currentResponse.ok) {
+      console.error("Failed to fetch current variant:", currentResponse.statusText);
+      return {
+        success: false,
+        error: {
+          code: "FETCH_FAILED",
+          message: "Failed to fetch current variant data",
+        },
+      };
+    }
+
+    const currentData = await currentResponse.json();
+    const currentVariant = currentData.data;
+
+    if (!currentVariant) {
+      console.error("Variant not found:", documentId);
+      return {
+        success: false,
+        error: {
+          code: "NOT_FOUND",
+          message: "Variant not found",
+        },
+      };
+    }
+
+    // Зберігаємо всі існуючі поля + оновлюємо тільки те що потрібно
+    const updateData: any = {
+      length: currentVariant.length,
+      // Зберігаємо зв'язок з flower (використовуємо documentId для Strapi v5)
+      flower: currentVariant.flower?.documentId || currentVariant.flower?.id || null,
+    };
 
     if (data.price !== undefined) {
-      // Strapi decimal може вимагати рядок або число, переконуємося що це число
       const priceValue = Number(data.price);
-      console.log("Price processing:", { original: data.price, converted: priceValue, isNaN: isNaN(priceValue) });
       if (isNaN(priceValue)) {
         console.error("Invalid price value:", data.price);
         return {
@@ -425,10 +458,12 @@ export async function updateVariant(
         };
       }
       updateData.price = priceValue;
+    } else {
+      updateData.price = currentVariant.price;
     }
+
     if (data.stock !== undefined) {
       const stockValue = Number(data.stock);
-      console.log("Stock processing:", { original: data.stock, converted: stockValue, isNaN: isNaN(stockValue) });
       if (isNaN(stockValue)) {
         console.error("Invalid stock value:", data.stock);
         return {
@@ -440,26 +475,14 @@ export async function updateVariant(
         };
       }
       updateData.stock = stockValue;
+    } else {
+      updateData.stock = currentVariant.stock;
     }
 
-    // Перевіряємо, чи є що оновлювати
-    if (Object.keys(updateData).length === 0) {
-      console.warn("No data to update for variant:", documentId);
-      return {
-        success: false,
-        error: {
-          code: "NO_DATA",
-          message: "No data provided for update",
-        },
-      };
-    }
-
-    // Діагностика: логуємо що відправляємо
-    console.log("Updating variant - sending:", {
+    console.log("Updating variant - preserving flower relation:", {
       documentId,
+      flowerId: updateData.flower,
       updateData,
-      fullPayload: { data: updateData },
-      url: `${API_URL}/variants/${documentId}`,
     });
 
     const response = await fetch(`${API_URL}/variants/${documentId}`, {

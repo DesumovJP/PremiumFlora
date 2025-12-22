@@ -243,9 +243,15 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
               .join("\n")
           : "";
 
+        // Для картинок з DO Spaces URL вже повний, для локальних - додаємо STRAPI_URL
+        const imageUrl = flowerData.image?.url;
+        const imagePreview = imageUrl
+          ? (imageUrl.startsWith('http') ? imageUrl : `${STRAPI_URL}${imageUrl}`)
+          : null;
+
         setEditData({
           image: null,
-          imagePreview: flowerData.image ? `${STRAPI_URL}${flowerData.image.url}` : null,
+          imagePreview,
           description: descriptionText,
           variants: flowerData.variants.map((v) => ({
             documentId: v.documentId,
