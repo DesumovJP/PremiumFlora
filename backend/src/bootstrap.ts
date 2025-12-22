@@ -1,5 +1,6 @@
 import type { Core } from "@strapi/strapi";
 import { cleanupDuplicates } from "./scripts/cleanup-duplicates";
+import { resetFlowersAndVariants } from "./scripts/reset-flowers";
 
 const flowersData = [
   {
@@ -255,6 +256,14 @@ export default async function bootstrap({ strapi }: { strapi: Core.Strapi }) {
 
   // Set up authenticated permissions for API endpoints
   await setupAuthenticatedPermissions(strapi);
+
+  // Reset flowers if RESET_FLOWERS=true (one-time operation)
+  if (process.env.RESET_FLOWERS === 'true') {
+    strapi.log.warn('⚠️ RESET_FLOWERS=true - deleting all flowers and variants!');
+    await resetFlowersAndVariants(strapi);
+    strapi.log.info('🔔 Remember to remove RESET_FLOWERS env variable after import!');
+    return; // Skip other operations after reset
+  }
 
   // Clean up duplicate records (run once to fix existing duplicates)
   await cleanupDuplicates(strapi);
