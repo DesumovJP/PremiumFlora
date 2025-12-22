@@ -12,6 +12,7 @@ export type Product = {
   documentId?: string; // Strapi v5 documentId
   slug?: string; // URL-friendly identifier
   name: string;
+  description?: Array<{ type: string; children: Array<{ type: string; text: string }> }>; // Strapi blocks
   image: string;
   variants: Variant[];
 };

@@ -109,6 +109,18 @@ export function ProductPageClient({ product }: { product: Product }) {
                       <span className="text-base font-semibold text-slate-900 sm:text-lg">{minPrice} грн <span className="text-xs font-light text-slate-500 sm:text-sm">за шт.</span></span>
                     )}
                   </div>
+                  {/* Product description from Strapi */}
+                  {product.description && product.description.length > 0 && (
+                    <div className="mb-3 text-sm leading-relaxed text-slate-700 sm:text-base">
+                      {product.description.map((block, index) => (
+                        <p key={index}>
+                          {block.children?.map((child, childIndex) => (
+                            <span key={childIndex}>{child.text}</span>
+                          ))}
+                        </p>
+                      ))}
+                    </div>
+                  )}
                   <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
                     Свіжі квіти височної якості. Ідеально підходять для оптових замовлень та
                     великих проектів. Гарантуємо свіжість та довготривалість. Нова поставка свіжих квітів щоп'ятниці.
