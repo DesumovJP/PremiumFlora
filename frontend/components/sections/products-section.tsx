@@ -283,7 +283,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
     setIsSavingEdit(true);
     try {
-      const STRAPI_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
+      const STRAPI_URL = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337").replace(/\/$/, '');
       const API_URL = `${STRAPI_URL}/api`;
       const authHeaders = getAuthHeaders();
 
@@ -491,7 +491,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
     setIsSaving(true);
     try {
-      const STRAPI_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
+      const STRAPI_URL = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337").replace(/\/$/, '');
       const API_URL = `${STRAPI_URL}/api`;
       const authHeaders = getAuthHeaders();
 
