@@ -121,61 +121,44 @@ export class UpserterService {
 
   /**
    * Upsert Flower
-   * Використовує Documents API для правильної роботи з draftAndPublish в Strapi v5
+   * Використовує db.query для простоти і надійності
    */
   private async upsertFlower(
     name: string,
     slug: string
   ): Promise<{ flower: FlowerRecord; created: boolean }> {
-    // Шукати існуючу квітку за slug через Documents API
-    const existingFlowers = await this.strapi.documents('api::flower.flower').findMany({
-      filters: { slug: { $eq: slug } },
-      fields: ['id', 'documentId', 'name', 'slug'],
-      status: 'published',
+    // Шукати існуючу квітку за slug через db.query
+    const existing = await this.strapi.db.query('api::flower.flower').findOne({
+      where: { slug },
+      select: ['id', 'documentId', 'name', 'slug', 'publishedAt'],
     });
 
-    const existing = existingFlowers[0];
-
     if (existing) {
-      this.strapi.log.debug('Flower already exists (published)', { slug, documentId: existing.documentId });
+      // Якщо не опублікована - опублікувати
+      if (!existing.publishedAt) {
+        this.strapi.log.info(`📤 Publishing existing flower: ${existing.name}`);
+        await this.strapi.db.query('api::flower.flower').update({
+          where: { id: existing.id },
+          data: { publishedAt: new Date().toISOString() },
+        });
+      }
+      this.strapi.log.debug('Flower already exists', { slug, id: existing.id });
       return { flower: existing as FlowerRecord, created: false };
     }
 
-    // Перевірити чи є draft версія
-    const draftFlowers = await this.strapi.documents('api::flower.flower').findMany({
-      filters: { slug: { $eq: slug } },
-      fields: ['id', 'documentId', 'name', 'slug'],
-      status: 'draft',
-    });
-
-    const draft = draftFlowers[0];
-
-    if (draft) {
-      // Опублікувати існуючий draft через Documents API
-      this.strapi.log.info(`📤 Publishing existing flower draft: ${draft.name}`);
-      await this.strapi.documents('api::flower.flower').publish({
-        documentId: draft.documentId,
-      });
-      this.strapi.log.info(`✅ Flower published: ${draft.name}`);
-      return { flower: draft as FlowerRecord, created: false };
-    }
-
-    // Створити нову квітку через Documents API
+    // Створити нову квітку через db.query
     this.strapi.log.info(`🌸 Creating new flower: ${name} (${slug})`);
-    const created = await this.strapi.documents('api::flower.flower').create({
+    const created = await this.strapi.db.query('api::flower.flower').create({
       data: {
         name,
         slug,
+        locale: 'en',
+        publishedAt: new Date().toISOString(), // Одразу опублікована
       },
-      locale: 'en',
     });
 
-    // Опублікувати створену квітку
-    await this.strapi.documents('api::flower.flower').publish({
-      documentId: created.documentId,
-    });
-
-    this.strapi.log.info('Flower created and published successfully', {
+    this.strapi.log.info('Flower created successfully', {
+      id: created.id,
       documentId: created.documentId,
       name: created.name,
       slug: created.slug,
@@ -268,35 +251,19 @@ export class UpserterService {
     // Створити новий варіант
     this.strapi.log.info(`🌱 Creating variant: ${flower.name} ${variantLength}cm - stock ${row.stock}, price ${finalPrice} UAH`);
 
-    // Отримати внутрішній ID квітки через db.query (Documents API може повертати id по-різному)
-    const flowerFromDb = await this.strapi.db.query('api::flower.flower').findOne({
-      where: { documentId: flower.documentId },
-      select: ['id'],
-    });
-
-    if (!flowerFromDb) {
-      this.strapi.log.error(`❌ Could not find flower in database: ${flower.documentId}`);
-      throw new Error(`Flower not found: ${flower.documentId}`);
-    }
-
-    this.strapi.log.info(`🔗 Linking variant to flower: documentId=${flower.documentId}, internalId=${flowerFromDb.id}`);
-
     const created = await this.strapi.db.query('api::variant.variant').create({
       data: {
         length: variantLength,
         stock: row.stock,
-        price: finalPrice, // Використовуємо розраховану ціну
-        flower: flowerFromDb.id, // Використовуємо внутрішній ID з db.query
-        locale: 'en', // Змінено на 'en' для сумісності з Content Manager
-        // Не потрібен publishedAt, бо draftAndPublish: false
+        price: finalPrice,
+        flower: flower.id, // Тепер flower.id - це правильний внутрішній ID з db.query
+        locale: 'en',
       },
     });
 
     this.strapi.log.info('Variant created successfully', {
       variantId: created.id,
-      documentId: (created as VariantRecord).documentId,
-      flowerId: flowerFromDb.id,
-      flowerDocumentId: flower.documentId,
+      flowerId: flower.id,
       length: variantLength,
     });
 
