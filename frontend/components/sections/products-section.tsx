@@ -423,8 +423,10 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                   length: variant.length,
                   price: variant.price,
                   stock: variant.stock,
-                  flower: editingProduct.documentId,
-                  locale: "en", // Strapi v5 uses "en" as default locale
+                  // Strapi v5: use connect syntax for relations
+                  flower: {
+                    connect: [{ documentId: editingProduct.documentId }]
+                  },
                 },
               }),
             });
@@ -755,13 +757,16 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                 length,
                 price,
                 stock,
-                flower: flowerDocumentId, // Use documentId for relation
-                locale: "en", // Strapi v5 uses "en" as default locale
+                // Strapi v5: use connect syntax for relations
+                flower: {
+                  connect: [{ documentId: flowerDocumentId }]
+                },
               },
             }),
           });
           if (!updateResponse.ok) {
-            console.error("Помилка оновлення варіанту");
+            const errorText = await updateResponse.text();
+            console.error("Помилка оновлення варіанту:", errorText);
           }
         } else {
           // Створити новий варіант
@@ -776,14 +781,18 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                 length,
                 price,
                 stock,
-                flower: flowerDocumentId, // Use documentId for relation
-                locale: "en", // Strapi v5 uses "en" as default locale
+                // Strapi v5: use connect syntax for relations
+                flower: {
+                  connect: [{ documentId: flowerDocumentId }]
+                },
               },
             }),
           });
           if (!createResponse.ok) {
             const errorText = await createResponse.text();
             console.error("Помилка створення варіанту:", errorText);
+          } else {
+            console.log(`✅ Variant created: ${length}cm for flower ${flowerDocumentId}`);
           }
         }
       }
