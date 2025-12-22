@@ -1,4 +1,4 @@
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
+const STRAPI_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
 const AUTH_URL = `${STRAPI_URL}/api/auth/admin/login`;
 
 export interface LoginResponse {
