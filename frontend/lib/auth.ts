@@ -129,9 +129,15 @@ export function isAuthenticated(): boolean {
 
 /**
  * Отримати заголовки з токеном для авторизованих запитів
+ * Використовує JWT токен (з localStorage) або API Token (з env) як fallback
  */
 export function getAuthHeaders(): HeadersInit {
-  const token = getToken();
+  const jwtToken = getToken();
+  const apiToken = process.env.NEXT_PUBLIC_STRAPI_TOKEN;
+
+  // Приоритет: JWT токен > API токен
+  const token = jwtToken || apiToken;
+
   return {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
