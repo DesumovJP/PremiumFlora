@@ -39,6 +39,9 @@ COPY --from=builder --chown=strapi:nodejs /app/src ./src
 COPY --from=builder --chown=strapi:nodejs /app/types ./types
 COPY --from=builder --chown=strapi:nodejs /app/tsconfig.json ./tsconfig.json
 
+# Create .tmp directory with proper permissions for Strapi
+RUN mkdir -p /app/.tmp && chown -R strapi:nodejs /app/.tmp
+
 USER strapi
 
 EXPOSE 1337
