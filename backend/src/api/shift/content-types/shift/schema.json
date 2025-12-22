@@ -1,0 +1,55 @@
+{
+  "kind": "collectionType",
+  "collectionName": "shifts",
+  "info": {
+    "singularName": "shift",
+    "pluralName": "shifts",
+    "displayName": "Shift",
+    "description": "Work shift with activity log"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "startedAt": {
+      "type": "datetime",
+      "required": true
+    },
+    "closedAt": {
+      "type": "datetime"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["active", "closed"],
+      "default": "active",
+      "required": true
+    },
+    "activities": {
+      "type": "json",
+      "required": true
+    },
+    "summary": {
+      "type": "json"
+    },
+    "totalSales": {
+      "type": "integer",
+      "default": 0
+    },
+    "totalSalesAmount": {
+      "type": "decimal",
+      "default": 0
+    },
+    "totalWriteOffs": {
+      "type": "integer",
+      "default": 0
+    },
+    "totalWriteOffsQty": {
+      "type": "integer",
+      "default": 0
+    },
+    "notes": {
+      "type": "text"
+    }
+  }
+}

@@ -13,6 +13,7 @@ interface LowStockVariant {
   flowerDocumentId: string;
   flowerName: string;
   flowerSlug: string;
+  imageUrl: string | null;
   length: number;
   currentStock: number;
   price: number;
@@ -23,6 +24,9 @@ interface FlowerWithVariants {
   documentId: string;
   name: string;
   slug: string;
+  image?: {
+    url: string;
+  } | null;
   variants: Array<{
     id: number;
     documentId: string;
@@ -40,12 +44,13 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   async getLowStockVariants(threshold: number = 100): Promise<LowStockVariant[]> {
     strapi.log.info(`🔍 Fetching low stock variants (threshold: ${threshold})`);
 
-    // Отримати всі квіти з варіантами
+    // Отримати всі квіти з варіантами та зображеннями
     const flowers = await strapi.entityService.findMany('api::flower.flower', {
       filters: {
         locale: 'en',
       },
       populate: {
+        image: true,
         variants: {
           filters: {
             stock: {
@@ -69,6 +74,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
             flowerDocumentId: flower.documentId,
             flowerName: flower.name,
             flowerSlug: flower.slug,
+            imageUrl: flower.image?.url || null,
             length: variant.length,
             currentStock: variant.stock,
             price: variant.price,

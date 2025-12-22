@@ -11,6 +11,7 @@ export interface LowStockVariant {
   flowerDocumentId: string;
   flowerName: string;
   flowerSlug: string;
+  imageUrl: string | null;
   length: number;
   currentStock: number;
   price: number;
@@ -24,6 +25,7 @@ export interface PlannedSupplyItem {
   variantDocumentId?: string;
   flowerName: string;
   flowerSlug: string;
+  imageUrl?: string | null;
   length: number;
   currentStock: number;
   plannedQuantity: number; // Кількість для замовлення

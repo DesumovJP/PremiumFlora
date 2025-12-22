@@ -1,0 +1,5 @@
+/**
+ * Shift Service
+ */
+
+export default () => ({});
