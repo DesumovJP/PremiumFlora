@@ -402,13 +402,11 @@ export async function updateFlower(
     }
 
     const authHeaders = getAuthHeaders();
-    // Використовуємо кастомний endpoint який використовує Documents API
-    const url = `${API_URL}/flowers/${documentId}/safe-update`;
+    const url = `${API_URL}/flowers/${documentId}`;
 
     console.log("🌸 PUT request:", { url, updateData });
 
-    // Custom safe-update endpoint uses Documents API internally
-    // This avoids the draft/publish cycle that breaks variant relations
+    // Simple PUT - works because draftAndPublish is disabled for Flower
     const response = await fetch(url, {
       method: "PUT",
       headers: authHeaders,

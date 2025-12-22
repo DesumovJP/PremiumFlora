@@ -130,30 +130,22 @@ export class UpserterService {
     // Шукати існуючу квітку за slug через db.query
     const existing = await this.strapi.db.query('api::flower.flower').findOne({
       where: { slug },
-      select: ['id', 'documentId', 'name', 'slug', 'publishedAt'],
+      select: ['id', 'documentId', 'name', 'slug'],
     });
 
     if (existing) {
-      // Якщо не опублікована - опублікувати
-      if (!existing.publishedAt) {
-        this.strapi.log.info(`📤 Publishing existing flower: ${existing.name}`);
-        await this.strapi.db.query('api::flower.flower').update({
-          where: { id: existing.id },
-          data: { publishedAt: new Date().toISOString() },
-        });
-      }
       this.strapi.log.debug('Flower already exists', { slug, id: existing.id });
       return { flower: existing as FlowerRecord, created: false };
     }
 
     // Створити нову квітку через db.query
+    // draftAndPublish вимкнено - не потрібен publishedAt
     this.strapi.log.info(`🌸 Creating new flower: ${name} (${slug})`);
     const created = await this.strapi.db.query('api::flower.flower').create({
       data: {
         name,
         slug,
         locale: 'en',
-        publishedAt: new Date().toISOString(), // Одразу опублікована
       },
     });
 
