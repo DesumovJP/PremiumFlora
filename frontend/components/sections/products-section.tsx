@@ -223,6 +223,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         return;
       }
 
+      const STRAPI_URL = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337").replace(/\/$/, '');
       const flowerData = await getFlowerForEdit(product.documentId);
       if (flowerData) {
         // Конвертуємо StrapiBlock[] в текст для textarea
