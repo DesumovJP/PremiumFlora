@@ -18,7 +18,7 @@ export default ({ env }) => ({
               ACL: 'public-read',
             },
           },
-          baseUrl: `${env('DO_SPACE_ENDPOINT')}/${env('DO_SPACE_BUCKET')}`,
+          baseUrl: `${env('DO_SPACE_ENDPOINT')}/${env('DO_SPACE_BUCKET')}${env('DO_SPACE_ROOT_PATH') ? '/' + env('DO_SPACE_ROOT_PATH') : ''}`,
         },
         actionOptions: {
           upload: {},

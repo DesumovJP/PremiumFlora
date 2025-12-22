@@ -223,7 +223,6 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         return;
       }
 
-      const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
       const flowerData = await getFlowerForEdit(product.documentId);
       if (flowerData) {
         // Конвертуємо StrapiBlock[] в текст для textarea
@@ -284,7 +283,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
     setIsSavingEdit(true);
     try {
-      const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
+      const STRAPI_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
       const API_URL = `${STRAPI_URL}/api`;
       const authHeaders = getAuthHeaders();
 
@@ -492,7 +491,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
     setIsSaving(true);
     try {
-      const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
+      const STRAPI_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
       const API_URL = `${STRAPI_URL}/api`;
       const authHeaders = getAuthHeaders();
 
