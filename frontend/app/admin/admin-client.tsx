@@ -385,6 +385,55 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
     setCart((current) => current.filter((line) => line.id !== id));
   };
 
+  // Handle close shift
+  const handleCloseShift = async () => {
+    if (!shiftStartedAt || activities.length === 0) return;
+
+    setIsClosingShift(true);
+    try {
+      const result = await closeShiftApi({
+        activities: activities.map(a => ({
+          id: a.id,
+          type: a.type,
+          timestamp: a.timestamp,
+          details: a.details as Record<string, unknown>,
+        })),
+        summary: {
+          totalSales: shiftSummary.totalSales,
+          totalSalesAmount: shiftSummary.totalSalesAmount,
+          totalWriteOffs: shiftSummary.totalWriteOffs,
+          totalWriteOffsQty: shiftSummary.totalWriteOffsQty,
+          activitiesCount: shiftSummary.activitiesCount,
+        },
+        startedAt: shiftStartedAt,
+      });
+
+      if (result.success) {
+        showSuccess(
+          result.alert?.title || "Зміну закрито",
+          result.alert?.message || "Зміна успішно збережена в архів"
+        );
+        clearActivities();
+      } else {
+        showError(
+          result.alert?.title || "Помилка",
+          result.alert?.message || result.error?.message || "Не вдалося закрити зміну"
+        );
+      }
+    } catch (error) {
+      console.error("Close shift error:", error);
+      showError("Помилка", "Сталася помилка при закритті зміни");
+    } finally {
+      setIsClosingShift(false);
+    }
+  };
+
+  // Handle export shift
+  const handleExportShift = () => {
+    if (!shiftStartedAt || activities.length === 0) return;
+    exportShift(activities, shiftSummary, shiftStartedAt);
+  };
+
   // Уникаємо hydration mismatch - рендеримо тільки після монтування
   if (!mounted) {
     return (
@@ -458,6 +507,17 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
                 exportAnalytics(analyticsData);
               }
             }}
+          />
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-5">
+          <HistorySection
+            activities={activities}
+            shiftStartedAt={shiftStartedAt}
+            summary={shiftSummary}
+            onCloseShift={handleCloseShift}
+            onExportShift={handleExportShift}
+            isClosingShift={isClosingShift}
           />
         </TabsContent>
       </div>

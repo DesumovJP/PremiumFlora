@@ -9,7 +9,7 @@ import type { Context } from 'koa';
 
 interface Activity {
   id: string;
-  type: 'sale' | 'writeOff' | 'productEdit' | 'productCreate' | 'paymentConfirm' | 'customerCreate' | 'supply';
+  type: 'sale' | 'writeOff' | 'productEdit' | 'productCreate' | 'productDelete' | 'paymentConfirm' | 'customerCreate' | 'customerDelete' | 'supply';
   timestamp: string;
   details: Record<string, unknown>;
 }
@@ -63,7 +63,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       const now = new Date().toISOString();
 
       // Створюємо закриту зміну
-      const shift = await strapi.documents('api::shift.shift').create({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const shift = await (strapi.documents as any)('api::shift.shift').create({
         data: {
           startedAt: body.startedAt,
           closedAt: now,
@@ -115,13 +116,15 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     try {
       const { page = 1, pageSize = 10 } = ctx.query;
 
-      const shifts = await strapi.documents('api::shift.shift').findMany({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const shifts = await (strapi.documents as any)('api::shift.shift').findMany({
         sort: { closedAt: 'desc' },
         limit: Number(pageSize),
         offset: (Number(page) - 1) * Number(pageSize),
       });
 
-      const total = await strapi.documents('api::shift.shift').count({});
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const total = await (strapi.documents as any)('api::shift.shift').count({});
 
       ctx.body = {
         success: true,
@@ -157,7 +160,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     try {
       const { documentId } = ctx.params;
 
-      const shift = await strapi.documents('api::shift.shift').findOne({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const shift = await (strapi.documents as any)('api::shift.shift').findOne({
         documentId,
       });
 

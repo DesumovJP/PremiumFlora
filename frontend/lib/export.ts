@@ -182,6 +182,7 @@ const activityTypeLabels: Record<string, string> = {
   productDelete: 'Видалення товару',
   paymentConfirm: 'Підтвердження оплати',
   customerCreate: 'Новий клієнт',
+  customerDelete: 'Видалення клієнта',
   supply: 'Поставка',
 };
 

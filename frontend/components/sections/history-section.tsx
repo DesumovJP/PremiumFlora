@@ -96,6 +96,11 @@ const activityConfig: Record<
     label: 'Новий клієнт',
     color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/30',
   },
+  customerDelete: {
+    icon: Trash,
+    label: 'Видалення клієнта',
+    color: 'text-rose-600 bg-rose-50 dark:bg-rose-900/30',
+  },
   supply: {
     icon: Truck,
     label: 'Поставка',

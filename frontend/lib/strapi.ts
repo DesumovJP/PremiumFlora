@@ -55,6 +55,7 @@ import type {
   Transaction,
   TransactionFilters,
   ApiResponse,
+  ApiError,
 } from "./api-types";
 import type { ImportOptions, ImportResponse } from "./import-types";
 import type { LowStockVariant, FlowerSearchResult } from "./planned-supply-types";
@@ -1022,7 +1023,7 @@ export async function getAllFlowersForSupply(): Promise<
 
 export interface ShiftActivity {
   id: string;
-  type: 'sale' | 'writeOff' | 'productEdit' | 'productCreate' | 'productDelete' | 'paymentConfirm' | 'customerCreate' | 'supply';
+  type: 'sale' | 'writeOff' | 'productEdit' | 'productCreate' | 'productDelete' | 'paymentConfirm' | 'customerCreate' | 'customerDelete' | 'supply';
   timestamp: string;
   details: Record<string, unknown>;
 }
