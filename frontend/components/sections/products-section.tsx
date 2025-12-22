@@ -135,6 +135,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       length: number;
       price: number;
       stock: number;
+      isNew?: boolean;
     }>;
   }>({
     image: null,
@@ -279,15 +280,36 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
     }
   };
 
-  const handleEditVariantChange = (documentId: string, field: "price" | "stock", value: number) => {
+  const handleEditVariantChange = (documentId: string, field: "price" | "stock" | "length", value: number) => {
     setEditData((prev) => ({
       ...prev,
       variants: prev.variants.map((v) =>
         v.documentId === documentId ? { ...v, [field]: value } : v
       ),
     }));
-    // Діагностика: логуємо зміни
-    console.log("Variant change:", { documentId, field, value });
+  };
+
+  const addEditVariant = () => {
+    setEditData((prev) => ({
+      ...prev,
+      variants: [
+        ...prev.variants,
+        {
+          documentId: `new-${Date.now()}`,
+          length: 0,
+          price: 0,
+          stock: 0,
+          isNew: true,
+        },
+      ],
+    }));
+  };
+
+  const removeEditVariant = (documentId: string) => {
+    setEditData((prev) => ({
+      ...prev,
+      variants: prev.variants.filter((v) => v.documentId !== documentId),
+    }));
   };
 
   const handleSaveEdit = async () => {
@@ -364,41 +386,57 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         return;
       }
 
-      // 4. Оновити варіанти
+      // 4. Оновити існуючі варіанти та створити нові
       const variantErrors: string[] = [];
+
       for (const variant of editData.variants) {
         try {
-          console.log("Updating variant:", {
-            documentId: variant.documentId,
-            length: variant.length,
-            price: variant.price,
-            stock: variant.stock,
-            priceType: typeof variant.price,
-            stockType: typeof variant.stock,
-          });
+          if (variant.isNew) {
+            // Створити новий варіант
+            if (!variant.length || variant.length <= 0) {
+              variantErrors.push(`Новий варіант: довжина повинна бути більше 0`);
+              continue;
+            }
 
-          const variantResult = await updateVariant(variant.documentId, {
-            price: variant.price,
-            stock: variant.stock,
-          });
+            const createResponse = await fetch(`${STRAPI_URL}/api/variants`, {
+              method: "POST",
+              headers: authHeaders,
+              body: JSON.stringify({
+                data: {
+                  length: variant.length,
+                  price: variant.price,
+                  stock: variant.stock,
+                  flower: editingProduct.documentId,
+                  locale: "uk",
+                },
+              }),
+            });
 
-          if (!variantResult || !variantResult.success) {
-            const errorMessage = variantResult?.error?.message || variantResult?.error?.code || "Невідома помилка";
-            const errorText = `Варіант ${variant.length} см: ${errorMessage}`;
-            variantErrors.push(errorText);
-            console.error(`Помилка оновлення варіанту ${variant.documentId} (${variant.length} см):`, errorMessage);
+            if (!createResponse.ok) {
+              const errorData = await createResponse.json().catch(() => ({}));
+              variantErrors.push(`Новий варіант ${variant.length} см: ${errorData.error?.message || "Помилка створення"}`);
+            }
+          } else {
+            // Оновити існуючий варіант
+            const variantResult = await updateVariant(variant.documentId, {
+              price: variant.price,
+              stock: variant.stock,
+            });
+
+            if (!variantResult || !variantResult.success) {
+              const errorMessage = variantResult?.error?.message || variantResult?.error?.code || "Невідома помилка";
+              variantErrors.push(`Варіант ${variant.length} см: ${errorMessage}`);
+            }
           }
         } catch (variantError) {
           const errorMessage = variantError instanceof Error ? variantError.message : "Невідома помилка";
-          const errorText = `Варіант ${variant.length} см: ${errorMessage}`;
-          variantErrors.push(errorText);
-          console.error(`Помилка при оновленні варіанту ${variant.documentId} (${variant.length} см):`, errorMessage);
+          variantErrors.push(`Варіант ${variant.length} см: ${errorMessage}`);
         }
       }
 
-      // Показуємо попередження, якщо були помилки, але не блокуємо процес
+      // Показуємо попередження, якщо були помилки
       if (variantErrors.length > 0) {
-        console.warn("Деякі варіанти не вдалося оновити:", variantErrors);
+        alert(`Деякі варіанти не вдалося обробити:\n${variantErrors.join("\n")}`);
       }
 
       // 5. Оновити список продуктів
@@ -1514,49 +1552,104 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
           {/* Variants */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Варіанти (ціна та кількість)</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-slate-700">Варіанти</label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addEditVariant}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Додати варіант
+              </Button>
+            </div>
             <div className="space-y-3">
-              {editData.variants.map((variant) => (
-                <div
-                  key={variant.documentId}
-                  className="flex gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3"
-                >
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-900">{variant.length} см</p>
+              {editData.variants.length === 0 ? (
+                <p className="text-sm text-slate-500 py-2">Немає варіантів. Додайте хоча б один.</p>
+              ) : (
+                editData.variants.map((variant) => (
+                  <div
+                    key={variant.documentId}
+                    className={cn(
+                      "flex gap-2 rounded-lg border p-3",
+                      variant.isNew
+                        ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-900/20"
+                        : "border-slate-200 bg-slate-50 dark:border-admin-border dark:bg-admin-surface"
+                    )}
+                  >
+                    <div className="flex-1">
+                      <label className="text-xs text-slate-600">Довжина, см</label>
+                      {variant.isNew ? (
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="60"
+                          value={variant.length || ""}
+                          onChange={(e) => {
+                            const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                            if (!isNaN(value)) {
+                              handleEditVariantChange(variant.documentId, "length", value);
+                            }
+                          }}
+                          className="mt-1"
+                        />
+                      ) : (
+                        <p className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary mt-2">
+                          {variant.length} см
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-xs text-slate-600">Ціна, грн</label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="100"
+                        value={variant.price || ""}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                          if (!isNaN(value)) {
+                            handleEditVariantChange(variant.documentId, "price", value);
+                          }
+                        }}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-xs text-slate-600">Кількість, шт</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="100"
+                        value={variant.stock || ""}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                          if (!isNaN(value)) {
+                            handleEditVariantChange(variant.documentId, "stock", value);
+                          }
+                        }}
+                        className="mt-1"
+                      />
+                    </div>
+                    {variant.isNew && (
+                      <div className="flex items-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeEditVariant(variant.documentId)}
+                          className="text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex-1">
-                    <label className="text-xs text-slate-600">Ціна, грн</label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={variant.price}
-                      onChange={(e) => {
-                        const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
-                        if (!isNaN(value)) {
-                          handleEditVariantChange(variant.documentId, "price", value);
-                        }
-                      }}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-xs text-slate-600">Кількість, шт</label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={variant.stock}
-                      onChange={(e) => {
-                        const value = e.target.value === "" ? 0 : parseInt(e.target.value);
-                        if (!isNaN(value)) {
-                          handleEditVariantChange(variant.documentId, "stock", value);
-                        }
-                      }}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
