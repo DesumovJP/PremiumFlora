@@ -2,11 +2,5 @@
   "buildCommand": "yarn build",
   "devCommand": "yarn dev",
   "installCommand": "yarn install",
-  "framework": "nextjs",
-  "rewrites": [
-    {
-      "source": "/strapi-admin/:path*",
-      "destination": "https://your-backend.railway.app/admin/:path*"
-    }
-  ]
+  "framework": "nextjs"
 }

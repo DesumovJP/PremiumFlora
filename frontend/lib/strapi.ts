@@ -7,8 +7,7 @@ import type {
 } from "./strapi-types";
 import type { Product, Variant } from "./types";
 
-// Підтримка обох назв змінних для сумісності
-const STRAPI_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
 const API_URL = `${STRAPI_URL}/api`;
 
 // Helper функція для конвертації blocks в text

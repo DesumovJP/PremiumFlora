@@ -23,15 +23,11 @@ export default ({ env }) => {
         headers: '*',
         origin: env('NODE_ENV') === 'production'
           ? [
-              env('FRONTEND_URL'),
-              env('PUBLIC_URL'),
-              env('SERVER_URL'),
+              env('FRONTEND_URL', 'https://your-app.vercel.app'),
               /\.vercel\.app$/,
-              /\.railway\.app$/,
               'http://localhost:3000',
-            ].filter(Boolean)
+            ]
           : ['http://localhost:3000', 'http://127.0.0.1:3000'],
-        credentials: true,
       },
     },
     'strapi::poweredBy',

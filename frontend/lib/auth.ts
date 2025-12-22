@@ -1,11 +1,5 @@
-// Підтримка обох назв змінних для сумісності
-const STRAPI_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
 const AUTH_URL = `${STRAPI_URL}/api/auth/admin/login`;
-
-// Перевірка чи URL встановлений правильно
-if (typeof window !== "undefined" && STRAPI_URL === "http://localhost:1337" && window.location.hostname !== "localhost") {
-  console.error("⚠️ NEXT_PUBLIC_API_URL або NEXT_PUBLIC_STRAPI_URL не встановлено! Встановіть Railway backend URL в Vercel Environment Variables.");
-}
 
 export interface LoginResponse {
   success: boolean;
@@ -79,24 +73,11 @@ export async function login(
     };
   } catch (error) {
     console.error("Login error:", error);
-    console.error("STRAPI_URL:", STRAPI_URL);
-    console.error("AUTH_URL:", AUTH_URL);
-    
-    // Більш детальна помилка
-    let errorMessage = "Не вдалося підключитися до сервера";
-    if (error instanceof TypeError && error.message.includes("fetch")) {
-      if (STRAPI_URL === "http://localhost:1337") {
-        errorMessage = "NEXT_PUBLIC_STRAPI_URL не налаштовано. Встановіть Railway backend URL в Vercel Environment Variables.";
-      } else {
-        errorMessage = `Не вдалося підключитися до ${STRAPI_URL}. Перевірте, чи працює backend.`;
-      }
-    }
-    
     return {
       success: false,
       error: {
         code: "NETWORK_ERROR",
-        message: errorMessage,
+        message: "Не вдалося підключитися до сервера",
       },
     };
   }
