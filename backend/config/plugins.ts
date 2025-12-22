@@ -15,6 +15,7 @@ export default ({ env }) => ({
   },
 
   // DigitalOcean Spaces upload provider (only in production)
+  // URL format: https://{bucket}.{region}.digitaloceanspaces.com/{rootPath}/filename
   ...(env('NODE_ENV') === 'production' && env('DO_SPACE_KEY') && {
     upload: {
       config: {
@@ -28,13 +29,14 @@ export default ({ env }) => ({
             },
             endpoint: env('DO_SPACE_ENDPOINT'),
             region: env('DO_SPACE_REGION'),
-            forcePathStyle: true,
+            // forcePathStyle: false - DO Spaces uses subdomain-style URLs
             params: {
               Bucket: env('DO_SPACE_BUCKET'),
               ACL: 'public-read',
             },
           },
-          baseUrl: `${env('DO_SPACE_ENDPOINT')}/${env('DO_SPACE_BUCKET')}${env('DO_SPACE_ROOT_PATH') ? '/' + env('DO_SPACE_ROOT_PATH') : ''}`,
+          // Subdomain-style baseUrl БЕЗ rootPath (Strapi додає шлях автоматично)
+          baseUrl: `https://${env('DO_SPACE_BUCKET')}.${env('DO_SPACE_REGION')}.digitaloceanspaces.com`,
         },
         actionOptions: {
           upload: {},
