@@ -7,6 +7,7 @@
 import * as XLSX from 'xlsx';
 import type { Product } from "@/lib/types";
 import type { Customer, DashboardData } from "@/lib/api-types";
+import type { Activity, ShiftSummary } from "@/hooks/use-activity-log";
 
 // ============================================
 // Helper Functions
@@ -167,4 +168,86 @@ export function exportAnalytics(data: DashboardData): void {
   XLSX.utils.book_append_sheet(wb, ws, 'Аналітика');
 
   downloadWorkbook(wb, `analytics_${getTimestamp()}.xlsx`);
+}
+
+// ============================================
+// Shift Export
+// ============================================
+
+const activityTypeLabels: Record<string, string> = {
+  sale: 'Продаж',
+  writeOff: 'Списання',
+  productEdit: 'Редагування товару',
+  productCreate: 'Створення товару',
+  productDelete: 'Видалення товару',
+  paymentConfirm: 'Підтвердження оплати',
+  customerCreate: 'Новий клієнт',
+  supply: 'Поставка',
+};
+
+function formatActivityDetails(activity: Activity): string {
+  const { type, details } = activity;
+
+  switch (type) {
+    case 'sale':
+      return `${details.customerName} - ${details.totalAmount} грн (${details.items?.length || 0} позицій)`;
+    case 'writeOff':
+      return `${details.flowerName} (${details.length} см) - ${details.qty} шт, причина: ${details.reason}`;
+    case 'productEdit':
+    case 'productCreate':
+    case 'productDelete':
+      return details.productName || '';
+    case 'paymentConfirm':
+      return `${details.customerName} - ${details.amount} грн`;
+    case 'customerCreate':
+      return `${details.customerName}${details.phone ? `, ${details.phone}` : ''}`;
+    default:
+      return JSON.stringify(details);
+  }
+}
+
+export function exportShift(
+  activities: Activity[],
+  summary: ShiftSummary,
+  shiftStartedAt: string
+): void {
+  // Sheet 1: Summary
+  const summaryHeaders = ['Показник', 'Значення'];
+  const summaryRows: (string | number)[][] = [
+    ['Початок зміни', new Date(shiftStartedAt).toLocaleString('uk-UA')],
+    ['Закриття зміни', new Date().toLocaleString('uk-UA')],
+    ['', ''],
+    ['Кількість продажів', summary.totalSales],
+    ['Сума продажів (грн)', summary.totalSalesAmount],
+    ['Кількість списань', summary.totalWriteOffs],
+    ['Списано штук', summary.totalWriteOffsQty],
+    ['Редагувань товарів', summary.productEdits],
+    ['Нових клієнтів', summary.customersCreated],
+    ['Всього дій', summary.activitiesCount],
+  ];
+
+  const summaryData = [summaryHeaders, ...summaryRows];
+  const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+  applyCenterAlignment(summaryWs);
+  setColumnWidths(summaryWs, summaryData);
+
+  // Sheet 2: Activities Detail
+  const activitiesHeaders = ['Час', 'Тип дії', 'Деталі'];
+  const activitiesRows: (string | number)[][] = [...activities].reverse().map(activity => [
+    new Date(activity.timestamp).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    activityTypeLabels[activity.type] || activity.type,
+    formatActivityDetails(activity),
+  ]);
+
+  const activitiesData = [activitiesHeaders, ...activitiesRows];
+  const activitiesWs = XLSX.utils.aoa_to_sheet(activitiesData);
+  applyCenterAlignment(activitiesWs);
+  setColumnWidths(activitiesWs, activitiesData);
+
+  // Create workbook with both sheets
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, summaryWs, 'Підсумок');
+  XLSX.utils.book_append_sheet(wb, activitiesWs, 'Деталі');
+
+  downloadWorkbook(wb, `shift_${getTimestamp()}.xlsx`);
 }

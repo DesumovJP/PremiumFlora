@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header, MobileMenuButton } from "@/components/layout/header";
 import { AnalyticsSection } from "@/components/sections/analytics-section";
 import { ClientsSection } from "@/components/sections/clients-section";
+import { HistorySection } from "@/components/sections/history-section";
 import { PosSection } from "@/components/sections/pos-section";
 import { ProductsSection } from "@/components/sections/products-section";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -22,8 +23,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PlannedSupplyModal } from "@/components/ui/planned-supply-modal";
 import { ShoppingBag } from "lucide-react";
-import { exportProducts, exportClients, exportAnalytics } from "@/lib/export";
+import { exportProducts, exportClients, exportAnalytics, exportShift } from "@/lib/export";
 import { useAlerts } from "@/hooks/use-alerts";
+import { useActivityLog } from "@/hooks/use-activity-log";
 import { generateOperationId } from "@/lib/uuid";
 import {
   getCustomers,
@@ -33,6 +35,7 @@ import {
   createWriteOff,
   getDashboardAnalytics,
   getFlowers,
+  closeShift as closeShiftApi,
 } from "@/lib/strapi";
 import type { Customer, DashboardData, WriteOffInput } from "@/lib/api-types";
 
@@ -60,6 +63,16 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
 
   // Alerts
   const { alerts, showSuccess, showError, dismiss } = useAlerts();
+
+  // Activity Log for shift history
+  const {
+    activities,
+    shiftStartedAt,
+    summary: shiftSummary,
+    logActivity,
+    clearActivities,
+  } = useActivityLog();
+  const [isClosingShift, setIsClosingShift] = useState(false);
 
   // Initialize theme from localStorage or system preference
   useLayoutEffect(() => {
@@ -155,6 +168,23 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
       });
 
       if (result.success) {
+        // Log activity for shift history
+        const customerName = customers.find(c => c.documentId === selectedClient)?.name || 'Невідомий';
+        const totalAmount = cart.reduce((sum, item) => sum + item.price * item.qty, 0) - discount;
+        logActivity('sale', {
+          customerName,
+          customerId: selectedClient,
+          items: cart.map((line) => ({
+            name: line.name,
+            size: line.size,
+            qty: line.qty,
+            price: line.price,
+          })),
+          totalAmount,
+          discount,
+          paymentStatus,
+        });
+
         showSuccess(
           result.alert?.title || "Замовлення створено",
           result.alert?.message || "Замовлення успішно оформлено"
@@ -194,6 +224,22 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
       });
 
       if (result.success) {
+        // Log activity for shift history
+        const flower = products.find(p => p.id === data.flowerSlug || p.slug === data.flowerSlug);
+        const reasonLabels: Record<string, string> = {
+          damage: 'Пошкодження',
+          expiry: 'Закінчення терміну',
+          adjustment: 'Інвентаризація',
+          other: 'Інша причина',
+        };
+        logActivity('writeOff', {
+          flowerName: flower?.name || data.flowerSlug,
+          length: data.length,
+          qty: data.qty,
+          reason: reasonLabels[data.reason] || data.reason,
+          notes: data.notes,
+        });
+
         showSuccess(
           result.alert?.title || "Товар списано",
           result.alert?.message || "Товар успішно списано зі складу"
@@ -225,6 +271,14 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
         ...data,
         type: 'Regular',  // Default type for new customers
       });
+
+      // Log activity for shift history
+      logActivity('customerCreate', {
+        customerName: data.name,
+        phone: data.phone,
+        email: data.email,
+      });
+
       showSuccess("Клієнта додано", "Новий клієнт успішно створений");
       await fetchCustomers();
     } catch (error) {

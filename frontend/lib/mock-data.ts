@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   Clock3,
+  History,
   Leaf,
   LineChart,
   Package,
@@ -27,6 +28,7 @@ export const navItems: NavItem[] = [
   { id: "products", label: "Товари", icon: Package },
   { id: "clients", label: "Клієнти", icon: Users },
   { id: "analytics", label: "Аналітика", icon: LineChart },
+  { id: "history", label: "Історія", icon: History },
 ];
 
 export const products: Product[] = [
