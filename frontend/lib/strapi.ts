@@ -493,8 +493,31 @@ export async function updateVariant(
 
     const authHeaders = getAuthHeaders();
 
+    // Спочатку отримуємо поточний варіант щоб зберегти flower relation
+    const currentResponse = await fetch(
+      `${API_URL}/variants/${documentId}?populate=flower`,
+      { headers: authHeaders }
+    );
+
+    if (!currentResponse.ok) {
+      return {
+        success: false,
+        error: {
+          code: "NOT_FOUND",
+          message: "Variant not found",
+        },
+      };
+    }
+
+    const currentVariant = await currentResponse.json();
+    const flowerDocumentId = currentVariant.data?.flower?.documentId;
+
+    // Зберігаємо flower relation якщо вона є
+    if (flowerDocumentId) {
+      updateData.flower = flowerDocumentId;
+    }
+
     // REST API: PUT /api/variants/:documentId
-    // Оновлюємо тільки передані поля - flower relation залишається!
     const response = await fetch(`${API_URL}/variants/${documentId}`, {
       method: "PUT",
       headers: authHeaders,
