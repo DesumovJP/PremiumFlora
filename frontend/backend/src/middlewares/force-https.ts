@@ -1,0 +1,12 @@
+export default () => {
+  return async (ctx: any, next: () => Promise<void>) => {
+    // Ensure x-forwarded-proto is set for Railway proxy
+    if (!ctx.request.header['x-forwarded-proto'] || ctx.request.header['x-forwarded-proto'] !== 'https') {
+      ctx.request.header['x-forwarded-proto'] = 'https';
+    }
+    if (!ctx.request.header['x-forwarded-host'] && ctx.request.header.host) {
+      ctx.request.header['x-forwarded-host'] = ctx.request.header.host;
+    }
+    await next();
+  };
+};
