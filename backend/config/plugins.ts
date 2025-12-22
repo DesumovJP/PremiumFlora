@@ -4,7 +4,7 @@ export default ({ env }) => ({
     config: {
       endpoint: '/graphql',
       shadowCRUD: true,
-      landingPage: false, // Disable landing page, API still works
+      landingPage: true, // Apollo Sandbox for testing
       defaultLimit: 100,
       maxLimit: 500,
       apolloServer: {
