@@ -156,29 +156,32 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       } : null,
     });
 
-    // 9. Створити Supply запис через Entity Service API
-    const supply = await strapi.entityService.create('api::supply.supply', {
+    // 9. Створити Supply запис через Documents API (для правильної роботи з draftAndPublish)
+    const supply = await strapi.documents('api::supply.supply').create({
       data: {
         filename,
         checksum,
         dateParsed: new Date().toISOString(),
         awb: effectiveAwb,
         supplier: effectiveSupplier,
-        rows: supplyRows as any, // JSON field - Entity Service handles serialization
+        rows: supplyRows as any, // JSON field
         supplyStatus,
         supplyErrors: errors as any, // JSON field
         supplyWarnings: allWarnings as any, // JSON field
         users_permissions_user: options.userId || null,
-        publishedAt: new Date().toISOString(),
       },
     });
 
-    strapi.log.info('Supply record created via Entity Service', {
+    // Опублікувати Supply через Documents API
+    await strapi.documents('api::supply.supply').publish({
+      documentId: supply.documentId,
+    });
+
+    strapi.log.info('Supply record created and published via Documents API', {
       supplyId: supply.id,
       documentId: supply.documentId,
       filename: supply.filename,
       supplyStatus: supply.supplyStatus,
-      publishedAt: supply.publishedAt,
       rowsStored: supply.rows
         ? (Array.isArray(supply.rows) ? supply.rows.length : 'not an array')
         : 'null or undefined',

@@ -121,58 +121,61 @@ export class UpserterService {
 
   /**
    * Upsert Flower
+   * Використовує Documents API для правильної роботи з draftAndPublish в Strapi v5
    */
   private async upsertFlower(
     name: string,
     slug: string
   ): Promise<{ flower: FlowerRecord; created: boolean }> {
-    // Шукати існуючу квітку за slug
-    const existing = await this.strapi.db.query('api::flower.flower').findOne({
-      where: { slug },
-      select: ['id', 'documentId', 'name', 'slug', 'publishedAt'],
+    // Шукати існуючу квітку за slug через Documents API
+    const existingFlowers = await this.strapi.documents('api::flower.flower').findMany({
+      filters: { slug: { $eq: slug } },
+      fields: ['id', 'documentId', 'name', 'slug'],
+      status: 'published',
     });
 
+    const existing = existingFlowers[0];
+
     if (existing) {
-      // Перевірити чи опублікована
-      if (!existing.publishedAt) {
-        this.strapi.log.info(`📤 Publishing existing flower: ${existing.name} (was draft)`);
-        // Опублікувати через Entity Service update (використовуємо documentId)
-        // В Strapi v5 потрібно явно вказати publishedAt та status
-        await this.strapi.entityService.update('api::flower.flower', existing.documentId, {
-          data: {
-            publishedAt: new Date().toISOString(),
-          },
-          // Явно вказуємо статус published
-        });
-        
-        // Перезавантажити для отримання оновленого publishedAt
-        const updated = await this.strapi.db.query('api::flower.flower').findOne({
-          where: { documentId: existing.documentId },
-          select: ['id', 'documentId', 'name', 'slug', 'publishedAt'],
-        });
-        if (updated) {
-          this.strapi.log.info(`✅ Flower published: ${updated.name}, publishedAt=${updated.publishedAt}`);
-          return { flower: updated as FlowerRecord, created: false };
-        }
-      }
-      this.strapi.log.debug('Flower already exists', { slug, id: existing.id, published: !!existing.publishedAt });
+      this.strapi.log.debug('Flower already exists (published)', { slug, documentId: existing.documentId });
       return { flower: existing as FlowerRecord, created: false };
     }
 
-    // Створити нову квітку через Entity Service (для draft/publish)
+    // Перевірити чи є draft версія
+    const draftFlowers = await this.strapi.documents('api::flower.flower').findMany({
+      filters: { slug: { $eq: slug } },
+      fields: ['id', 'documentId', 'name', 'slug'],
+      status: 'draft',
+    });
+
+    const draft = draftFlowers[0];
+
+    if (draft) {
+      // Опублікувати існуючий draft через Documents API
+      this.strapi.log.info(`📤 Publishing existing flower draft: ${draft.name}`);
+      await this.strapi.documents('api::flower.flower').publish({
+        documentId: draft.documentId,
+      });
+      this.strapi.log.info(`✅ Flower published: ${draft.name}`);
+      return { flower: draft as FlowerRecord, created: false };
+    }
+
+    // Створити нову квітку через Documents API
     this.strapi.log.info(`🌸 Creating new flower: ${name} (${slug})`);
-    const created = await this.strapi.entityService.create('api::flower.flower', {
+    const created = await this.strapi.documents('api::flower.flower').create({
       data: {
         name,
         slug,
-        locale: 'en', // Змінено на 'en' для сумісності з Content Manager
-        publishedAt: new Date().toISOString(), // Явно вказуємо publishedAt
       },
-      // Strapi v5: явно вказуємо статус published
+      locale: 'en',
     });
 
-    this.strapi.log.info('Flower created successfully', {
-      id: created.id,
+    // Опублікувати створену квітку
+    await this.strapi.documents('api::flower.flower').publish({
+      documentId: created.documentId,
+    });
+
+    this.strapi.log.info('Flower created and published successfully', {
       documentId: created.documentId,
       name: created.name,
       slug: created.slug,
