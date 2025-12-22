@@ -1,4 +1,5 @@
 import type { Core } from "@strapi/strapi";
+import { cleanupDuplicates } from "./scripts/cleanup-duplicates";
 
 const flowersData = [
   {
@@ -255,8 +256,13 @@ export default async function bootstrap({ strapi }: { strapi: Core.Strapi }) {
   // Set up authenticated permissions for API endpoints
   await setupAuthenticatedPermissions(strapi);
 
-  // Fix flowers without slugs
+  // Clean up duplicate records (run once to fix existing duplicates)
+  await cleanupDuplicates(strapi);
+
+  // Fix flowers without slugs (uses Documents API to avoid creating duplicates)
   await fixFlowersWithoutSlugs(strapi);
+
+  // Publish all draft flowers (uses Documents API to avoid creating duplicates)
   await publishAllFlowers(strapi);
 }
 
@@ -431,9 +437,9 @@ async function fixFlowersWithoutSlugs(strapi: Core.Strapi) {
         .replace(/^-|-$/g, '');
     };
 
-    // Find all flowers
-    const flowers = await strapi.db.query("api::flower.flower").findMany({
-      where: {},
+    // Use Documents API to find all flowers
+    const flowers = await strapi.documents("api::flower.flower").findMany({
+      fields: ["documentId", "name", "slug"],
     });
 
     let fixedCount = 0;
@@ -442,8 +448,9 @@ async function fixFlowersWithoutSlugs(strapi: Core.Strapi) {
       if (!flower.slug && flower.name) {
         const slug = generateSlug(flower.name);
 
-        await strapi.db.query("api::flower.flower").update({
-          where: { documentId: flower.documentId },
+        // Use Documents API update method
+        await strapi.documents("api::flower.flower").update({
+          documentId: flower.documentId,
           data: { slug },
         });
 
@@ -466,24 +473,19 @@ async function publishAllFlowers(strapi: Core.Strapi) {
   try {
     strapi.log.info("📤 Publishing all unpublished flowers...");
 
-    // Find all flowers without publishedAt
-    const flowers = await strapi.db.query("api::flower.flower").findMany({
-      where: {
-        publishedAt: null,
-      },
-      select: ['id', 'documentId', 'name', 'slug', 'publishedAt'],
+    // Use Documents API to find unpublished flowers (draft status)
+    const draftFlowers = await strapi.documents("api::flower.flower").findMany({
+      status: "draft",
+      fields: ["documentId", "name", "slug"],
     });
 
     let publishedCount = 0;
 
-    for (const flower of flowers) {
+    for (const flower of draftFlowers) {
       try {
-        // Use db.query with documentId for Strapi v5
-        await strapi.db.query("api::flower.flower").update({
-          where: { documentId: flower.documentId },
-          data: {
-            publishedAt: new Date().toISOString(),
-          },
+        // Use Documents API publish() method - this is the correct way in Strapi v5
+        await strapi.documents("api::flower.flower").publish({
+          documentId: flower.documentId,
         });
         strapi.log.info(`✅ Published flower: "${flower.name}" (${flower.slug})`);
         publishedCount++;
