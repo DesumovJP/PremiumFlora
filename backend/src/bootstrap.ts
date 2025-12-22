@@ -294,7 +294,12 @@ async function setupPublicPermissions(strapi: Core.Strapi) {
       { action: "api::pos.pos.createWriteOff", enabled: true },
       { action: "api::pos.pos.confirmPayment", enabled: true },
       // Analytics API
-      { action: "api::analytics.analytics.getDashboard", enabled: true },
+      { action: "api::analytics.analytics.dashboard", enabled: true },
+      { action: "api::analytics.analytics.stock", enabled: true },
+      { action: "api::analytics.analytics.sales", enabled: true },
+      { action: "api::analytics.analytics.writeOffs", enabled: true },
+      { action: "api::analytics.analytics.topCustomers", enabled: true },
+      { action: "api::analytics.analytics.dailySales", enabled: true },
       // Customer API
       { action: "api::customer.customer.find", enabled: true },
       { action: "api::customer.customer.findOne", enabled: true },
@@ -361,7 +366,12 @@ async function setupAuthenticatedPermissions(strapi: Core.Strapi) {
       { action: "api::pos.pos.createWriteOff", enabled: true },
       { action: "api::pos.pos.confirmPayment", enabled: true },
       // Analytics API
-      { action: "api::analytics.analytics.getDashboard", enabled: true },
+      { action: "api::analytics.analytics.dashboard", enabled: true },
+      { action: "api::analytics.analytics.stock", enabled: true },
+      { action: "api::analytics.analytics.sales", enabled: true },
+      { action: "api::analytics.analytics.writeOffs", enabled: true },
+      { action: "api::analytics.analytics.topCustomers", enabled: true },
+      { action: "api::analytics.analytics.dailySales", enabled: true },
       // Customer API
       { action: "api::customer.customer.find", enabled: true },
       { action: "api::customer.customer.findOne", enabled: true },
