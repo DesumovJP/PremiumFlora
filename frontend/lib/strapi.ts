@@ -386,6 +386,8 @@ export async function updateFlower(
     imageId?: number | null;
   }
 ): Promise<ApiResponse<void>> {
+  console.log("🌸 updateFlower called:", { documentId, data });
+
   try {
     const updateData: Record<string, unknown> = {};
 
@@ -400,27 +402,33 @@ export async function updateFlower(
     }
 
     const authHeaders = getAuthHeaders();
+    const url = `${API_URL}/flowers/${documentId}?status=published`;
+
+    console.log("🌸 PUT request:", { url, updateData });
 
     // Strapi v5 REST API: PUT /api/flowers/:documentId?status=published
     // status=published оновлює published версію напряму (без створення draft)
-    const response = await fetch(`${API_URL}/flowers/${documentId}?status=published`, {
+    const response = await fetch(url, {
       method: "PUT",
       headers: authHeaders,
       body: JSON.stringify({ data: updateData }),
     });
 
+    const responseData = await response.json().catch(() => ({}));
+    console.log("🌸 PUT response:", { status: response.status, ok: response.ok, data: responseData });
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("Error updating flower via REST:", errorData);
+      console.error("🌸 Error updating flower via REST:", responseData);
       return {
         success: false,
         error: {
           code: "UPDATE_FAILED",
-          message: errorData.error?.message || `HTTP ${response.status}`,
+          message: responseData.error?.message || `HTTP ${response.status}`,
         },
       };
     }
 
+    console.log("🌸 Flower updated successfully");
     return { success: true };
   } catch (error) {
     console.error("Error updating flower:", error);
@@ -481,12 +489,14 @@ export async function updateVariant(
     const authHeaders = getAuthHeaders();
 
     // Спочатку отримуємо поточний варіант щоб зберегти flower relation
+    console.log("🔍 Fetching current variant:", documentId);
     const currentResponse = await fetch(
       `${API_URL}/variants/${documentId}?populate=flower`,
       { headers: authHeaders }
     );
 
     if (!currentResponse.ok) {
+      console.error("🔍 Variant not found:", documentId);
       return {
         success: false,
         error: {
@@ -497,12 +507,17 @@ export async function updateVariant(
     }
 
     const currentVariant = await currentResponse.json();
+    console.log("🔍 Current variant data:", currentVariant);
+
     const flowerDocumentId = currentVariant.data?.flower?.documentId;
+    console.log("🔍 Flower documentId from current variant:", flowerDocumentId);
 
     // Зберігаємо flower relation якщо вона є
     if (flowerDocumentId) {
       updateData.flower = flowerDocumentId;
     }
+
+    console.log("📝 Final updateData for variant:", updateData);
 
     // REST API: PUT /api/variants/:documentId
     const response = await fetch(`${API_URL}/variants/${documentId}`, {
@@ -511,9 +526,11 @@ export async function updateVariant(
       body: JSON.stringify({ data: updateData }),
     });
 
+    const responseData = await response.json().catch(() => ({}));
+    console.log("📝 Variant PUT response:", { status: response.status, data: responseData });
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("Error updating variant via REST:", errorData);
+      console.error("Error updating variant via REST:", responseData);
       return {
         success: false,
         error: {
