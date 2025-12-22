@@ -268,12 +268,25 @@ export class UpserterService {
     // Створити новий варіант
     this.strapi.log.info(`🌱 Creating variant: ${flower.name} ${variantLength}cm - stock ${row.stock}, price ${finalPrice} UAH`);
 
+    // Отримати внутрішній ID квітки через db.query (Documents API може повертати id по-різному)
+    const flowerFromDb = await this.strapi.db.query('api::flower.flower').findOne({
+      where: { documentId: flower.documentId },
+      select: ['id'],
+    });
+
+    if (!flowerFromDb) {
+      this.strapi.log.error(`❌ Could not find flower in database: ${flower.documentId}`);
+      throw new Error(`Flower not found: ${flower.documentId}`);
+    }
+
+    this.strapi.log.info(`🔗 Linking variant to flower: documentId=${flower.documentId}, internalId=${flowerFromDb.id}`);
+
     const created = await this.strapi.db.query('api::variant.variant').create({
       data: {
         length: variantLength,
         stock: row.stock,
         price: finalPrice, // Використовуємо розраховану ціну
-        flower: flower.id,
+        flower: flowerFromDb.id, // Використовуємо внутрішній ID з db.query
         locale: 'en', // Змінено на 'en' для сумісності з Content Manager
         // Не потрібен publishedAt, бо draftAndPublish: false
       },
@@ -282,7 +295,8 @@ export class UpserterService {
     this.strapi.log.info('Variant created successfully', {
       variantId: created.id,
       documentId: (created as VariantRecord).documentId,
-      flowerId: flower.id,
+      flowerId: flowerFromDb.id,
+      flowerDocumentId: flower.documentId,
       length: variantLength,
     });
 
