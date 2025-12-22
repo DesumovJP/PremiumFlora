@@ -1,4 +1,19 @@
 export default ({ env }) => ({
+  // GraphQL plugin configuration
+  graphql: {
+    config: {
+      endpoint: '/graphql',
+      shadowCRUD: true,
+      playgroundAlways: env('NODE_ENV') !== 'production',
+      defaultLimit: 100,
+      maxLimit: 500,
+      apolloServer: {
+        tracing: false,
+        introspection: true,
+      },
+    },
+  },
+
   // DigitalOcean Spaces upload provider (only in production)
   ...(env('NODE_ENV') === 'production' && env('DO_SPACE_KEY') && {
     upload: {
