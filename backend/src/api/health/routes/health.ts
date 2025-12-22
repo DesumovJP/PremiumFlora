@@ -11,6 +11,7 @@ export default {
       path: '/health',
       handler: 'health.index',
       config: {
+        auth: false,
         policies: [],
         middlewares: [],
       },
