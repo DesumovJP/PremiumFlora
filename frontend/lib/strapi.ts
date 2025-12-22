@@ -457,10 +457,9 @@ export async function updateVariant(
 
     const currentVariant = currentData.variant;
 
-    const updateData: Record<string, unknown> = {
-      length: currentVariant.length,
-      flower: currentVariant.flower?.documentId || null,
-    };
+    // НЕ включаємо flower в updateData - ми оновлюємо тільки price і stock!
+    // Включення flower: null або невірного значення відключає варіант від квітки
+    const updateData: Record<string, unknown> = {};
 
     if (data.price !== undefined) {
       const priceValue = Number(data.price);
