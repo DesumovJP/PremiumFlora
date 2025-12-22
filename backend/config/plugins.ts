@@ -5,6 +5,7 @@ export default ({ env }) => ({
       config: {
         provider: '@strapi/provider-upload-aws-s3',
         providerOptions: {
+          rootPath: env('DO_SPACE_ROOT_PATH'),
           s3Options: {
             credentials: {
               accessKeyId: env('DO_SPACE_KEY'),
