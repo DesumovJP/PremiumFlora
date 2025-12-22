@@ -21,7 +21,15 @@ export function createGraphQLClient(token?: string): GraphQLClient {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  return new GraphQLClient(GRAPHQL_URL, { headers });
+  return new GraphQLClient(GRAPHQL_URL, {
+    headers,
+    // Вимкнути кешування Next.js для актуальних даних
+    fetch: (url, options) =>
+      fetch(url, {
+        ...options,
+        cache: "no-store",
+      }),
+  });
 }
 
 /**
