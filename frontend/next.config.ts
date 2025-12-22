@@ -44,7 +44,7 @@ const nextConfig: NextConfig = {
   },
   // Redirect Strapi admin to Railway backend
   async redirects() {
-    const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL || process.env.STRAPI_URL;
+    const strapiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_STRAPI_URL || process.env.STRAPI_URL;
     
     if (strapiUrl) {
       return [
