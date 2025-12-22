@@ -478,7 +478,9 @@ async function publishAllFlowers(strapi: Core.Strapi) {
 
     for (const flower of flowers) {
       try {
-        await strapi.entityService.update('api::flower.flower', flower.documentId, {
+        // Use db.query with documentId for Strapi v5
+        await strapi.db.query("api::flower.flower").update({
+          where: { documentId: flower.documentId },
           data: {
             publishedAt: new Date().toISOString(),
           },
