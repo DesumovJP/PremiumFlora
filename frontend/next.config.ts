@@ -42,6 +42,22 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizeCss: true,
   },
+  // Redirect Strapi admin to Railway backend
+  async redirects() {
+    const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL || process.env.STRAPI_URL;
+    
+    if (strapiUrl) {
+      return [
+        {
+          source: "/strapi-admin/:path*",
+          destination: `${strapiUrl}/admin/:path*`,
+          permanent: false,
+        },
+      ];
+    }
+    
+    return [];
+  },
 };
 
 export default nextConfig;
