@@ -323,6 +323,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
       // 1. Завантажити нове зображення, якщо є
       let imageId: number | null = null;
+      let imageUploadError: string | null = null;
       if (editData.image) {
         try {
           const imageFormData = new FormData();
@@ -341,12 +342,28 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           if (imageResponse.ok) {
             const imageData = await imageResponse.json();
             imageId = imageData[0]?.id || null;
+            if (!imageId) {
+              imageUploadError = "Зображення завантажено, але не отримано ID";
+            }
           } else {
-            console.error("Failed to upload image:", await imageResponse.text());
+            const errorText = await imageResponse.text();
+            console.error("Failed to upload image:", errorText);
+            imageUploadError = `Помилка завантаження зображення: ${imageResponse.status}`;
           }
         } catch (imageError) {
           console.error("Error uploading image:", imageError);
-          // Продовжуємо без зображення, якщо завантаження не вдалося
+          imageUploadError = imageError instanceof Error ? imageError.message : "Невідома помилка завантаження";
+        }
+      }
+
+      // Попередити користувача про помилку завантаження зображення
+      if (imageUploadError) {
+        const continueWithoutImage = window.confirm(
+          `${imageUploadError}\n\nПродовжити збереження без зміни зображення?`
+        );
+        if (!continueWithoutImage) {
+          setIsSavingEdit(false);
+          return;
         }
       }
 
@@ -407,7 +424,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                   price: variant.price,
                   stock: variant.stock,
                   flower: editingProduct.documentId,
-                  locale: "uk",
+                  locale: "en", // Strapi v5 uses "en" as default locale
                 },
               }),
             });
@@ -594,6 +611,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
       // Спочатку завантажити зображення, якщо є
       let imageId: number | null = null;
+      let imageUploadError: string | null = null;
       if (draft.image) {
         const imageFormData = new FormData();
         imageFormData.append("files", draft.image);
@@ -604,16 +622,37 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           uploadHeaders.Authorization = (authHeaders as Record<string, string>).Authorization;
         }
 
-        const imageResponse = await fetch(`${STRAPI_URL}/api/upload`, {
-          method: "POST",
-          headers: uploadHeaders,
-          body: imageFormData,
-        });
-        if (imageResponse.ok) {
-          const imageData = await imageResponse.json();
-          imageId = imageData[0]?.id || null;
-        } else {
-          console.error("Помилка завантаження зображення:", await imageResponse.text());
+        try {
+          const imageResponse = await fetch(`${STRAPI_URL}/api/upload`, {
+            method: "POST",
+            headers: uploadHeaders,
+            body: imageFormData,
+          });
+          if (imageResponse.ok) {
+            const imageData = await imageResponse.json();
+            imageId = imageData[0]?.id || null;
+            if (!imageId) {
+              imageUploadError = "Зображення завантажено, але не отримано ID";
+            }
+          } else {
+            const errorText = await imageResponse.text();
+            console.error("Помилка завантаження зображення:", errorText);
+            imageUploadError = `Помилка завантаження: ${imageResponse.status}`;
+          }
+        } catch (err) {
+          console.error("Помилка завантаження зображення:", err);
+          imageUploadError = err instanceof Error ? err.message : "Невідома помилка";
+        }
+      }
+
+      // Попередити користувача про помилку завантаження зображення
+      if (imageUploadError) {
+        const continueWithoutImage = window.confirm(
+          `${imageUploadError}\n\nПродовжити створення товару без зображення?`
+        );
+        if (!continueWithoutImage) {
+          setIsSaving(false);
+          return;
         }
       }
 
@@ -647,29 +686,10 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         flowerSlug = flowerData.data.slug;
       } else {
         // Створити нову квітку
-        // Генеруємо slug з назви (транслітерація + kebab-case)
-        const generateSlug = (name: string) => {
-          const translitMap: Record<string, string> = {
-            'а': 'a', 'б': 'b', 'в': 'v', 'г': 'h', 'ґ': 'g', 'д': 'd', 'е': 'e', 'є': 'ye',
-            'ж': 'zh', 'з': 'z', 'и': 'y', 'і': 'i', 'ї': 'yi', 'й': 'y', 'к': 'k', 'л': 'l',
-            'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
-            'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ь': '', 'ю': 'yu',
-            'я': 'ya', ' ': '-',
-          };
-          return name
-            .toLowerCase()
-            .split('')
-            .map(char => translitMap[char] || char)
-            .join('')
-            .replace(/[^a-z0-9-]/g, '')
-            .replace(/-+/g, '-')
-            .replace(/^-|-$/g, '');
-        };
-
+        // Slug генерується автоматично backend lifecycle hook (не дублюємо логіку тут)
         const createData: any = {
           name: draft.flowerName,
-          slug: generateSlug(draft.flowerName),
-          locale: "uk",
+          locale: "en", // Strapi v5 uses "en" as default locale
           publishedAt: new Date().toISOString(),
         };
         if (imageId) {
@@ -696,14 +716,11 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         flowerDocumentId = flowerData.data.documentId;
         flowerSlug = flowerData.data.slug;
 
-        // Діагностика: перевірити чи slug збережено
         console.log("🌸 Flower created:", {
           id: flowerData.data.id,
           documentId: flowerData.data.documentId,
           name: flowerData.data.name,
           slug: flowerData.data.slug,
-          sentSlug: createData.slug,
-          slugMatch: flowerData.data.slug === createData.slug,
         });
       }
 
@@ -717,9 +734,9 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           continue;
         }
 
-        // Перевірити чи існує варіант
+        // Перевірити чи існує варіант (використовуємо documentId для Strapi v5)
         const existingVariantResponse = await fetch(
-          `${API_URL}/variants?filters[flower][id][$eq]=${flowerId}&filters[length][$eq]=${length}`,
+          `${API_URL}/variants?filters[flower][documentId][$eq]=${flowerDocumentId}&filters[length][$eq]=${length}`,
           { headers: authHeaders }
         );
         const existingVariantData = await existingVariantResponse.json();
@@ -738,7 +755,8 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                 length,
                 price,
                 stock,
-                locale: "uk",
+                flower: flowerDocumentId, // Use documentId for relation
+                locale: "en", // Strapi v5 uses "en" as default locale
               },
             }),
           });
@@ -758,8 +776,8 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                 length,
                 price,
                 stock,
-                flower: flowerId,
-                locale: "uk",
+                flower: flowerDocumentId, // Use documentId for relation
+                locale: "en", // Strapi v5 uses "en" as default locale
               },
             }),
           });
