@@ -481,23 +481,32 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
                       >
                         {item.isNew ? (
                           // Новий товар - редаговані поля
-                          <div className="flex-1 space-y-2">
-                            <Input
-                              type="text"
-                              value={item.flowerName}
-                              onChange={(e) => updateNewItem(item.id, "flowerName", e.target.value)}
-                              placeholder="Назва квітки"
-                              className="text-sm font-semibold h-8"
-                            />
-                            <Input
-                              type="number"
-                              value={item.length}
-                              onChange={(e) =>
-                                updateNewItem(item.id, "length", parseInt(e.target.value) || 0)
-                              }
-                              placeholder="Довжина (см)"
-                              className="text-xs h-8"
-                            />
+                          <div className="flex-1 flex items-center gap-2">
+                            <div className="flex-1 min-w-0">
+                              <label className="block text-[10px] text-slate-500 dark:text-admin-text-muted mb-0.5">Назва</label>
+                              <Input
+                                type="text"
+                                value={item.flowerName}
+                                onChange={(e) => updateNewItem(item.id, "flowerName", e.target.value)}
+                                placeholder="Введіть назву"
+                                className="text-sm font-semibold h-8"
+                              />
+                            </div>
+                            <div className="w-20 shrink-0">
+                              <label className="block text-[10px] text-slate-500 dark:text-admin-text-muted mb-0.5">Довжина</label>
+                              <div className="relative">
+                                <Input
+                                  type="number"
+                                  value={item.length}
+                                  onChange={(e) =>
+                                    updateNewItem(item.id, "length", parseInt(e.target.value) || 0)
+                                  }
+                                  placeholder="50"
+                                  className="text-xs h-8 pr-7"
+                                />
+                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-admin-text-muted">см</span>
+                              </div>
+                            </div>
                           </div>
                         ) : (
                           // Існуючий товар

@@ -34,7 +34,8 @@ export function Modal({
         <Dialog.Overlay className="admin-surface-overlay fixed inset-0 z-50 bg-black/30 backdrop-blur-sm data-[state=open]:animate-fade-in data-[state=closed]:animate-out data-[state=closed]:fade-out" />
         <Dialog.Content
           className={cn(
-            "admin-surface admin-optimized fixed left-1/2 top-1/2 z-50 w-[calc(100%-1.5rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-slate-100 dark:border-admin-border bg-white/95 dark:bg-admin-surface-elevated p-5 shadow-xl shadow-emerald-500/10 outline-none data-[state=open]:animate-scale-in data-[state=closed]:animate-out data-[state=closed]:fade-out sm:top-10 sm:-translate-y-0 sm:max-h-[calc(100%-5rem)] flex flex-col",
+            "admin-surface admin-optimized fixed left-1/2 z-50 w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-2xl border border-slate-100 dark:border-admin-border bg-white/95 dark:bg-admin-surface-elevated p-5 shadow-xl shadow-emerald-500/10 outline-none data-[state=open]:animate-scale-in data-[state=closed]:animate-out data-[state=closed]:fade-out",
+            "top-4 max-h-[calc(100%-2rem)] sm:top-10 sm:max-h-[calc(100%-5rem)] flex flex-col",
             sizeMap[size]
           )}
         >
