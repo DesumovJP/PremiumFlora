@@ -360,7 +360,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
     <div className="border-b border-slate-100 dark:border-admin-border last:border-b-0">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-admin-surface transition-colors"
+        className="flex w-full items-center gap-3 px-4 py-3 text-left bg-white dark:bg-admin-surface hover:bg-slate-50 dark:hover:bg-[#21262d] transition-colors"
       >
         <div
           className={cn(

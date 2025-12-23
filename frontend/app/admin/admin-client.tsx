@@ -351,18 +351,28 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
 
   const addToCart = (product: Product, variant: Variant) => {
     const id = `${product.id}-${variant.length}`;
-    const addQty = 25;
+    let addQty = 25;
 
     // Перевірка stock перед додаванням
     const currentInCart = cart.find((line) => line.id === id)?.qty || 0;
-    const newQty = currentInCart + addQty;
+    const availableToAdd = variant.stock - currentInCart;
 
-    if (newQty > variant.stock) {
+    // Якщо не можна додати 25, додаємо скільки є
+    if (availableToAdd <= 0) {
       showWarning(
         "Недостатньо на складі",
-        `${product.name} (${variant.size}): доступно ${variant.stock} шт, в кошику ${currentInCart} шт`
+        `${product.name} (${variant.size}): весь доступний запас вже в кошику (${currentInCart} шт)`
       );
       return;
+    }
+
+    if (addQty > availableToAdd) {
+      // Додаємо скільки є і показуємо інфо
+      addQty = availableToAdd;
+      showWarning(
+        "Додано залишок",
+        `${product.name} (${variant.size}): додано ${addQty} шт (весь доступний залишок)`
+      );
     }
 
     setCart((current) => {
