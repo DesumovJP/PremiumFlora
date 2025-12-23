@@ -511,6 +511,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
       // 5. Оновити існуючі варіанти та створити нові
       const activeVariants = editData.variants.filter(v => !v.isDeleted);
+      const changesLog: Record<string, { from: unknown; to: unknown }> = {};
 
       for (const variant of activeVariants) {
         try {
@@ -540,8 +541,14 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
             if (!createResponse.ok) {
               const errorData = await createResponse.json().catch(() => ({}));
               variantErrors.push(`Новий варіант ${variant.length} см: ${errorData.error?.message || "Помилка створення"}`);
+            } else {
+              // Логуємо створення нового варіанту
+              changesLog[`Новий варіант ${variant.length} см`] = { from: '-', to: `${variant.stock} шт, ${variant.price} грн` };
             }
           } else {
+            // Знаходимо оригінальний варіант для порівняння
+            const originalVariant = editData.originalVariants.find(ov => ov.documentId === variant.documentId);
+
             // Оновити існуючий варіант
             const variantResult = await updateVariant(variant.documentId, {
               price: variant.price,
@@ -551,6 +558,14 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
             if (!variantResult || !variantResult.success) {
               const errorMessage = variantResult?.error?.message || variantResult?.error?.code || "Невідома помилка";
               variantErrors.push(`Варіант ${variant.length} см: ${errorMessage}`);
+            } else if (originalVariant) {
+              // Логуємо зміни, якщо вони є
+              if (originalVariant.stock !== variant.stock) {
+                changesLog[`${variant.length} см - кількість`] = { from: originalVariant.stock, to: variant.stock };
+              }
+              if (originalVariant.price !== variant.price) {
+                changesLog[`${variant.length} см - ціна`] = { from: originalVariant.price, to: variant.price };
+              }
             }
           }
         } catch (variantError) {
@@ -559,9 +574,21 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         }
       }
 
+      // Логуємо редагування продукту, якщо були зміни
+      if (onLogActivity && Object.keys(changesLog).length > 0) {
+        onLogActivity('productEdit', {
+          productName: editingProduct.name,
+          productId: editingProduct.documentId,
+          changes: changesLog,
+        });
+      }
+
       // Показуємо попередження, якщо були помилки
       if (variantErrors.length > 0) {
         alert(`Деякі варіанти не вдалося обробити:\n${variantErrors.join("\n")}`);
+      } else {
+        // Показуємо повідомлення про успіх
+        alert('Зміни успішно збережено!');
       }
 
       // 5. Оновити список продуктів
