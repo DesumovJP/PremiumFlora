@@ -1315,15 +1315,28 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                   </div>
                 )}
                 {flowerSearchQuery && !draft.flowerId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDraft((prev) => ({ ...prev, flowerName: flowerSearchQuery }));
-                    }}
-                    className="text-sm text-emerald-600 hover:text-emerald-700"
-                  >
-                    + Створити нову квітку "{flowerSearchQuery}"
-                  </button>
+                  <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-3">
+                    <p className="text-sm text-amber-800 dark:text-amber-300 mb-2">
+                      Квітку "{flowerSearchQuery}" не знайдено
+                    </p>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={draft.flowerName === flowerSearchQuery}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setDraft((prev) => ({ ...prev, flowerName: flowerSearchQuery }));
+                          } else {
+                            setDraft((prev) => ({ ...prev, flowerName: "" }));
+                          }
+                        }}
+                        className="h-4 w-4 rounded border-amber-300 text-emerald-600 focus:ring-emerald-500"
+                      />
+                      <span className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">
+                        Створити нову квітку з назвою "{flowerSearchQuery}"
+                      </span>
+                    </label>
+                  </div>
                 )}
               </div>
             </div>
