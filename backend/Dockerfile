@@ -12,9 +12,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production --ignore-scripts && \
-    npm rebuild better-sqlite3
+# Install all dependencies (including dev for build)
+RUN npm install
 
 # Copy source code
 COPY . .
@@ -22,8 +21,14 @@ COPY . .
 # Build Strapi admin
 RUN npm run build
 
+# Remove dev dependencies after build
+RUN npm prune --omit=dev
+
 # Expose port
 EXPOSE 1337
+
+# Set environment
+ENV NODE_ENV=production
 
 # Start Strapi
 CMD ["npm", "run", "start"]
