@@ -914,7 +914,8 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
     setOpen(false);
     } catch (error) {
       console.error("Помилка збереження:", error);
-      alert("Помилка збереження. Спробуйте ще раз.");
+      const errorMessage = error instanceof Error ? error.message : "Невідома помилка";
+      alert(`Помилка збереження: ${errorMessage}`);
     } finally {
       setIsSaving(false);
     }
