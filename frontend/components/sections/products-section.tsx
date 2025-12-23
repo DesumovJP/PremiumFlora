@@ -132,7 +132,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
   const [isWritingOff, setIsWritingOff] = useState(false);
 
   // Sorting state
-  type SortKey = 'name' | 'price' | 'updatedAt';
+  type SortKey = 'name' | 'price' | 'stock' | 'updatedAt';
   type SortDirection = 'asc' | 'desc';
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -152,6 +152,12 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           const minPriceB = Math.min(...b.variants.map(v => v.price));
           comparison = minPriceA - minPriceB;
           break;
+        case 'stock':
+          // Сортуємо за загальною кількістю на складі
+          const totalStockA = a.variants.reduce((sum, v) => sum + v.stock, 0);
+          const totalStockB = b.variants.reduce((sum, v) => sum + v.stock, 0);
+          comparison = totalStockA - totalStockB;
+          break;
         case 'updatedAt':
           const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
           const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
@@ -170,7 +176,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
     } else {
       // Новий ключ - встановлюємо його та дефолтний напрямок
       setSortKey(key);
-      setSortDirection(key === 'updatedAt' ? 'desc' : 'asc');
+      setSortDirection(key === 'updatedAt' || key === 'stock' ? 'desc' : 'asc');
     }
   };
 
@@ -1008,6 +1014,17 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
             >
               Ціна
               {sortKey === 'price' && (
+                <ArrowUpDown className={cn("h-3 w-3", sortDirection === 'desc' && "rotate-180")} />
+              )}
+            </Button>
+            <Button
+              variant={sortKey === 'stock' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleSort('stock')}
+              className="gap-1"
+            >
+              Кількість
+              {sortKey === 'stock' && (
                 <ArrowUpDown className={cn("h-3 w-3", sortDirection === 'desc' && "rotate-180")} />
               )}
             </Button>
