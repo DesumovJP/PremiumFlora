@@ -5,6 +5,24 @@
 export default {
   routes: [
     {
+      method: 'GET',
+      path: '/shifts/current',
+      handler: 'shift.getCurrent',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
+    {
+      method: 'POST',
+      path: '/shifts/current/activity',
+      handler: 'shift.addActivity',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
+    {
       method: 'POST',
       path: '/shifts/close',
       handler: 'shift.closeShift',

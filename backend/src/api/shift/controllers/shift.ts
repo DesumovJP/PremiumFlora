@@ -1,7 +1,7 @@
 /**
  * Shift Controller
  *
- * Контролер для управління робочими змінами
+ * Контролер для управління робочими змінами з підтримкою багатьох пристроїв
  */
 
 import type { Core } from '@strapi/strapi';
@@ -14,79 +14,249 @@ interface Activity {
   details: Record<string, unknown>;
 }
 
+interface AddActivityBody {
+  activity: Activity;
+}
+
 interface CloseShiftBody {
-  activities: Activity[];
-  summary: {
-    totalSales: number;
-    totalSalesAmount: number;
-    totalWriteOffs: number;
-    totalWriteOffsQty: number;
-    activitiesCount: number;
-  };
-  startedAt: string;
   notes?: string;
+}
+
+// Helper для розрахунку summary
+function calculateSummary(activities: Activity[]) {
+  return activities.reduce(
+    (acc, activity) => {
+      switch (activity.type) {
+        case 'sale':
+          acc.totalSales += 1;
+          acc.totalSalesAmount += (activity.details.totalAmount as number) || 0;
+          break;
+        case 'writeOff':
+          acc.totalWriteOffs += 1;
+          acc.totalWriteOffsQty += (activity.details.qty as number) || 0;
+          break;
+      }
+      acc.activitiesCount += 1;
+      return acc;
+    },
+    {
+      totalSales: 0,
+      totalSalesAmount: 0,
+      totalWriteOffs: 0,
+      totalWriteOffsQty: 0,
+      activitiesCount: 0,
+    }
+  );
 }
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   /**
-   * POST /api/shifts/close
-   * Закрити зміну та зберегти історію
+   * GET /api/shifts/current
+   * Отримати або створити поточну активну зміну
    */
-  async closeShift(ctx: Context) {
+  async getCurrent(ctx: Context) {
     try {
-      const body = ctx.request.body as CloseShiftBody;
-
-      if (!body.activities || !Array.isArray(body.activities)) {
-        ctx.status = 400;
-        ctx.body = {
-          success: false,
-          error: {
-            code: 'MISSING_ACTIVITIES',
-            message: 'activities array is required',
-          },
-        };
-        return;
-      }
-
-      if (!body.startedAt) {
-        ctx.status = 400;
-        ctx.body = {
-          success: false,
-          error: {
-            code: 'MISSING_STARTED_AT',
-            message: 'startedAt is required',
-          },
-        };
-        return;
-      }
-
-      const now = new Date().toISOString();
-
-      // Створюємо закриту зміну
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const shift = await (strapi.documents as any)('api::shift.shift').create({
+      const docs = strapi.documents as any;
+
+      // Шукаємо активну зміну
+      const activeShifts = await docs('api::shift.shift').findMany({
+        filters: { status: 'active' },
+        limit: 1,
+      });
+
+      if (activeShifts && activeShifts.length > 0) {
+        ctx.body = {
+          success: true,
+          data: activeShifts[0],
+        };
+        return;
+      }
+
+      // Якщо немає активної зміни - створюємо нову
+      const now = new Date().toISOString();
+      const newShift = await docs('api::shift.shift').create({
         data: {
-          startedAt: body.startedAt,
-          closedAt: now,
-          status: 'closed',
-          activities: body.activities,
-          summary: body.summary,
-          totalSales: body.summary?.totalSales || 0,
-          totalSalesAmount: body.summary?.totalSalesAmount || 0,
-          totalWriteOffs: body.summary?.totalWriteOffs || 0,
-          totalWriteOffsQty: body.summary?.totalWriteOffsQty || 0,
-          notes: body.notes || null,
+          startedAt: now,
+          closedAt: null,
+          status: 'active',
+          activities: [],
+          summary: null,
+          totalSales: 0,
+          totalSalesAmount: 0,
+          totalWriteOffs: 0,
+          totalWriteOffsQty: 0,
+          notes: null,
         },
       });
 
       ctx.status = 201;
       ctx.body = {
         success: true,
+        data: newShift,
+        isNew: true,
+      };
+    } catch (error) {
+      strapi.log.error('Shift getCurrent error:', error);
+
+      ctx.status = 500;
+      ctx.body = {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'An error occurred while getting current shift',
+        },
+      };
+    }
+  },
+
+  /**
+   * POST /api/shifts/current/activity
+   * Додати активність до поточної зміни
+   */
+  async addActivity(ctx: Context) {
+    try {
+      const body = ctx.request.body as AddActivityBody;
+
+      if (!body.activity || !body.activity.id || !body.activity.type) {
+        ctx.status = 400;
+        ctx.body = {
+          success: false,
+          error: {
+            code: 'INVALID_ACTIVITY',
+            message: 'activity with id and type is required',
+          },
+        };
+        return;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const docs = strapi.documents as any;
+
+      // Знаходимо активну зміну
+      const activeShifts = await docs('api::shift.shift').findMany({
+        filters: { status: 'active' },
+        limit: 1,
+      });
+
+      let shift;
+      if (!activeShifts || activeShifts.length === 0) {
+        // Створюємо нову зміну якщо немає активної
+        const now = new Date().toISOString();
+        shift = await docs('api::shift.shift').create({
+          data: {
+            startedAt: now,
+            closedAt: null,
+            status: 'active',
+            activities: [body.activity],
+            summary: null,
+            totalSales: 0,
+            totalSalesAmount: 0,
+            totalWriteOffs: 0,
+            totalWriteOffsQty: 0,
+            notes: null,
+          },
+        });
+      } else {
+        shift = activeShifts[0];
+        const currentActivities = (shift.activities || []) as Activity[];
+
+        // Перевіряємо чи активність вже не існує (idempotency)
+        const exists = currentActivities.some((a: Activity) => a.id === body.activity.id);
+        if (exists) {
+          ctx.body = {
+            success: true,
+            data: shift,
+            idempotent: true,
+          };
+          return;
+        }
+
+        // Додаємо нову активність
+        const updatedActivities = [body.activity, ...currentActivities];
+
+        shift = await docs('api::shift.shift').update({
+          documentId: shift.documentId,
+          data: {
+            activities: updatedActivities,
+          },
+        });
+      }
+
+      ctx.body = {
+        success: true,
         data: shift,
+      };
+    } catch (error) {
+      strapi.log.error('Shift addActivity error:', error);
+
+      ctx.status = 500;
+      ctx.body = {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'An error occurred while adding activity',
+        },
+      };
+    }
+  },
+
+  /**
+   * POST /api/shifts/close
+   * Закрити поточну активну зміну
+   */
+  async closeShift(ctx: Context) {
+    try {
+      const body = ctx.request.body as CloseShiftBody;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const docs = strapi.documents as any;
+
+      // Знаходимо активну зміну
+      const activeShifts = await docs('api::shift.shift').findMany({
+        filters: { status: 'active' },
+        limit: 1,
+      });
+
+      if (!activeShifts || activeShifts.length === 0) {
+        ctx.status = 404;
+        ctx.body = {
+          success: false,
+          error: {
+            code: 'NO_ACTIVE_SHIFT',
+            message: 'No active shift found to close',
+          },
+        };
+        return;
+      }
+
+      const shift = activeShifts[0];
+      const activities = (shift.activities || []) as Activity[];
+      const summary = calculateSummary(activities);
+      const now = new Date().toISOString();
+
+      // Закриваємо зміну
+      const closedShift = await docs('api::shift.shift').update({
+        documentId: shift.documentId,
+        data: {
+          closedAt: now,
+          status: 'closed',
+          summary,
+          totalSales: summary.totalSales,
+          totalSalesAmount: summary.totalSalesAmount,
+          totalWriteOffs: summary.totalWriteOffs,
+          totalWriteOffsQty: summary.totalWriteOffsQty,
+          notes: body.notes || null,
+        },
+      });
+
+      ctx.body = {
+        success: true,
+        data: closedShift,
         alert: {
           type: 'success',
           title: 'Зміну закрито',
-          message: `Зміну успішно закрито. Записано ${body.activities.length} дій.`,
+          message: `Зміну успішно закрито. Записано ${activities.length} дій.`,
         },
       };
     } catch (error) {
@@ -117,14 +287,18 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       const { page = 1, pageSize = 10 } = ctx.query;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const shifts = await (strapi.documents as any)('api::shift.shift').findMany({
+      const docs = strapi.documents as any;
+
+      const shifts = await docs('api::shift.shift').findMany({
+        filters: { status: 'closed' },
         sort: { closedAt: 'desc' },
         limit: Number(pageSize),
         offset: (Number(page) - 1) * Number(pageSize),
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const total = await (strapi.documents as any)('api::shift.shift').count({});
+      const total = await docs('api::shift.shift').count({
+        filters: { status: 'closed' },
+      });
 
       ctx.body = {
         success: true,

@@ -1054,21 +1054,70 @@ export interface Shift {
 }
 
 export interface CloseShiftInput {
-  activities: ShiftActivity[];
-  summary: ShiftSummary;
-  startedAt: string;
   notes?: string;
 }
 
+export interface AddActivityInput {
+  activity: ShiftActivity;
+}
+
 /**
- * Закрити зміну та зберегти в Strapi
+ * Отримати або створити поточну активну зміну
  */
-export async function closeShift(data: CloseShiftInput): Promise<ApiResponse<Shift>> {
+export async function getCurrentShift(): Promise<ApiResponse<Shift> & { isNew?: boolean }> {
+  try {
+    const response = await fetch(`${API_URL}/shifts/current`, {
+      cache: "no-store",
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Error getting current shift:", error);
+    return {
+      success: false,
+      error: {
+        code: "NETWORK_ERROR",
+        message: "Failed to connect to server",
+      },
+    };
+  }
+}
+
+/**
+ * Додати активність до поточної зміни
+ */
+export async function addShiftActivity(data: AddActivityInput): Promise<ApiResponse<Shift> & { idempotent?: boolean }> {
+  try {
+    const response = await fetch(`${API_URL}/shifts/current/activity`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Error adding shift activity:", error);
+    return {
+      success: false,
+      error: {
+        code: "NETWORK_ERROR",
+        message: "Failed to connect to server",
+      },
+    };
+  }
+}
+
+/**
+ * Закрити поточну активну зміну
+ */
+export async function closeShift(data?: CloseShiftInput): Promise<ApiResponse<Shift>> {
   try {
     const response = await fetch(`${API_URL}/shifts/close`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify(data),
+      body: JSON.stringify(data || {}),
     });
 
     const result = await response.json();

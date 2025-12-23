@@ -70,7 +70,8 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
     shiftStartedAt,
     summary: shiftSummary,
     logActivity,
-    clearActivities,
+    refreshActivities,
+    isLoading: isLoadingShift,
   } = useActivityLog();
   const [isClosingShift, setIsClosingShift] = useState(false);
 
@@ -391,29 +392,15 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
 
     setIsClosingShift(true);
     try {
-      const result = await closeShiftApi({
-        activities: activities.map(a => ({
-          id: a.id,
-          type: a.type,
-          timestamp: a.timestamp,
-          details: a.details as Record<string, unknown>,
-        })),
-        summary: {
-          totalSales: shiftSummary.totalSales,
-          totalSalesAmount: shiftSummary.totalSalesAmount,
-          totalWriteOffs: shiftSummary.totalWriteOffs,
-          totalWriteOffsQty: shiftSummary.totalWriteOffsQty,
-          activitiesCount: shiftSummary.activitiesCount,
-        },
-        startedAt: shiftStartedAt,
-      });
+      const result = await closeShiftApi();
 
       if (result.success) {
         showSuccess(
           result.alert?.title || "Зміну закрито",
           result.alert?.message || "Зміна успішно збережена в архів"
         );
-        clearActivities();
+        // Refresh to get the new empty shift
+        await refreshActivities();
       } else {
         showError(
           result.alert?.title || "Помилка",
@@ -517,7 +504,9 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             summary={shiftSummary}
             onCloseShift={handleCloseShift}
             onExportShift={handleExportShift}
+            onRefresh={refreshActivities}
             isClosingShift={isClosingShift}
+            isLoading={isLoadingShift}
           />
         </TabsContent>
       </div>

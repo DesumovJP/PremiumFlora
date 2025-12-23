@@ -37,6 +37,7 @@ import {
   Clock,
   CheckCircle2,
   History,
+  RefreshCw,
   XCircle,
 } from 'lucide-react';
 
@@ -50,7 +51,9 @@ interface HistorySectionProps {
   summary: ShiftSummary;
   onCloseShift: () => Promise<void>;
   onExportShift: () => void;
+  onRefresh?: () => Promise<void>;
   isClosingShift?: boolean;
+  isLoading?: boolean;
 }
 
 // ============================================
@@ -398,13 +401,26 @@ export function HistorySection({
   summary,
   onCloseShift,
   onExportShift,
+  onRefresh,
   isClosingShift = false,
+  isLoading = false,
 }: HistorySectionProps) {
   const [closeModalOpen, setCloseModalOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleCloseShift = async () => {
     await onCloseShift();
     setCloseModalOpen(false);
+  };
+
+  const handleRefresh = async () => {
+    if (!onRefresh) return;
+    setIsRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   return (
@@ -428,6 +444,17 @@ export function HistorySection({
             </CardDescription>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
+            {onRefresh && (
+              <Button
+                variant="outline"
+                onClick={handleRefresh}
+                disabled={isRefreshing || isLoading}
+                size="icon"
+                title="Оновити (синхронізація з іншими пристроями)"
+              >
+                <RefreshCw className={cn("h-4 w-4", (isRefreshing || isLoading) && "animate-spin")} />
+              </Button>
+            )}
             <Button
               variant="outline"
               onClick={onExportShift}
