@@ -40,12 +40,14 @@ function extractImageUrl(image: GraphQLImage | null): string {
 function convertFlowerToProduct(flower: GraphQLFlower): Product {
   const imageUrl = extractImageUrl(flower.image);
 
-  const variants: Variant[] = (flower.variants || []).map((v) => ({
-    size: `${v.length} см`,
-    price: v.price ?? 0,
-    stock: v.stock ?? 0,
-    length: v.length ?? 0,
-  }));
+  const variants: Variant[] = (flower.variants || [])
+    .filter((v) => v != null)
+    .map((v) => ({
+      size: `${v.length} см`,
+      price: v.price ?? 0,
+      stock: v.stock ?? 0,
+      length: v.length ?? 0,
+    }));
 
   return {
     id: flower.slug,
@@ -114,7 +116,9 @@ export function useFlowers(options?: UseFlowersOptions): UseFlowersResult {
         return true;
       });
 
-      const products = uniqueFlowers.map(convertFlowerToProduct);
+      const products = uniqueFlowers
+        .map(convertFlowerToProduct)
+        .filter((product) => product.variants && product.variants.length > 0);
       setFlowers(products);
     } catch (err) {
       console.error("Error fetching flowers:", err);
@@ -155,7 +159,14 @@ export function useFlowerBySlug(slug: string | null) {
         });
 
         if (data.flowers && data.flowers.length > 0) {
-          setFlower(convertFlowerToProduct(data.flowers[0]));
+          const product = convertFlowerToProduct(data.flowers[0]);
+
+          // Якщо немає варіантів – вважаємо, що квітки немає для клієнта
+          if (!product.variants || product.variants.length === 0) {
+            setFlower(null);
+          } else {
+            setFlower(product);
+          }
         } else {
           setFlower(null);
         }
@@ -187,7 +198,9 @@ export async function getFlowers(options?: { fresh?: boolean }): Promise<Product
       status: "LIVE",
     });
 
-    return data.flowers.map(convertFlowerToProduct);
+    return data.flowers
+      .map(convertFlowerToProduct)
+      .filter((product) => product.variants && product.variants.length > 0);
   } catch (error) {
     console.error("Error fetching flowers:", error);
     return [];
@@ -204,7 +217,12 @@ export async function getFlowerBySlug(slug: string): Promise<Product | null> {
     });
 
     if (data.flowers && data.flowers.length > 0) {
-      return convertFlowerToProduct(data.flowers[0]);
+      const product = convertFlowerToProduct(data.flowers[0]);
+      // Якщо немає варіантів – не повертаємо цю квітку
+      if (!product.variants || product.variants.length === 0) {
+        return null;
+      }
+      return product;
     }
     return null;
   } catch (error) {
@@ -230,7 +248,9 @@ export async function searchFlowers(query: string): Promise<Product[]> {
       pageSize: 100,
     });
 
-    return data.flowers.map(convertFlowerToProduct);
+    return data.flowers
+      .map(convertFlowerToProduct)
+      .filter((product) => product.variants && product.variants.length > 0);
   } catch (error) {
     console.error("Error searching flowers:", error);
     return [];
@@ -251,8 +271,15 @@ export async function getFlowerDetails(slug: string) {
     }
 
     const flower = data.flowers[0];
+    const product = convertFlowerToProduct(flower);
+
+    // Якщо немає варіантів – не показуємо детальну сторінку
+    if (!product.variants || product.variants.length === 0) {
+      return null;
+    }
+
     return {
-      ...convertFlowerToProduct(flower),
+      ...product,
       description: blocksToText(flower.description),
       slug: flower.slug,
     };

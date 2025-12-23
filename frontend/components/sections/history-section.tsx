@@ -391,7 +391,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
       </button>
       {isExpanded && (
         <div className="px-4 pb-4 pt-0 ml-12 animate-fade-in">
-          <div className="rounded-lg border border-slate-100 dark:border-admin-border bg-slate-50/50 dark:bg-admin-surface p-3">
+          <div className="rounded-lg border border-slate-100 dark:border-admin-border bg-slate-50/70 dark:bg-admin-surface-elevated p-3">
             {renderDetails()}
           </div>
         </div>
@@ -456,8 +456,27 @@ export function HistorySection({
     <>
       <Card className="admin-card border-none bg-white/90 dark:bg-admin-surface shadow-md">
         <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle className="text-2xl">Історія зміни</CardTitle>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className="text-2xl">Історія зміни</CardTitle>
+              {onRefresh && (
+                <Button
+                  variant="outline"
+                  onClick={handleRefresh}
+                  disabled={isRefreshing || isLoading}
+                  size="icon"
+                  title="Оновити (синхронізація з іншими пристроями)"
+                  className="shrink-0"
+                >
+                  <RefreshCw
+                    className={cn(
+                      "h-4 w-4",
+                      (isRefreshing || isLoading) && "animate-spin"
+                    )}
+                  />
+                </Button>
+              )}
+            </div>
             <CardDescription>
               {shiftStartedAt ? (
                 <span className="flex items-center gap-2">
@@ -473,17 +492,6 @@ export function HistorySection({
             </CardDescription>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
-            {onRefresh && (
-              <Button
-                variant="outline"
-                onClick={handleRefresh}
-                disabled={isRefreshing || isLoading}
-                size="icon"
-                title="Оновити (синхронізація з іншими пристроями)"
-              >
-                <RefreshCw className={cn("h-4 w-4", (isRefreshing || isLoading) && "animate-spin")} />
-              </Button>
-            )}
             <Button
               variant="outline"
               onClick={onExportShift}

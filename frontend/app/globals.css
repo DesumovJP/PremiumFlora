@@ -82,15 +82,17 @@
   --radius-2xl: 1.5rem;    /* 24px */
   --radius-full: 9999px;
   
-  /* Typography Scale (rem) */
-  --text-xs: clamp(0.6875rem, 0.625rem + 0.125vw, 0.75rem);      /* 11px - 12px */
-  --text-sm: clamp(0.8125rem, 0.75rem + 0.125vw, 0.875rem);      /* 13px - 14px */
-  --text-base: clamp(0.9375rem, 0.875rem + 0.125vw, 1rem);       /* 15px - 16px */
-  --text-lg: clamp(1.0625rem, 1rem + 0.125vw, 1.125rem);         /* 17px - 18px */
-  --text-xl: clamp(1.1875rem, 1.125rem + 0.125vw, 1.25rem);      /* 19px - 20px */
-  --text-2xl: clamp(1.375rem, 1.25rem + 0.25vw, 1.5rem);         /* 22px - 24px */
-  --text-3xl: clamp(1.625rem, 1.5rem + 0.25vw, 1.875rem);        /* 26px - 30px */
-  --text-4xl: clamp(1.875rem, 1.75rem + 0.25vw, 2.25rem);         /* 30px - 36px */
+  /* Typography Scale (rem)
+   * ВАЖЛИВО: без залежності від vw, щоб не було стрибків при зміні ширини viewport (DevTools тощо)
+   */
+  --text-xs: 0.75rem;   /* 12px */
+  --text-sm: 0.875rem;  /* 14px */
+  --text-base: 1rem;    /* 16px */
+  --text-lg: 1.125rem;  /* 18px */
+  --text-xl: 1.25rem;   /* 20px */
+  --text-2xl: 1.5rem;   /* 24px */
+  --text-3xl: 1.875rem; /* 30px */
+  --text-4xl: 2.25rem;  /* 36px */
   
   /* Line Heights */
   --leading-tight: 1.25;
@@ -189,6 +191,8 @@ body {
   letter-spacing: var(--tracking-tight);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Фіксуємо вертикальний скролбар, щоб верстка не стрибала при відкритті DevTools */
+  overflow-y: scroll;
 }
 
 .dark body {
@@ -409,28 +413,29 @@ h6 {
 }
 
 h1 {
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  /* Фіксовані розміри без vw, щоб заголовки не стрибали при зміні ширини вікна */
+  font-size: var(--text-3xl);
   font-weight: 700;
   letter-spacing: var(--tracking-tighter);
   line-height: var(--leading-tight);
 }
 
 h2 {
-  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  font-size: var(--text-2xl);
   font-weight: 600;
   letter-spacing: var(--tracking-tight);
   line-height: var(--leading-snug);
 }
 
 h3 {
-  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  font-size: var(--text-xl);
   font-weight: 600;
   letter-spacing: var(--tracking-tight);
   line-height: var(--leading-snug);
 }
 
 h4 {
-  font-size: clamp(1.125rem, 2vw, 1.25rem);
+  font-size: var(--text-lg);
   font-weight: 600;
   letter-spacing: var(--tracking-tight);
   line-height: var(--leading-normal);
@@ -457,7 +462,8 @@ p:not([class*="text-xs"]):not([class*="text-sm"]):not([class*="text-base"]):not(
 
 /* Enhanced text utilities - Premium System */
 .text-display {
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  /* Використовуємо статичний розмір для стабільності layout */
+  font-size: 2.25rem;
   font-weight: 700;
   letter-spacing: var(--tracking-tighter);
   line-height: var(--leading-tight);
@@ -465,7 +471,7 @@ p:not([class*="text-xs"]):not([class*="text-sm"]):not([class*="text-base"]):not(
 }
 
 .text-display-sm {
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: var(--tracking-tighter);
   line-height: var(--leading-snug);
@@ -499,13 +505,14 @@ p:not([class*="text-xs"]):not([class*="text-sm"]):not([class*="text-base"]):not(
 
 /* Premium spacing utilities */
 .section-padding {
-  padding-top: clamp(var(--space-12), 8vw, var(--space-24));
-  padding-bottom: clamp(var(--space-12), 8vw, var(--space-24));
+  /* Стабільні відступи без vw */
+  padding-top: var(--space-20);
+  padding-bottom: var(--space-20);
 }
 
 .section-padding-sm {
-  padding-top: clamp(var(--space-8), 5vw, var(--space-16));
-  padding-bottom: clamp(var(--space-8), 5vw, var(--space-16));
+  padding-top: var(--space-12);
+  padding-bottom: var(--space-12);
 }
 
 /* Admin Panel Utilities - No backdrop-filter */
