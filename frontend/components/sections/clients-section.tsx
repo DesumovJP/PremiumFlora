@@ -97,19 +97,25 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
         const lastTransactionDate = result.data.length > 0 && result.data[0].date
           ? new Date(result.data[0].date).toLocaleDateString('uk-UA')
           : client.lastOrder;
-        
+
+        // Рахуємо суму очікуваних оплат
+        const pendingPayment = result.data
+          .filter(t => t.paymentStatus === 'expected')
+          .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
         // Оновлюємо дані клієнта в локальному стані (для синхронізації з картками)
         const updatedData: Partial<Client> = {
           orders: actualOrderCount,
           spent: actualTotalSpent,
           lastOrder: lastTransactionDate,
+          pendingPayment,
         };
-        
+
         setUpdatedClients((prev) => ({
           ...prev,
           [client.id]: updatedData,
         }));
-        
+
         // Оновлюємо selected клієнта з реальними даними
         setSelected((prev) => {
           if (!prev || prev.id !== client.id) {
@@ -165,18 +171,24 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
               const actualOrderCount = result.data.length;
               // Використовуємо totalSpent з сервера, якщо він є, інакше обчислюємо з транзакцій
               // Але якщо транзакцій менше ніж orderCount, то використовуємо totalSpent з сервера
-              const actualTotalSpent = result.data.length > 0 
+              const actualTotalSpent = result.data.length > 0
                 ? result.data.reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
                 : customer.totalSpent;
               const lastTransactionDate = result.data.length > 0 && result.data[0].date
                 ? new Date(result.data[0].date).toLocaleDateString('uk-UA')
                 : null;
 
+              // Рахуємо суму очікуваних оплат
+              const pendingPayment = result.data
+                .filter(t => t.paymentStatus === 'expected')
+                .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
               return {
                 customerId: customer.documentId,
                 orders: actualOrderCount,
                 spent: actualTotalSpent,
                 lastOrder: lastTransactionDate,
+                pendingPayment,
               };
             }
             // Якщо транзакцій немає або помилка, все одно повертаємо дані з 0 замовленнями
@@ -186,6 +198,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
               orders: 0,
               spent: customer.totalSpent || 0,
               lastOrder: null,
+              pendingPayment: 0,
             };
           } catch (error) {
             console.error(`Failed to load transactions for customer ${customer.documentId}:`, error);
@@ -194,7 +207,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
         });
 
         const results = await Promise.all(transactionPromises);
-        
+
         // Оновлюємо дані клієнтів - оновлюємо всі результати, навіть якщо замовлень 0
         const updates: Record<string, Partial<Client>> = {};
         results.forEach((result) => {
@@ -203,6 +216,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
               orders: result.orders,
               spent: result.spent,
               lastOrder: result.lastOrder || undefined,
+              pendingPayment: result.pendingPayment,
             };
           }
         });
@@ -442,6 +456,11 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                       </button>
                     </div>
                   </div>
+                  {client.pendingPayment && client.pendingPayment > 0 && (
+                    <Badge tone="warning" className="mt-2 w-fit">
+                      Очікується оплата: {client.pendingPayment.toLocaleString('uk-UA')} грн
+                    </Badge>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-2 gap-2 text-xs text-slate-700 dark:text-admin-text-secondary sm:text-sm">
@@ -500,6 +519,16 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                     <MetricBox label="Витрачено" value={`${selected.spent.toLocaleString("uk-UA")} грн`} />
                     <MetricBox label="Останнє" value={selected.lastOrder} />
                   </div>
+                  {selected.pendingPayment && selected.pendingPayment > 0 && (
+                    <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-900/20 p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-amber-800 dark:text-amber-300">Очікується оплата</span>
+                        <span className="text-lg font-bold text-amber-700 dark:text-amber-400">
+                          {selected.pendingPayment.toLocaleString('uk-UA')} грн
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   <div>
                   {isLoadingTransactions ? (
                     <div className="flex items-center justify-center py-8">

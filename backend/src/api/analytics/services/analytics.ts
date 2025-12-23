@@ -84,15 +84,23 @@ interface CategorySplit {
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   /**
-   * Отримати рівні складу
+   * Отримати рівні складу (тільки варіанти з опублікованими квітками)
    */
   async getStockLevels(): Promise<StockLevel[]> {
     const variants = await strapi.db.query('api::variant.variant').findMany({
+      where: {
+        flower: { id: { $notNull: true } },
+      },
       populate: ['flower'],
       orderBy: { stock: 'asc' },
     });
 
-    return variants.map((v: {
+    // Фільтруємо тільки варіанти з опублікованими квітками
+    const publishedVariants = variants.filter((v: { flower?: { publishedAt?: string } }) =>
+      v.flower && v.flower.publishedAt
+    );
+
+    return publishedVariants.map((v: {
       id: number;
       length: number;
       stock: number;
@@ -466,10 +474,19 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       },
     });
 
-    // Склад
-    const variants = await strapi.db.query('api::variant.variant').findMany({});
-    const totalStock = variants.reduce((sum: number, v: { stock: number }) => sum + (v.stock || 0), 0);
-    const stockValue = variants.reduce((sum: number, v: { stock: number; price: number }) =>
+    // Склад - рахуємо тільки варіанти що мають прив'язану квітку (для консистентності з UI)
+    const variants = await strapi.db.query('api::variant.variant').findMany({
+      where: {
+        flower: { id: { $notNull: true } },
+      },
+      populate: ['flower'],
+    });
+    // Фільтруємо тільки варіанти з опублікованими квітками
+    const publishedVariants = variants.filter((v: { flower?: { publishedAt?: string } }) =>
+      v.flower && v.flower.publishedAt
+    );
+    const totalStock = publishedVariants.reduce((sum: number, v: { stock: number }) => sum + (v.stock || 0), 0);
+    const stockValue = publishedVariants.reduce((sum: number, v: { stock: number; price: number }) =>
       sum + (v.stock || 0) * Number(v.price || 0), 0);
 
     return [

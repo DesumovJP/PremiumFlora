@@ -28,6 +28,7 @@ export type Client = {
   spent: number;
   lastOrder: string;
   isVip?: boolean;
+  pendingPayment?: number; // Сума очікуваних оплат
 };
 
 export type CartLine = {

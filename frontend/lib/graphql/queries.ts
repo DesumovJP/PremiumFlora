@@ -76,7 +76,7 @@ export const CUSTOMER_FRAGMENT = gql`
  * Отримати всі опубліковані квіти
  */
 export const GET_FLOWERS = gql`
-  query GetFlowers($pageSize: Int = 100) {
+  query GetFlowers($pageSize: Int = 500) {
     flowers(
       pagination: { pageSize: $pageSize }
       filters: { publishedAt: { notNull: true } }

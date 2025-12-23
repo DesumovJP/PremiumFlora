@@ -254,7 +254,7 @@ function convertTransaction(t: GraphQLTransaction): Transaction {
 export async function getFlowers(options?: { fresh?: boolean }): Promise<Product[]> {
   try {
     const data = await graphqlRequest<FlowersResponse>(GET_FLOWERS, {
-      pageSize: 100,
+      pageSize: 500,
     });
 
     // Дедуплікація по documentId (Strapi v5 може повертати кілька версій)
@@ -322,7 +322,7 @@ export async function searchFlowers(query: string): Promise<Product[]> {
   try {
     const data = await graphqlRequest<FlowersResponse>(SEARCH_FLOWERS, {
       query,
-      pageSize: 100,
+      pageSize: 500,
     });
 
     // Пошук повертає тільки квітки з варіантами
