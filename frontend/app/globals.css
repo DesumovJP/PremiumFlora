@@ -1690,16 +1690,40 @@ html {
    TOUCH-FRIENDLY MOBILE STYLES
    ============================================ */
 
-/* Touch targets - 48px minimum */
+/*
+ * Touch targets strategy:
+ * - Buttons/links: use .touch-target class or rely on natural sizing (44-48px via padding)
+ * - Checkboxes/radios: keep small visual size, expand touch area via wrapper padding
+ * - DO NOT apply global min-height/min-width to all interactive elements
+ */
+
 @media (pointer: coarse) {
-  button,
-  a,
-  [role="button"],
-  input[type="checkbox"],
-  input[type="radio"],
-  select {
-    min-height: 48px;
-    min-width: 48px;
+  /* Only apply to explicit touch-target elements, not all buttons/links */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Icon buttons (small clickable icons) - expand touch area */
+  .touch-target-icon {
+    position: relative;
+  }
+
+  .touch-target-icon::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px;
+    height: 44px;
+    /* Invisible but captures touch */
+  }
+
+  /* Checkbox/radio wrapper - provides touch area without changing visual size */
+  .touch-checkbox-wrapper {
+    padding: 12px;
+    margin: -12px;
   }
 
   /* Disable hover effects on touch */
