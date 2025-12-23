@@ -7,6 +7,7 @@ import { ClientsSection } from "@/components/sections/clients-section";
 import { HistorySection } from "@/components/sections/history-section";
 import { PosSection } from "@/components/sections/pos-section";
 import { ProductsSection } from "@/components/sections/products-section";
+import { TodoSection } from "@/components/sections/todo-section";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertToast } from "@/components/ui/alert-toast";
@@ -344,6 +345,18 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
     [cart]
   );
 
+  // Calculate pending payments count from shift activities
+  const pendingPaymentsCount = useMemo(() => {
+    return activities.filter(
+      (a) => a.type === 'sale' && a.details.paymentStatus === 'expected'
+    ).length;
+  }, [activities]);
+
+  // Handler to show pending payments (navigate to clients tab)
+  const handleShowPendingPayments = () => {
+    setTab('clients');
+  };
+
   const cartCount = useMemo(
     () => cart.reduce((acc, item) => acc + item.qty, 0),
     [cart]
@@ -554,6 +567,10 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             isLoading={isLoadingShift}
           />
         </TabsContent>
+
+        <TabsContent value="todo" className="space-y-5">
+          <TodoSection />
+        </TabsContent>
       </div>
     </Tabs>
   );
@@ -604,6 +621,8 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             brand={brandCard}
             supplyCard={supplyCard}
             onOpenSupply={() => setSupplyOpen(true)}
+            pendingPaymentsCount={pendingPaymentsCount}
+            onShowPendingPayments={handleShowPendingPayments}
           />
         </aside>
 
@@ -639,6 +658,8 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
                 brand={brandCard}
                 supplyCard={supplyCard}
                 onOpenSupply={() => setSupplyOpen(true)}
+                pendingPaymentsCount={pendingPaymentsCount}
+                onShowPendingPayments={handleShowPendingPayments}
               />
             </SheetContent>
           </Sheet>

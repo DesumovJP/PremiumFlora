@@ -6,7 +6,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { NavItem } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ComponentType, useEffect, useState } from "react";
-import { Moon, Sun, LogOut } from "lucide-react";
+import { Moon, Sun, LogOut, Package, CreditCard, Zap } from "lucide-react";
 import { logout } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 
@@ -17,9 +17,11 @@ type SidebarProps = {
   brand: { title: string; subtitle: string; icon: ComponentType<{ className?: string }> };
   supplyCard: { title: string; subtitle: string; icon: ComponentType<{ className?: string }> };
   onOpenSupply?: () => void;
+  pendingPaymentsCount?: number;
+  onShowPendingPayments?: () => void;
 };
 
-export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenSupply }: SidebarProps) {
+export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenSupply, pendingPaymentsCount = 0, onShowPendingPayments }: SidebarProps) {
   const router = useRouter();
   const BrandIcon = brand.icon;
   const SupplyIcon = supplyCard.icon;
@@ -69,7 +71,7 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
         </div>
       </div>
       <nav className="grid gap-2 text-sm font-semibold animate-stagger">
-        {navItems.map(({ id, label, icon: Icon }) => (
+        {navItems.map(({ id, label, icon: Icon, badge }) => (
           <Button
             key={id}
             variant={active === id ? "default" : "ghost"}
@@ -83,25 +85,51 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
           >
             <Icon className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
             {label}
+            {badge && (
+              <Badge className={cn(
+                "ml-auto text-[10px] px-1.5 py-0",
+                active === id
+                  ? "bg-white/20 text-white"
+                  : "bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300"
+              )}>
+                {badge}
+              </Badge>
+            )}
           </Button>
         ))}
       </nav>
-      <div className="mt-auto">
-        <Card
-          className="border-dashed border-emerald-100 dark:border-[#30363d] bg-emerald-50/60 dark:bg-emerald-900/20 cursor-pointer transition hover:border-emerald-200 dark:hover:border-emerald-500"
-          onClick={onOpenSupply}
-        >
-          <CardHeader className="space-y-2">
-            <CardTitle className="flex items-center justify-center gap-2 text-emerald-800 dark:text-emerald-300">
-              <SupplyIcon className="h-4 w-4" />
-              {supplyCard.title}
-            </CardTitle>
-            {supplyCard.subtitle && (
-              <CardDescription className="text-emerald-700 dark:text-emerald-400">{supplyCard.subtitle}</CardDescription>
+      <div className="mt-auto space-y-3">
+        {/* Quick Actions Block */}
+        <div className="rounded-2xl border border-slate-100 dark:border-[#30363d] bg-white dark:bg-admin-surface p-3 space-y-2">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-admin-text-tertiary px-1">
+            <Zap className="h-3 w-3" />
+            Швидкі дії
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2 text-sm border-emerald-100 dark:border-emerald-800/50 bg-emerald-50/50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:border-emerald-200 dark:hover:border-emerald-700"
+            onClick={onOpenSupply}
+          >
+            <Package className="h-4 w-4" />
+            Наступна поставка
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2 text-sm border-amber-100 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:border-amber-200 dark:hover:border-amber-700"
+            onClick={onShowPendingPayments}
+          >
+            <CreditCard className="h-4 w-4" />
+            Очікує оплати
+            {pendingPaymentsCount > 0 && (
+              <Badge className="ml-auto bg-amber-500 text-white text-xs px-1.5 py-0">
+                {pendingPaymentsCount}
+              </Badge>
             )}
-          </CardHeader>
-        </Card>
-        <div className="mt-3 flex gap-1.5">
+          </Button>
+        </div>
+        <div className="flex gap-1.5">
           <Button
             variant="outline"
             size="sm"

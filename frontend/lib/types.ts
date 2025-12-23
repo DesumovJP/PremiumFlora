@@ -54,6 +54,7 @@ export type NavItem = {
   id: string;
   label: string;
   icon: LucideIcon;
+  badge?: string; // Optional badge text (e.g., "Пропозиція")
 };
 
 export type Kpi = {

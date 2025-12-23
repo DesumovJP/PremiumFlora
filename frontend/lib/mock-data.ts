@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  CheckSquare,
   Clock3,
   History,
   Leaf,
@@ -29,6 +30,7 @@ export const navItems: NavItem[] = [
   { id: "clients", label: "Клієнти", icon: Users },
   { id: "history", label: "Історія", icon: History },
   { id: "analytics", label: "Аналітика", icon: LineChart },
+  { id: "todo", label: "Завдання", icon: CheckSquare, badge: "Пропозиція" },
 ];
 
 export const products: Product[] = [

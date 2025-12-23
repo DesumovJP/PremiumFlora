@@ -232,7 +232,51 @@ export function exportShift(
   applyCenterAlignment(summaryWs);
   setColumnWidths(summaryWs, summaryData);
 
-  // Sheet 2: Activities Detail
+  // Sheet 2: Sales Detail (with items breakdown)
+  const salesActivities = activities.filter(a => a.type === 'sale');
+  const salesHeaders = ['Час', 'Клієнт', 'Товар', 'Розмір', 'К-сть', 'Ціна', 'Сума', 'Статус оплати'];
+  const salesRows: (string | number)[][] = [];
+
+  salesActivities.forEach(activity => {
+    const { details, timestamp } = activity;
+    const time = new Date(timestamp).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+    const items = details.items || [];
+    const paymentStatus = details.paymentStatus === 'paid' ? 'Оплачено' : 'Очікує оплати';
+
+    if (items.length === 0) {
+      // Якщо немає деталей товарів
+      salesRows.push([time, details.customerName || '-', '-', '-', '-', '-', details.totalAmount || 0, paymentStatus]);
+    } else {
+      // Перший рядок з клієнтом
+      items.forEach((item: { name: string; size: string; qty: number; price: number }, index: number) => {
+        salesRows.push([
+          index === 0 ? time : '',
+          index === 0 ? (details.customerName || '-') : '',
+          item.name,
+          item.size,
+          item.qty,
+          item.price,
+          item.qty * item.price,
+          index === 0 ? paymentStatus : '',
+        ]);
+      });
+      // Рядок з підсумком продажу
+      salesRows.push(['', '', '', '', '', 'РАЗОМ:', details.totalAmount || 0, '']);
+    }
+  });
+
+  // Загальний підсумок продажів
+  if (salesRows.length > 0) {
+    salesRows.push(['', '', '', '', '', '', '', '']);
+    salesRows.push(['', '', '', '', '', 'ВСЬОГО:', summary.totalSalesAmount, '']);
+  }
+
+  const salesData = [salesHeaders, ...salesRows];
+  const salesWs = XLSX.utils.aoa_to_sheet(salesData);
+  applyCenterAlignment(salesWs);
+  setColumnWidths(salesWs, salesData);
+
+  // Sheet 3: All Activities
   const activitiesHeaders = ['Час', 'Тип дії', 'Деталі'];
   const activitiesRows: (string | number)[][] = [...activities].reverse().map(activity => [
     new Date(activity.timestamp).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
@@ -245,10 +289,11 @@ export function exportShift(
   applyCenterAlignment(activitiesWs);
   setColumnWidths(activitiesWs, activitiesData);
 
-  // Create workbook with both sheets
+  // Create workbook with all sheets
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, summaryWs, 'Підсумок');
-  XLSX.utils.book_append_sheet(wb, activitiesWs, 'Деталі');
+  XLSX.utils.book_append_sheet(wb, salesWs, 'Продажі');
+  XLSX.utils.book_append_sheet(wb, activitiesWs, 'Всі дії');
 
   downloadWorkbook(wb, `shift_${getTimestamp()}.xlsx`);
 }

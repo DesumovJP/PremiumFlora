@@ -191,8 +191,14 @@ body {
   letter-spacing: var(--tracking-tight);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Фіксуємо вертикальний скролбар, щоб верстка не стрибала при відкритті DevTools */
-  overflow-y: scroll;
+  /* 
+   * Стабільний layout без з'їдання правого паддінгу:
+   * - замість примусового scroll використовуємо scrollbar-gutter
+   * - скролбар з'являється лише коли потрібен, але місце під нього резервується
+   *   ➜ відступи зліва/справа виглядають однаково і на мобільних, і в DevTools
+   */
+  overflow-y: auto;
+  scrollbar-gutter: stable both-edges;
 }
 
 .dark body {
