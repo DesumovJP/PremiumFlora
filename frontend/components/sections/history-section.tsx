@@ -457,26 +457,7 @@ export function HistorySection({
       <Card className="admin-card border-none bg-white/90 dark:bg-admin-surface shadow-md">
         <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
-            <div className="flex items-center justify-between gap-3">
-              <CardTitle className="text-2xl">Історія зміни</CardTitle>
-              {onRefresh && (
-                <Button
-                  variant="outline"
-                  onClick={handleRefresh}
-                  disabled={isRefreshing || isLoading}
-                  size="icon"
-                  title="Оновити (синхронізація з іншими пристроями)"
-                  className="shrink-0"
-                >
-                  <RefreshCw
-                    className={cn(
-                      "h-4 w-4",
-                      (isRefreshing || isLoading) && "animate-spin"
-                    )}
-                  />
-                </Button>
-              )}
-            </div>
+            <CardTitle className="text-2xl">Історія зміни</CardTitle>
             <CardDescription>
               {shiftStartedAt ? (
                 <span className="flex items-center gap-2">
@@ -492,8 +473,25 @@ export function HistorySection({
             </CardDescription>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
+            {onRefresh && (
+              <Button
+                variant="outline"
+                onClick={handleRefresh}
+                disabled={isRefreshing || isLoading}
+                size="icon"
+                title="Оновити (синхронізація з іншими пристроями)"
+                className="shrink-0"
+              >
+                <RefreshCw
+                  className={cn(
+                    "h-4 w-4",
+                    (isRefreshing || isLoading) && "animate-spin"
+                  )}
+                />
+              </Button>
+            )}
             <Button
-              variant="outline"
+              className="bg-emerald-600 hover:bg-emerald-700"
               onClick={onExportShift}
               disabled={activities.length === 0}
             >
@@ -501,9 +499,9 @@ export function HistorySection({
               Експортувати
             </Button>
             <Button
+              variant="outline"
               onClick={() => setCloseModalOpen(true)}
               disabled={activities.length === 0}
-              className="bg-emerald-600 hover:bg-emerald-700"
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />
               Закрити зміну
