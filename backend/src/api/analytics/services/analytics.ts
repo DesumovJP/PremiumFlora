@@ -59,6 +59,14 @@ interface DailySale {
   revenue: number;
   avg: number;
   status: 'high' | 'mid' | 'low';
+  writeOffs: number; // Кількість списань за день
+}
+
+interface TopWriteOffFlower {
+  name: string;
+  totalQty: number;
+  totalAmount: number;
+  percentage: number;
 }
 
 interface KpiData {
@@ -230,14 +238,15 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   /**
-   * Отримати щоденні продажі за поточний місяць
+   * Отримати щоденні продажі та списання за поточний місяць
    */
   async getDailySales(): Promise<DailySale[]> {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
 
-    const transactions = await strapi.db.query('api::transaction.transaction').findMany({
+    // Отримуємо продажі
+    const sales = await strapi.db.query('api::transaction.transaction').findMany({
       where: {
         type: 'sale',
         date: { $gte: startOfMonth.toISOString() },
@@ -245,17 +254,42 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       },
     });
 
-    // Групувати по днях
-    const dailyMap = new Map<string, { orders: number; revenue: number }>();
+    // Отримуємо списання за цей місяць
+    const writeOffs = await strapi.db.query('api::transaction.transaction').findMany({
+      where: {
+        type: 'writeOff',
+        date: { $gte: startOfMonth.toISOString() },
+      },
+    });
 
-    transactions.forEach((t: { date: string; amount: number }) => {
+    // Групувати продажі по днях
+    const dailyMap = new Map<string, { orders: number; revenue: number; writeOffs: number }>();
+
+    sales.forEach((t: { date: string; amount: number }) => {
       const date = new Date(t.date);
       const key = `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}`;
 
-      const existing = dailyMap.get(key) || { orders: 0, revenue: 0 };
+      const existing = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0 };
       dailyMap.set(key, {
         orders: existing.orders + 1,
         revenue: existing.revenue + (t.amount || 0),
+        writeOffs: existing.writeOffs,
+      });
+    });
+
+    // Додаємо списання по днях
+    writeOffs.forEach((wo: { date: string; items: Array<{ qty: number }> }) => {
+      const date = new Date(wo.date);
+      const key = `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+      const items = wo.items || [];
+      const totalQty = items.reduce((sum, item) => sum + (item.qty || 0), 0);
+
+      const existing = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0 };
+      dailyMap.set(key, {
+        orders: existing.orders,
+        revenue: existing.revenue,
+        writeOffs: existing.writeOffs + totalQty,
       });
     });
 
@@ -265,7 +299,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(now.getFullYear(), now.getMonth(), day);
       const key = `${String(day).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}`;
-      const data = dailyMap.get(key) || { orders: 0, revenue: 0 };
+      const data = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0 };
 
       let status: 'high' | 'mid' | 'low' = 'low';
       if (data.orders >= 7) status = 'high';
@@ -278,10 +312,50 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         revenue: data.revenue,
         avg: data.orders > 0 ? Math.round(data.revenue / data.orders) : 0,
         status,
+        writeOffs: data.writeOffs,
       });
     }
 
     return result;
+  },
+
+  /**
+   * Отримати топ-5 квітів з найбільшим списанням
+   */
+  async getTopWriteOffFlowers(): Promise<TopWriteOffFlower[]> {
+    const writeOffs = await strapi.db.query('api::transaction.transaction').findMany({
+      where: { type: 'writeOff' },
+    });
+
+    // Агрегувати по квіткам
+    const flowerMap = new Map<string, { qty: number; amount: number }>();
+    let totalQty = 0;
+
+    writeOffs.forEach((wo: { items: Array<{ name: string; qty: number; price: number }> }) => {
+      (wo.items || []).forEach((item) => {
+        const qty = item.qty || 0;
+        const amount = qty * (item.price || 0);
+
+        const existing = flowerMap.get(item.name) || { qty: 0, amount: 0 };
+        flowerMap.set(item.name, {
+          qty: existing.qty + qty,
+          amount: existing.amount + amount,
+        });
+        totalQty += qty;
+      });
+    });
+
+    // Сортувати по кількості і взяти топ-5
+    const sorted = Array.from(flowerMap.entries())
+      .sort((a, b) => b[1].qty - a[1].qty)
+      .slice(0, 5);
+
+    return sorted.map(([name, data]) => ({
+      name,
+      totalQty: data.qty,
+      totalAmount: data.amount,
+      percentage: totalQty > 0 ? Math.round((data.qty / totalQty) * 100) : 0,
+    }));
   },
 
   /**
@@ -536,6 +610,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       stockLevels,
       writeOffSummary,
       topCustomers,
+      topWriteOffFlowers,
     ] = await Promise.all([
       this.getKpis(),
       this.getWeeklyRevenue(),
@@ -547,6 +622,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       this.getStockLevels(),
       this.getWriteOffSummary(),
       this.getTopCustomers(5),
+      this.getTopWriteOffFlowers(),
     ]);
 
     return {
@@ -560,6 +636,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       stockLevels,
       writeOffSummary,
       topCustomers,
+      topWriteOffFlowers,
     };
   },
 });

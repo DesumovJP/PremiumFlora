@@ -57,6 +57,7 @@ const emptyData: DashboardData = {
   writeOffSummary: { totalWriteOffs: 0, totalItems: 0, byReason: {}, recentWriteOffs: [] },
   topCustomers: [],
   supplyPlan: { nextDate: '', recommended: '', currentStock: 0, forecast: '' },
+  topWriteOffFlowers: [],
 };
 
 export function AnalyticsSection({
@@ -72,6 +73,7 @@ export function AnalyticsSection({
     ordersPerWeek,
     topProducts,
     dailySales,
+    topWriteOffFlowers,
   } = data ?? emptyData;
 
   const maxRevenue = Math.max(...(weeklyRevenue.length ? weeklyRevenue : [0]));
@@ -356,6 +358,47 @@ export function AnalyticsSection({
           </Card>
         </div>
 
+        {/* Топ-5 квітів по списаннях */}
+        {topWriteOffFlowers && topWriteOffFlowers.length > 0 && (
+          <Card className="border-slate-100 dark:border-admin-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="dark:text-admin-text-primary">Топ-5 квітів по списаннях</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {topWriteOffFlowers.map((flower, idx) => (
+                <div key={flower.name} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="h-6 w-6 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-xs font-bold text-rose-600 dark:text-rose-400">
+                        {idx + 1}
+                      </span>
+                      <span className="font-semibold text-slate-800 dark:text-admin-text-primary">{flower.name}</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-right">
+                      <span className="text-rose-600 dark:text-rose-400 font-medium">{flower.totalQty} шт</span>
+                      <span className="text-slate-500 dark:text-admin-text-muted text-xs w-14">{flower.percentage}%</span>
+                    </div>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-200 dark:bg-admin-border">
+                    <div
+                      className="h-full rounded-full bg-rose-500 dark:bg-rose-400"
+                      style={{ width: `${flower.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-admin-border">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500 dark:text-admin-text-muted">Всього списано:</span>
+                  <span className="font-bold text-rose-600 dark:text-rose-400">
+                    {topWriteOffFlowers.reduce((sum, f) => sum + f.totalQty, 0)} шт
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface">
           <CardHeader className="pb-2 pl-6 pr-5 pt-5">
             <CardTitle className="dark:text-admin-text-primary">Календар продажів по днях · {currentMonth} {currentYear}</CardTitle>
@@ -417,6 +460,17 @@ export function AnalyticsSection({
                         {item.avg.toLocaleString("uk-UA")} грн
                       </p>
                     </div>
+                    <div className="rounded-xl bg-slate-50 dark:bg-admin-surface px-2 py-1.5 sm:px-3 sm:py-2">
+                      <p className="text-xs uppercase text-slate-400 dark:text-admin-text-muted">Списано</p>
+                      <p className={cn(
+                        "text-sm font-semibold",
+                        item.writeOffs > 0
+                          ? "text-rose-600 dark:text-rose-400"
+                          : "text-slate-400 dark:text-admin-text-muted"
+                      )}>
+                        {item.writeOffs > 0 ? `${item.writeOffs} шт` : "—"}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -432,6 +486,7 @@ export function AnalyticsSection({
                     <th className="py-2 pl-4 pr-4">Замовлень</th>
                     <th className="py-2 pl-4 pr-4">Виручка (грн)</th>
                     <th className="py-2 pl-4 pr-4">Середній чек</th>
+                    <th className="py-2 pl-4 pr-4">Списано</th>
                     <th className="py-2 pl-4 pr-4">Статус</th>
                   </tr>
                 </thead>
@@ -445,6 +500,13 @@ export function AnalyticsSection({
                         {item.revenue.toLocaleString("uk-UA")}
                       </td>
                       <td className="py-2 pl-4 pr-4 text-slate-700 dark:text-admin-text-secondary">{item.avg.toLocaleString("uk-UA")}</td>
+                      <td className="py-2 pl-4 pr-4">
+                        {item.writeOffs > 0 ? (
+                          <span className="text-rose-600 dark:text-rose-400 font-medium">{item.writeOffs} шт</span>
+                        ) : (
+                          <span className="text-slate-400 dark:text-admin-text-muted">—</span>
+                        )}
+                      </td>
                       <td className="py-2 pl-4 pr-4">
                         <span
                           className={cn(

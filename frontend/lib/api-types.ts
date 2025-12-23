@@ -193,6 +193,14 @@ export interface DailySale {
   revenue: number;
   avg: number;
   status: 'high' | 'mid' | 'low';
+  writeOffs: number; // Кількість списань за день
+}
+
+export interface TopWriteOffFlower {
+  name: string;
+  totalQty: number;
+  totalAmount: number;
+  percentage: number;
 }
 
 export interface KpiData {
@@ -231,6 +239,7 @@ export interface DashboardData {
   stockLevels: StockLevel[];
   writeOffSummary: WriteOffSummary;
   topCustomers: TopCustomer[];
+  topWriteOffFlowers: TopWriteOffFlower[];
 }
 
 // ============================================
