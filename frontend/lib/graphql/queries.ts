@@ -41,6 +41,7 @@ export const FLOWER_FRAGMENT = gql`
     slug
     description
     publishedAt
+    updatedAt
     image {
       ...ImageFields
     }

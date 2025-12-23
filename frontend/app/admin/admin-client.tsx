@@ -471,6 +471,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             onOpenExport={() => exportProducts(products)}
             onWriteOff={handleWriteOff}
             onRefresh={refreshProducts}
+            onLogActivity={logActivity}
           />
         </TabsContent>
 

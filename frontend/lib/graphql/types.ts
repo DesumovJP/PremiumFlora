@@ -65,6 +65,7 @@ export interface GraphQLFlower {
   image: GraphQLImage | null;
   variants: GraphQLVariant[];
   publishedAt: string | null;
+  updatedAt: string;
 }
 
 export interface FlowersResponse {

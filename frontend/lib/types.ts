@@ -15,6 +15,7 @@ export type Product = {
   description?: Array<{ type: string; children: Array<{ type: string; text: string }> }>; // Strapi blocks
   image: string;
   variants: Variant[];
+  updatedAt?: string; // ISO date string
 };
 
 export type Client = {

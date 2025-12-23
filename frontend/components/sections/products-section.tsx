@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { StatPill } from "@/components/ui/stat-pill";
 import { Product, Variant } from "@/lib/types";
-import { AlertTriangle, CheckCircle2, Trash, PackageMinus, Plus, X, Pencil, Eye, Download, Package } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Trash, PackageMinus, Plus, X, Pencil, Eye, Download, Package, ArrowUpDown } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { ImportModal } from "@/components/ui/import-modal";
 import { useState, useMemo, useEffect } from "react";
@@ -49,6 +49,14 @@ type ProductsSectionProps = {
   onOpenExport: () => void;
   onWriteOff?: (data: Omit<WriteOffInput, "operationId">) => Promise<boolean>;
   onRefresh?: () => void;
+  onLogActivity?: (type: 'variantDelete' | 'productEdit', details: {
+    productName?: string;
+    productId?: string;
+    variantLength?: number;
+    variantPrice?: number;
+    variantStock?: number;
+    changes?: Record<string, { from: unknown; to: unknown }>;
+  }) => void;
 };
 
 type WriteOffReason = 'damage' | 'expiry' | 'adjustment' | 'other';
@@ -60,7 +68,7 @@ const reasonLabels: Record<WriteOffReason, string> = {
   other: 'Інша причина',
 };
 
-export function ProductsSection({ summary, products, onOpenSupply, onOpenExport, onWriteOff, onRefresh }: ProductsSectionProps) {
+export function ProductsSection({ summary, products, onOpenSupply, onOpenExport, onWriteOff, onRefresh, onLogActivity }: ProductsSectionProps) {
   const LowStockIcon = AlertTriangle;
   
   // Знаходимо продукти з низьким залишком (< 150)
@@ -123,6 +131,49 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
   });
   const [isWritingOff, setIsWritingOff] = useState(false);
 
+  // Sorting state
+  type SortKey = 'name' | 'price' | 'updatedAt';
+  type SortDirection = 'asc' | 'desc';
+  const [sortKey, setSortKey] = useState<SortKey>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  // Sorted products
+  const sortedProducts = useMemo(() => {
+    return [...products].sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortKey) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name, 'uk');
+          break;
+        case 'price':
+          // Сортуємо за мінімальною ціною
+          const minPriceA = Math.min(...a.variants.map(v => v.price));
+          const minPriceB = Math.min(...b.variants.map(v => v.price));
+          comparison = minPriceA - minPriceB;
+          break;
+        case 'updatedAt':
+          const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          comparison = dateA - dateB;
+          break;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [products, sortKey, sortDirection]);
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      // Якщо клікаємо по тому ж ключу, змінюємо напрямок
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Новий ключ - встановлюємо його та дефолтний напрямок
+      setSortKey(key);
+      setSortDirection(key === 'updatedAt' ? 'desc' : 'asc');
+    }
+  };
+
   // Edit state
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -136,12 +187,20 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       price: number;
       stock: number;
       isNew?: boolean;
+      isDeleted?: boolean;
+    }>;
+    originalVariants: Array<{
+      documentId: string;
+      length: number;
+      price: number;
+      stock: number;
     }>;
   }>({
     image: null,
     imagePreview: null,
     description: "",
     variants: [],
+    originalVariants: [],
   });
   const [isLoadingEditData, setIsLoadingEditData] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -250,16 +309,18 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           ? (imageUrl.startsWith('http') ? imageUrl : `${STRAPI_URL}${imageUrl}`)
           : null;
 
+        const mappedVariants = flowerData.variants.map((v) => ({
+          documentId: v.documentId,
+          length: v.length,
+          price: v.price,
+          stock: v.stock,
+        }));
         setEditData({
           image: null,
           imagePreview,
           description: descriptionText,
-          variants: flowerData.variants.map((v) => ({
-            documentId: v.documentId,
-            length: v.length,
-            price: v.price,
-            stock: v.stock,
-          })),
+          variants: mappedVariants,
+          originalVariants: mappedVariants.map(v => ({ ...v })),
         });
       }
     } catch (error) {
@@ -306,10 +367,23 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
   };
 
   const removeEditVariant = (documentId: string) => {
-    setEditData((prev) => ({
-      ...prev,
-      variants: prev.variants.filter((v) => v.documentId !== documentId),
-    }));
+    setEditData((prev) => {
+      // Для нових варіантів - просто видаляємо зі списку
+      const variant = prev.variants.find(v => v.documentId === documentId);
+      if (variant?.isNew) {
+        return {
+          ...prev,
+          variants: prev.variants.filter((v) => v.documentId !== documentId),
+        };
+      }
+      // Для існуючих - позначаємо як видалені
+      return {
+        ...prev,
+        variants: prev.variants.map((v) =>
+          v.documentId === documentId ? { ...v, isDeleted: true } : v
+        ),
+      };
+    });
   };
 
   const handleSaveEdit = async () => {
@@ -403,10 +477,42 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         return;
       }
 
-      // 4. Оновити існуючі варіанти та створити нові
+      // 4. Видалити позначені варіанти
       const variantErrors: string[] = [];
+      const deletedVariants = editData.variants.filter(v => v.isDeleted && !v.isNew);
 
-      for (const variant of editData.variants) {
+      for (const variant of deletedVariants) {
+        try {
+          const deleteResponse = await fetch(`${STRAPI_URL}/api/variants/${variant.documentId}`, {
+            method: "DELETE",
+            headers: authHeaders,
+          });
+
+          if (deleteResponse.ok) {
+            // Логуємо видалення в історію
+            if (onLogActivity) {
+              onLogActivity('variantDelete', {
+                productName: editingProduct.name,
+                productId: editingProduct.documentId,
+                variantLength: variant.length,
+                variantPrice: variant.price,
+                variantStock: variant.stock,
+              });
+            }
+          } else {
+            const errorData = await deleteResponse.json().catch(() => ({}));
+            variantErrors.push(`Видалення варіанту ${variant.length} см: ${errorData.error?.message || "Помилка видалення"}`);
+          }
+        } catch (deleteError) {
+          const errorMessage = deleteError instanceof Error ? deleteError.message : "Невідома помилка";
+          variantErrors.push(`Видалення варіанту ${variant.length} см: ${errorMessage}`);
+        }
+      }
+
+      // 5. Оновити існуючі варіанти та створити нові
+      const activeVariants = editData.variants.filter(v => !v.isDeleted);
+
+      for (const variant of activeVariants) {
         try {
           if (variant.isNew) {
             // Створити новий варіант
@@ -467,7 +573,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
       setEditModalOpen(false);
       setEditingProduct(null);
-      setEditData({ image: null, imagePreview: null, description: "", variants: [] });
+      setEditData({ image: null, imagePreview: null, description: "", variants: [], originalVariants: [] });
     } catch (error) {
       console.error("Error saving edit:", error);
       alert("Помилка збереження. Спробуйте ще раз.");
@@ -851,9 +957,49 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           <StatPill label="Середня ціна варіанта" value={`${avgPrice} грн`} />
           <StatPill label="Середній запас/варіант" value={`${avgStockPerVariant} шт`} />
         </div>
+        {/* Сортування */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-sm text-slate-500 dark:text-admin-text-tertiary">Сортування:</span>
+          <div className="flex gap-1">
+            <Button
+              variant={sortKey === 'name' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleSort('name')}
+              className="gap-1"
+            >
+              Назва
+              {sortKey === 'name' && (
+                <ArrowUpDown className={cn("h-3 w-3", sortDirection === 'desc' && "rotate-180")} />
+              )}
+            </Button>
+            <Button
+              variant={sortKey === 'price' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleSort('price')}
+              className="gap-1"
+            >
+              Ціна
+              {sortKey === 'price' && (
+                <ArrowUpDown className={cn("h-3 w-3", sortDirection === 'desc' && "rotate-180")} />
+              )}
+            </Button>
+            <Button
+              variant={sortKey === 'updatedAt' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleSort('updatedAt')}
+              className="gap-1"
+            >
+              Оновлено
+              {sortKey === 'updatedAt' && (
+                <ArrowUpDown className={cn("h-3 w-3", sortDirection === 'desc' && "rotate-180")} />
+              )}
+            </Button>
+          </div>
+        </div>
+
         {/* Мобільна карткова версія без горизонтального скролу */}
         <div className="grid gap-3 sm:hidden animate-stagger">
-          {products.map((product, index) => {
+          {sortedProducts.map((product, index) => {
             const total = product.variants.reduce((acc, variant) => acc + variant.stock, 0);
             // Використовуємо стабільний ключ: documentId, slug або комбінацію з індексом
             const key = product.documentId || product.slug || `product-fallback-${index}-${product.name}`;
@@ -949,11 +1095,12 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                 <TableHead className="px-4 text-center">Назва</TableHead>
                 <TableHead className="text-center">Висоти / ціни / кількість</TableHead>
                 <TableHead className="text-center min-w-[7.5rem] px-6">Загальний запас</TableHead>
+                <TableHead className="text-center min-w-[6.5rem] px-4">Оновлено</TableHead>
                 <TableHead className="text-center min-w-[11.25rem] px-6">Дії</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.map((product, index) => {
+              {sortedProducts.map((product, index) => {
                 const total = product.variants.reduce((acc, variant) => acc + variant.stock, 0);
                 // Використовуємо стабільний ключ: documentId, slug або комбінацію з індексом
                 const key = product.documentId || product.slug || `product-fallback-${index}-${product.name}`;
@@ -993,6 +1140,15 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                       </div>
                     </TableCell>
                     <TableCell className="font-semibold text-emerald-700 min-w-[7.5rem] px-6 text-center align-middle">{total} шт</TableCell>
+                    <TableCell className="text-xs text-slate-500 dark:text-admin-text-tertiary min-w-[6.5rem] px-4 text-center align-middle">
+                      {product.updatedAt
+                        ? new Date(product.updatedAt).toLocaleDateString('uk-UA', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: '2-digit',
+                          })
+                        : '—'}
+                    </TableCell>
                     <TableCell className="min-w-[11.25rem] px-6 text-center align-middle">
                       <div className="flex items-center justify-center gap-1">
                         <Button
@@ -1482,7 +1638,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         setEditModalOpen(v);
         if (!v) {
           setEditingProduct(null);
-          setEditData({ image: null, imagePreview: null, description: "", variants: [] });
+          setEditData({ image: null, imagePreview: null, description: "", variants: [], originalVariants: [] });
         }
       }}
       title="Редагувати товар"
@@ -1593,10 +1749,10 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
               </Button>
             </div>
             <div className="space-y-3">
-              {editData.variants.length === 0 ? (
+              {editData.variants.filter(v => !v.isDeleted).length === 0 ? (
                 <p className="text-sm text-slate-500 py-2">Немає варіантів. Додайте хоча б один.</p>
               ) : (
-                editData.variants.map((variant) => (
+                editData.variants.filter(v => !v.isDeleted).map((variant) => (
                   <div
                     key={variant.documentId}
                     className={cn(
@@ -1661,21 +1817,53 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                         className="mt-1"
                       />
                     </div>
-                    {variant.isNew && (
-                      <div className="flex items-end">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeEditVariant(variant.documentId)}
-                          className="text-rose-600 hover:text-rose-700 hover:bg-rose-50"
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
+                    <div className="flex items-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeEditVariant(variant.documentId)}
+                        className="text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                        title="Видалити варіант"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))
+              )}
+              {/* Показуємо видалені варіанти як закреслені */}
+              {editData.variants.filter(v => v.isDeleted).length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-admin-border">
+                  <p className="text-xs text-slate-500">Буде видалено після збереження:</p>
+                  {editData.variants.filter(v => v.isDeleted).map((variant) => (
+                    <div
+                      key={variant.documentId}
+                      className="flex items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50/50 dark:border-rose-800 dark:bg-rose-900/20 p-2"
+                    >
+                      <span className="text-sm text-rose-600 line-through">
+                        {variant.length} см · {variant.price} грн · {variant.stock} шт
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          // Відмінити видалення
+                          setEditData((prev) => ({
+                            ...prev,
+                            variants: prev.variants.map((v) =>
+                              v.documentId === variant.documentId ? { ...v, isDeleted: false } : v
+                            ),
+                          }));
+                        }}
+                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-xs h-7 px-2"
+                      >
+                        Відмінити
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>

@@ -27,8 +27,8 @@ export const navItems: NavItem[] = [
   { id: "pos", label: "POS Термінал", icon: ShoppingBag },
   { id: "products", label: "Товари", icon: Package },
   { id: "clients", label: "Клієнти", icon: Users },
-  { id: "analytics", label: "Аналітика", icon: LineChart },
   { id: "history", label: "Історія", icon: History },
+  { id: "analytics", label: "Аналітика", icon: LineChart },
 ];
 
 export const products: Product[] = [

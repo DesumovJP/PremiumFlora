@@ -24,6 +24,7 @@ export type ActivityType =
   | 'productEdit'
   | 'productCreate'
   | 'productDelete'
+  | 'variantDelete'
   | 'paymentConfirm'
   | 'customerCreate'
   | 'customerDelete'
@@ -54,6 +55,11 @@ export interface ActivityDetails {
   productName?: string;
   productId?: string;
   changes?: Record<string, { from: unknown; to: unknown }>;
+
+  // Variant delete
+  variantLength?: number;
+  variantPrice?: number;
+  variantStock?: number;
 
   // Customer
   phone?: string;
@@ -200,6 +206,7 @@ export function useActivityLog(): UseActivityLogReturn {
         case 'productEdit':
         case 'productCreate':
         case 'productDelete':
+        case 'variantDelete':
           acc.productEdits += 1;
           break;
         case 'customerCreate':

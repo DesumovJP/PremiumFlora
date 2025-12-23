@@ -23,8 +23,8 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
   const [result, setResult] = useState<ImportResponse | null>(null);
   const [options, setOptions] = useState<ImportOptions>({
     dryRun: true,
-    stockMode: "replace",
-    priceMode: "replace",
+    stockMode: "add",
+    priceMode: "skip",
   });
 
   const handleFileChange = useCallback(
@@ -95,10 +95,10 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
   const handleClose = () => {
     setFile(null);
     setResult(null);
-    setOptions({ 
-      dryRun: true, 
-      stockMode: "replace", 
-      priceMode: "replace",
+    setOptions({
+      dryRun: true,
+      stockMode: "add",
+      priceMode: "skip",
       forceImport: false,
     });
     onOpenChange(false);

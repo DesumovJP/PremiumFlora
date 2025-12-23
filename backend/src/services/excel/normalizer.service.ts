@@ -25,6 +25,45 @@ export class NormalizerService {
   private readonly textGrades = ['jumbo', 'premium', 'select', 'standard', 'mini', 'xl', 'xxl'];
 
   /**
+   * Словник синонімів назв квіток
+   * Ключ - канонічна назва, значення - масив варіантів
+   */
+  private readonly flowerNameSynonyms: Record<string, string[]> = {
+    'Freedom': ['Freedom Rose', 'Freedom R', 'Freedomrose'],
+    'Explorer': ['Explorer Rose', 'Explorer R'],
+    'Pink Floyd': ['Pink Floyd Rose', 'Pinkfloyd'],
+    'Deep Purple': ['Deep Purple Rose'],
+    'Brighton': ['Brighton Rose'],
+    'Mondial': ['Mondial Rose', 'White Mondial'],
+    'Avalanche': ['Avalanche Rose', 'Avalanche+'],
+    'High Magic': ['High Magic Rose', 'Highmagic'],
+    'Tiffany': ['Tiffany Rose'],
+    'Sweetness': ['Sweetness Rose'],
+  };
+
+  /**
+   * Загальні суфікси, які можна видалити для пошуку співпадінь
+   */
+  private readonly removableSuffixes = [' Rose', ' Roses', ' Spray', ' Garden', ' R'];
+
+  /**
+   * Побудова зворотного індексу: варіант -> канонічна назва
+   */
+  private readonly synonymIndex: Map<string, string>;
+
+  constructor() {
+    this.synonymIndex = new Map();
+    for (const [canonical, variants] of Object.entries(this.flowerNameSynonyms)) {
+      // Додаємо канонічну назву як ключ на себе
+      this.synonymIndex.set(canonical.toLowerCase(), canonical);
+      // Додаємо всі варіанти
+      for (const variant of variants) {
+        this.synonymIndex.set(variant.toLowerCase(), canonical);
+      }
+    }
+  }
+
+  /**
    * Нормалізувати масив ParsedRow
    */
   normalize(rows: ParsedRow[]): NormalizationResult {
@@ -101,8 +140,39 @@ export class NormalizerService {
   }
 
   /**
+   * Нормалізувати варіант назви до канонічної форми
+   * "Freedom Rose" -> "Freedom"
+   */
+  private normalizeNameVariant(name: string): string {
+    const lowerName = name.toLowerCase().trim();
+
+    // Спочатку перевіряємо чи є пряме співпадіння в словнику синонімів
+    const canonicalFromDict = this.synonymIndex.get(lowerName);
+    if (canonicalFromDict) {
+      return canonicalFromDict;
+    }
+
+    // Спробуємо видалити суфікси і перевірити чи є базова назва в словнику
+    for (const suffix of this.removableSuffixes) {
+      if (lowerName.endsWith(suffix.toLowerCase())) {
+        const baseName = name.slice(0, -suffix.length).trim();
+        const canonicalFromBase = this.synonymIndex.get(baseName.toLowerCase());
+        if (canonicalFromBase) {
+          return canonicalFromBase;
+        }
+        // Навіть якщо немає в словнику, повертаємо базову назву в Title Case
+        // (це об'єднає "Xyz Rose" та "Xyz" автоматично)
+        return this.toTitleCase(baseName);
+      }
+    }
+
+    // Повертаємо оригінальну назву в Title Case
+    return this.toTitleCase(name);
+  }
+
+  /**
    * Нормалізувати ім'я квітки
-   * Об'єднує variety + type в Title Case
+   * Об'єднує variety + type в Title Case та нормалізує варіанти назв
    */
   private normalizeFlowerName(
     variety: string,
@@ -133,19 +203,24 @@ export class NormalizerService {
       }
     }
 
+    // Нормалізувати варіант назви (Freedom Rose -> Freedom)
+    const normalizedName = this.normalizeNameVariant(flowerName);
+
     // Попередження якщо ім'я було змінено
     const originalName = type ? `${variety} ${type}` : variety;
-    if (originalName !== flowerName) {
+    if (originalName !== normalizedName) {
       warning = {
         row: rowIndex,
         field: 'name',
-        message: 'Name normalized to Title Case',
+        message: normalizedName !== flowerName
+          ? `Name normalized: "${flowerName}" -> "${normalizedName}"`
+          : 'Name normalized to Title Case',
         originalValue: originalName,
-        normalizedValue: flowerName,
+        normalizedValue: normalizedName,
       };
     }
 
-    return { flowerName, nameWarning: warning };
+    return { flowerName: normalizedName, nameWarning: warning };
   }
 
   /**

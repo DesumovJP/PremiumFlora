@@ -89,6 +89,11 @@ const activityConfig: Record<
     label: 'Видалення товару',
     color: 'text-rose-600 bg-rose-50 dark:bg-rose-900/30',
   },
+  variantDelete: {
+    icon: XCircle,
+    label: 'Видалення варіанту',
+    color: 'text-rose-600 bg-rose-50 dark:bg-rose-900/30',
+  },
   paymentConfirm: {
     icon: CreditCard,
     label: 'Підтвердження оплати',
@@ -259,6 +264,28 @@ function ActivityItem({ activity }: { activity: Activity }) {
           </div>
         );
 
+      case 'variantDelete':
+        return (
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-500 dark:text-admin-text-tertiary">Товар:</span>
+              <span className="font-medium dark:text-admin-text-primary">{details.productName}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500 dark:text-admin-text-tertiary">Висота:</span>
+              <span className="dark:text-admin-text-primary">{details.variantLength} см</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500 dark:text-admin-text-tertiary">Ціна:</span>
+              <span className="dark:text-admin-text-primary">{details.variantPrice} грн</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500 dark:text-admin-text-tertiary">Кількість на складі:</span>
+              <span className="font-medium text-rose-600">{details.variantStock} шт</span>
+            </div>
+          </div>
+        );
+
       case 'paymentConfirm':
         return (
           <div className="space-y-2 text-sm">
@@ -318,6 +345,8 @@ function ActivityItem({ activity }: { activity: Activity }) {
       case 'productCreate':
       case 'productDelete':
         return details.productName || '';
+      case 'variantDelete':
+        return `${details.productName} - ${details.variantLength} см`;
       case 'paymentConfirm':
         return `${details.customerName} - ${details.amount} грн`;
       case 'customerCreate':

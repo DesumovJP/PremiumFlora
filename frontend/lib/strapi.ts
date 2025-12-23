@@ -136,6 +136,7 @@ function convertFlowerToProduct(flower: GraphQLFlower): Product {
     description: flower.description || undefined,
     image: imageUrl,
     variants,
+    updatedAt: flower.updatedAt,
   };
 }
 
