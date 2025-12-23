@@ -1140,13 +1140,21 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                       </div>
                     </TableCell>
                     <TableCell className="font-semibold text-emerald-700 min-w-[7.5rem] px-6 text-center align-middle">{total} шт</TableCell>
-                    <TableCell className="text-xs text-slate-500 dark:text-admin-text-tertiary min-w-[6.5rem] px-4 text-center align-middle">
+                    <TableCell className="text-xs text-slate-500 dark:text-admin-text-tertiary min-w-[7.5rem] px-4 text-center align-middle">
                       {product.updatedAt
-                        ? new Date(product.updatedAt).toLocaleDateString('uk-UA', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: '2-digit',
-                          })
+                        ? (
+                          <div className="flex flex-col">
+                            <span>{new Date(product.updatedAt).toLocaleDateString('uk-UA', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: '2-digit',
+                            })}</span>
+                            <span className="text-slate-400">{new Date(product.updatedAt).toLocaleTimeString('uk-UA', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}</span>
+                          </div>
+                        )
                         : '—'}
                     </TableCell>
                     <TableCell className="min-w-[11.25rem] px-6 text-center align-middle">
