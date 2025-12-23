@@ -53,6 +53,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   const [supplyOpen, setSupplyOpen] = useState(false);
   const [discount, setDiscount] = useState<number>(0);
   const [paymentStatus, setPaymentStatus] = useState<'paid' | 'expected'>('expected');
+  const [posComment, setPosComment] = useState<string>('');
 
   // Real data states
   const [products, setProducts] = useState<Product[]>(initialProducts);
@@ -167,6 +168,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
         })),
         discount,
         paymentStatus: paymentStatus,
+        notes: posComment || undefined,
       });
 
       if (result.success) {
@@ -185,6 +187,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
           totalAmount,
           discount,
           paymentStatus,
+          notes: posComment || undefined,
         });
 
         showSuccess(
@@ -195,6 +198,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
         setSelectedClient(undefined);
         setDiscount(0);
         setPaymentStatus('expected');
+        setPosComment('');
         await refreshProducts();
         await fetchCustomers(); // Оновити дані клієнтів
         // Refresh analytics if needed
@@ -513,6 +517,9 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             isCheckingOut={isCheckingOut}
             paymentStatus={paymentStatus}
             onPaymentStatusChange={setPaymentStatus}
+            comment={posComment}
+            onCommentChange={setPosComment}
+            onAddCustomer={handleAddCustomer}
             hideDesktopCart
           />
         </TabsContent>
@@ -595,6 +602,9 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
         renderOnlyCart
         paymentStatus={paymentStatus}
         onPaymentStatusChange={setPaymentStatus}
+        comment={posComment}
+        onCommentChange={setPosComment}
+        onAddCustomer={handleAddCustomer}
       />
     </aside>
   );
@@ -697,6 +707,9 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
                 renderOnlyCart
                 paymentStatus={paymentStatus}
                 onPaymentStatusChange={setPaymentStatus}
+                comment={posComment}
+                onCommentChange={setPosComment}
+                onAddCustomer={handleAddCustomer}
               />
             </SheetContent>
           </Sheet>

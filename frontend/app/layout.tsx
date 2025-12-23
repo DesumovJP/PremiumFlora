@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { StickyCTA } from "@/components/client/sticky-cta";
+import { ScrollToTop } from "@/components/client/scroll-to-top";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,6 +42,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-[#f9fbfa] dark:bg-[#0d1117] text-slate-900 dark:text-[var(--admin-text-primary)]`}
       >
+        {/* Scroll to top on route change */}
+        <ScrollToTop />
         {/* Skip to main content link for accessibility */}
         <a href="#main-content" className="skip-link">
           Перейти до основного контенту

@@ -234,7 +234,7 @@ export function exportShift(
 
   // Sheet 2: Sales Detail (with items breakdown)
   const salesActivities = activities.filter(a => a.type === 'sale');
-  const salesHeaders = ['Час', 'Клієнт', 'Товар', 'Розмір', 'К-сть', 'Ціна', 'Сума', 'Статус оплати'];
+  const salesHeaders = ['Час', 'Клієнт', 'Товар', 'Розмір', 'К-сть', 'Ціна', 'Сума', 'Статус оплати', 'Коментар'];
   const salesRows: (string | number)[][] = [];
 
   salesActivities.forEach(activity => {
@@ -242,10 +242,11 @@ export function exportShift(
     const time = new Date(timestamp).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
     const items = details.items || [];
     const paymentStatus = details.paymentStatus === 'paid' ? 'Оплачено' : 'Очікує оплати';
+    const notes = details.notes || '';
 
     if (items.length === 0) {
       // Якщо немає деталей товарів
-      salesRows.push([time, details.customerName || '-', '-', '-', '-', '-', details.totalAmount || 0, paymentStatus]);
+      salesRows.push([time, details.customerName || '-', '-', '-', '-', '-', details.totalAmount || 0, paymentStatus, notes]);
     } else {
       // Перший рядок з клієнтом
       items.forEach((item: { name: string; size: string; qty: number; price: number }, index: number) => {
@@ -258,17 +259,18 @@ export function exportShift(
           item.price,
           item.qty * item.price,
           index === 0 ? paymentStatus : '',
+          index === 0 ? notes : '',
         ]);
       });
       // Рядок з підсумком продажу
-      salesRows.push(['', '', '', '', '', 'РАЗОМ:', details.totalAmount || 0, '']);
+      salesRows.push(['', '', '', '', '', 'РАЗОМ:', details.totalAmount || 0, '', '']);
     }
   });
 
   // Загальний підсумок продажів
   if (salesRows.length > 0) {
-    salesRows.push(['', '', '', '', '', '', '', '']);
-    salesRows.push(['', '', '', '', '', 'ВСЬОГО:', summary.totalSalesAmount, '']);
+    salesRows.push(['', '', '', '', '', '', '', '', '']);
+    salesRows.push(['', '', '', '', '', 'ВСЬОГО:', summary.totalSalesAmount, '', '']);
   }
 
   const salesData = [salesHeaders, ...salesRows];

@@ -413,7 +413,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                               </div>
                             </div>
                             {Array.isArray(transaction.items) && transaction.items.length > 0 && (
-                              <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
+                              <div className="mt-2 pt-2 border-t border-slate-100 dark:border-admin-border space-y-1">
                                 {transaction.items.map((item, idx) => (
                                   <div key={idx} className="flex items-start justify-between gap-2 text-xs">
                                     <span className="text-slate-700 dark:text-admin-text-secondary flex-1">
@@ -424,6 +424,12 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                                     </span>
                                   </div>
                                 ))}
+                              </div>
+                            )}
+                            {transaction.notes && (
+                              <div className="mt-2 pt-2 border-t border-slate-100 dark:border-admin-border">
+                                <p className="text-xs text-slate-500 dark:text-admin-text-tertiary">Коментар:</p>
+                                <p className="text-xs text-slate-700 dark:text-admin-text-secondary mt-0.5">{transaction.notes}</p>
                               </div>
                             )}
                           </div>
@@ -602,7 +608,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                               </div>
                             </div>
                             {Array.isArray(transaction.items) && transaction.items.length > 0 && (
-                              <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
+                              <div className="mt-2 pt-2 border-t border-slate-100 dark:border-admin-border space-y-1">
                                 {transaction.items.map((item, idx) => (
                                   <div key={idx} className="flex items-start justify-between gap-2 text-xs">
                                     <span className="text-slate-700 dark:text-admin-text-secondary flex-1">
@@ -613,6 +619,12 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                                     </span>
                                   </div>
                                 ))}
+                              </div>
+                            )}
+                            {transaction.notes && (
+                              <div className="mt-2 pt-2 border-t border-slate-100 dark:border-admin-border">
+                                <p className="text-xs text-slate-500 dark:text-admin-text-tertiary">Коментар:</p>
+                                <p className="text-xs text-slate-700 dark:text-admin-text-secondary mt-0.5">{transaction.notes}</p>
                               </div>
                             )}
                           </div>

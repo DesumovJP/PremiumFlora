@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Modal } from "@/components/ui/modal";
 import { CartLine, Client, Product, Variant } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
@@ -29,8 +30,12 @@ import {
   LayoutGrid,
   Package,
   CheckCircle2,
+  User,
+  UserPlus,
+  Check,
+  ChevronDown,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 type PosSectionProps = {
   products: Product[];
@@ -50,6 +55,9 @@ type PosSectionProps = {
   hideDesktopCart?: boolean;
   paymentStatus?: 'paid' | 'expected';
   onPaymentStatusChange?: (status: 'paid' | 'expected') => void;
+  comment?: string;
+  onCommentChange?: (value: string) => void;
+  onAddCustomer?: (data: { name: string; phone: string; email: string; address: string }) => Promise<void>;
 };
 
 export function PosSection({
@@ -70,6 +78,9 @@ export function PosSection({
   hideDesktopCart = false,
   paymentStatus = 'expected',
   onPaymentStatusChange,
+  comment = '',
+  onCommentChange,
+  onAddCustomer,
 }: PosSectionProps) {
   if (renderOnlyCart) {
     return (
@@ -85,6 +96,9 @@ export function PosSection({
         isCheckingOut={isCheckingOut}
         paymentStatus={paymentStatus}
         onPaymentStatusChange={onPaymentStatusChange}
+        comment={comment}
+        onCommentChange={onCommentChange}
+        onAddCustomer={onAddCustomer}
       />
     );
   }
@@ -189,6 +203,9 @@ function CartPanel({
   isCheckingOut = false,
   paymentStatus = 'expected',
   onPaymentStatusChange,
+  comment = '',
+  onCommentChange,
+  onAddCustomer,
 }: {
   clients: Client[];
   selectedClient?: string;
@@ -201,14 +218,59 @@ function CartPanel({
   isCheckingOut?: boolean;
   paymentStatus?: 'paid' | 'expected';
   onPaymentStatusChange?: (status: 'paid' | 'expected') => void;
+  comment?: string;
+  onCommentChange?: (value: string) => void;
+  onAddCustomer?: (data: { name: string; phone: string; email: string; address: string }) => Promise<void>;
 }) {
   const [discount, setDiscount] = useState<number>(0);
   const [showDiscount, setShowDiscount] = useState(false);
+  const [showComment, setShowComment] = useState(!!comment);
+
+  // Client selection modal state
+  const [clientModalOpen, setClientModalOpen] = useState(false);
+  const [clientSearch, setClientSearch] = useState('');
+  const [showAddClientForm, setShowAddClientForm] = useState(false);
+  const [newClient, setNewClient] = useState({ name: '', phone: '', email: '', address: '' });
+  const [isSavingClient, setIsSavingClient] = useState(false);
+
   const payable = Math.max(0, cartTotal - discount);
   const canCheckout = selectedClient && cart.length > 0 && !isCheckingOut;
   const groupedCart = groupCartItems(cart);
 
+  // Filter clients by search
+  const filteredClients = useMemo(() => {
+    if (!clientSearch.trim()) return clients;
+    const search = clientSearch.toLowerCase();
+    return clients.filter(c =>
+      c.name.toLowerCase().includes(search) ||
+      c.contact?.toLowerCase().includes(search) ||
+      c.city?.toLowerCase().includes(search)
+    );
+  }, [clients, clientSearch]);
+
+  const selectedClientObj = clients.find(c => c.id === selectedClient);
+  const useModal = clients.length >= 5;
+
+  const handleSelectClient = (clientId: string) => {
+    onClientChange(clientId);
+    setClientModalOpen(false);
+    setClientSearch('');
+  };
+
+  const handleAddClient = async () => {
+    if (!onAddCustomer || !newClient.name.trim()) return;
+    setIsSavingClient(true);
+    try {
+      await onAddCustomer(newClient);
+      setNewClient({ name: '', phone: '', email: '', address: '' });
+      setShowAddClientForm(false);
+    } finally {
+      setIsSavingClient(false);
+    }
+  };
+
   return (
+    <>
     <Card className="admin-card flex h-full flex-col border border-slate-100 dark:border-[#30363d] bg-white/95 dark:bg-admin-surface-elevated shadow-lg shadow-emerald-500/10 rounded-none overflow-hidden">
       <CardHeader className="space-y-2 pb-2 p-3 sm:p-5 sm:pb-3 sm:space-y-3">
         <div className="flex items-center justify-between gap-2 sm:gap-3">
@@ -217,18 +279,34 @@ function CartPanel({
             {cart.length} поз.
           </Badge>
         </div>
-        <Select value={selectedClient} onValueChange={onClientChange}>
-          <SelectTrigger>
-            <SelectValue placeholder="Оберіть клієнта" />
-          </SelectTrigger>
-          <SelectContent>
-            {clients.map((client) => (
-              <SelectItem key={client.id} value={client.id}>
-                {client.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {useModal ? (
+          <Button
+            variant="outline"
+            className="w-full justify-between text-left font-normal"
+            onClick={() => setClientModalOpen(true)}
+          >
+            <span className="flex items-center gap-2 truncate">
+              <User className="h-4 w-4 shrink-0 text-slate-400" />
+              <span className={selectedClientObj ? "text-slate-900 dark:text-admin-text-primary" : "text-slate-500 dark:text-admin-text-muted"}>
+                {selectedClientObj?.name || "Оберіть клієнта"}
+              </span>
+            </span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+          </Button>
+        ) : (
+          <Select value={selectedClient} onValueChange={onClientChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Оберіть клієнта" />
+            </SelectTrigger>
+            <SelectContent>
+              {clients.map((client) => (
+                <SelectItem key={client.id} value={client.id}>
+                  {client.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </CardHeader>
       <CardContent className="flex-1 min-h-0 space-y-2 pt-0 p-3 sm:p-5 sm:pt-0 sm:space-y-4">
         <ScrollArea className="h-full max-h-none pr-2">
@@ -300,6 +378,44 @@ function CartPanel({
             </Select>
           </div>
         )}
+        {/* Comment section */}
+        {onCommentChange && (
+          <div className="w-full space-y-2">
+            <button
+              type="button"
+              className="flex items-center gap-2 text-xs text-slate-600 dark:text-admin-text-secondary hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+              onClick={() => {
+                setShowComment(!showComment);
+                if (showComment && comment) {
+                  onCommentChange('');
+                }
+              }}
+            >
+              <div className={cn(
+                "h-4 w-4 rounded border flex items-center justify-center transition-colors",
+                showComment
+                  ? "bg-emerald-600 border-emerald-600"
+                  : "border-slate-300 dark:border-admin-border"
+              )}>
+                {showComment && (
+                  <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </div>
+              <span>Додати коментар</span>
+            </button>
+            {showComment && (
+              <textarea
+                value={comment}
+                onChange={(e) => onCommentChange(e.target.value)}
+                placeholder="Введіть коментар до замовлення..."
+                className="w-full rounded-lg border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface px-3 py-2 text-sm text-slate-900 dark:text-admin-text-primary placeholder:text-slate-400 dark:placeholder:text-admin-text-muted focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
+                rows={2}
+              />
+            )}
+          </div>
+        )}
         <div className="flex w-full items-center justify-between text-sm font-semibold sm:text-base">
           <span>До сплати</span>
           <span className="text-emerald-700">{Math.round(payable)} грн</span>
@@ -313,6 +429,133 @@ function CartPanel({
         </Button>
       </CardFooter>
     </Card>
+
+    {/* Client Selection Modal */}
+    <Modal
+      open={clientModalOpen}
+      onOpenChange={(open) => {
+        setClientModalOpen(open);
+        if (!open) {
+          setClientSearch('');
+          setShowAddClientForm(false);
+          setNewClient({ name: '', phone: '', email: '', address: '' });
+        }
+      }}
+      title="Оберіть клієнта"
+      description={showAddClientForm ? "Заповніть дані нового клієнта" : `${clients.length} клієнтів доступно`}
+    >
+      {showAddClientForm ? (
+        <div className="space-y-3">
+          <Input
+            placeholder="Ім'я клієнта *"
+            value={newClient.name}
+            onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+          />
+          <Input
+            placeholder="Телефон"
+            value={newClient.phone}
+            onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
+          />
+          <Input
+            placeholder="Email"
+            value={newClient.email}
+            onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
+          />
+          <Input
+            placeholder="Місто / Адреса"
+            value={newClient.address}
+            onChange={(e) => setNewClient({ ...newClient, address: e.target.value })}
+          />
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                setShowAddClientForm(false);
+                setNewClient({ name: '', phone: '', email: '', address: '' });
+              }}
+              disabled={isSavingClient}
+            >
+              Назад
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={handleAddClient}
+              disabled={!newClient.name.trim() || isSavingClient}
+            >
+              {isSavingClient ? "Збереження..." : "Додати"}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Пошук клієнта..."
+              value={clientSearch}
+              onChange={(e) => setClientSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Add Client Button */}
+          {onAddCustomer && (
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+              onClick={() => setShowAddClientForm(true)}
+            >
+              <UserPlus className="h-4 w-4" />
+              Додати нового клієнта
+            </Button>
+          )}
+
+          {/* Client List */}
+          <ScrollArea className="max-h-[300px]">
+            <div className="space-y-1">
+              {filteredClients.length === 0 ? (
+                <p className="text-center text-sm text-slate-500 dark:text-admin-text-muted py-4">
+                  {clientSearch ? "Клієнтів не знайдено" : "Немає клієнтів"}
+                </p>
+              ) : (
+                filteredClients.map((client) => (
+                  <button
+                    key={client.id}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors",
+                      selectedClient === client.id
+                        ? "bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700"
+                        : "hover:bg-slate-50 dark:hover:bg-admin-surface-elevated border border-transparent"
+                    )}
+                    onClick={() => handleSelectClient(client.id)}
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-admin-surface">
+                      <User className="h-4 w-4 text-slate-500 dark:text-admin-text-muted" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-slate-900 dark:text-admin-text-primary truncate">
+                        {client.name}
+                      </p>
+                      {client.city && (
+                        <p className="text-xs text-slate-500 dark:text-admin-text-tertiary truncate">
+                          {client.city}
+                        </p>
+                      )}
+                    </div>
+                    {selectedClient === client.id && (
+                      <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
+    </Modal>
+    </>
   );
 }
 

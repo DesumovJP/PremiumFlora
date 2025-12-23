@@ -1282,25 +1282,25 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           </Table>
         </div>
         {hasLowStock && (
-          <div className="rounded-2xl border border-amber-200/80 dark:border-amber-700/40 bg-gradient-to-r from-amber-50 via-amber-50/80 to-yellow-50/60 dark:from-amber-900/30 dark:via-amber-900/20 dark:to-yellow-900/10 p-4 shadow-sm">
+          <div className="rounded-2xl border border-rose-200/80 dark:border-rose-700/40 bg-gradient-to-r from-rose-50 via-rose-50/80 to-red-50/60 dark:from-rose-900/30 dark:via-rose-900/20 dark:to-red-900/10 p-4 shadow-sm">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-800/40 shadow-sm">
-                  <LowStockIcon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-800/40 shadow-sm">
+                  <LowStockIcon className="h-5 w-5 text-rose-600 dark:text-rose-400" />
                 </div>
                 <div className="space-y-2">
-                  <p className="font-semibold text-amber-900 dark:text-amber-200">Низькі залишки</p>
+                  <p className="font-semibold text-rose-900 dark:text-rose-200">Низькі залишки</p>
                   <div className="flex flex-wrap gap-2">
                     {lowStockItems.map((item, idx) => (
                       <div
                         key={idx}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-700/40 px-2.5 py-1.5 text-sm shadow-sm"
+                        className="inline-flex items-center gap-1 rounded-full bg-rose-100 dark:bg-rose-900/50 border border-rose-200 dark:border-rose-700/60 px-3 py-1 text-xs font-medium text-rose-700 dark:text-rose-300 shadow-sm"
                       >
-                        <span className="font-medium text-slate-700 dark:text-amber-100">{item.productName}</span>
-                        <span className="text-slate-500 dark:text-amber-300/70">({item.variant})</span>
-                        <span className="ml-1 rounded-md bg-amber-100 dark:bg-amber-800/60 px-1.5 py-0.5 text-xs font-bold text-amber-700 dark:text-amber-300">
-                          {item.stock} шт
-                        </span>
+                        <span>{item.productName}</span>
+                        <span className="text-rose-500 dark:text-rose-400">·</span>
+                        <span>{item.variant}</span>
+                        <span className="text-rose-500 dark:text-rose-400">·</span>
+                        <span className="font-bold">{item.stock} шт</span>
                       </div>
                     ))}
                   </div>
@@ -1308,7 +1308,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
               </div>
               <Button
                 variant="outline"
-                className="shrink-0 border-amber-300 dark:border-amber-600 bg-white/60 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-800/50 hover:border-amber-400 dark:hover:border-amber-500"
+                className="shrink-0 border-rose-300 dark:border-rose-600 bg-white/60 dark:bg-rose-900/40 text-rose-800 dark:text-rose-200 hover:bg-rose-100 dark:hover:bg-rose-800/50 hover:border-rose-400 dark:hover:border-rose-500"
                 onClick={onOpenSupply}
               >
                 Запланувати закупку

@@ -173,7 +173,7 @@ export function TodoSection() {
                   </p>
                 </div>
                 <Badge
-                  variant="outline"
+                  tone="outline"
                   className={cn("text-xs shrink-0", priorityColors[task.priority])}
                 >
                   {priorityLabels[task.priority]}

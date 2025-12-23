@@ -206,6 +206,12 @@ function ActivityItem({ activity }: { activity: Activity }) {
                 {details.paymentStatus === 'paid' ? 'Сплачено' : 'Очікується'}
               </Badge>
             </div>
+            {details.notes && (
+              <div className="border-t pt-2 dark:border-admin-border">
+                <span className="text-slate-500 dark:text-admin-text-tertiary block mb-1">Коментар:</span>
+                <span className="text-slate-700 dark:text-admin-text-secondary text-sm">{details.notes}</span>
+              </div>
+            )}
           </div>
         );
 
@@ -535,7 +541,7 @@ export function HistorySection({
             {activities.length === 0 ? (
               <EmptyState />
             ) : (
-              <div className="max-h-[500px] overflow-y-auto">
+              <div>
                 {activities.map((activity) => (
                   <ActivityItem key={activity.id} activity={activity} />
                 ))}
