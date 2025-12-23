@@ -1258,26 +1258,39 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           </Table>
         </div>
         {hasLowStock && (
-          <Card className="border-amber-100 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-900/20">
-            <CardContent className="flex flex-col gap-2 py-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center gap-3">
-                <LowStockIcon className="h-5 w-5 text-amber-500" />
-                <div>
-                  <p className="font-semibold text-amber-800">Попередження про низькі залишки</p>
-                  <div className="text-sm text-amber-700 space-y-1">
+          <div className="rounded-2xl border border-amber-200/80 dark:border-amber-700/40 bg-gradient-to-r from-amber-50 via-amber-50/80 to-yellow-50/60 dark:from-amber-900/30 dark:via-amber-900/20 dark:to-yellow-900/10 p-4 shadow-sm">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-800/40 shadow-sm">
+                  <LowStockIcon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="space-y-2">
+                  <p className="font-semibold text-amber-900 dark:text-amber-200">Низькі залишки</p>
+                  <div className="flex flex-wrap gap-2">
                     {lowStockItems.map((item, idx) => (
-                      <p key={idx}>
-                        {item.productName} ({item.variant}) — залишилось {item.stock} шт.
-                      </p>
+                      <div
+                        key={idx}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-700/40 px-2.5 py-1.5 text-sm shadow-sm"
+                      >
+                        <span className="font-medium text-slate-700 dark:text-amber-100">{item.productName}</span>
+                        <span className="text-slate-500 dark:text-amber-300/70">({item.variant})</span>
+                        <span className="ml-1 rounded-md bg-amber-100 dark:bg-amber-800/60 px-1.5 py-0.5 text-xs font-bold text-amber-700 dark:text-amber-300">
+                          {item.stock} шт
+                        </span>
+                      </div>
                     ))}
                   </div>
                 </div>
               </div>
-              <Button variant="outline" className="border-amber-200 text-amber-800" onClick={onOpenSupply}>
+              <Button
+                variant="outline"
+                className="shrink-0 border-amber-300 dark:border-amber-600 bg-white/60 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-800/50 hover:border-amber-400 dark:hover:border-amber-500"
+                onClick={onOpenSupply}
+              >
                 Запланувати закупку
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
