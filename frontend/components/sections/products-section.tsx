@@ -57,6 +57,9 @@ type ProductsSectionProps = {
     variantStock?: number;
     changes?: Record<string, { from: unknown; to: unknown }>;
   }) => void;
+  showSuccess?: (title: string, message: string) => void;
+  showError?: (title: string, message: string) => void;
+  showWarning?: (title: string, message: string) => void;
 };
 
 type WriteOffReason = 'damage' | 'expiry' | 'adjustment' | 'other';
@@ -68,7 +71,13 @@ const reasonLabels: Record<WriteOffReason, string> = {
   other: 'Інша причина',
 };
 
-export function ProductsSection({ summary, products, onOpenSupply, onOpenExport, onWriteOff, onRefresh, onLogActivity }: ProductsSectionProps) {
+export function ProductsSection({ summary, products, onOpenSupply, onOpenExport, onWriteOff, onRefresh, onLogActivity, showSuccess, showError, showWarning }: ProductsSectionProps) {
+  // Fallback to alert if toast functions not provided
+  const notify = {
+    success: showSuccess || ((title: string, message: string) => alert(`${title}: ${message}`)),
+    error: showError || ((title: string, message: string) => alert(`${title}: ${message}`)),
+    warning: showWarning || ((title: string, message: string) => alert(`${title}: ${message}`)),
+  };
   const LowStockIcon = AlertTriangle;
   
   // Знаходимо продукти з низьким залишком (< 150)
@@ -473,13 +482,13 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         updateResult = await updateFlower(editingProduct.documentId, updateData);
       } catch (error) {
         console.error("Error calling updateFlower:", error);
-        alert(`Помилка оновлення квітки: ${error instanceof Error ? error.message : "Невідома помилка"}`);
+        notify.error("Помилка оновлення", error instanceof Error ? error.message : "Невідома помилка");
         return;
       }
 
       if (!updateResult || !updateResult.success) {
         const errorMessage = updateResult?.error?.message || "Невідома помилка оновлення квітки";
-        alert(`Помилка оновлення квітки: ${errorMessage}`);
+        notify.error("Помилка оновлення", errorMessage);
         return;
       }
 
@@ -591,10 +600,10 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
       // Показуємо попередження, якщо були помилки
       if (variantErrors.length > 0) {
-        alert(`Деякі варіанти не вдалося обробити:\n${variantErrors.join("\n")}`);
+        notify.warning("Увага", `Деякі варіанти не вдалося обробити: ${variantErrors.join(", ")}`);
       } else {
         // Показуємо повідомлення про успіх
-        alert('Зміни успішно збережено!');
+        notify.success("Збережено", "Зміни успішно збережено");
       }
 
       // 5. Оновити список продуктів
@@ -609,7 +618,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       setEditData({ image: null, imagePreview: null, description: "", variants: [], originalVariants: [] });
     } catch (error) {
       console.error("Error saving edit:", error);
-      alert("Помилка збереження. Спробуйте ще раз.");
+      notify.error("Помилка", "Помилка збереження. Спробуйте ще раз.");
     } finally {
       setIsSavingEdit(false);
     }
@@ -624,7 +633,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       : writeOffData.qty;
 
     if (!qty || qty < 1) {
-      alert('Будь ласка, введіть кількість для списання (мінімум 1)');
+      notify.warning("Увага", "Будь ласка, введіть кількість для списання (мінімум 1)");
       return;
     }
 
@@ -683,7 +692,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Помилка видалення:", errorText);
-        alert("Помилка видалення товару. Спробуйте ще раз.");
+        notify.error("Помилка", "Помилка видалення товару. Спробуйте ще раз.");
         return;
       }
 
@@ -698,7 +707,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       setDeleteTarget(null);
     } catch (error) {
       console.error("Error deleting product:", error);
-      alert("Помилка видалення. Спробуйте ще раз.");
+      notify.error("Помилка", "Помилка видалення. Спробуйте ще раз.");
     } finally {
       setIsDeleting(false);
     }
@@ -722,19 +731,19 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
   const handleSave = async () => {
     if (!draft.flowerName.trim()) {
-      alert("Будь ласка, вкажіть назву квітки");
+      notify.warning("Увага", "Будь ласка, вкажіть назву квітки");
       return;
     }
 
     if (draft.variants.length === 0) {
-      alert("Будь ласка, додайте хоча б один варіант");
+      notify.warning("Увага", "Будь ласка, додайте хоча б один варіант");
       return;
     }
 
     // Валідація варіантів
     for (const variant of draft.variants) {
       if (!variant.length || !variant.price || !variant.stock) {
-        alert("Будь ласка, заповніть всі поля для варіантів");
+        notify.warning("Увага", "Будь ласка, заповніть всі поля для варіантів");
         return;
       }
     }
@@ -948,7 +957,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
     } catch (error) {
       console.error("Помилка збереження:", error);
       const errorMessage = error instanceof Error ? error.message : "Невідома помилка";
-      alert(`Помилка збереження: ${errorMessage}`);
+      notify.error("Помилка збереження", errorMessage);
     } finally {
       setIsSaving(false);
     }

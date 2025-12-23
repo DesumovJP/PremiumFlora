@@ -513,6 +513,9 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             onWriteOff={handleWriteOff}
             onRefresh={refreshProducts}
             onLogActivity={logActivity}
+            showSuccess={showSuccess}
+            showError={showError}
+            showWarning={showWarning}
           />
         </TabsContent>
 
