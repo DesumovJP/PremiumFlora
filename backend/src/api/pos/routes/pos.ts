@@ -1,7 +1,7 @@
 /**
  * POS Routes
  *
- * Маршрути для POS операцій
+ * Маршрути для POS операцій з авторизацією
  */
 
 export default {
@@ -11,8 +11,7 @@ export default {
       path: '/pos/sales',
       handler: 'pos.createSale',
       config: {
-        policies: [],
-        middlewares: [],
+        middlewares: ['api::pos.pos-auth'],
       },
     },
     {
@@ -20,8 +19,7 @@ export default {
       path: '/pos/write-offs',
       handler: 'pos.createWriteOff',
       config: {
-        policies: [],
-        middlewares: [],
+        middlewares: ['api::pos.pos-auth'],
       },
     },
     {
@@ -29,8 +27,7 @@ export default {
       path: '/pos/transactions/:id/confirm-payment',
       handler: 'pos.confirmPayment',
       config: {
-        policies: [],
-        middlewares: [],
+        middlewares: ['api::pos.pos-auth'],
       },
     },
   ],

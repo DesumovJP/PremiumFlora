@@ -65,6 +65,58 @@ import { getAuthHeaders } from "./auth";
 const API_URL = `${STRAPI_URL}/api`;
 
 // ============================================
+// Retry Logic
+// ============================================
+
+interface RetryOptions {
+  retries?: number;
+  backoff?: number;
+  retryOn?: number[];
+}
+
+/**
+ * Fetch з автоматичним retry при тимчасових помилках
+ * Використовує exponential backoff
+ */
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  { retries = 3, backoff = 1000, retryOn = [500, 502, 503, 504, 0] }: RetryOptions = {}
+): Promise<Response> {
+  let lastError: Error = new Error('Unknown error');
+
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+
+      // Якщо успіх або клієнтська помилка - повертаємо одразу
+      if (response.ok || (response.status >= 400 && response.status < 500)) {
+        return response;
+      }
+
+      // Серверна помилка - retry якщо потрібно
+      if (!retryOn.includes(response.status)) {
+        return response;
+      }
+
+      lastError = new Error(`HTTP ${response.status}`);
+    } catch (error) {
+      // Мережева помилка (status 0)
+      lastError = error as Error;
+    }
+
+    // Якщо не останній attempt - чекаємо і пробуємо знову
+    if (attempt < retries - 1) {
+      const delay = backoff * Math.pow(2, attempt);
+      console.warn(`[Retry] Attempt ${attempt + 1}/${retries} failed. Retrying in ${delay}ms...`);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+
+  throw lastError;
+}
+
+// ============================================
 // Helper функції
 // ============================================
 
@@ -215,7 +267,10 @@ export async function getFlowers(options?: { fresh?: boolean }): Promise<Product
       return true;
     });
 
-    return uniqueFlowers.map(convertFlowerToProduct);
+    // Конвертуємо та відкидаємо квітки без варіантів
+    return uniqueFlowers
+      .map(convertFlowerToProduct)
+      .filter((product) => product.variants && product.variants.length > 0);
   } catch (error) {
     console.error("Error fetching flowers:", error);
     return [];
@@ -236,6 +291,11 @@ export async function getFlowerBySlug(slug: string): Promise<Product | null> {
     }
 
     const product = convertFlowerToProduct(data.flowers[0]);
+
+    // Якщо немає варіантів – не показуємо цю квітку на клієнті
+    if (!product.variants || product.variants.length === 0) {
+      return null;
+    }
 
     if (!product.image && data.flowers[0].name) {
       console.warn(`Product "${data.flowers[0].name}" has no image`);
@@ -265,7 +325,10 @@ export async function searchFlowers(query: string): Promise<Product[]> {
       pageSize: 100,
     });
 
-    return data.flowers.map(convertFlowerToProduct);
+    // Пошук повертає тільки квітки з варіантами
+    return data.flowers
+      .map(convertFlowerToProduct)
+      .filter((product) => product.variants && product.variants.length > 0);
   } catch (error) {
     console.error("Error searching flowers:", error);
     return [];
@@ -286,9 +349,15 @@ export async function getFlowerDetails(slug: string) {
     }
 
     const flower = data.flowers[0];
+    const product = convertFlowerToProduct(flower);
+
+    // Якщо немає варіантів – не показуємо детальну сторінку
+    if (!product.variants || product.variants.length === 0) {
+      return null;
+    }
 
     return {
-      ...convertFlowerToProduct(flower),
+      ...product,
       description: blocksToText(flower.description),
       slug: flower.slug,
     };
@@ -775,16 +844,19 @@ export async function importExcel(
 
 /**
  * Створити продаж (sale)
+ * Використовує retry логіку для надійності
  */
 export async function createSale(data: CreateSaleInput): Promise<SaleResponse> {
   try {
-    const response = await fetch(`${API_URL}/pos/sales`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetchWithRetry(
+      `${API_URL}/pos/sales`,
+      {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
       },
-      body: JSON.stringify(data),
-    });
+      { retries: 3, backoff: 1000 }
+    );
 
     return response.json();
   } catch (error) {
@@ -793,12 +865,12 @@ export async function createSale(data: CreateSaleInput): Promise<SaleResponse> {
       success: false,
       error: {
         code: "NETWORK_ERROR",
-        message: "Failed to connect to server",
+        message: "Failed to connect to server after retries",
       },
       alert: {
         type: "error",
         title: "Помилка мережі",
-        message: "Не вдалося з'єднатися з сервером",
+        message: "Не вдалося з'єднатися з сервером. Перевірте підключення та спробуйте ще раз.",
       },
     };
   }
@@ -806,16 +878,19 @@ export async function createSale(data: CreateSaleInput): Promise<SaleResponse> {
 
 /**
  * Створити списання (writeOff)
+ * Використовує retry логіку для надійності
  */
 export async function createWriteOff(data: WriteOffInput): Promise<WriteOffResponse> {
   try {
-    const response = await fetch(`${API_URL}/pos/write-offs`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetchWithRetry(
+      `${API_URL}/pos/write-offs`,
+      {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
       },
-      body: JSON.stringify(data),
-    });
+      { retries: 3, backoff: 1000 }
+    );
 
     return response.json();
   } catch (error) {
@@ -824,12 +899,12 @@ export async function createWriteOff(data: WriteOffInput): Promise<WriteOffRespo
       success: false,
       error: {
         code: "NETWORK_ERROR",
-        message: "Failed to connect to server",
+        message: "Failed to connect to server after retries",
       },
       alert: {
         type: "error",
         title: "Помилка мережі",
-        message: "Не вдалося з'єднатися з сервером",
+        message: "Не вдалося з'єднатися з сервером. Перевірте підключення та спробуйте ще раз.",
       },
     };
   }
@@ -837,19 +912,19 @@ export async function createWriteOff(data: WriteOffInput): Promise<WriteOffRespo
 
 /**
  * Підтвердити оплату транзакції
+ * Використовує retry логіку для надійності
  */
 export async function confirmPayment(
   transactionId: string
 ): Promise<ConfirmPaymentResponse> {
   try {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${API_URL}/pos/transactions/${transactionId}/confirm-payment`,
       {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+        headers: getAuthHeaders(),
+      },
+      { retries: 3, backoff: 1000 }
     );
 
     return response.json();
@@ -859,12 +934,12 @@ export async function confirmPayment(
       success: false,
       error: {
         code: "NETWORK_ERROR",
-        message: "Failed to connect to server",
+        message: "Failed to connect to server after retries",
       },
       alert: {
         type: "error",
         title: "Помилка мережі",
-        message: "Не вдалося з'єднатися з сервером",
+        message: "Не вдалося з'єднатися з сервером. Перевірте підключення та спробуйте ще раз.",
       },
     };
   }

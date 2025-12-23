@@ -62,7 +62,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true);
 
   // Alerts
-  const { alerts, showSuccess, showError, dismiss } = useAlerts();
+  const { alerts, showSuccess, showError, showWarning, dismiss } = useAlerts();
 
   // Activity Log for shift history
   const {
@@ -351,11 +351,25 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
 
   const addToCart = (product: Product, variant: Variant) => {
     const id = `${product.id}-${variant.length}`;
+    const addQty = 25;
+
+    // Перевірка stock перед додаванням
+    const currentInCart = cart.find((line) => line.id === id)?.qty || 0;
+    const newQty = currentInCart + addQty;
+
+    if (newQty > variant.stock) {
+      showWarning(
+        "Недостатньо на складі",
+        `${product.name} (${variant.size}): доступно ${variant.stock} шт, в кошику ${currentInCart} шт`
+      );
+      return;
+    }
+
     setCart((current) => {
       const existing = current.find((line) => line.id === id);
       if (existing) {
         return current.map((line) =>
-          line.id === id ? { ...line, qty: line.qty + 25 } : line
+          line.id === id ? { ...line, qty: line.qty + addQty } : line
         );
       }
       return [
@@ -365,7 +379,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
           name: product.name,
           size: variant.size,
           price: variant.price,
-          qty: 25,
+          qty: addQty,
           image: product.image,
           flowerSlug: product.id,  // product.id is the slug
           length: variant.length,
@@ -375,6 +389,23 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   };
 
   const updateQty = (id: string, delta: number) => {
+    // При збільшенні кількості - перевіряємо stock
+    if (delta > 0) {
+      const line = cart.find((l) => l.id === id);
+      if (line) {
+        // Знаходимо варіант в продуктах для перевірки stock
+        const product = products.find((p) => p.id === line.flowerSlug);
+        const variant = product?.variants.find((v) => v.length === line.length);
+        if (variant && line.qty + delta > variant.stock) {
+          showWarning(
+            "Недостатньо на складі",
+            `${line.name} (${line.size}): доступно ${variant.stock} шт`
+          );
+          return;
+        }
+      }
+    }
+
     setCart((current) =>
       current
         .map((line) => (line.id === id ? { ...line, qty: Math.max(1, line.qty + delta) } : line))

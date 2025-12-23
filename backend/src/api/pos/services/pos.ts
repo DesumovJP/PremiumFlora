@@ -5,9 +5,12 @@
  * - Створення продажів з декрементом складу
  * - Списання товарів
  * - Підтвердження оплати
+ *
+ * ВАЖЛИВО: Всі операції використовують транзакції БД для атомарності
  */
 
 import type { Core } from '@strapi/strapi';
+import type { Knex } from 'knex';
 
 // Types
 interface SaleItem {
@@ -60,17 +63,26 @@ interface StockValidationError {
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   /**
+   * Отримати Knex connection для транзакцій
+   */
+  getKnex(): Knex {
+    return strapi.db.connection as Knex;
+  },
+
+  /**
    * Перевірка ідемпотентності - чи існує транзакція з даним operationId
    */
-  async findByOperationId(operationId: string) {
+  async findByOperationId(operationId: string, trx?: Knex.Transaction) {
     if (!operationId) return null;
 
-    const existing = await strapi.db.query('api::transaction.transaction').findOne({
-      where: { operationId },
-      populate: ['customer'],
-    });
+    const query = trx
+      ? trx('transactions').where('operation_id', operationId).first()
+      : strapi.db.query('api::transaction.transaction').findOne({
+          where: { operationId },
+          populate: ['customer'],
+        });
 
-    return existing;
+    return query;
   },
 
   /**
@@ -106,27 +118,6 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
     if (!variant) {
       strapi.log.warn(`❌ Variant not found for flowerSlug="${flowerSlug}", length=${length}`);
-
-      // Показати всі варіанти для діагностики
-      const allVariants = await strapi.db.query('api::variant.variant').findMany({
-        where: {
-          $or: [
-            { flower: { slug: flowerSlug } },
-            { flower: { documentId: flowerSlug } },
-          ],
-        },
-        populate: ['flower'],
-      });
-
-      strapi.log.info(`📋 All variants for flower "${flowerSlug}":`, allVariants.map(v => ({
-        documentId: v.documentId,
-        length: v.length,
-        stock: v.stock,
-        price: v.price,
-        flowerSlug: v.flower?.slug,
-        flowerDocumentId: v.flower?.documentId,
-        flowerName: v.flower?.name,
-      })));
     } else {
       strapi.log.info(`✅ Variant found:`, {
         documentId: variant.documentId,
@@ -134,7 +125,6 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         stock: variant.stock,
         price: variant.price,
         flowerSlug: variant.flower?.slug,
-        flowerDocumentId: variant.flower?.documentId,
         flowerName: variant.flower?.name,
       });
     }
@@ -190,10 +180,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   /**
-   * Створити продаж (sale)
+   * Створити продаж (sale) - АТОМАРНА ОПЕРАЦІЯ З ТРАНЗАКЦІЄЮ
    */
   async createSale(data: CreateSaleInput) {
-    // 1. Перевірка ідемпотентності
+    const knex = this.getKnex();
+
+    // 1. Перевірка ідемпотентності (поза транзакцією для швидкості)
     const existing = await this.findByOperationId(data.operationId);
     if (existing) {
       return {
@@ -219,7 +211,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       };
     }
 
-    // 3. Валідація stock
+    // 3. Валідація stock (попередня перевірка)
     const { valid, errors, variants } = await this.validateStock(data.items);
 
     if (!valid) {
@@ -233,75 +225,114 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       };
     }
 
-    // 4. Атомарні операції (без справжньої транзакції БД, але послідовно)
+    // 4. АТОМАРНА ТРАНЗАКЦІЯ
     try {
-      // 4a. Зменшити stock для кожного variant
-      for (const item of data.items) {
-        const key = `${item.flowerSlug}-${item.length}`;
-        const variant = variants.get(key)!;
+      const result = await knex.transaction(async (trx) => {
+        // 4a. Повторна перевірка ідемпотентності всередині транзакції
+        const existingInTrx = await trx('transactions')
+          .where('operation_id', data.operationId)
+          .first();
 
-        await strapi.db.query('api::variant.variant').update({
-          where: { documentId: variant.documentId },
-          data: {
-            stock: variant.stock - item.qty,
-          },
+        if (existingInTrx) {
+          return {
+            success: true,
+            idempotent: true,
+            data: existingInTrx,
+            message: 'Transaction already exists with this operationId',
+          };
+        }
+
+        // 4b. Атомарний декремент stock з перевіркою (захист від race condition)
+        const stockUpdates: Array<{ flowerSlug: string; length: number; decremented: number }> = [];
+
+        for (const item of data.items) {
+          const key = `${item.flowerSlug}-${item.length}`;
+          const variant = variants.get(key)!;
+
+          // Атомарний UPDATE з перевіркою stock >= qty
+          const updated = await trx('variants')
+            .where('id', variant.id)
+            .andWhere('stock', '>=', item.qty)
+            .update({
+              stock: trx.raw('stock - ?', [item.qty]),
+            });
+
+          if (updated === 0) {
+            // Race condition: stock змінився між валідацією і оновленням
+            throw new Error(`RACE_CONDITION:${item.name}:${item.flowerSlug}:${item.length}`);
+          }
+
+          stockUpdates.push({
+            flowerSlug: item.flowerSlug,
+            length: item.length,
+            decremented: item.qty,
+          });
+        }
+
+        // 4c. Обчислити загальну суму
+        const subtotal = data.items.reduce((sum, item) => sum + item.price * item.qty, 0);
+        const amount = Math.round(subtotal - (data.discount || 0));
+
+        strapi.log.info('📝 Creating transaction in DB transaction:', {
+          operationId: data.operationId,
+          customerId: customer.id,
+          amount,
+          itemsCount: data.items.length,
         });
-      }
 
-      // 4b. Обчислити загальну суму
-      const subtotal = data.items.reduce((sum, item) => sum + item.price * item.qty, 0);
-      const amount = Math.round(subtotal - (data.discount || 0));
-
-      strapi.log.info('📝 Creating transaction with data:', {
-        operationId: data.operationId,
-        customerId: customer.id,
-        amount,
-        itemsCount: data.items.length,
-      });
-
-      // 4c. Створити Transaction
-      const transaction = await strapi.db.query('api::transaction.transaction').create({
-        data: {
+        // 4d. Створити Transaction
+        const [transactionId] = await trx('transactions').insert({
+          document_id: `trx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           date: new Date().toISOString(),
           type: 'sale',
-          operationId: data.operationId,
-          paymentStatus: data.paymentStatus || 'pending',
+          operation_id: data.operationId,
+          payment_status: data.paymentStatus || 'pending',
           amount,
-          items: data.items.map(item => ({
+          items: JSON.stringify(data.items.map(item => ({
             flowerSlug: item.flowerSlug,
             length: item.length,
             qty: item.qty,
             price: item.price,
             name: item.name,
             subtotal: item.price * item.qty,
-          })),
-          customer: customer.id,
-          notes: data.notes,
-          // Не потрібен publishedAt, бо draftAndPublish: false
-        },
-      });
+          }))),
+          customer_id: customer.id,
+          notes: data.notes || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }).returning('id');
 
-      strapi.log.info('✅ Transaction created:', {
-        id: transaction?.id,
-        documentId: transaction?.documentId,
-        operationId: transaction?.operationId,
-      });
+        // 4e. Оновити статистику клієнта якщо оплачено
+        if (data.paymentStatus === 'paid') {
+          await trx('customers')
+            .where('id', customer.id)
+            .update({
+              order_count: trx.raw('COALESCE(order_count, 0) + 1'),
+              total_spent: trx.raw('COALESCE(total_spent, 0) + ?', [amount]),
+              updated_at: new Date().toISOString(),
+            });
+        }
 
-      // 4d. Оновити статистику клієнта якщо оплачено
-      if (data.paymentStatus === 'paid') {
-        await strapi.db.query('api::customer.customer').update({
-          where: { documentId: customer.documentId },
-          data: {
-            orderCount: (customer.orderCount || 0) + 1,
-            totalSpent: (customer.totalSpent || 0) + amount,
-          },
+        strapi.log.info('✅ Transaction created successfully in DB transaction:', {
+          transactionId,
+          operationId: data.operationId,
         });
+
+        return {
+          transactionId: typeof transactionId === 'object' ? transactionId.id : transactionId,
+          stockUpdates,
+          amount,
+        };
+      });
+
+      // Якщо ідемпотентний результат
+      if ('idempotent' in result && result.idempotent) {
+        return result;
       }
 
       // Завантажити повну транзакцію з relations
-      strapi.log.info('🔍 Loading full transaction with documentId:', transaction.documentId);
       const fullTransaction = await strapi.db.query('api::transaction.transaction').findOne({
-        where: { documentId: transaction.documentId },
+        where: { id: result.transactionId },
         populate: ['customer'],
       });
 
@@ -314,21 +345,34 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         success: true,
         idempotent: false,
         data: fullTransaction,
-        stockUpdates: data.items.map(item => ({
-          flowerSlug: item.flowerSlug,
-          length: item.length,
-          decremented: item.qty,
-        })),
+        stockUpdates: result.stockUpdates,
       };
-    } catch (error) {
+    } catch (error: any) {
       strapi.log.error('❌ Sale creation error:', error);
+
+      // Обробка race condition помилки
+      if (error.message?.startsWith('RACE_CONDITION:')) {
+        const [, name, flowerSlug, length] = error.message.split(':');
+        return {
+          success: false,
+          error: {
+            code: 'CONCURRENT_MODIFICATION',
+            message: `Товар "${name}" було змінено іншим користувачем. Оновіть сторінку та спробуйте знову.`,
+            details: {
+              flowerSlug,
+              length: Number(length),
+              name,
+            },
+          },
+        };
+      }
+
       strapi.log.error('Error details:', {
         name: error?.name,
         message: error?.message,
         stack: error?.stack,
       });
 
-      // В ідеалі тут був би rollback
       return {
         success: false,
         error: {
@@ -340,9 +384,11 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   /**
-   * Створити списання (writeOff)
+   * Створити списання (writeOff) - АТОМАРНА ОПЕРАЦІЯ З ТРАНЗАКЦІЄЮ
    */
   async createWriteOff(data: CreateWriteOffInput) {
+    const knex = this.getKnex();
+
     strapi.log.info('🗑️ Creating write-off:', {
       flowerSlug: data.flowerSlug,
       length: data.length,
@@ -376,7 +422,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       };
     }
 
-    // 3. Перевірка stock
+    // 3. Попередня перевірка stock
     if (variant.stock < data.qty) {
       return {
         success: false,
@@ -393,69 +439,119 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       };
     }
 
+    // 4. АТОМАРНА ТРАНЗАКЦІЯ
     try {
-      // 4a. Зменшити stock
-      strapi.log.info('📉 Updating stock:', {
-        variantDocumentId: variant.documentId,
-        oldStock: variant.stock,
-        newStock: variant.stock - data.qty,
-      });
+      const result = await knex.transaction(async (trx) => {
+        // 4a. Повторна перевірка ідемпотентності
+        const existingInTrx = await trx('transactions')
+          .where('operation_id', data.operationId)
+          .first();
 
-      await strapi.db.query('api::variant.variant').update({
-        where: { documentId: variant.documentId },
-        data: {
-          stock: variant.stock - data.qty,
-        },
-      });
+        if (existingInTrx) {
+          return {
+            success: true,
+            idempotent: true,
+            data: existingInTrx,
+            message: 'Transaction already exists with this operationId',
+          };
+        }
 
-      // 4b. Створити Transaction (без customer)
-      strapi.log.info('📝 Creating write-off transaction:', {
-        type: 'writeOff',
-        operationId: data.operationId,
-        flowerSlug: data.flowerSlug,
-        reason: data.reason,
-      });
+        // 4b. Атомарний декремент stock з перевіркою
+        strapi.log.info('📉 Updating stock atomically:', {
+          variantId: variant.id,
+          oldStock: variant.stock,
+          decrementBy: data.qty,
+        });
 
-      const transaction = await strapi.db.query('api::transaction.transaction').create({
-        data: {
-          date: new Date().toISOString(),
+        const updated = await trx('variants')
+          .where('id', variant.id)
+          .andWhere('stock', '>=', data.qty)
+          .update({
+            stock: trx.raw('stock - ?', [data.qty]),
+          });
+
+        if (updated === 0) {
+          throw new Error('RACE_CONDITION');
+        }
+
+        // 4c. Створити Transaction
+        strapi.log.info('📝 Creating write-off transaction:', {
           type: 'writeOff',
           operationId: data.operationId,
-          paymentStatus: 'cancelled', // Для списання немає оплати
+          flowerSlug: data.flowerSlug,
+          reason: data.reason,
+        });
+
+        const [transactionId] = await trx('transactions').insert({
+          document_id: `trx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          date: new Date().toISOString(),
+          type: 'writeOff',
+          operation_id: data.operationId,
+          payment_status: 'cancelled',
           amount: 0,
-          items: [{
+          items: JSON.stringify([{
             flowerSlug: data.flowerSlug,
             length: data.length,
             qty: data.qty,
             price: variant.price,
             name: variant.flower?.name || data.flowerSlug,
-          }],
-          writeOffReason: data.reason,
-          notes: data.notes,
-          // Не потрібен publishedAt, бо draftAndPublish: false
-        },
+          }]),
+          write_off_reason: data.reason,
+          notes: data.notes || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }).returning('id');
+
+        // Отримуємо новий stock
+        const updatedVariant = await trx('variants')
+          .where('id', variant.id)
+          .first();
+
+        return {
+          transactionId: typeof transactionId === 'object' ? transactionId.id : transactionId,
+          newStock: updatedVariant?.stock ?? (variant.stock - data.qty),
+        };
       });
 
+      // Якщо ідемпотентний результат
+      if ('idempotent' in result && result.idempotent) {
+        return result;
+      }
+
       strapi.log.info('✅ Write-off transaction created:', {
-        id: transaction?.id,
-        documentId: transaction?.documentId,
-        type: transaction?.type,
-        operationId: transaction?.operationId,
+        transactionId: result.transactionId,
+        operationId: data.operationId,
+      });
+
+      // Завантажити повну транзакцію
+      const fullTransaction = await strapi.db.query('api::transaction.transaction').findOne({
+        where: { id: result.transactionId },
       });
 
       return {
         success: true,
         idempotent: false,
-        data: transaction,
+        data: fullTransaction,
         stockUpdate: {
           flowerSlug: data.flowerSlug,
           length: data.length,
           decremented: data.qty,
-          newStock: variant.stock - data.qty,
+          newStock: result.newStock,
         },
       };
-    } catch (error) {
+    } catch (error: any) {
       strapi.log.error('❌ WriteOff creation error:', error);
+
+      if (error.message === 'RACE_CONDITION') {
+        return {
+          success: false,
+          error: {
+            code: 'CONCURRENT_MODIFICATION',
+            message: 'Склад було змінено іншим користувачем. Оновіть сторінку та спробуйте знову.',
+          },
+        };
+      }
+
       strapi.log.error('Error details:', {
         name: error?.name,
         message: error?.message,
@@ -473,9 +569,11 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   /**
-   * Підтвердити оплату транзакції
+   * Підтвердити оплату транзакції - АТОМАРНА ОПЕРАЦІЯ З ТРАНЗАКЦІЄЮ
    */
   async confirmPayment(transactionId: string) {
+    const knex = this.getKnex();
+
     // Знайти транзакцію
     const transaction = await strapi.db.query('api::transaction.transaction').findOne({
       where: { documentId: transactionId },
@@ -512,26 +610,28 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     }
 
     try {
-      // Оновити статус транзакції
-      await strapi.db.query('api::transaction.transaction').update({
-        where: { documentId: transaction.documentId },
-        data: {
-          paymentStatus: 'paid',
-          paymentDate: new Date().toISOString(),
-        },
-      });
+      await knex.transaction(async (trx) => {
+        // Оновити статус транзакції
+        await trx('transactions')
+          .where('id', transaction.id)
+          .update({
+            payment_status: 'paid',
+            payment_date: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
 
-      // Оновити статистику клієнта
-      if (transaction.customer) {
-        const customer = transaction.customer as { documentId: string; orderCount?: number; totalSpent?: number };
-        await strapi.db.query('api::customer.customer').update({
-          where: { documentId: customer.documentId },
-          data: {
-            orderCount: (customer.orderCount || 0) + 1,
-            totalSpent: (customer.totalSpent || 0) + transaction.amount,
-          },
-        });
-      }
+        // Оновити статистику клієнта
+        if (transaction.customer) {
+          const customer = transaction.customer as { id: number };
+          await trx('customers')
+            .where('id', customer.id)
+            .update({
+              order_count: trx.raw('COALESCE(order_count, 0) + 1'),
+              total_spent: trx.raw('COALESCE(total_spent, 0) + ?', [transaction.amount]),
+              updated_at: new Date().toISOString(),
+            });
+        }
+      });
 
       // Завантажити оновлену транзакцію
       const updated = await strapi.db.query('api::transaction.transaction').findOne({
@@ -544,7 +644,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         idempotent: false,
         data: updated,
       };
-    } catch (error) {
+    } catch (error: any) {
       strapi.log.error('Payment confirmation error:', error);
 
       return {
