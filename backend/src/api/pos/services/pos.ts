@@ -280,9 +280,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           itemsCount: data.items.length,
         });
 
-        // 4d. Створити Transaction
-        const [transactionId] = await trx('transactions').insert({
-          document_id: `trx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        // 4d. Створити Transaction (без customer - relation буде додано після)
+        const transactionDocumentId = `trx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const [transactionResult] = await trx('transactions').insert({
+          document_id: transactionDocumentId,
           date: new Date().toISOString(),
           type: 'sale',
           operation_id: data.operationId,
@@ -296,11 +297,13 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
             name: item.name,
             subtotal: item.price * item.qty,
           }))),
-          customer_id: customer.id,
           notes: data.notes || null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        }).returning('id');
+        }).returning(['id', 'document_id']);
+
+        const transactionId = typeof transactionResult === 'object' ? transactionResult.id : transactionResult;
+        const txDocId = typeof transactionResult === 'object' ? transactionResult.document_id : transactionDocumentId;
 
         // 4e. Оновити статистику клієнта якщо оплачено
         if (data.paymentStatus === 'paid') {
@@ -319,7 +322,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         });
 
         return {
-          transactionId: typeof transactionId === 'object' ? transactionId.id : transactionId,
+          transactionId,
+          transactionDocumentId: txDocId,
+          customerId: customer.id,
+          customerDocumentId: customer.documentId,
           stockUpdates,
           amount,
         };
@@ -328,6 +334,25 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       // Якщо ідемпотентний результат
       if ('idempotent' in result && result.idempotent) {
         return result;
+      }
+
+      // Прив'язати customer до transaction через Strapi (relation)
+      if (result.transactionDocumentId && result.customerDocumentId) {
+        try {
+          await strapi.documents('api::transaction.transaction').update({
+            documentId: result.transactionDocumentId,
+            data: {
+              customer: result.customerDocumentId,
+            },
+          });
+          strapi.log.info('✅ Customer linked to transaction:', {
+            transactionDocumentId: result.transactionDocumentId,
+            customerDocumentId: result.customerDocumentId,
+          });
+        } catch (linkError) {
+          strapi.log.warn('⚠️ Failed to link customer to transaction:', linkError);
+          // Не фейлимо всю операцію через це
+        }
       }
 
       // Завантажити повну транзакцію з relations
