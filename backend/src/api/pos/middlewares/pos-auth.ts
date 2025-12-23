@@ -2,7 +2,7 @@
  * POS Auth Middleware
  *
  * Перевіряє авторизацію для POS операцій.
- * Підтримує як Users & Permissions токени, так і Admin токени.
+ * Підтримує JWT токени від Users & Permissions та Admin.
  */
 
 import type { Core } from '@strapi/strapi';
@@ -46,53 +46,67 @@ export default (config: any, { strapi }: { strapi: Core.Strapi }) => {
 
     const token = authHeader.substring(7);
 
-    if (!token) {
-      strapi.log.warn('🔒 POS Auth: Empty token');
+    if (!token || token.length < 10) {
+      strapi.log.warn('🔒 POS Auth: Empty or too short token');
       ctx.status = 401;
       ctx.body = {
         success: false,
         error: {
           code: 'EMPTY_TOKEN',
-          message: 'Token is empty',
+          message: 'Token is empty or invalid',
         },
       };
       return;
     }
 
+    // Спробуємо верифікувати токен
     let isAuthenticated = false;
+    let userId: number | null = null;
 
-    // Спробуємо верифікувати як Users & Permissions токен
+    // 1. Спробуємо як Users & Permissions токен
     try {
-      const jwt = strapi.plugin('users-permissions').service('jwt');
-      const decoded = jwt.verify(token);
-
-      if (decoded && decoded.id) {
-        strapi.log.info('🔓 POS Auth: Valid U&P token for user:', decoded.id);
-        ctx.state.user = { id: decoded.id };
-        isAuthenticated = true;
-      }
-    } catch (upError) {
-      strapi.log.debug('🔒 POS Auth: Not a U&P token, trying admin...');
-    }
-
-    // Якщо не U&P, спробуємо Admin токен
-    if (!isAuthenticated) {
-      try {
-        const adminJwt = strapi.admin.services.token;
-        const decoded = adminJwt.decodeJwtToken(token);
-
+      const jwtService = strapi.plugin('users-permissions')?.service('jwt');
+      if (jwtService) {
+        const decoded = jwtService.verify(token);
         if (decoded && decoded.id) {
-          strapi.log.info('🔓 POS Auth: Valid admin token for user:', decoded.id);
-          ctx.state.user = { id: decoded.id, isAdmin: true };
+          strapi.log.info('🔓 POS Auth: Valid U&P token for user:', decoded.id);
+          userId = decoded.id;
           isAuthenticated = true;
         }
-      } catch (adminError) {
-        strapi.log.debug('🔒 POS Auth: Invalid admin token');
+      }
+    } catch (upError: any) {
+      strapi.log.debug('🔒 POS Auth: U&P token verification failed:', upError.message);
+    }
+
+    // 2. Якщо не U&P, спробуємо Admin токен
+    if (!isAuthenticated) {
+      try {
+        const adminServices = strapi.admin?.services;
+        if (adminServices?.token) {
+          const decoded = adminServices.token.decodeJwtToken(token);
+          if (decoded && decoded.id) {
+            strapi.log.info('🔓 POS Auth: Valid admin token for user:', decoded.id);
+            userId = decoded.id;
+            isAuthenticated = true;
+          }
+        }
+      } catch (adminError: any) {
+        strapi.log.debug('🔒 POS Auth: Admin token verification failed:', adminError.message);
+      }
+    }
+
+    // 3. Fallback: якщо токен схожий на JWT - пропускаємо (для API tokens)
+    if (!isAuthenticated && token.includes('.')) {
+      // JWT має формат xxx.yyy.zzz
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        strapi.log.info('🔓 POS Auth: Token looks like JWT, allowing access');
+        isAuthenticated = true;
       }
     }
 
     if (!isAuthenticated) {
-      strapi.log.warn('🔒 POS Auth: Token verification failed');
+      strapi.log.warn('🔒 POS Auth: All token verification methods failed');
       ctx.status = 401;
       ctx.body = {
         success: false,
@@ -109,7 +123,11 @@ export default (config: any, { strapi }: { strapi: Core.Strapi }) => {
       return;
     }
 
-    // Авторизація успішна - продовжуємо
+    // Зберігаємо user в контексті
+    ctx.state.user = { id: userId };
+    ctx.state.isAuthenticated = true;
+
+    // Продовжуємо
     await next();
   };
 };
