@@ -196,6 +196,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
     image: File | null;
     imagePreview: string | null;
     description: string;
+    originalDescription: string;
     variants: Array<{
       documentId: string;
       length: number;
@@ -214,6 +215,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
     image: null,
     imagePreview: null,
     description: "",
+    originalDescription: "",
     variants: [],
     originalVariants: [],
   });
@@ -334,6 +336,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           image: null,
           imagePreview,
           description: descriptionText,
+          originalDescription: descriptionText,
           variants: mappedVariants,
           originalVariants: mappedVariants.map(v => ({ ...v })),
         });
@@ -528,6 +531,18 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       const activeVariants = editData.variants.filter(v => !v.isDeleted);
       const changesLog: Record<string, { from: unknown; to: unknown }> = {};
 
+      // Логуємо зміну опису
+      if (editData.description !== editData.originalDescription) {
+        const fromDesc = editData.originalDescription.trim() || '(пусто)';
+        const toDesc = editData.description.trim() || '(пусто)';
+        changesLog['Опис'] = { from: fromDesc.slice(0, 50) + (fromDesc.length > 50 ? '...' : ''), to: toDesc.slice(0, 50) + (toDesc.length > 50 ? '...' : '') };
+      }
+
+      // Логуємо зміну зображення
+      if (editData.image) {
+        changesLog['Зображення'] = { from: 'старе', to: 'нове' };
+      }
+
       for (const variant of activeVariants) {
         try {
           if (variant.isNew) {
@@ -615,7 +630,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
       setEditModalOpen(false);
       setEditingProduct(null);
-      setEditData({ image: null, imagePreview: null, description: "", variants: [], originalVariants: [] });
+      setEditData({ image: null, imagePreview: null, description: "", originalDescription: "", variants: [], originalVariants: [] });
     } catch (error) {
       console.error("Error saving edit:", error);
       notify.error("Помилка", "Помилка збереження. Спробуйте ще раз.");
@@ -1726,7 +1741,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         setEditModalOpen(v);
         if (!v) {
           setEditingProduct(null);
-          setEditData({ image: null, imagePreview: null, description: "", variants: [], originalVariants: [] });
+          setEditData({ image: null, imagePreview: null, description: "", originalDescription: "", variants: [], originalVariants: [] });
         }
       }}
       title="Редагувати товар"

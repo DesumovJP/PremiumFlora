@@ -70,6 +70,19 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Фільтруємо клієнтів за пошуковим запитом
+  const filteredClients = useMemo(() => {
+    if (!searchQuery.trim()) return clients;
+    const query = searchQuery.toLowerCase();
+    return clients.filter((client) =>
+      client.name.toLowerCase().includes(query) ||
+      client.contact.toLowerCase().includes(query) ||
+      client.email.toLowerCase().includes(query) ||
+      client.city.toLowerCase().includes(query)
+    );
+  }, [clients, searchQuery]);
 
   const handleSelect = async (client: Client) => {
     setSelected(client);
@@ -278,6 +291,8 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
           <Input
             placeholder="Пошук клієнтів..."
             className="w-full sm:w-56"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
           <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-row">
             <Button
@@ -302,7 +317,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
         ) : (
         <>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <StatPill label="Всього клієнтів" value={clients.length.toString()} />
+          <StatPill label="Всього клієнтів" value={searchQuery ? `${filteredClients.length} / ${clients.length}` : clients.length.toString()} />
           <StatPill label="Загальна виручка" value={`${totalSpent.toLocaleString("uk-UA")} грн`} />
           <StatPill label="Середній чек" value={`${avgOrder.toLocaleString("uk-UA")} грн`} />
         </div>
@@ -429,7 +444,12 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
         )}
         <div className={selected ? "grid gap-4 lg:grid-cols-[1.8fr_1fr]" : "grid gap-4"}>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 animate-stagger">
-            {clients.map((client) => (
+            {filteredClients.length === 0 && searchQuery ? (
+              <div className="col-span-full text-center py-8 text-slate-500 dark:text-admin-text-tertiary">
+                Клієнтів за запитом "{searchQuery}" не знайдено
+              </div>
+            ) : null}
+            {filteredClients.map((client) => (
               <Card
                 key={client.id}
                 className={cn(
