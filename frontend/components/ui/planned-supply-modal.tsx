@@ -32,6 +32,7 @@ const stockBadgeClass = (stock: number) => {
 
 // Тип для згрупованих товарів
 type GroupedSupplyItem = {
+  groupKey: string; // Stable key for React
   flowerName: string;
   flowerId?: number;
   imageUrl?: string | null;
@@ -45,9 +46,12 @@ function groupSupplyItems(items: PlannedSupplyItem[]): GroupedSupplyItem[] {
   const groups: Record<string, GroupedSupplyItem> = {};
 
   items.forEach((item) => {
-    const key = item.flowerName;
+    // Для нових товарів (isNew) використовуємо item.id як ключ групи
+    // щоб уникнути проблем з фокусом при зміні назви
+    const key = item.isNew ? item.id : (item.flowerId?.toString() || item.flowerName);
     if (!groups[key]) {
       groups[key] = {
+        groupKey: key, // Stable key based on flowerId or item.id for new items
         flowerName: item.flowerName,
         flowerId: item.flowerId,
         imageUrl: item.imageUrl,
@@ -58,6 +62,10 @@ function groupSupplyItems(items: PlannedSupplyItem[]): GroupedSupplyItem[] {
     }
     groups[key].items.push(item);
     groups[key].totalPlanned += item.plannedQuantity;
+    // Оновлюємо flowerName для групи (для нових товарів)
+    if (item.isNew) {
+      groups[key].flowerName = item.flowerName;
+    }
     if (item.isNew) {
       groups[key].hasNewItems = true;
     }
@@ -419,7 +427,7 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
             <div className="max-h-96 overflow-y-auto space-y-3 pr-1">
               {groupSupplyItems(items).map((group) => (
                 <div
-                  key={group.flowerName}
+                  key={group.groupKey}
                   className="rounded-2xl border border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface-elevated shadow-sm overflow-hidden"
                 >
                   {/* Заголовок групи */}
