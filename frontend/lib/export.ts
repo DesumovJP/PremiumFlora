@@ -210,13 +210,15 @@ function formatActivityDetails(activity: Activity): string {
 export function exportShift(
   activities: Activity[],
   summary: ShiftSummary,
-  shiftStartedAt: string
+  shiftStartedAt: string,
+  shiftClosedAt?: string | null
 ): void {
   // Sheet 1: Summary
   const summaryHeaders = ['Показник', 'Значення'];
+  const closedAtDate = shiftClosedAt ? new Date(shiftClosedAt) : new Date();
   const summaryRows: (string | number)[][] = [
     ['Початок зміни', new Date(shiftStartedAt).toLocaleString('uk-UA')],
-    ['Закриття зміни', new Date().toLocaleString('uk-UA')],
+    ['Закриття зміни', closedAtDate.toLocaleString('uk-UA')],
     ['', ''],
     ['Кількість продажів', summary.totalSales],
     ['Сума продажів (грн)', summary.totalSalesAmount],
@@ -297,5 +299,7 @@ export function exportShift(
   XLSX.utils.book_append_sheet(wb, salesWs, 'Продажі');
   XLSX.utils.book_append_sheet(wb, activitiesWs, 'Всі дії');
 
-  downloadWorkbook(wb, `shift_${getTimestamp()}.xlsx`);
+  const shiftDate = new Date(shiftStartedAt);
+  const dateStr = `${shiftDate.getFullYear()}-${String(shiftDate.getMonth() + 1).padStart(2, '0')}-${String(shiftDate.getDate()).padStart(2, '0')}`;
+  downloadWorkbook(wb, `shift_${dateStr}.xlsx`);
 }

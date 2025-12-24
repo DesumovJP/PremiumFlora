@@ -1,10 +1,10 @@
 /**
  * History Section
  *
- * Відображення історії дій поточної зміни з можливістю закриття
+ * Відображення історії дій поточної зміни та архіву закритих змін
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,9 +22,12 @@ import {
   ShiftSummary,
 } from '@/hooks/use-activity-log';
 import { cn } from '@/lib/utils';
+import { getShifts, Shift } from '@/lib/strapi';
+import { exportShift } from '@/lib/export';
 import {
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   ShoppingBag,
   PackageMinus,
   Pencil,
@@ -39,6 +42,9 @@ import {
   History,
   RefreshCw,
   XCircle,
+  Calendar,
+  Eye,
+  CalendarDays,
 } from 'lucide-react';
 
 // ============================================
@@ -55,6 +61,8 @@ interface HistorySectionProps {
   isClosingShift?: boolean;
   isLoading?: boolean;
 }
+
+type TabType = 'current' | 'archive';
 
 // ============================================
 // Activity Icons and Labels
@@ -139,10 +147,10 @@ function formatDateTime(isoString: string): string {
   });
 }
 
-function formatDuration(startIso: string): string {
+function formatDuration(startIso: string, endIso?: string | null): string {
   const start = new Date(startIso);
-  const now = new Date();
-  const diffMs = now.getTime() - start.getTime();
+  const end = endIso ? new Date(endIso) : new Date();
+  const diffMs = end.getTime() - start.getTime();
   const hours = Math.floor(diffMs / (1000 * 60 * 60));
   const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
@@ -150,6 +158,14 @@ function formatDuration(startIso: string): string {
     return `${hours} год ${minutes} хв`;
   }
   return `${minutes} хв`;
+}
+
+function formatShortDate(isoString: string): string {
+  const date = new Date(isoString);
+  return date.toLocaleDateString('uk-UA', {
+    day: '2-digit',
+    month: '2-digit',
+  });
 }
 
 // ============================================
@@ -461,6 +477,395 @@ function EmptyState() {
 }
 
 // ============================================
+// Calendar Component
+// ============================================
+
+interface CalendarProps {
+  shifts: Shift[];
+  onSelectShift: (shift: Shift) => void;
+  currentMonth: Date;
+  onMonthChange: (date: Date) => void;
+}
+
+function ShiftCalendar({ shifts, onSelectShift, currentMonth, onMonthChange }: CalendarProps) {
+  const DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+  const MONTHS = [
+    'Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень',
+    'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'
+  ];
+
+  // Get first day of month and total days
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+
+  // Get day of week for first day (0 = Sunday, convert to Monday-based)
+  let startDayOfWeek = firstDay.getDay() - 1;
+  if (startDayOfWeek < 0) startDayOfWeek = 6;
+
+  // Create map of shifts by date
+  const shiftsByDate = new Map<string, Shift[]>();
+  shifts.forEach(shift => {
+    const dateKey = new Date(shift.closedAt || shift.startedAt).toDateString();
+    const existing = shiftsByDate.get(dateKey) || [];
+    existing.push(shift);
+    shiftsByDate.set(dateKey, existing);
+  });
+
+  // Generate calendar days
+  const calendarDays: (number | null)[] = [];
+  for (let i = 0; i < startDayOfWeek; i++) {
+    calendarDays.push(null);
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    calendarDays.push(i);
+  }
+
+  const prevMonth = () => {
+    onMonthChange(new Date(year, month - 1, 1));
+  };
+
+  const nextMonth = () => {
+    onMonthChange(new Date(year, month + 1, 1));
+  };
+
+  const today = new Date();
+  const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+
+  return (
+    <div className="space-y-4">
+      {/* Month Navigation */}
+      <div className="flex items-center justify-between">
+        <Button variant="outline" size="icon" onClick={prevMonth}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <h3 className="text-lg font-semibold dark:text-admin-text-primary">
+          {MONTHS[month]} {year}
+        </h3>
+        <Button variant="outline" size="icon" onClick={nextMonth}>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="rounded-xl border border-slate-200 dark:border-admin-border overflow-hidden">
+        {/* Days Header */}
+        <div className="grid grid-cols-7 bg-slate-50 dark:bg-admin-surface-elevated">
+          {DAYS.map(day => (
+            <div
+              key={day}
+              className="py-2 text-center text-sm font-medium text-slate-500 dark:text-admin-text-tertiary"
+            >
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Calendar Days */}
+        <div className="grid grid-cols-7 bg-white dark:bg-admin-surface">
+          {calendarDays.map((day, idx) => {
+            if (day === null) {
+              return (
+                <div
+                  key={`empty-${idx}`}
+                  className="h-20 border-t border-r border-slate-100 dark:border-admin-border last:border-r-0"
+                />
+              );
+            }
+
+            const date = new Date(year, month, day);
+            const dateKey = date.toDateString();
+            const dayShifts = shiftsByDate.get(dateKey) || [];
+            const hasShifts = dayShifts.length > 0;
+            const isToday = isCurrentMonth && day === today.getDate();
+
+            return (
+              <div
+                key={day}
+                className={cn(
+                  'h-20 p-1 border-t border-r border-slate-100 dark:border-admin-border last:border-r-0 relative',
+                  hasShifts && 'bg-emerald-50/50 dark:bg-emerald-900/10'
+                )}
+              >
+                <span
+                  className={cn(
+                    'inline-flex h-6 w-6 items-center justify-center rounded-full text-sm',
+                    isToday && 'bg-emerald-600 text-white font-bold',
+                    !isToday && 'text-slate-700 dark:text-admin-text-primary'
+                  )}
+                >
+                  {day}
+                </span>
+                {hasShifts && (
+                  <div className="mt-1 space-y-0.5">
+                    {dayShifts.slice(0, 2).map((shift) => (
+                      <button
+                        key={shift.documentId}
+                        onClick={() => onSelectShift(shift)}
+                        className="w-full text-left text-[10px] px-1 py-0.5 rounded bg-emerald-100 dark:bg-emerald-800/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-700/50 truncate transition-colors"
+                      >
+                        {shift.totalSalesAmount.toLocaleString()} грн
+                      </button>
+                    ))}
+                    {dayShifts.length > 2 && (
+                      <span className="text-[10px] text-slate-500 px-1">
+                        +{dayShifts.length - 2} ще
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// Shift Detail Modal Component
+// ============================================
+
+interface ShiftDetailModalProps {
+  shift: Shift | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onExport: (shift: Shift) => void;
+}
+
+function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailModalProps) {
+  if (!shift) return null;
+
+  const activities = (shift.activities || []) as Activity[];
+  const summary = shift.summary || {
+    totalSales: shift.totalSales || 0,
+    totalSalesAmount: shift.totalSalesAmount || 0,
+    totalWriteOffs: shift.totalWriteOffs || 0,
+    totalWriteOffsQty: shift.totalWriteOffsQty || 0,
+    activitiesCount: activities.length,
+    productEdits: 0,
+    customersCreated: 0,
+  };
+
+  return (
+    <Modal
+      open={open}
+      onOpenChange={onOpenChange}
+      title={`Зміна ${formatShortDate(shift.startedAt)}`}
+      description={
+        <span className="flex items-center gap-2">
+          <Clock className="h-4 w-4" />
+          {formatDateTime(shift.startedAt)} — {shift.closedAt ? formatDateTime(shift.closedAt) : 'Активна'}
+          <span className="text-emerald-600 font-medium">
+            ({formatDuration(shift.startedAt, shift.closedAt)})
+          </span>
+        </span>
+      }
+      footer={
+        <>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Закрити
+          </Button>
+          <Button
+            className="bg-emerald-600 hover:bg-emerald-700"
+            onClick={() => onExport(shift)}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Експортувати
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+        {/* Summary Stats */}
+        <div className="rounded-xl border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/60 dark:bg-emerald-900/20 p-4">
+          <h4 className="font-semibold text-slate-900 dark:text-admin-text-primary mb-3">
+            Підсумок зміни
+          </h4>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-600 dark:text-admin-text-secondary">Продажів:</span>
+              <span className="font-medium dark:text-admin-text-primary">{summary.totalSales}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-600 dark:text-admin-text-secondary">Виручка:</span>
+              <span className="font-medium text-emerald-600">
+                {Math.round(summary.totalSalesAmount).toLocaleString()} грн
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-600 dark:text-admin-text-secondary">Списань:</span>
+              <span className="font-medium dark:text-admin-text-primary">{summary.totalWriteOffs}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-600 dark:text-admin-text-secondary">Списано шт:</span>
+              <span className="font-medium text-amber-600">{summary.totalWriteOffsQty}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Activities List */}
+        <div className="rounded-xl border border-slate-100 dark:border-admin-border bg-white dark:bg-admin-surface overflow-hidden">
+          <div className="px-4 py-2 bg-slate-50 dark:bg-admin-surface-elevated border-b border-slate-100 dark:border-admin-border">
+            <span className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">
+              Дії ({activities.length})
+            </span>
+          </div>
+          {activities.length === 0 ? (
+            <div className="p-8 text-center text-slate-500 dark:text-admin-text-tertiary">
+              Немає записів
+            </div>
+          ) : (
+            <div className="max-h-64 overflow-y-auto">
+              {activities.map((activity) => (
+                <ActivityItem key={activity.id} activity={activity} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ============================================
+// Archive Tab Component
+// ============================================
+
+interface ArchiveTabProps {
+  onExportShift: (shift: Shift) => void;
+}
+
+function ArchiveTab({ onExportShift }: ArchiveTabProps) {
+  const [shifts, setShifts] = useState<Shift[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const loadShifts = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Load more shifts for calendar view
+      const result = await getShifts(1, 100);
+      if (result.success && result.data) {
+        // Filter only closed shifts
+        const closedShifts = result.data.filter(s => s.status === 'closed');
+        setShifts(closedShifts);
+      }
+    } catch (error) {
+      console.error('Error loading shifts:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadShifts();
+  }, [loadShifts]);
+
+  const handleSelectShift = (shift: Shift) => {
+    setSelectedShift(shift);
+    setModalOpen(true);
+  };
+
+  const handleExportShift = (shift: Shift) => {
+    onExportShift(shift);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (shifts.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-admin-surface mb-4">
+          <CalendarDays className="h-8 w-8 text-slate-400 dark:text-admin-text-muted" />
+        </div>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-admin-text-primary mb-1">
+          Немає закритих змін
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-admin-text-tertiary max-w-xs">
+          Після закриття зміни вона з'явиться тут у календарі
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <ShiftCalendar
+        shifts={shifts}
+        onSelectShift={handleSelectShift}
+        currentMonth={currentMonth}
+        onMonthChange={setCurrentMonth}
+      />
+
+      {/* Recent Shifts List */}
+      <div className="mt-6">
+        <h4 className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary mb-3">
+          Останні зміни
+        </h4>
+        <div className="space-y-2">
+          {shifts.slice(0, 5).map(shift => (
+            <div
+              key={shift.documentId}
+              className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-admin-border bg-white dark:bg-admin-surface hover:bg-slate-50 dark:hover:bg-[#21262d] transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/30">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <div className="font-medium text-slate-900 dark:text-admin-text-primary">
+                    {formatShortDate(shift.startedAt)}
+                  </div>
+                  <div className="text-sm text-slate-500 dark:text-admin-text-tertiary">
+                    {shift.totalSales} продажів • {shift.totalSalesAmount.toLocaleString()} грн
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSelectShift(shift)}
+                >
+                  <Eye className="h-4 w-4 mr-1" />
+                  Деталі
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleExportShift(shift)}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <ShiftDetailModal
+        shift={selectedShift}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onExport={handleExportShift}
+      />
+    </>
+  );
+}
+
+// ============================================
 // Main Component
 // ============================================
 
@@ -474,6 +879,7 @@ export function HistorySection({
   isClosingShift = false,
   isLoading = false,
 }: HistorySectionProps) {
+  const [activeTab, setActiveTab] = useState<TabType>('current');
   const [closeModalOpen, setCloseModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -492,6 +898,20 @@ export function HistorySection({
     }
   };
 
+  const handleExportArchivedShift = (shift: Shift) => {
+    const shiftActivities = (shift.activities || []) as Activity[];
+    const shiftSummary: ShiftSummary = shift.summary || {
+      totalSales: shift.totalSales || 0,
+      totalSalesAmount: shift.totalSalesAmount || 0,
+      totalWriteOffs: shift.totalWriteOffs || 0,
+      totalWriteOffsQty: shift.totalWriteOffsQty || 0,
+      activitiesCount: shiftActivities.length,
+      productEdits: 0,
+      customersCreated: 0,
+    };
+    exportShift(shiftActivities, shiftSummary, shift.startedAt, shift.closedAt);
+  };
+
   return (
     <>
       <Card className="admin-card border-none bg-white/90 dark:bg-admin-surface shadow-md">
@@ -499,7 +919,7 @@ export function HistorySection({
           <div className="space-y-1">
             <CardTitle className="text-2xl">Історія зміни</CardTitle>
             <CardDescription>
-              {shiftStartedAt ? (
+              {activeTab === 'current' && shiftStartedAt ? (
                 <span className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   Зміна розпочата: {formatDateTime(shiftStartedAt)}
@@ -507,81 +927,119 @@ export function HistorySection({
                     ({formatDuration(shiftStartedAt)})
                   </span>
                 </span>
-              ) : (
+              ) : activeTab === 'current' ? (
                 'Історія дій поточної робочої зміни'
+              ) : (
+                'Архів закритих змін з можливістю експорту'
               )}
             </CardDescription>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            {onRefresh && (
+          {activeTab === 'current' && (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              {onRefresh && (
+                <Button
+                  variant="outline"
+                  onClick={handleRefresh}
+                  disabled={isRefreshing || isLoading}
+                  size="icon"
+                  title="Оновити (синхронізація з іншими пристроями)"
+                  className="shrink-0"
+                >
+                  <RefreshCw
+                    className={cn(
+                      "h-4 w-4",
+                      (isRefreshing || isLoading) && "animate-spin"
+                    )}
+                  />
+                </Button>
+              )}
+              <Button
+                className="bg-emerald-600 hover:bg-emerald-700"
+                onClick={onExportShift}
+                disabled={activities.length === 0}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Експортувати
+              </Button>
               <Button
                 variant="outline"
-                onClick={handleRefresh}
-                disabled={isRefreshing || isLoading}
-                size="icon"
-                title="Оновити (синхронізація з іншими пристроями)"
-                className="shrink-0"
+                onClick={() => setCloseModalOpen(true)}
+                disabled={activities.length === 0}
               >
-                <RefreshCw
-                  className={cn(
-                    "h-4 w-4",
-                    (isRefreshing || isLoading) && "animate-spin"
-                  )}
-                />
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Закрити зміну
               </Button>
-            )}
-            <Button
-              className="bg-emerald-600 hover:bg-emerald-700"
-              onClick={onExportShift}
-              disabled={activities.length === 0}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Експортувати
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setCloseModalOpen(true)}
-              disabled={activities.length === 0}
-            >
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Закрити зміну
-            </Button>
-          </div>
+            </div>
+          )}
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Summary Stats */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatPill
-              label="Продажів"
-              value={`${summary.totalSales}`}
-            />
-            <StatPill
-              label="Виручка"
-              value={`${Math.round(summary.totalSalesAmount)} грн`}
-            />
-            <StatPill
-              label="Списань"
-              value={`${summary.totalWriteOffs}`}
-            />
-            <StatPill
-              label="Всього дій"
-              value={`${summary.activitiesCount}`}
-            />
+          {/* Tab Switcher */}
+          <div className="flex gap-1 p-1 bg-slate-100 dark:bg-admin-surface-elevated rounded-lg">
+            <button
+              onClick={() => setActiveTab('current')}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                activeTab === 'current'
+                  ? 'bg-white dark:bg-admin-surface text-slate-900 dark:text-admin-text-primary shadow-sm'
+                  : 'text-slate-600 dark:text-admin-text-tertiary hover:text-slate-900 dark:hover:text-admin-text-primary'
+              )}
+            >
+              <History className="h-4 w-4" />
+              Поточна зміна
+            </button>
+            <button
+              onClick={() => setActiveTab('archive')}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                activeTab === 'archive'
+                  ? 'bg-white dark:bg-admin-surface text-slate-900 dark:text-admin-text-primary shadow-sm'
+                  : 'text-slate-600 dark:text-admin-text-tertiary hover:text-slate-900 dark:hover:text-admin-text-primary'
+              )}
+            >
+              <Calendar className="h-4 w-4" />
+              Архів змін
+            </button>
           </div>
 
-          {/* Activities List */}
-          <div className="rounded-xl border border-slate-100 dark:border-admin-border bg-white dark:bg-admin-surface overflow-hidden">
-            {activities.length === 0 ? (
-              <EmptyState />
-            ) : (
-              <div>
-                {activities.map((activity) => (
-                  <ActivityItem key={activity.id} activity={activity} />
-                ))}
+          {activeTab === 'current' ? (
+            <>
+              {/* Summary Stats */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <StatPill
+                  label="Продажів"
+                  value={`${summary.totalSales}`}
+                />
+                <StatPill
+                  label="Виручка"
+                  value={`${Math.round(summary.totalSalesAmount)} грн`}
+                />
+                <StatPill
+                  label="Списань"
+                  value={`${summary.totalWriteOffs}`}
+                />
+                <StatPill
+                  label="Всього дій"
+                  value={`${summary.activitiesCount}`}
+                />
               </div>
-            )}
-          </div>
+
+              {/* Activities List */}
+              <div className="rounded-xl border border-slate-100 dark:border-admin-border bg-white dark:bg-admin-surface overflow-hidden">
+                {activities.length === 0 ? (
+                  <EmptyState />
+                ) : (
+                  <div>
+                    {activities.map((activity) => (
+                      <ActivityItem key={activity.id} activity={activity} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <ArchiveTab onExportShift={handleExportArchivedShift} />
+          )}
         </CardContent>
       </Card>
 
