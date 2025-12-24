@@ -272,9 +272,6 @@ export default async function bootstrap({ strapi }: { strapi: Core.Strapi }) {
   // Fix flowers without slugs (uses Documents API to avoid creating duplicates)
   await fixFlowersWithoutSlugs(strapi);
 
-  // Publish all draft flowers (uses Documents API to avoid creating duplicates)
-  await publishAllFlowers(strapi);
-
   // Seed articles if empty
   await seedArticles(strapi);
 }
@@ -507,41 +504,6 @@ async function fixFlowersWithoutSlugs(strapi: Core.Strapi) {
     }
   } catch (error) {
     strapi.log.error("❌ Error fixing flowers without slugs:", error);
-  }
-}
-
-async function publishAllFlowers(strapi: Core.Strapi) {
-  try {
-    strapi.log.info("📤 Publishing all unpublished flowers...");
-
-    // Use Documents API to find unpublished flowers (draft status)
-    const draftFlowers = await strapi.documents("api::flower.flower").findMany({
-      status: "draft",
-      fields: ["documentId", "name", "slug"],
-    });
-
-    let publishedCount = 0;
-
-    for (const flower of draftFlowers) {
-      try {
-        // Use Documents API publish() method - this is the correct way in Strapi v5
-        await strapi.documents("api::flower.flower").publish({
-          documentId: flower.documentId,
-        });
-        strapi.log.info(`✅ Published flower: "${flower.name}" (${flower.slug})`);
-        publishedCount++;
-      } catch (error) {
-        strapi.log.error(`❌ Error publishing flower "${flower.name}":`, error);
-      }
-    }
-
-    if (publishedCount > 0) {
-      strapi.log.info(`✅ Published ${publishedCount} flowers`);
-    } else {
-      strapi.log.info(`✅ All flowers are already published`);
-    }
-  } catch (error) {
-    strapi.log.error("❌ Error publishing flowers:", error);
   }
 }
 
