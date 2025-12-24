@@ -1586,6 +1586,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           window.location.reload();
         }
       }}
+      onLogActivity={onLogActivity ? (type, details) => onLogActivity(type as any, details as any) : undefined}
     />
 
     {/* Write-off Modal */}

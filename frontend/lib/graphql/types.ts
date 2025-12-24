@@ -182,3 +182,100 @@ export interface CreateCustomerInput {
   email?: string;
   address?: string;
 }
+
+// ============================================
+// Article типи
+// ============================================
+
+export type ArticleCategory = "note" | "guide" | "procedure" | "info";
+export type ArticlePriority = "low" | "medium" | "high";
+
+export interface GraphQLArticle {
+  documentId: string;
+  title: string;
+  slug: string | null;
+  content: GraphQLBlock[];
+  category: ArticleCategory;
+  priority: ArticlePriority;
+  pinned: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ArticlesResponse {
+  articles: GraphQLArticle[];
+}
+
+export interface ArticleResponse {
+  article: GraphQLArticle | null;
+}
+
+export interface CreateArticleInput {
+  title: string;
+  content?: GraphQLBlock[];
+  category?: ArticleCategory;
+  priority?: ArticlePriority;
+  pinned?: boolean;
+}
+
+export interface UpdateArticleInput {
+  title?: string;
+  content?: GraphQLBlock[];
+  category?: ArticleCategory;
+  priority?: ArticlePriority;
+  pinned?: boolean;
+}
+
+// ============================================
+// Task типи
+// ============================================
+
+export type TaskPriority = "low" | "medium" | "high";
+export type TaskStatus = "pending" | "in_progress" | "completed" | "cancelled";
+export type TaskCategory = "delivery" | "supply" | "maintenance" | "meeting" | "other";
+
+export interface GraphQLTask {
+  documentId: string;
+  title: string;
+  description: string | null;
+  dueDate: string;
+  reminderAt: string | null;
+  priority: TaskPriority;
+  status: TaskStatus;
+  category: TaskCategory;
+  completedAt: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TasksResponse {
+  tasks: GraphQLTask[];
+}
+
+export interface TaskResponse {
+  task: GraphQLTask | null;
+}
+
+export interface CreateTaskInput {
+  title: string;
+  description?: string;
+  dueDate: string;
+  reminderAt?: string;
+  priority?: TaskPriority;
+  status?: TaskStatus;
+  category?: TaskCategory;
+  notes?: string;
+}
+
+export interface UpdateTaskInput {
+  title?: string;
+  description?: string;
+  dueDate?: string;
+  reminderAt?: string;
+  priority?: TaskPriority;
+  status?: TaskStatus;
+  category?: TaskCategory;
+  completedAt?: string;
+  notes?: string;
+}

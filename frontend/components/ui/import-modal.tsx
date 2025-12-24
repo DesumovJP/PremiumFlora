@@ -15,9 +15,16 @@ interface ImportModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  onLogActivity?: (type: 'supply', details: {
+    filename: string;
+    flowersCreated: number;
+    flowersUpdated: number;
+    variantsCreated: number;
+    variantsUpdated: number;
+  }) => void;
 }
 
-export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps) {
+export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: ImportModalProps) {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ImportResponse | null>(null);
@@ -76,6 +83,16 @@ export function ImportModal({ open, onOpenChange, onSuccess }: ImportModalProps)
       setResult(res);
 
       if (res.success) {
+        // Log supply activity for shift history
+        if (onLogActivity && res.data.status === 'success') {
+          onLogActivity('supply', {
+            filename: file.name,
+            flowersCreated: res.data.stats.flowersCreated,
+            flowersUpdated: res.data.stats.flowersUpdated,
+            variantsCreated: res.data.stats.variantsCreated,
+            variantsUpdated: res.data.stats.variantsUpdated,
+          });
+        }
         onSuccess?.();
       }
     } catch (error) {

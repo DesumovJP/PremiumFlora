@@ -68,6 +68,13 @@ export interface ActivityDetails {
   // Payment
   transactionId?: string;
   amount?: number;
+
+  // Supply
+  filename?: string;
+  flowersCreated?: number;
+  flowersUpdated?: number;
+  variantsCreated?: number;
+  variantsUpdated?: number;
 }
 
 export interface Activity {

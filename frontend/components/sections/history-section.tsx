@@ -328,6 +328,36 @@ function ActivityItem({ activity }: { activity: Activity }) {
           </div>
         );
 
+      case 'supply':
+        return (
+          <div className="space-y-2 text-sm">
+            {details.filename && (
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Файл:</span>
+                <span className="font-medium dark:text-admin-text-primary">{details.filename}</span>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Нових квітів:</span>
+                <span className="ml-2 font-medium dark:text-admin-text-primary">{details.flowersCreated || 0}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Оновлено:</span>
+                <span className="ml-2 font-medium dark:text-admin-text-primary">{details.flowersUpdated || 0}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Нових варіантів:</span>
+                <span className="ml-2 font-medium dark:text-admin-text-primary">{details.variantsCreated || 0}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Оновлено:</span>
+                <span className="ml-2 font-medium dark:text-admin-text-primary">{details.variantsUpdated || 0}</span>
+              </div>
+            </div>
+          </div>
+        );
+
       default:
         return (
           <div className="text-sm text-slate-500 dark:text-admin-text-tertiary">
@@ -357,6 +387,10 @@ function ActivityItem({ activity }: { activity: Activity }) {
         return `${details.customerName} - ${details.amount} грн`;
       case 'customerCreate':
         return details.customerName || '';
+      case 'customerDelete':
+        return details.customerName || '';
+      case 'supply':
+        return details.filename || 'Імпорт';
       default:
         return '';
     }

@@ -8,6 +8,7 @@ import { HistorySection } from "@/components/sections/history-section";
 import { PosSection } from "@/components/sections/pos-section";
 import { ProductsSection } from "@/components/sections/products-section";
 import { TodoSection } from "@/components/sections/todo-section";
+import { ArticlesSection } from "@/components/sections/articles-section";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertToast } from "@/components/ui/alert-toast";
@@ -297,8 +298,20 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   // Handle delete customer
   const handleDeleteCustomer = async (documentId: string) => {
     try {
+      // Знаходимо клієнта перед видаленням для логування
+      const customerToDelete = customers.find(c => c.documentId === documentId);
+
       const result = await deleteCustomer(documentId);
       if (result.success) {
+        // Log activity for shift history
+        if (customerToDelete) {
+          logActivity('customerDelete', {
+            customerName: customerToDelete.name,
+            phone: customerToDelete.phone,
+            email: customerToDelete.email,
+          });
+        }
+
         showSuccess("Клієнта видалено", "Клієнт успішно видалений");
         await fetchCustomers();
       } else {
@@ -577,6 +590,10 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
 
         <TabsContent value="todo" className="space-y-5">
           <TodoSection />
+        </TabsContent>
+
+        <TabsContent value="articles" className="space-y-5">
+          <ArticlesSection />
         </TabsContent>
       </div>
     </Tabs>

@@ -98,3 +98,115 @@ export const DELETE_CUSTOMER = gql`
     }
   }
 `;
+
+// ============================================
+// Article Mutations
+// ============================================
+
+/**
+ * Створити статтю
+ */
+export const CREATE_ARTICLE = gql`
+  mutation CreateArticle($data: ArticleInput!) {
+    createArticle(data: $data) {
+      documentId
+      title
+      slug
+      content
+      category
+      priority
+      pinned
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+/**
+ * Оновити статтю
+ */
+export const UPDATE_ARTICLE = gql`
+  mutation UpdateArticle($documentId: ID!, $data: ArticleInput!) {
+    updateArticle(documentId: $documentId, data: $data) {
+      documentId
+      title
+      slug
+      content
+      category
+      priority
+      pinned
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+/**
+ * Видалити статтю
+ */
+export const DELETE_ARTICLE = gql`
+  mutation DeleteArticle($documentId: ID!) {
+    deleteArticle(documentId: $documentId) {
+      documentId
+    }
+  }
+`;
+
+// ============================================
+// Task Mutations
+// ============================================
+
+/**
+ * Створити завдання
+ */
+export const CREATE_TASK = gql`
+  mutation CreateTask($data: TaskInput!) {
+    createTask(data: $data) {
+      documentId
+      title
+      description
+      dueDate
+      reminderAt
+      priority
+      status
+      category
+      completedAt
+      notes
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+/**
+ * Оновити завдання
+ */
+export const UPDATE_TASK = gql`
+  mutation UpdateTask($documentId: ID!, $data: TaskInput!) {
+    updateTask(documentId: $documentId, data: $data) {
+      documentId
+      title
+      description
+      dueDate
+      reminderAt
+      priority
+      status
+      category
+      completedAt
+      notes
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+/**
+ * Видалити завдання
+ */
+export const DELETE_TASK = gql`
+  mutation DeleteTask($documentId: ID!) {
+    deleteTask(documentId: $documentId) {
+      documentId
+    }
+  }
+`;

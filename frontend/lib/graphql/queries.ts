@@ -235,3 +235,129 @@ export const GET_VARIANT_BY_ID = gql`
     }
   }
 `;
+
+// ============================================
+// Article Queries
+// ============================================
+
+/**
+ * Отримати всі статті
+ */
+export const GET_ARTICLES = gql`
+  query GetArticles($pageSize: Int = 100) {
+    articles(
+      pagination: { pageSize: $pageSize }
+      sort: ["createdAt:desc"]
+    ) {
+      documentId
+      title
+      slug
+      content
+      category
+      priority
+      pinned
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+/**
+ * Отримати статтю за documentId
+ */
+export const GET_ARTICLE_BY_ID = gql`
+  query GetArticleById($documentId: ID!) {
+    article(documentId: $documentId) {
+      documentId
+      title
+      slug
+      content
+      category
+      priority
+      pinned
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+// ============================================
+// Task Queries
+// ============================================
+
+/**
+ * Отримати всі завдання
+ */
+export const GET_TASKS = gql`
+  query GetTasks($pageSize: Int = 100, $status: String) {
+    tasks(
+      pagination: { pageSize: $pageSize }
+      sort: ["dueDate:asc"]
+      filters: { status: { eq: $status } }
+    ) {
+      documentId
+      title
+      description
+      dueDate
+      reminderAt
+      priority
+      status
+      category
+      completedAt
+      notes
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+/**
+ * Отримати завдання за documentId
+ */
+export const GET_TASK_BY_ID = gql`
+  query GetTaskById($documentId: ID!) {
+    task(documentId: $documentId) {
+      documentId
+      title
+      description
+      dueDate
+      reminderAt
+      priority
+      status
+      category
+      completedAt
+      notes
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+/**
+ * Отримати завдання на сьогодні та майбутні
+ */
+export const GET_UPCOMING_TASKS = gql`
+  query GetUpcomingTasks($dateFrom: DateTime!, $pageSize: Int = 50) {
+    tasks(
+      pagination: { pageSize: $pageSize }
+      sort: ["dueDate:asc"]
+      filters: {
+        dueDate: { gte: $dateFrom }
+        status: { ne: "cancelled" }
+      }
+    ) {
+      documentId
+      title
+      description
+      dueDate
+      reminderAt
+      priority
+      status
+      category
+      completedAt
+      notes
+      createdAt
+      updatedAt
+    }
+  }
+`;
