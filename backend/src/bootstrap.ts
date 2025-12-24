@@ -1,7 +1,6 @@
 import type { Core } from "@strapi/strapi";
 import { cleanupDuplicates } from "./scripts/cleanup-duplicates";
 import { resetFlowersAndVariants } from "./scripts/reset-flowers";
-import { seedArticles } from "./scripts/seed-articles";
 
 const flowersData = [
   {
@@ -272,8 +271,8 @@ export default async function bootstrap({ strapi }: { strapi: Core.Strapi }) {
   // Fix flowers without slugs (uses Documents API to avoid creating duplicates)
   await fixFlowersWithoutSlugs(strapi);
 
-  // Seed articles if empty
-  await seedArticles(strapi);
+  // Note: Articles can be created manually via admin panel
+  // Seed disabled due to blocks format validation issues
 }
 
 async function setupPublicPermissions(strapi: Core.Strapi) {
