@@ -1,6 +1,7 @@
 import type { Core } from "@strapi/strapi";
 import { cleanupDuplicates } from "./scripts/cleanup-duplicates";
 import { resetFlowersAndVariants } from "./scripts/reset-flowers";
+import { seedArticles } from "./scripts/seed-articles";
 
 const flowersData = [
   {
@@ -273,6 +274,9 @@ export default async function bootstrap({ strapi }: { strapi: Core.Strapi }) {
 
   // Publish all draft flowers (uses Documents API to avoid creating duplicates)
   await publishAllFlowers(strapi);
+
+  // Seed articles if empty
+  await seedArticles(strapi);
 }
 
 async function setupPublicPermissions(strapi: Core.Strapi) {
@@ -316,6 +320,12 @@ async function setupPublicPermissions(strapi: Core.Strapi) {
       // Import API
       { action: "api::import.import.excel", enabled: true },
       { action: "api::import.import.findOne", enabled: true },
+      // Article API (read-only for public)
+      { action: "api::article.article.find", enabled: true },
+      { action: "api::article.article.findOne", enabled: true },
+      // Task API (read-only for public)
+      { action: "api::task.task.find", enabled: true },
+      { action: "api::task.task.findOne", enabled: true },
     ];
 
     // Check existing permissions
@@ -397,6 +407,18 @@ async function setupAuthenticatedPermissions(strapi: Core.Strapi) {
       // Import API
       { action: "api::import.import.excel", enabled: true },
       { action: "api::import.import.findOne", enabled: true },
+      // Article API (full CRUD for authenticated)
+      { action: "api::article.article.find", enabled: true },
+      { action: "api::article.article.findOne", enabled: true },
+      { action: "api::article.article.create", enabled: true },
+      { action: "api::article.article.update", enabled: true },
+      { action: "api::article.article.delete", enabled: true },
+      // Task API (full CRUD for authenticated)
+      { action: "api::task.task.find", enabled: true },
+      { action: "api::task.task.findOne", enabled: true },
+      { action: "api::task.task.create", enabled: true },
+      { action: "api::task.task.update", enabled: true },
+      { action: "api::task.task.delete", enabled: true },
     ];
 
     // Check existing permissions
