@@ -1313,6 +1313,7 @@ export async function seedArticles(strapi: Core.Strapi): Promise<void> {
 
   try {
     // Check if articles already exist
+    // @ts-expect-error - type will be generated after first run
     const existingArticles = await strapi.documents('api::article.article').findMany({
       fields: ['documentId'],
     });
@@ -1324,8 +1325,9 @@ export async function seedArticles(strapi: Core.Strapi): Promise<void> {
 
     // Create articles
     for (const articleData of articlesData) {
+      // @ts-expect-error - type will be generated after first run
       await strapi.documents('api::article.article').create({
-        data: articleData,
+        data: articleData as Record<string, unknown>,
       });
       strapi.log.info(`✅ Created article: ${articleData.title}`);
     }
