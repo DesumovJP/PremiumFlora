@@ -1327,7 +1327,7 @@ export async function seedArticles(strapi: Core.Strapi): Promise<void> {
     for (const articleData of articlesData) {
       // @ts-expect-error - type will be generated after first run
       await strapi.documents('api::article.article').create({
-        data: articleData as Record<string, unknown>,
+        data: articleData as unknown,
       });
       strapi.log.info(`✅ Created article: ${articleData.title}`);
     }
