@@ -5,7 +5,7 @@
     "singularName": "article",
     "pluralName": "articles",
     "displayName": "Article",
-    "description": "Internal articles and notes"
+    "description": "Articles for internal notes and public blog"
   },
   "options": {
     "draftAndPublish": false
@@ -22,9 +22,13 @@
     "content": {
       "type": "blocks"
     },
+    "excerpt": {
+      "type": "text",
+      "maxLength": 500
+    },
     "category": {
       "type": "enumeration",
-      "enum": ["note", "guide", "procedure", "info"],
+      "enum": ["note", "guide", "procedure", "info", "blog", "care"],
       "default": "note"
     },
     "priority": {
@@ -35,6 +39,20 @@
     "pinned": {
       "type": "boolean",
       "default": false
+    },
+    "isPublic": {
+      "type": "boolean",
+      "default": false
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "author": {
+      "type": "string",
+      "default": "Premium Flora"
     }
   }
 }

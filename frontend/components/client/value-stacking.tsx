@@ -80,7 +80,7 @@ export function ValueStackingSection() {
   }, []);
 
   return (
-    <section ref={ref} className="relative py-20 sm:py-28 overflow-hidden">
+    <section ref={ref} className="relative py-10 sm:py-16 lg:py-20 overflow-hidden">
       {/* Background with gradient mesh */}
       <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 via-white to-emerald-50/30" />
 
@@ -99,7 +99,7 @@ export function ValueStackingSection() {
         {/* Header */}
         <div
           className={cn(
-            'text-center mb-16',
+            'text-center mb-8 sm:mb-12',
             isVisible ? 'opacity-100' : 'opacity-0'
           )}
           style={{
@@ -107,25 +107,25 @@ export function ValueStackingSection() {
             transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
           }}
         >
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-sm font-medium mb-4 border border-emerald-100/50 shadow-sm">
+          <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-xs sm:text-sm font-medium mb-3 sm:mb-4 border border-emerald-100/50 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Наші переваги
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-3 sm:mb-4 tracking-tight">
             Чому обирають <span className="text-emerald-600">Premium Flora</span>
           </h2>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base lg:text-lg text-slate-600 max-w-2xl mx-auto px-4">
             Ми поєднуємо європейську якість з українським сервісом
           </p>
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
           {values.map((value, index) => (
             <div
               key={value.title}
               className={cn(
-                'group relative bg-white/80 backdrop-blur-sm rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-100/80',
+                'group relative bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-sm border border-slate-100/80',
                 'hover:shadow-lg hover:border-emerald-200/60 hover:bg-white',
                 'transition-all duration-300 ease-out',
                 isVisible ? 'opacity-100' : 'opacity-0'
@@ -138,7 +138,7 @@ export function ValueStackingSection() {
               {/* Hover gradient background */}
               <div
                 className={cn(
-                  'absolute inset-0 rounded-2xl bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300',
+                  'absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300',
                   value.gradient
                 )}
               />
@@ -146,24 +146,24 @@ export function ValueStackingSection() {
               {/* Icon */}
               <div
                 className={cn(
-                  'relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mb-4 transition-all duration-300',
+                  'relative w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3 transition-all duration-300',
                   'group-hover:scale-110 group-hover:shadow-md',
                   value.color
                 )}
               >
-                <value.icon className="w-6 h-6 sm:w-7 sm:h-7" />
+                <value.icon className="w-4 h-4 sm:w-6 sm:h-6" />
               </div>
 
               {/* Content */}
-              <h3 className="relative text-base sm:text-lg font-semibold text-slate-900 mb-2 group-hover:text-emerald-700 transition-colors">
+              <h3 className="relative text-xs sm:text-base font-semibold text-slate-900 mb-1 sm:mb-2 group-hover:text-emerald-700 transition-colors leading-tight">
                 {value.title}
               </h3>
-              <p className="relative text-sm sm:text-base text-slate-600 leading-relaxed">
+              <p className="relative text-[10px] sm:text-sm text-slate-600 leading-snug sm:leading-relaxed">
                 {value.description}
               </p>
 
               {/* Corner decoration on hover */}
-              <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-emerald-400 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:scale-100 scale-0" />
+              <div className="absolute top-2 right-2 sm:top-3 sm:right-3 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:scale-100 scale-0" />
             </div>
           ))}
         </div>

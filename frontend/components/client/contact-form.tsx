@@ -49,17 +49,17 @@ export function ContactForm() {
 
   return (
     <Card id="contact" className="border-none bg-white/80 shadow-md">
-      <CardHeader>
-        <CardTitle className="text-2xl">Зв'яжіться з нами</CardTitle>
-        <CardDescription>
+      <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-4">
+        <CardTitle className="text-xl sm:text-2xl">Зв'яжіться з нами</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
           Заповніть форму, і наш менеджер зв'яжеться з вами для обговорення умов співпраці
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+      <CardContent className="p-4 sm:p-6 pt-2 sm:pt-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+          <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="name" className="mb-2 block text-sm font-medium text-slate-900">
+              <label htmlFor="name" className="mb-1.5 sm:mb-2 block text-xs sm:text-sm font-medium text-slate-900">
                 Ім'я *
               </label>
               <Input
@@ -72,7 +72,7 @@ export function ContactForm() {
               />
             </div>
             <div>
-              <label htmlFor="phone" className="mb-2 block text-sm font-medium text-slate-900">
+              <label htmlFor="phone" className="mb-1.5 sm:mb-2 block text-xs sm:text-sm font-medium text-slate-900">
                 Телефон *
               </label>
               <Input
@@ -86,7 +86,7 @@ export function ContactForm() {
             </div>
           </div>
           <div>
-            <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-900">
+            <label htmlFor="email" className="mb-1.5 sm:mb-2 block text-xs sm:text-sm font-medium text-slate-900">
               Email *
             </label>
             <Input
@@ -99,19 +99,19 @@ export function ContactForm() {
             />
           </div>
           <div>
-            <label htmlFor="message" className="mb-2 block text-sm font-medium text-slate-900">
+            <label htmlFor="message" className="mb-1.5 sm:mb-2 block text-xs sm:text-sm font-medium text-slate-900">
               Повідомлення
             </label>
             <textarea
               id="message"
-              rows={4}
+              rows={3}
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
               placeholder="Опишіть ваші потреби або залиште питання..."
-              className="flex w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-900 shadow-sm transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 placeholder:text-slate-400 resize-none"
+              className="flex w-full rounded-xl border border-slate-200 bg-white/70 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-900 shadow-sm transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 placeholder:text-slate-400 resize-none"
             />
           </div>
-          <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+          <Button type="submit" size="lg" className="w-full h-10 sm:h-11 text-sm" disabled={isSubmitting}>
             {isSubmitting ? (
               "Відправка..."
             ) : (
@@ -126,6 +126,9 @@ export function ContactForm() {
     </Card>
   );
 }
+
+
+
 
 
 

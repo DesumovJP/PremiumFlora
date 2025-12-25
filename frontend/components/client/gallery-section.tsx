@@ -97,7 +97,7 @@ export function GallerySection({
     <>
       <section
         ref={sectionRef}
-        className="relative overflow-hidden py-16 sm:py-20 lg:py-24"
+        className="relative overflow-hidden py-10 sm:py-16 lg:py-24"
       >
         {/* Background */}
         <div className="absolute inset-0 bg-gradient-to-b from-white via-emerald-50/20 to-slate-50/50" />
@@ -110,7 +110,7 @@ export function GallerySection({
           {/* Header */}
           <div
             className={cn(
-              "mb-12 text-center sm:mb-16",
+              "mb-6 sm:mb-10 lg:mb-12 text-center",
               isVisible ? "opacity-100" : "opacity-0"
             )}
             style={{
@@ -118,14 +118,14 @@ export function GallerySection({
               transform: isVisible ? "translateY(0)" : "translateY(20px)",
             }}
           >
-            <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-100/50 bg-emerald-50 px-4 py-1.5 text-sm font-medium text-emerald-700 shadow-sm">
+            <span className="mb-3 sm:mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-100/50 bg-emerald-50 px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-emerald-700 shadow-sm">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
               Галерея
             </span>
-            <h2 className="mb-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            <h2 className="mb-3 sm:mb-4 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
               {title}
             </h2>
-            <p className="mx-auto max-w-2xl text-lg text-slate-600">
+            <p className="mx-auto max-w-2xl text-sm sm:text-base lg:text-lg text-slate-600 px-4">
               {description}
             </p>
           </div>
@@ -257,3 +257,6 @@ export function GallerySection({
     </>
   );
 }
+
+
+

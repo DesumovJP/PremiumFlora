@@ -56,7 +56,7 @@ export function CatalogClient({ products }: CatalogClientProps) {
   return (
     <main className="min-h-screen">
       {/* Hero Header - Compact Premium Design */}
-      <section className="relative overflow-hidden py-8 sm:py-10 lg:py-12">
+      <section className="relative overflow-hidden py-6 sm:py-8 lg:py-12">
         {/* Background layers */}
         <div className="absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/60 via-white to-amber-50/30" />
@@ -70,7 +70,7 @@ export function CatalogClient({ products }: CatalogClientProps) {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 lg:gap-12">
             {/* Left: Title & Description */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 mb-3">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tight text-slate-900 mb-2 sm:mb-3">
                 Каталог{' '}
                 <span className="relative inline-block">
                   <span className="text-emerald-600">квітів</span>
@@ -79,7 +79,7 @@ export function CatalogClient({ products }: CatalogClientProps) {
                   </svg>
                 </span>
               </h1>
-              <p className="text-base sm:text-lg text-slate-600 max-w-xl leading-relaxed">
+              <p className="text-sm sm:text-base lg:text-lg text-slate-600 max-w-xl leading-relaxed">
                 Широкий вибір свіжих квітів для вашого бізнесу — від класичних троянд до екзотичних орхідей
               </p>
             </div>
@@ -254,10 +254,10 @@ export function CatalogClient({ products }: CatalogClientProps) {
       </section>
 
       {/* Products Section */}
-      <section className="py-8 sm:py-12">
+      <section className="py-6 sm:py-8 lg:py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Results Count */}
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-4 sm:mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-sm text-slate-600">
                 Знайдено: <span className="font-semibold text-slate-900">{filteredProducts.length}</span> товарів
@@ -273,7 +273,7 @@ export function CatalogClient({ products }: CatalogClientProps) {
           {/* Products Grid/List */}
           {filteredProducts.length > 0 ? (
             <div className={cn(
-              "grid gap-4 sm:gap-6",
+              "grid gap-3 sm:gap-5",
               viewMode === "grid"
                 ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 auto-rows-fr"
                 : "grid-cols-1 lg:grid-cols-2 auto-rows-fr"

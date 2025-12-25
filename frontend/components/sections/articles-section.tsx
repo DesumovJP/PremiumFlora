@@ -42,6 +42,7 @@ import {
   List,
   ListOrdered,
   Image as ImageIcon,
+  Leaf,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 
@@ -51,25 +52,31 @@ const toast = {
   error: (msg: string) => console.error(`[ERROR] ${msg}`),
 };
 
-const categoryIcons = {
+const categoryIcons: Record<string, typeof FileText> = {
   note: FileText,
   guide: Book,
   procedure: FileQuestion,
   info: Lightbulb,
+  blog: FileText,
+  care: Leaf,
 };
 
-const categoryLabels = {
+const categoryLabels: Record<string, string> = {
   note: "Нотатка",
   guide: "Гайд",
   procedure: "Процедура",
   info: "Інформація",
+  blog: "Блог",
+  care: "Догляд",
 };
 
-const categoryColors = {
+const categoryColors: Record<string, string> = {
   note: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400",
   guide: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400",
   procedure: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
   info: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400",
+  blog: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400",
+  care: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400",
 };
 
 const priorityLabels = {
@@ -78,7 +85,7 @@ const priorityLabels = {
   high: "Високий",
 };
 
-type ArticleCategory = "note" | "guide" | "procedure" | "info";
+type ArticleCategory = "note" | "guide" | "procedure" | "info" | "blog" | "care";
 type ArticlePriority = "low" | "medium" | "high";
 
 interface ArticleFormData {
@@ -475,6 +482,8 @@ export function ArticlesSection() {
             <option value="guide">Гайди</option>
             <option value="procedure">Процедури</option>
             <option value="info">Інформація</option>
+            <option value="blog">Блог</option>
+            <option value="care">Догляд</option>
           </select>
         </div>
 
@@ -554,6 +563,8 @@ export function ArticlesSection() {
                 <option value="guide">Гайд</option>
                 <option value="procedure">Процедура</option>
                 <option value="info">Інформація</option>
+                <option value="blog">Блог</option>
+                <option value="care">Догляд</option>
               </select>
             </div>
             <div>

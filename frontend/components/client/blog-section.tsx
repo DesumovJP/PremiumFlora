@@ -47,21 +47,21 @@ export function BlogSection({ posts }: BlogSectionProps) {
 
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
-          <div className="mb-12 sm:mb-16 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-1.5 text-xs sm:text-sm font-semibold text-amber-700 border border-amber-100/50 shadow-sm">
-              <BookOpen className="h-4 w-4" />
+          <div className="mb-6 sm:mb-10 lg:mb-12 text-center">
+            <div className="mb-3 sm:mb-4 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold text-amber-700 border border-amber-100/50 shadow-sm">
+              <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span>Блог</span>
             </div>
-            <h2 className="mb-4 text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900">
+            <h2 className="mb-3 sm:mb-4 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900">
               Корисні статті та <span className="text-emerald-600">поради</span>
             </h2>
-            <p className="mx-auto max-w-2xl text-base sm:text-lg text-slate-600">
+            <p className="mx-auto max-w-2xl text-sm sm:text-base lg:text-lg text-slate-600 px-4">
               Дізнайтеся про догляд за квітами, тренди та секрети професійних флористів
             </p>
           </div>
 
           {/* Decorative line */}
-          <div className="mb-12 hidden sm:block">
+          <div className="mb-6 sm:mb-10 hidden sm:block">
             <DecorativeLine variant="gradient" />
           </div>
 
@@ -180,12 +180,12 @@ export function BlogSection({ posts }: BlogSectionProps) {
           </div>
 
           {/* View All Button */}
-          <div className="mt-12 sm:mt-16 text-center">
+          <div className="mt-8 sm:mt-12 text-center">
             <Button
               asChild
               variant="outline"
               size="lg"
-              className="group h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-semibold border-2 border-slate-200 bg-white/80 backdrop-blur-sm hover:border-amber-300 hover:bg-amber-50/50 shadow-sm hover:shadow-md transition-all duration-300"
+              className="group h-11 sm:h-12 px-5 sm:px-8 text-sm sm:text-base font-semibold border-2 border-slate-200 bg-white/80 backdrop-blur-sm hover:border-amber-300 hover:bg-amber-50/50 shadow-sm hover:shadow-md transition-all duration-300"
             >
               <Link href="/blog" className="flex items-center gap-2">
                 Переглянути всі статті

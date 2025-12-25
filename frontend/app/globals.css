@@ -929,14 +929,19 @@ html {
 }
 
 /* Focus visible improvements - Premium Style */
-*:focus-visible {
+/* Прибираємо глобальну обводку, залишаємо тільки для форм */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
   outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
   transition: outline var(--transition-fast);
 }
 
-.dark *:focus-visible {
+.dark input:focus-visible,
+.dark textarea:focus-visible,
+.dark select:focus-visible {
   outline-color: var(--brand-primary);
 }
 
@@ -1662,8 +1667,10 @@ html {
   border: 0;
 }
 
-/* Focus visible improvements */
-*:focus-visible {
+/* Focus visible improvements - тільки для форм */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
   outline: 3px solid var(--brand-primary);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
@@ -2074,21 +2081,40 @@ html {
 
 /* ============================================
    SECTION PADDING UTILITIES
+   Optimized for mobile with browser UI consideration
    ============================================ */
 
 .section-padding {
+  padding-top: clamp(2.5rem, 6vw, 5rem);
+  padding-bottom: clamp(2.5rem, 6vw, 5rem);
+}
+
+.section-padding-sm {
+  padding-top: clamp(1.5rem, 4vw, 3rem);
+  padding-bottom: clamp(1.5rem, 4vw, 3rem);
+}
+
+.section-padding-lg {
   padding-top: clamp(3rem, 8vw, 6rem);
   padding-bottom: clamp(3rem, 8vw, 6rem);
 }
 
-.section-padding-sm {
-  padding-top: clamp(2rem, 5vw, 4rem);
-  padding-bottom: clamp(2rem, 5vw, 4rem);
-}
+/* Mobile-first section spacing */
+@media (max-width: 639px) {
+  .section-padding {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
 
-.section-padding-lg {
-  padding-top: clamp(4rem, 10vw, 8rem);
-  padding-bottom: clamp(4rem, 10vw, 8rem);
+  .section-padding-sm {
+    padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .section-padding-lg {
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+  }
 }
 
 /* Container max-width variants */

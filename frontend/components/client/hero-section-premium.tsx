@@ -123,7 +123,7 @@ export function HeroSectionPremium() {
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-[90vh] flex items-center overflow-hidden"
+      className="relative min-h-[calc(100svh-56px)] sm:min-h-[85vh] flex items-center overflow-hidden"
     >
       {/* Background Video/Image */}
       <div className="absolute inset-0 z-0">
@@ -159,7 +159,7 @@ export function HeroSectionPremium() {
       </div>
 
       {/* Content */}
-      <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 lg:py-20">
         <div
           className="max-w-7xl text-center sm:text-left"
           style={{
@@ -190,7 +190,7 @@ export function HeroSectionPremium() {
 
           {/* Headline with character animation */}
           <h1
-            className="!text-[2.75rem] sm:!text-[3rem] md:!text-[4rem] lg:!text-[5rem] xl:!text-[6rem] 2xl:!text-[7rem] font-bold text-slate-900 !leading-[1.05] mb-6"
+            className="!text-[2rem] sm:!text-[2.5rem] md:!text-[3.5rem] lg:!text-[4.5rem] xl:!text-[5.5rem] font-bold text-slate-900 !leading-[1.1] mb-4 sm:mb-6"
             style={{ perspective: '1000px' }}
           >
             <span className="block overflow-hidden">
@@ -226,7 +226,7 @@ export function HeroSectionPremium() {
 
           {/* Subheadline with fade-in */}
           <p
-            className={`text-base sm:text-lg lg:text-xl text-slate-600 mb-8 max-w-xl mx-auto sm:mx-0 leading-relaxed gpu-accelerated ${
+            className={`text-sm sm:text-base lg:text-lg text-slate-600 mb-6 sm:mb-8 max-w-lg sm:max-w-xl mx-auto sm:mx-0 leading-relaxed gpu-accelerated ${
               isVisible ? 'opacity-100' : 'opacity-0'
             }`}
             style={{
@@ -241,7 +241,7 @@ export function HeroSectionPremium() {
 
           {/* CTAs with premium hover effect */}
           <div
-            className={`flex flex-col sm:flex-row gap-4 mb-12 items-center sm:items-start ${
+            className={`flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8 sm:mb-10 items-center sm:items-start ${
               isVisible ? 'opacity-100' : 'opacity-0'
             }`}
             style={{
@@ -279,7 +279,7 @@ export function HeroSectionPremium() {
 
           {/* Trust indicators with staggered animation */}
           <div
-            className={`flex flex-wrap gap-6 items-center justify-center sm:justify-start ${
+            className={`flex flex-wrap gap-4 sm:gap-6 items-center justify-center sm:justify-start ${
               isVisible ? 'opacity-100' : 'opacity-0'
             }`}
             style={{
@@ -295,14 +295,14 @@ export function HeroSectionPremium() {
             ].map((stat, i) => (
               <div
                 key={stat.label}
-                className="flex items-center gap-2 gpu-accelerated"
+                className="flex items-center gap-1.5 sm:gap-2 gpu-accelerated"
                 style={{
                   animation: isVisible ? `fadeInUpPremium 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${2 + i * 0.1}s forwards` : 'none',
                   opacity: 0,
                 }}
               >
-                <span className="text-2xl font-bold text-emerald-600">{stat.value}</span>
-                <span className="text-sm text-slate-500">{stat.label}</span>
+                <span className="text-xl sm:text-2xl font-bold text-emerald-600">{stat.value}</span>
+                <span className="text-xs sm:text-sm text-slate-500">{stat.label}</span>
               </div>
             ))}
           </div>

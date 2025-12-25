@@ -46,21 +46,21 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="mb-12 sm:mb-16 text-center fade-in-up">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-1.5 text-xs sm:text-sm font-semibold text-emerald-700 border border-emerald-100/50 shadow-sm">
-            <Flower2 className="h-4 w-4" />
+        <div className="mb-6 sm:mb-10 lg:mb-12 text-center fade-in-up">
+          <div className="mb-3 sm:mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold text-emerald-700 border border-emerald-100/50 shadow-sm">
+            <Flower2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span>Каталог</span>
           </div>
-          <h2 className="mb-4 text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900">
+          <h2 className="mb-3 sm:mb-4 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900">
             Популярні <span className="text-emerald-600">товари</span>
           </h2>
-          <p className="mx-auto max-w-2xl text-base sm:text-lg text-slate-600">
+          <p className="mx-auto max-w-2xl text-sm sm:text-base lg:text-lg text-slate-600 px-4">
             Найбільш затребувані квіти серед наших клієнтів. Свіжість та якість гарантовані.
           </p>
         </div>
 
         {/* Products Grid - Premium with animations */}
-        <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
           {featured.map((product, index) => (
             <div
               key={product.id}
@@ -75,16 +75,16 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
         </div>
 
         {/* CTA - Premium */}
-        <div className="mt-16 text-center fade-in-up">
+        <div className="mt-8 sm:mt-12 text-center fade-in-up">
           <Button
             asChild
             variant="outline"
             size="lg"
-            className="group h-14 px-8 text-base font-semibold border-2 border-slate-200 bg-white/80 backdrop-blur-sm hover:border-emerald-300 hover:bg-emerald-50/50 shadow-sm hover:shadow-md transition-all duration-300"
+            className="group h-11 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold border-2 border-slate-200 bg-white/80 backdrop-blur-sm hover:border-emerald-300 hover:bg-emerald-50/50 shadow-sm hover:shadow-md transition-all duration-300"
           >
             <Link href="/catalog" className="flex items-center gap-2">
               Переглянути весь каталог
-              <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+              <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </Button>
         </div>
