@@ -293,14 +293,14 @@ export default function AboutPage() {
             </div>
 
             {/* Advantages Grid */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
               {advantages.map((advantage, index) => {
                 const Icon = advantage.icon;
                 return (
                   <div
                     key={advantage.title}
                     className={cn(
-                      "group relative overflow-hidden rounded-2xl border border-slate-100/80 bg-white/80 p-5 shadow-sm backdrop-blur-sm sm:p-6",
+                      "group relative overflow-hidden rounded-xl sm:rounded-2xl border border-slate-100/80 bg-white/80 p-3 sm:p-6 shadow-sm backdrop-blur-sm",
                       "transition-all duration-300 ease-out hover:border-emerald-200/60 hover:bg-white hover:shadow-lg",
                       advantagesVisible ? "opacity-100" : "opacity-0"
                     )}
@@ -312,7 +312,7 @@ export default function AboutPage() {
                     {/* Hover gradient background */}
                     <div
                       className={cn(
-                        "absolute inset-0 rounded-2xl bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100",
+                        "absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100",
                         advantage.gradient
                       )}
                     />
@@ -320,24 +320,24 @@ export default function AboutPage() {
                     {/* Icon */}
                     <div
                       className={cn(
-                        "relative mb-4 flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-300 sm:h-14 sm:w-14",
+                        "relative mb-2 sm:mb-4 flex h-9 w-9 sm:h-14 sm:w-14 items-center justify-center rounded-lg sm:rounded-xl transition-all duration-300",
                         "group-hover:scale-110 group-hover:shadow-md",
                         advantage.color
                       )}
                     >
-                      <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
+                      <Icon className="h-4 w-4 sm:h-7 sm:w-7" />
                     </div>
 
                     {/* Content */}
-                    <h3 className="relative mb-2 text-base font-semibold text-slate-900 transition-colors group-hover:text-emerald-700 sm:text-lg">
+                    <h3 className="relative mb-1 sm:mb-2 text-xs sm:text-lg font-semibold text-slate-900 transition-colors group-hover:text-emerald-700 leading-tight">
                       {advantage.title}
                     </h3>
-                    <p className="relative text-sm leading-relaxed text-slate-600 sm:text-base">
+                    <p className="relative text-[10px] sm:text-base leading-snug sm:leading-relaxed text-slate-600">
                       {advantage.description}
                     </p>
 
                     {/* Corner decoration */}
-                    <div className="absolute right-3 top-3 h-2 w-2 scale-0 rounded-full bg-emerald-400 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
+                    <div className="absolute right-2 top-2 sm:right-3 sm:top-3 h-1.5 w-1.5 sm:h-2 sm:w-2 scale-0 rounded-full bg-emerald-400 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
                   </div>
                 );
               })}
@@ -371,17 +371,17 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
               {[
                 {
                   icon: Phone,
                   title: "Телефон",
                   content: (
-                    <div className="space-y-1">
-                      <a href="tel:+380671234567" className="block text-sm text-emerald-600 transition-colors hover:text-emerald-700">
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <a href="tel:+380671234567" className="block text-[10px] sm:text-sm text-emerald-600 transition-colors hover:text-emerald-700">
                         +380 67 123 4567
                       </a>
-                      <a href="tel:+380501234567" className="block text-sm text-emerald-600 transition-colors hover:text-emerald-700">
+                      <a href="tel:+380501234567" className="block text-[10px] sm:text-sm text-emerald-600 transition-colors hover:text-emerald-700">
                         +380 50 123 4567
                       </a>
                     </div>
@@ -391,7 +391,7 @@ export default function AboutPage() {
                   icon: Mail,
                   title: "Email",
                   content: (
-                    <a href="mailto:info@premiumflora.ua" className="text-sm text-emerald-600 transition-colors hover:text-emerald-700">
+                    <a href="mailto:info@premiumflora.ua" className="text-[10px] sm:text-sm text-emerald-600 transition-colors hover:text-emerald-700 break-all">
                       info@premiumflora.ua
                     </a>
                   ),
@@ -399,15 +399,15 @@ export default function AboutPage() {
                 {
                   icon: MapPin,
                   title: "Адреса",
-                  content: <p className="text-sm text-slate-600">м. Київ, Україна</p>,
+                  content: <p className="text-[10px] sm:text-sm text-slate-600">м. Київ, Україна</p>,
                 },
                 {
                   icon: Clock,
                   title: "Режим роботи",
                   content: (
                     <>
-                      <p className="text-sm text-slate-600">Пн-Пт: 9:00-18:00</p>
-                      <p className="text-sm text-slate-600">Сб: 10:00-16:00</p>
+                      <p className="text-[10px] sm:text-sm text-slate-600">Пн-Пт: 9:00-18:00</p>
+                      <p className="text-[10px] sm:text-sm text-slate-600">Сб: 10:00-16:00</p>
                     </>
                   ),
                 },
@@ -416,21 +416,21 @@ export default function AboutPage() {
                 return (
                   <div
                     key={item.title}
-                    className="group relative overflow-hidden rounded-2xl border border-slate-100/80 bg-white/80 p-6 text-center shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-emerald-200/60 hover:bg-white hover:shadow-lg"
+                    className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-slate-100/80 bg-white/80 p-3 sm:p-6 text-center shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-emerald-200/60 hover:bg-white hover:shadow-lg"
                   >
                     {/* Hover gradient */}
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500/5 to-teal-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500/5 to-teal-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
                     <div className="relative">
-                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-all duration-300 group-hover:scale-110 group-hover:bg-emerald-100 group-hover:shadow-md">
-                        <Icon className="h-6 w-6" />
+                      <div className="mx-auto mb-2 sm:mb-3 flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-lg sm:rounded-xl bg-emerald-50 text-emerald-600 transition-all duration-300 group-hover:scale-110 group-hover:bg-emerald-100 group-hover:shadow-md">
+                        <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
                       </div>
-                      <h3 className="mb-2 font-semibold text-slate-900">{item.title}</h3>
+                      <h3 className="mb-1 sm:mb-2 text-xs sm:text-base font-semibold text-slate-900">{item.title}</h3>
                       {item.content}
                     </div>
 
                     {/* Corner decoration */}
-                    <div className="absolute right-3 top-3 h-2 w-2 scale-0 rounded-full bg-emerald-400 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
+                    <div className="absolute right-2 top-2 sm:right-3 sm:top-3 h-1.5 w-1.5 sm:h-2 sm:w-2 scale-0 rounded-full bg-emerald-400 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
                   </div>
                 );
               })}
