@@ -241,7 +241,7 @@ export const GET_VARIANT_BY_ID = gql`
 // ============================================
 
 /**
- * Отримати всі статті
+ * Отримати всі статті (для адмінки)
  */
 export const GET_ARTICLES = gql`
   query GetArticles($pageSize: Int = 100) {
@@ -253,13 +253,20 @@ export const GET_ARTICLES = gql`
       title
       slug
       content
+      excerpt
       category
       priority
       pinned
+      isPublic
+      author
+      image {
+        ...ImageFields
+      }
       createdAt
       updatedAt
     }
   }
+  ${IMAGE_FRAGMENT}
 `;
 
 /**
@@ -272,13 +279,47 @@ export const GET_ARTICLE_BY_ID = gql`
       title
       slug
       content
+      excerpt
       category
       priority
       pinned
+      isPublic
+      author
+      image {
+        ...ImageFields
+      }
       createdAt
       updatedAt
     }
   }
+  ${IMAGE_FRAGMENT}
+`;
+
+/**
+ * Отримати публічні статті для блогу
+ */
+export const GET_BLOG_POSTS = gql`
+  query GetBlogPosts($pageSize: Int = 20) {
+    articles(
+      pagination: { pageSize: $pageSize }
+      sort: ["createdAt:desc"]
+      filters: { isPublic: { eq: true } }
+    ) {
+      documentId
+      title
+      slug
+      content
+      excerpt
+      category
+      author
+      image {
+        ...ImageFields
+      }
+      createdAt
+      updatedAt
+    }
+  }
+  ${IMAGE_FRAGMENT}
 `;
 
 // ============================================
