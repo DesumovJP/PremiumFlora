@@ -654,7 +654,8 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
         </aside>
 
         {/* Main Content - scrollable */}
-        <main className="h-full overflow-y-auto px-6 py-4 lg:px-8">
+        {/* Note: pr is slightly larger to compensate for scrollbar width */}
+        <main className="h-full overflow-y-auto pl-6 pr-8 py-4 lg:pl-8 lg:pr-10">
           {tabsContent}
         </main>
 

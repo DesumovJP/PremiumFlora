@@ -212,11 +212,6 @@ body {
   color: var(--admin-text-primary);
 }
 
-/* Admin panel main content - scrollbar gutter to prevent layout shift */
-.admin-panel main {
-  scrollbar-gutter: stable;
-}
-
 .dark .admin-panel {
   background: var(--admin-bg);
 }
