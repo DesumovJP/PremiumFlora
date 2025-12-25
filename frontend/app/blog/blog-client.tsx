@@ -187,21 +187,21 @@ export function BlogPageClient({ posts }: BlogPageClientProps) {
           open={!!selectedPost}
           onOpenChange={(open) => !open && setSelectedPost(null)}
           breadcrumb={
-            <nav className="flex items-center gap-2 text-sm" aria-label="Breadcrumb">
+            <nav className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap" aria-label="Breadcrumb">
               <Link
                 href="/"
-                className="inline-flex items-center gap-1.5 text-slate-600 dark:text-admin-text-secondary transition-colors hover:text-emerald-600 dark:hover:text-emerald-400 group"
+                className="inline-flex items-center gap-1 sm:gap-1.5 text-slate-500 dark:text-admin-text-secondary transition-colors hover:text-emerald-600 dark:hover:text-emerald-400 flex-shrink-0"
                 onClick={(e) => {
                   e.stopPropagation();
                 }}
               >
-                <Home className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
-                <span className="font-medium">Головна</span>
+                <Home className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline font-medium">Головна</span>
               </Link>
-              <ChevronRight className="h-4 w-4 text-slate-400 dark:text-admin-text-tertiary flex-shrink-0" />
+              <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-admin-text-tertiary flex-shrink-0" />
               <Link
                 href="/blog"
-                className="text-slate-600 dark:text-admin-text-secondary transition-colors hover:text-emerald-600 dark:hover:text-emerald-400 font-medium"
+                className="text-slate-500 dark:text-admin-text-secondary transition-colors hover:text-emerald-600 dark:hover:text-emerald-400 font-medium flex-shrink-0"
                 onClick={(e) => {
                   e.stopPropagation();
                   setSelectedPost(null);
@@ -209,8 +209,8 @@ export function BlogPageClient({ posts }: BlogPageClientProps) {
               >
                 Блог
               </Link>
-              <ChevronRight className="h-4 w-4 text-slate-400 dark:text-admin-text-tertiary flex-shrink-0" />
-              <span className="text-slate-900 dark:text-admin-text-primary font-semibold truncate">
+              <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-admin-text-tertiary flex-shrink-0" />
+              <span className="text-slate-800 dark:text-admin-text-primary font-semibold truncate max-w-[150px] sm:max-w-[250px] md:max-w-none">
                 {selectedPost.title}
               </span>
             </nav>

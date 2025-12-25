@@ -125,66 +125,115 @@ export function CatalogClient({ products }: CatalogClientProps) {
       {/* Search and Filters - Premium Sticky Bar */}
       <section className="sticky top-16 lg:top-[89px] z-40 border-b border-slate-100/80 bg-white/80 backdrop-blur-md py-3 sm:py-4 shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {/* Search Bar + mobile view toggle */}
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1 sm:max-w-md">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input
-                  type="text"
-                  placeholder="Пошук квітів..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-11 pl-11 pr-10 text-sm bg-slate-50/80 border-slate-200/60 rounded-xl placeholder:text-slate-400 focus:bg-white focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all duration-200"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
-                    aria-label="Очистити пошук"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
+          {/* Mobile: Single row with search, sort, view toggle */}
+          <div className="flex items-center gap-2 sm:hidden">
+            {/* Search - compact */}
+            <div className="relative flex-1 min-w-0">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                type="text"
+                placeholder="Пошук..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-10 pl-9 pr-8 text-sm bg-slate-50/80 border-slate-200/60 rounded-xl placeholder:text-slate-400 focus:bg-white focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all duration-200"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+                  aria-label="Очистити пошук"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
 
-              {/* View Mode Toggle - mobile */}
-              <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100/80 sm:hidden">
+            {/* Sort - compact dropdown */}
+            <Select
+              value={sortBy}
+              onValueChange={(v) => setSortBy(v as typeof sortBy)}
+            >
+              <SelectTrigger className="h-10 w-auto min-w-[100px] max-w-[120px] text-xs bg-slate-50/80 border-slate-200/60 rounded-xl hover:bg-white hover:border-slate-300 focus:ring-2 focus:ring-emerald-100 transition-all duration-200 px-2.5">
+                <div className="flex items-center gap-1.5">
+                  <ArrowUpDown className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                  <span className="truncate">
+                    {sortBy === "name" ? "Назва" : sortBy === "price-asc" ? "Ціна ↑" : "Ціна ↓"}
+                  </span>
+                </div>
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-slate-200/80 shadow-xl bg-white/95 backdrop-blur-sm min-w-[160px]">
+                <SelectItem value="name" className="rounded-lg cursor-pointer focus:bg-emerald-50 focus:text-emerald-700 text-sm">
+                  За назвою
+                </SelectItem>
+                <SelectItem value="price-asc" className="rounded-lg cursor-pointer focus:bg-emerald-50 focus:text-emerald-700 text-sm">
+                  Ціна: від низької
+                </SelectItem>
+                <SelectItem value="price-desc" className="rounded-lg cursor-pointer focus:bg-emerald-50 focus:text-emerald-700 text-sm">
+                  Ціна: від високої
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* View Mode Toggle - compact */}
+            <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-slate-100/80 flex-shrink-0">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={cn(
+                  "p-2 rounded-md transition-all duration-200",
+                  viewMode === "grid"
+                    ? "bg-white text-emerald-600 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+                aria-label="Сітка"
+              >
+                <Grid3x3 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={cn(
+                  "p-2 rounded-md transition-all duration-200",
+                  viewMode === "list"
+                    ? "bg-white text-emerald-600 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+                aria-label="Список"
+              >
+                <List className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Desktop: Two-column layout */}
+          <div className="hidden sm:flex sm:items-center sm:justify-between">
+            {/* Search Bar */}
+            <div className="relative max-w-md flex-1">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                type="text"
+                placeholder="Пошук квітів..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-11 pl-11 pr-10 text-sm bg-slate-50/80 border-slate-200/60 rounded-xl placeholder:text-slate-400 focus:bg-white focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 transition-all duration-200"
+              />
+              {searchQuery && (
                 <button
-                  onClick={() => setViewMode("grid")}
-                  className={cn(
-                    "p-2 rounded-lg transition-all duration-200",
-                    viewMode === "grid"
-                      ? "bg-white text-emerald-600 shadow-sm"
-                      : "text-slate-500 hover:text-slate-700"
-                  )}
-                  aria-label="Сітка"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+                  aria-label="Очистити пошук"
                 >
-                  <Grid3x3 className="h-4 w-4" />
+                  <X className="h-4 w-4" />
                 </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={cn(
-                    "p-2 rounded-lg transition-all duration-200",
-                    viewMode === "list"
-                      ? "bg-white text-emerald-600 shadow-sm"
-                      : "text-slate-500 hover:text-slate-700"
-                  )}
-                  aria-label="Список"
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              </div>
+              )}
             </div>
 
             {/* Sort and View */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              {/* Sort Select - Premium Style */}
+            <div className="flex items-center gap-3">
+              {/* Sort Select */}
               <Select
                 value={sortBy}
                 onValueChange={(v) => setSortBy(v as typeof sortBy)}
               >
-                <SelectTrigger className="h-11 w-full sm:w-[12.5rem] text-sm bg-slate-50/80 border-slate-200/60 rounded-xl hover:bg-white hover:border-slate-300 focus:ring-2 focus:ring-emerald-100 transition-all duration-200">
+                <SelectTrigger className="h-11 w-[12.5rem] text-sm bg-slate-50/80 border-slate-200/60 rounded-xl hover:bg-white hover:border-slate-300 focus:ring-2 focus:ring-emerald-100 transition-all duration-200">
                   <div className="flex items-center gap-2">
                     <ArrowUpDown className="h-4 w-4 text-slate-400" />
                     <SelectValue placeholder="Сортування" />
@@ -192,25 +241,19 @@ export function CatalogClient({ products }: CatalogClientProps) {
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-slate-200/80 shadow-xl bg-white/95 backdrop-blur-sm">
                   <SelectItem value="name" className="rounded-lg cursor-pointer focus:bg-emerald-50 focus:text-emerald-700">
-                    <span className="flex items-center gap-2">
-                      За назвою
-                    </span>
+                    За назвою
                   </SelectItem>
                   <SelectItem value="price-asc" className="rounded-lg cursor-pointer focus:bg-emerald-50 focus:text-emerald-700">
-                    <span className="flex items-center gap-2">
-                      Ціна: від низької
-                    </span>
+                    Ціна: від низької
                   </SelectItem>
                   <SelectItem value="price-desc" className="rounded-lg cursor-pointer focus:bg-emerald-50 focus:text-emerald-700">
-                    <span className="flex items-center gap-2">
-                      Ціна: від високої
-                    </span>
+                    Ціна: від високої
                   </SelectItem>
                 </SelectContent>
               </Select>
 
-              {/* View Mode Toggle - desktop */}
-              <div className="hidden sm:flex items-center gap-1 p-1 rounded-xl bg-slate-100/80">
+              {/* View Mode Toggle */}
+              <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100/80">
                 <button
                   onClick={() => setViewMode("grid")}
                   className={cn(

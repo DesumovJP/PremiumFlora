@@ -1021,6 +1021,15 @@ select:focus-visible {
   height: 0; /* Hide on WebKit (mobile Safari / Chrome) */
 }
 
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
 /* Section backgrounds - Dark theme support */
 .dark section {
   background-color: var(--admin-bg);

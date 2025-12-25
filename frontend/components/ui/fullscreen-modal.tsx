@@ -24,36 +24,79 @@ export function FullscreenModal({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in data-[state=closed]:fade-out" />
+        {/* Overlay */}
+        <Dialog.Overlay
+          className={cn(
+            "fixed inset-0 z-50 bg-black/50 backdrop-blur-sm",
+            "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-300",
+            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-200"
+          )}
+        />
+
+        {/* Content */}
         <Dialog.Content
           className={cn(
-            "fixed inset-0 z-50 flex flex-col overflow-y-auto bg-white dark:bg-admin-bg outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in data-[state=closed]:fade-out"
+            "fixed inset-0 z-50 flex flex-col bg-white dark:bg-admin-bg outline-none",
+            "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-300",
+            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-200"
           )}
         >
+          {/* Visually hidden title for accessibility */}
           <VisuallyHidden.Root>
             <Dialog.Title>{title}</Dialog.Title>
           </VisuallyHidden.Root>
-          <div className="relative mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-12">
-            <div className="sticky top-4 z-10 mb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 -mt-6 sm:-mt-8 lg:-mt-12 bg-white/80 dark:bg-admin-bg/80 backdrop-blur-md border-b border-slate-200/50 dark:border-admin-border/50">
-              <div className="mx-auto max-w-3xl flex items-center justify-between gap-4">
-                {breadcrumb && (
-                  <div className="flex-1 min-w-0">
-                    {breadcrumb}
+
+          {/* Sticky Header/Navbar */}
+          <header
+            className={cn(
+              "sticky top-0 z-20 flex-shrink-0",
+              "bg-white/95 dark:bg-admin-bg/95 backdrop-blur-md",
+              "border-b border-slate-200/80 dark:border-admin-border/50",
+              "safe-area-inset-top"
+            )}
+          >
+            <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+              <div className="flex h-14 sm:h-16 items-center justify-between gap-3">
+                {/* Breadcrumb */}
+                {breadcrumb ? (
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    <div className="overflow-x-auto scrollbar-hide">
+                      {breadcrumb}
+                    </div>
                   </div>
+                ) : (
+                  <div className="flex-1" />
                 )}
-                <Dialog.Close className="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 dark:bg-admin-surface-elevated text-slate-500 dark:text-admin-text-tertiary shadow-lg backdrop-blur-sm transition hover:bg-white dark:hover:bg-admin-surface hover:text-slate-900 dark:hover:text-admin-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200">
-                  <X className="h-5 w-5" />
+
+                {/* Close Button */}
+                <Dialog.Close
+                  className={cn(
+                    "flex-shrink-0",
+                    "flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center",
+                    "rounded-full",
+                    "bg-slate-100 dark:bg-white/10",
+                    "text-slate-600 dark:text-white/70",
+                    "transition-all duration-200 ease-out",
+                    "hover:bg-slate-200 dark:hover:bg-white/20 hover:scale-105",
+                    "active:scale-95",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+                  )}
+                >
+                  <X className="h-5 w-5" strokeWidth={1.5} />
                   <span className="sr-only">Закрити</span>
                 </Dialog.Close>
               </div>
             </div>
-            <div>{children}</div>
+          </header>
+
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-y-auto overscroll-contain">
+            <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+              {children}
+            </div>
           </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
   );
 }
-
-
-
