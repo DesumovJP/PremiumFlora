@@ -187,7 +187,7 @@ export interface CreateCustomerInput {
 // Article типи
 // ============================================
 
-export type ArticleCategory = "note" | "guide" | "procedure" | "info";
+export type ArticleCategory = "note" | "guide" | "procedure" | "info" | "blog" | "care";
 export type ArticlePriority = "low" | "medium" | "high";
 
 export interface GraphQLArticle {
@@ -195,9 +195,13 @@ export interface GraphQLArticle {
   title: string;
   slug: string | null;
   content: GraphQLBlock[];
+  excerpt: string | null;
   category: ArticleCategory;
   priority: ArticlePriority;
   pinned: boolean;
+  isPublic: boolean;
+  author: string | null;
+  image: GraphQLImage | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -213,17 +217,25 @@ export interface ArticleResponse {
 export interface CreateArticleInput {
   title: string;
   content?: GraphQLBlock[];
+  excerpt?: string;
   category?: ArticleCategory;
   priority?: ArticlePriority;
   pinned?: boolean;
+  isPublic?: boolean;
+  author?: string;
+  image?: string; // documentId зображення
 }
 
 export interface UpdateArticleInput {
   title?: string;
   content?: GraphQLBlock[];
+  excerpt?: string;
   category?: ArticleCategory;
   priority?: ArticlePriority;
   pinned?: boolean;
+  isPublic?: boolean;
+  author?: string;
+  image?: string; // documentId зображення
 }
 
 // ============================================
