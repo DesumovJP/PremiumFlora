@@ -191,14 +191,14 @@ body {
   letter-spacing: var(--tracking-tight);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* 
+  /*
    * Стабільний layout без з'їдання правого паддінгу:
    * - замість примусового scroll використовуємо scrollbar-gutter
    * - скролбар з'являється лише коли потрібен, але місце під нього резервується
-   *   ➜ відступи зліва/справа виглядають однаково і на мобільних, і в DevTools
+   *   ➜ відступ справа стабільний (не стрибає при появі скролбару)
    */
   overflow-y: auto;
-  scrollbar-gutter: stable both-edges;
+  scrollbar-gutter: stable;
 }
 
 .dark body {
@@ -212,6 +212,10 @@ body {
   color: var(--admin-text-primary);
 }
 
+/* Admin panel main content - scrollbar gutter to prevent layout shift */
+.admin-panel main {
+  scrollbar-gutter: stable;
+}
 
 .dark .admin-panel {
   background: var(--admin-bg);
