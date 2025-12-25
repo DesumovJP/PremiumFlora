@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, Leaf, Phone } from "lucide-react";
+import { Menu, Leaf, Phone, ChevronRight, MapPin, Clock } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 // Contact data
 const contacts = {
@@ -111,9 +113,142 @@ function ContactModalContent({ onClose }: { onClose?: () => void }) {
   );
 }
 
+// Navigation link for mobile drawer
+function MobileNavLink({
+  href,
+  label,
+  isActive,
+  onClick,
+  index
+}: {
+  href: string;
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+  index: number;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={cn(
+        "group relative flex items-center justify-between",
+        "px-2 py-4",
+        "transition-all duration-300 ease-out",
+        // Animation delay based on index
+        "opacity-0 translate-x-4 animate-[slideInNav_0.4s_ease-out_forwards]",
+      )}
+      style={{ animationDelay: `${100 + index * 60}ms` }}
+    >
+      {/* Active indicator */}
+      <div className={cn(
+        "absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-8 rounded-full",
+        "transition-all duration-300",
+        isActive
+          ? "bg-emerald-500 opacity-100"
+          : "bg-transparent opacity-0 group-hover:bg-slate-200 group-hover:opacity-100"
+      )} />
+
+      <span className={cn(
+        "text-[17px] font-medium tracking-[-0.01em] pl-4",
+        "transition-colors duration-200",
+        isActive
+          ? "text-emerald-600 dark:text-emerald-400"
+          : "text-slate-800 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400"
+      )}>
+        {label}
+      </span>
+
+      <ChevronRight className={cn(
+        "h-4 w-4 transition-all duration-200",
+        isActive
+          ? "text-emerald-500 opacity-100"
+          : "text-slate-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5"
+      )} />
+    </Link>
+  );
+}
+
+// Contact button for mobile drawer
+function MobileContactButton({
+  href,
+  icon: Icon,
+  iconComponent: IconComponent,
+  label,
+  sublabel,
+  variant,
+  index,
+}: {
+  href: string;
+  icon?: typeof Phone;
+  iconComponent?: React.ComponentType<{ className?: string }>;
+  label: string;
+  sublabel?: string;
+  variant: "emerald" | "purple" | "sky";
+  index: number;
+}) {
+  const variantStyles = {
+    emerald: {
+      bg: "bg-emerald-50 dark:bg-emerald-500/10",
+      icon: "text-emerald-600 dark:text-emerald-400",
+      hover: "hover:bg-emerald-100 dark:hover:bg-emerald-500/20",
+    },
+    purple: {
+      bg: "bg-purple-50 dark:bg-purple-500/10",
+      icon: "text-purple-600 dark:text-purple-400",
+      hover: "hover:bg-purple-100 dark:hover:bg-purple-500/20",
+    },
+    sky: {
+      bg: "bg-sky-50 dark:bg-sky-500/10",
+      icon: "text-sky-600 dark:text-sky-400",
+      hover: "hover:bg-sky-100 dark:hover:bg-sky-500/20",
+    },
+  };
+
+  const styles = variantStyles[variant];
+
+  return (
+    <a
+      href={href}
+      target={href.startsWith("http") ? "_blank" : undefined}
+      rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+      className={cn(
+        "flex items-center gap-3.5 rounded-2xl p-3",
+        "transition-all duration-200 ease-out",
+        styles.bg,
+        styles.hover,
+        "active:scale-[0.98]",
+        // Staggered animation
+        "opacity-0 translate-y-2 animate-[slideUpFade_0.4s_ease-out_forwards]",
+      )}
+      style={{ animationDelay: `${300 + index * 50}ms` }}
+    >
+      <div className={cn(
+        "flex h-11 w-11 items-center justify-center rounded-xl",
+        "bg-white dark:bg-white/10",
+        "shadow-sm"
+      )}>
+        {Icon && <Icon className={cn("h-5 w-5", styles.icon)} strokeWidth={1.5} />}
+        {IconComponent && <IconComponent className={cn("h-5 w-5", styles.icon)} />}
+      </div>
+      <div className="flex flex-col">
+        <span className="text-[15px] font-medium text-slate-800 dark:text-white">
+          {label}
+        </span>
+        {sublabel && (
+          <span className="text-[13px] text-slate-500 dark:text-slate-400">
+            {sublabel}
+          </span>
+        )}
+      </div>
+    </a>
+  );
+}
+
 export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
+  const pathname = usePathname();
 
   const navLinks = [
     { href: "/", label: "Головна" },
@@ -121,6 +256,11 @@ export function Navigation() {
     { href: "/blog", label: "Блог" },
     { href: "/about", label: "Про нас" },
   ];
+
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm">
@@ -146,7 +286,12 @@ export function Navigation() {
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-admin-text-secondary transition-colors duration-150 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-400"
+              className={cn(
+                "rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors duration-150",
+                isActive(link.href)
+                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
+                  : "text-slate-700 dark:text-admin-text-secondary hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-400"
+              )}
             >
               {link.label}
             </Link>
@@ -184,89 +329,113 @@ export function Navigation() {
         {/* Mobile Menu Button */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon" aria-label="Відкрити меню">
-              <Menu className="h-5 w-5" />
-            </Button>
+            <button
+              className={cn(
+                "flex h-10 w-10 items-center justify-center rounded-full",
+                "bg-slate-100/80 dark:bg-white/10",
+                "text-slate-700 dark:text-white",
+                "transition-all duration-200",
+                "hover:bg-slate-200/90 dark:hover:bg-white/20",
+                "active:scale-95",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+              )}
+              aria-label="Відкрити меню"
+            >
+              <Menu className="h-5 w-5" strokeWidth={1.5} />
+            </button>
           </SheetTrigger>
-          <SheetContent
-            side="right"
-            className="w-[20rem] sm:w-[23.75rem] border-l border-slate-200/60 dark:border-admin-border px-0 bg-white dark:bg-[#161b22]"
-          >
+
+          <SheetContent side="right" className="p-0 border-0">
             <SheetTitle className="sr-only">Навігаційне меню</SheetTitle>
+
             <div className="flex h-full flex-col">
-              {/* Header / Title */}
-              <div className="border-b border-slate-100 dark:border-admin-border px-4 py-4">
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-admin-text-muted">
-                  Навігація
-                </span>
+              {/* Header with Logo */}
+              <div className="flex items-center gap-3 px-6 pt-6 pb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
+                  <Leaf className="h-5 w-5" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[15px] font-semibold tracking-tight text-slate-900 dark:text-white">
+                    Premium Flora
+                  </span>
+                  <span className="text-[11px] font-medium uppercase tracking-[0.1em] text-emerald-600 dark:text-emerald-400">
+                    Оптовий магазин
+                  </span>
+                </div>
               </div>
 
-              {/* Navigation */}
-              <nav className="flex flex-col gap-0.5 px-4 py-4">
-                {navLinks.map((link) => (
-                  <Link
+              {/* Divider */}
+              <div className="mx-6 h-px bg-gradient-to-r from-slate-200 via-slate-200 to-transparent dark:from-white/10 dark:via-white/10" />
+
+              {/* Navigation Links */}
+              <nav className="flex flex-col px-6 py-6">
+                {navLinks.map((link, index) => (
+                  <MobileNavLink
                     key={link.href}
                     href={link.href}
+                    label={link.label}
+                    isActive={isActive(link.href)}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between rounded-xl px-3.5 py-3 text-sm font-semibold text-slate-700 dark:text-admin-text-secondary transition-all duration-200 hover:bg-emerald-50/80 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-400 active:scale-[0.98]"
-                  >
-                    <span>{link.label}</span>
-                    <span className="text-[0.625rem] uppercase tracking-[0.16em] text-slate-300">
-                      ↵
-                    </span>
-                  </Link>
+                    index={index}
+                  />
                 ))}
               </nav>
 
+              {/* Spacer */}
+              <div className="flex-1" />
+
               {/* Contact Section */}
-              <div className="mt-auto border-t border-slate-100 dark:border-admin-border bg-slate-50/80 dark:bg-admin-surface/80 px-4 py-5">
-                <div className="mb-4 text-center text-[0.6875rem] font-semibold text-emerald-700 dark:text-emerald-400">
-                  Свіжа поставка щоп'ятниці
-                </div>
-                <div className="mb-3 flex items-center justify-between text-[0.6875rem] font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-admin-text-muted">
-                  <span>Контакти</span>
-                  <span className="text-[0.625rem] font-semibold normal-case tracking-normal text-slate-600 dark:text-admin-text-tertiary">
-                    Пн-Нд: 9:00-18:00
+              <div className="border-t border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] px-6 py-6">
+                {/* Section header */}
+                <div className="flex items-center gap-2 mb-4 opacity-0 animate-[slideUpFade_0.4s_ease-out_forwards]" style={{ animationDelay: "250ms" }}>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                    Зв'яжіться з нами
                   </span>
+                  <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent dark:from-white/10" />
                 </div>
-                <div className="space-y-2">
-                  {/* Phone buttons */}
-                  {contacts.phones.map((phone, index) => (
-                    <a
-                      key={index}
-                      href={phone.href}
-                      className="flex items-center gap-3 rounded-xl bg-white dark:bg-admin-surface px-3.5 py-3 text-sm font-medium text-slate-700 dark:text-admin-text-secondary shadow-sm transition-all duration-200 hover:shadow-md hover:text-emerald-600 dark:hover:text-emerald-400"
-                    >
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/30">
-                        <Phone className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                      </div>
-                      <span>{phone.number}</span>
-                    </a>
-                  ))}
+
+                {/* Contact buttons */}
+                <div className="space-y-2.5">
+                  {/* Phone */}
+                  <MobileContactButton
+                    href={contacts.phones[0].href}
+                    icon={Phone}
+                    label="Зателефонувати"
+                    sublabel={contacts.phones[0].number}
+                    variant="emerald"
+                    index={0}
+                  />
 
                   {/* Viber */}
-                  <a
+                  <MobileContactButton
                     href={contacts.viber.href}
-                    className="flex items-center gap-3 rounded-xl bg-white dark:bg-admin-surface px-3.5 py-3 text-sm font-medium text-slate-700 dark:text-admin-text-secondary shadow-sm transition-all duration-200 hover:shadow-md hover:text-purple-600"
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 dark:bg-purple-900/30">
-                      <ViberIcon className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <span>Viber</span>
-                  </a>
+                    iconComponent={ViberIcon}
+                    label="Viber"
+                    sublabel="Написати в месенджер"
+                    variant="purple"
+                    index={1}
+                  />
 
                   {/* Telegram */}
-                  <a
+                  <MobileContactButton
                     href={contacts.telegram.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 rounded-xl bg-white dark:bg-admin-surface px-3.5 py-3 text-sm font-medium text-slate-700 dark:text-admin-text-secondary shadow-sm transition-all duration-200 hover:shadow-md hover:text-sky-600"
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-900/30">
-                      <TelegramIcon className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-                    </div>
-                    <span>Telegram</span>
-                  </a>
+                    iconComponent={TelegramIcon}
+                    label="Telegram"
+                    sublabel={contacts.telegram.username}
+                    variant="sky"
+                    index={2}
+                  />
+                </div>
+
+                {/* Work hours */}
+                <div
+                  className="flex items-center justify-center gap-2 mt-5 pt-4 border-t border-slate-200/60 dark:border-white/5 opacity-0 animate-[slideUpFade_0.4s_ease-out_forwards]"
+                  style={{ animationDelay: "500ms" }}
+                >
+                  <Clock className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="text-[13px] text-slate-500 dark:text-slate-400">
+                    {contacts.workHours}
+                  </span>
                 </div>
               </div>
             </div>
@@ -283,6 +452,31 @@ export function Navigation() {
       >
         <ContactModalContent onClose={() => setContactModalOpen(false)} />
       </Modal>
+
+      {/* Animation keyframes */}
+      <style jsx global>{`
+        @keyframes slideInNav {
+          from {
+            opacity: 0;
+            transform: translateX(16px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes slideUpFade {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </header>
   );
 }

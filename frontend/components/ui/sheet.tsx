@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
@@ -39,7 +41,9 @@ const SheetOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "admin-surface-overlay fixed inset-0 z-40 bg-black/30 backdrop-blur-sm data-[state=open]:animate-fade-in data-[state=closed]:animate-out data-[state=closed]:fade-out",
+      "fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]",
+      "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-300",
+      "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-200",
       className
     )}
     {...props}
@@ -55,23 +59,48 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   SheetContentProps
->(({ className, children, side = "left", ...props }, ref) => (
+>(({ className, children, side = "right", ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "admin-surface admin-optimized fixed z-50 flex h-full w-80 flex-col gap-4 bg-white dark:bg-admin-surface-elevated p-5 shadow-2xl transition",
-        side === "left" &&
-          "left-0 top-0 data-[state=open]:animate-slide-in-left data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left",
-        side === "right" &&
-          "right-0 top-0 data-[state=open]:animate-slide-in-right data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right",
+        // Base styles
+        "fixed z-50 flex h-full flex-col bg-white dark:bg-[#0d1117]",
+        "shadow-[-8px_0_32px_rgba(0,0,0,0.12)] dark:shadow-[-8px_0_32px_rgba(0,0,0,0.4)]",
+        // Width
+        "w-[min(85vw,320px)] sm:w-[360px]",
+        // Animations - smoother cubic bezier for Apple-like feel
+        side === "left" && [
+          "left-0 top-0",
+          "data-[state=open]:animate-in data-[state=open]:slide-in-from-left data-[state=open]:duration-500 data-[state=open]:ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=closed]:duration-300 data-[state=closed]:ease-[cubic-bezier(0.32,0.72,0,1)]",
+        ],
+        side === "right" && [
+          "right-0 top-0",
+          "data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=open]:duration-500 data-[state=open]:ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=closed]:duration-300 data-[state=closed]:ease-[cubic-bezier(0.32,0.72,0,1)]",
+        ],
+        // Focus trap styling
+        "focus:outline-none",
         className
       )}
       {...props}
     >
-      <SheetClose className="absolute right-4 top-4 rounded-full p-2 text-slate-500 dark:text-admin-text-tertiary transition hover:bg-slate-100 dark:hover:bg-admin-surface focus:outline-none focus:ring-2 focus:ring-emerald-200">
-        <X className="h-4 w-4" />
+      {/* Premium close button */}
+      <SheetClose className={cn(
+        "absolute right-4 top-4 z-10",
+        "flex h-10 w-10 items-center justify-center rounded-full",
+        "bg-slate-100/80 dark:bg-white/10",
+        "text-slate-600 dark:text-white/70",
+        "backdrop-blur-sm",
+        "transition-all duration-200 ease-out",
+        "hover:bg-slate-200/90 dark:hover:bg-white/20 hover:scale-105",
+        "active:scale-95",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+      )}>
+        <X className="h-5 w-5" strokeWidth={1.5} />
+        <span className="sr-only">Закрити меню</span>
       </SheetClose>
       {children}
     </DialogPrimitive.Content>
@@ -80,4 +109,3 @@ const SheetContent = React.forwardRef<
 SheetContent.displayName = DialogPrimitive.Content.displayName;
 
 export { Sheet, SheetClose, SheetContent, SheetOverlay, SheetPortal, SheetTrigger, SheetTitle, SheetDescription };
-
