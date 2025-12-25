@@ -22,6 +22,7 @@ import {
   GET_TRANSACTIONS,
   GET_ARTICLES,
   GET_ARTICLE_BY_ID,
+  GET_BLOG_POSTS,
   GET_TASKS,
   GET_TASK_BY_ID,
   GET_UPCOMING_TASKS,
@@ -57,7 +58,9 @@ import type {
   TaskResponse,
   CreateTaskInput,
   UpdateTaskInput,
+  GraphQLBlock,
 } from "./graphql/types";
+import type { BlogPost } from "./types";
 import type {
   StrapiFlower,
   StrapiBlock,
@@ -1131,6 +1134,8 @@ export interface ShiftSummary {
   totalWriteOffs: number;
   totalWriteOffsQty: number;
   activitiesCount: number;
+  productEdits: number;
+  customersCreated: number;
 }
 
 export interface Shift {
@@ -1403,6 +1408,89 @@ export async function deleteArticle(documentId: string): Promise<ApiResponse<voi
         message: error instanceof Error ? error.message : "Failed to delete article",
       },
     };
+  }
+}
+
+/**
+ * Конвертує blocks в HTML для відображення у блозі
+ */
+function blocksToHtml(blocks: GraphQLBlock[] | null): string {
+  if (!blocks || !Array.isArray(blocks)) return "";
+
+  return blocks
+    .map((block) => {
+      if (block.type === "paragraph" && block.children) {
+        const text = block.children.map((child) => child.text || "").join("");
+        return `<p>${text}</p>`;
+      }
+      if (block.type === "heading" && block.children) {
+        const level = (block as any).level || 2;
+        const text = block.children.map((child) => child.text || "").join("");
+        return `<h${level}>${text}</h${level}>`;
+      }
+      if (block.type === "list" && (block as any).children) {
+        const items = (block as any).children
+          .map((item: any) => {
+            const text = item.children
+              ?.map((c: any) => c.children?.map((t: any) => t.text || "").join("") || "")
+              .join("") || "";
+            return `<li>${text}</li>`;
+          })
+          .join("");
+        return `<ul>${items}</ul>`;
+      }
+      return "";
+    })
+    .filter(Boolean)
+    .join("\n");
+}
+
+/**
+ * Конвертує GraphQL статтю в BlogPost для клієнтської частини
+ */
+function convertArticleToBlogPost(article: GraphQLArticle): BlogPost {
+  const imageUrl = article.image ? extractImageUrl(article.image) : "";
+
+  return {
+    id: article.documentId,
+    title: article.title,
+    excerpt: article.excerpt || blocksToText(article.content).slice(0, 200) + "...",
+    content: blocksToHtml(article.content),
+    image: imageUrl || "/blog.jpg", // Fallback image
+    date: article.createdAt,
+    author: article.author || "Premium Flora",
+    category: getCategoryLabel(article.category),
+  };
+}
+
+/**
+ * Конвертує категорію в людську назву
+ */
+function getCategoryLabel(category: string): string {
+  const labels: Record<string, string> = {
+    blog: "Блог",
+    care: "Догляд",
+    guide: "Гайд",
+    info: "Інформація",
+    note: "Нотатка",
+    procedure: "Процедура",
+  };
+  return labels[category] || category;
+}
+
+/**
+ * Отримати публічні статті для блогу
+ */
+export async function getBlogPosts(): Promise<BlogPost[]> {
+  try {
+    const data = await graphqlRequest<ArticlesResponse>(GET_BLOG_POSTS, {
+      pageSize: 20,
+    });
+
+    return data.articles.map(convertArticleToBlogPost);
+  } catch (error) {
+    console.error("Error fetching blog posts:", error);
+    return [];
   }
 }
 
