@@ -2,7 +2,6 @@ import {
   AlertTriangle,
   CheckSquare,
   Clock3,
-  FileText,
   History,
   Leaf,
   LineChart,
@@ -27,12 +26,11 @@ import {
 
 export const navItems: NavItem[] = [
   { id: "pos", label: "POS Термінал", icon: ShoppingBag },
+  { id: "history", label: "Історія", icon: History },
   { id: "products", label: "Товари", icon: Package },
   { id: "clients", label: "Клієнти", icon: Users },
-  { id: "history", label: "Історія", icon: History },
   { id: "analytics", label: "Аналітика", icon: LineChart },
   { id: "todo", label: "Завдання", icon: CheckSquare },
-  { id: "articles", label: "Статті", icon: FileText },
 ];
 
 export const products: Product[] = [

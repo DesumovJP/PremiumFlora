@@ -8,7 +8,6 @@ import { HistorySection } from "@/components/sections/history-section";
 import { PosSection } from "@/components/sections/pos-section";
 import { ProductsSection } from "@/components/sections/products-section";
 import { TodoSection } from "@/components/sections/todo-section";
-import { ArticlesSection } from "@/components/sections/articles-section";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertToast } from "@/components/ui/alert-toast";
@@ -591,10 +590,6 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
         <TabsContent value="todo" className="space-y-5">
           <TodoSection />
         </TabsContent>
-
-        <TabsContent value="articles" className="space-y-5">
-          <ArticlesSection />
-        </TabsContent>
       </div>
     </Tabs>
   );
@@ -654,8 +649,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
         </aside>
 
         {/* Main Content - scrollable */}
-        {/* Note: pr is slightly larger to compensate for scrollbar width */}
-        <main className="h-full overflow-y-auto pl-6 pr-8 py-4 lg:pl-8 lg:pr-10">
+        <main className="h-full overflow-y-auto px-6 py-4 lg:px-8">
           {tabsContent}
         </main>
 
@@ -675,7 +669,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             <SheetTrigger asChild>
               <MobileMenuButton />
             </SheetTrigger>
-            <SheetContent side="left" className="w-80" suppressHydrationWarning>
+            <SheetContent side="left" className="w-80 p-4 pb-8" suppressHydrationWarning>
               <VisuallyHidden asChild>
                 <Dialog.Title>Меню</Dialog.Title>
               </VisuallyHidden>

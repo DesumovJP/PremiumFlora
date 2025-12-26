@@ -37,11 +37,6 @@ export function Footer() {
               </div>
             </div>
           </div>
-          
-          {/* Нова поставка - по центру */}
-          <div className="mt-6 text-center w-full">
-            <div className="text-[0.625rem] font-medium text-emerald-700 dark:text-emerald-400">Нова поставка щоп'ятниці</div>
-          </div>
         </div>
 
         {/* Desktop Layout */}
@@ -95,13 +90,6 @@ export function Footer() {
               <div>Сб: 10:00 - 16:00</div>
               <div>Нд: Вихідний</div>
             </div>
-          </div>
-        </div>
-
-        {/* Friday delivery note - centered for tablet & desktop with horizontal line */}
-        <div className="mt-8 hidden border-t border-slate-200 dark:border-admin-border pt-4 text-center sm:block">
-          <div className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-            Нова поставка щоп'ятниці
           </div>
         </div>
 

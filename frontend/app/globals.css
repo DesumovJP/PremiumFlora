@@ -216,6 +216,11 @@ body {
   background: var(--admin-bg);
 }
 
+/* Стабільний layout для скролящих областей в адмін-панелі */
+.admin-panel main {
+  scrollbar-gutter: stable;
+}
+
 /* Dark theme overrides for common background classes */
 .dark .bg-white {
   background-color: var(--surface) !important;
