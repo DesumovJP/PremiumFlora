@@ -42,7 +42,7 @@ export const publicClient = createGraphQLClient();
  */
 function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("auth_token");
+  return localStorage.getItem("admin_token");
 }
 
 /**

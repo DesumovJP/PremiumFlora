@@ -39,9 +39,13 @@ function applyCenterAlignment(ws: XLSX.WorkSheet): void {
 }
 
 /**
- * Set column widths based on content
+ * Set column widths based on content and limit range to actual data
  */
 function setColumnWidths(ws: XLSX.WorkSheet, data: (string | number)[][]): void {
+  if (data.length === 0) return;
+
+  const numCols = data[0].length;
+  const numRows = data.length;
   const colWidths: number[] = [];
 
   data.forEach(row => {
@@ -52,6 +56,12 @@ function setColumnWidths(ws: XLSX.WorkSheet, data: (string | number)[][]): void 
   });
 
   ws['!cols'] = colWidths.map(w => ({ wch: Math.min(w, 40) }));
+
+  // Explicitly set the range to only include actual data columns
+  ws['!ref'] = XLSX.utils.encode_range({
+    s: { r: 0, c: 0 },
+    e: { r: numRows - 1, c: numCols - 1 }
+  });
 }
 
 /**
@@ -231,8 +241,9 @@ export function exportShift(
 
   const summaryData = [summaryHeaders, ...summaryRows];
   const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
-  applyCenterAlignment(summaryWs);
-  setColumnWidths(summaryWs, summaryData);
+  // Force range to exactly 2 columns
+  summaryWs['!ref'] = `A1:B${summaryData.length}`;
+  summaryWs['!cols'] = [{ wch: 22 }, { wch: 25 }];
 
   // Sheet 2: Sales Detail (with items breakdown)
   const salesActivities = activities.filter(a => a.type === 'sale');
