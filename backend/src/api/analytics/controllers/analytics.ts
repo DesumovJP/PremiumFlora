@@ -8,23 +8,27 @@ import type { Core } from '@strapi/strapi';
 import type { Context } from 'koa';
 
 interface AnalyticsService {
-  getDashboardData: () => Promise<unknown>;
+  getDashboardData: (year?: number, month?: number) => Promise<unknown>;
   getStockLevels: () => Promise<unknown>;
   getSalesMetrics: (period: 'day' | 'week' | 'month') => Promise<unknown>;
   getWriteOffSummary: () => Promise<unknown>;
   getTopCustomers: (limit: number) => Promise<unknown>;
-  getDailySales: () => Promise<unknown>;
+  getDailySales: (year?: number, month?: number) => Promise<unknown>;
 }
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   /**
    * GET /api/analytics/dashboard
    * Отримати повну аналітику
+   * Query params: year, month (0-11)
    */
   async dashboard(ctx: Context) {
     try {
+      const year = ctx.query.year ? parseInt(ctx.query.year as string) : undefined;
+      const month = ctx.query.month ? parseInt(ctx.query.month as string) : undefined;
+
       const analyticsService = strapi.service('api::analytics.analytics') as AnalyticsService;
-      const data = await analyticsService.getDashboardData();
+      const data = await analyticsService.getDashboardData(year, month);
 
       ctx.status = 200;
       ctx.body = {

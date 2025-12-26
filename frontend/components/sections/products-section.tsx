@@ -997,10 +997,9 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           <Button variant="outline" onClick={onOpenSupply} className="w-full sm:w-auto">
             Заплановані закупки
           </Button>
-          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-row">
-            <Button className="w-full bg-emerald-600 hover:bg-emerald-700 sm:w-auto" onClick={onOpenExport}>
-              <Download className="mr-2 h-4 w-4" />
-              Експортувати
+          <div className="flex gap-2">
+            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={onOpenExport} size="icon" title="Експортувати">
+              <Download className="h-4 w-4" />
             </Button>
             <Button onClick={() => setOpen(true)} className="w-full sm:w-auto">
               Додати товар
@@ -1016,54 +1015,26 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           <StatPill label="Середній запас/варіант" value={`${avgStockPerVariant} шт`} />
         </div>
         {/* Сортування */}
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-sm text-slate-500 dark:text-admin-text-tertiary">Сортування:</span>
-          <div className="flex gap-1">
-            <Button
-              variant={sortKey === 'name' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleSort('name')}
-              className="gap-1"
-            >
-              Назва
-              {sortKey === 'name' && (
-                <ArrowUpDown className={cn("h-3 w-3", sortDirection === 'desc' && "rotate-180")} />
-              )}
-            </Button>
-            <Button
-              variant={sortKey === 'price' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleSort('price')}
-              className="gap-1"
-            >
-              Ціна
-              {sortKey === 'price' && (
-                <ArrowUpDown className={cn("h-3 w-3", sortDirection === 'desc' && "rotate-180")} />
-              )}
-            </Button>
-            <Button
-              variant={sortKey === 'stock' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleSort('stock')}
-              className="gap-1"
-            >
-              Кількість
-              {sortKey === 'stock' && (
-                <ArrowUpDown className={cn("h-3 w-3", sortDirection === 'desc' && "rotate-180")} />
-              )}
-            </Button>
-            <Button
-              variant={sortKey === 'updatedAt' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleSort('updatedAt')}
-              className="gap-1"
-            >
-              Оновлено
-              {sortKey === 'updatedAt' && (
-                <ArrowUpDown className={cn("h-3 w-3", sortDirection === 'desc' && "rotate-180")} />
-              )}
-            </Button>
-          </div>
+        <div className="flex items-center gap-2">
+          <Select value={`${sortKey}-${sortDirection}`} onValueChange={(value) => {
+            const [key, dir] = value.split('-') as [SortKey, SortDirection];
+            setSortKey(key);
+            setSortDirection(dir);
+          }}>
+            <SelectTrigger className="w-[180px] h-9">
+              <SelectValue placeholder="Сортування" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name-asc">Назва (А-Я)</SelectItem>
+              <SelectItem value="name-desc">Назва (Я-А)</SelectItem>
+              <SelectItem value="price-asc">Ціна (зростання)</SelectItem>
+              <SelectItem value="price-desc">Ціна (спадання)</SelectItem>
+              <SelectItem value="stock-asc">Кількість (зростання)</SelectItem>
+              <SelectItem value="stock-desc">Кількість (спадання)</SelectItem>
+              <SelectItem value="updatedAt-desc">Нові спочатку</SelectItem>
+              <SelectItem value="updatedAt-asc">Старі спочатку</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Мобільна карткова версія без горизонтального скролу */}

@@ -10,14 +10,14 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { StatPill } from "@/components/ui/stat-pill";
 import { Client } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Mail, MapPin, Phone, Plus, X, Loader2, Trash, Download } from "lucide-react";
+import { Mail, MapPin, Phone, Plus, X, Loader2, Trash, Download, Check } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import type { Customer, Transaction } from "@/lib/api-types";
-import { getTransactions } from "@/lib/strapi";
+import type { ActivityType, ActivityDetails } from "@/hooks/use-activity-log";
+import { getTransactions, confirmPayment } from "@/lib/strapi";
 
 type ClientsSectionProps = {
   customers: Customer[];
@@ -25,9 +25,15 @@ type ClientsSectionProps = {
   onOpenExport: () => void;
   onAddCustomer: (data: { name: string; phone: string; email: string; address: string }) => Promise<void>;
   onDeleteCustomer: (documentId: string) => Promise<void>;
+  onLogActivity?: (type: ActivityType, details: ActivityDetails) => Promise<void>;
 };
 
-export function ClientsSection({ customers, isLoading = false, onOpenExport, onAddCustomer, onDeleteCustomer }: ClientsSectionProps) {
+export function ClientsSection({ customers, isLoading = false, onOpenExport, onAddCustomer, onDeleteCustomer, onLogActivity }: ClientsSectionProps) {
+  // State for payment confirmation
+  const [confirmingPaymentId, setConfirmingPaymentId] = useState<string | null>(null);
+  // State for confirmation dialog
+  const [paymentToConfirm, setPaymentToConfirm] = useState<Transaction | null>(null);
+
   // Convert Customer to Client for display
   const baseClients: Client[] = useMemo(() => {
     return customers.map((c) => ({
@@ -111,9 +117,9 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
           ? new Date(result.data[0].date).toLocaleDateString('uk-UA')
           : client.lastOrder;
 
-        // Рахуємо суму очікуваних оплат
+        // Рахуємо суму очікуваних оплат (expected або pending)
         const pendingPayment = result.data
-          .filter(t => t.paymentStatus === 'expected')
+          .filter(t => t.paymentStatus === 'expected' || t.paymentStatus === 'pending')
           .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
         // Оновлюємо дані клієнта в локальному стані (для синхронізації з картками)
@@ -191,9 +197,9 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                 ? new Date(result.data[0].date).toLocaleDateString('uk-UA')
                 : null;
 
-              // Рахуємо суму очікуваних оплат
+              // Рахуємо суму очікуваних оплат (expected або pending)
               const pendingPayment = result.data
-                .filter(t => t.paymentStatus === 'expected')
+                .filter(t => t.paymentStatus === 'expected' || t.paymentStatus === 'pending')
                 .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
               return {
@@ -247,9 +253,6 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
     loadTransactionsForAll();
   }, [customers]);
 
-  const totalSpent = clients.reduce((acc, c) => acc + c.spent, 0);
-  const totalOrders = clients.reduce((acc, c) => acc + c.orders, 0);
-  const avgOrder = totalOrders > 0 ? Math.round(totalSpent / totalOrders) : 0;
   const resetNewClient = () =>
     setNewClient({ name: "", phone: "", email: "", city: "" });
 
@@ -261,7 +264,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
 
   const handleConfirmDelete = async () => {
     if (!clientToDelete) return;
-    
+
     setIsDeleting(true);
     try {
       await onDeleteCustomer(clientToDelete.id);
@@ -279,12 +282,78 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
     }
   };
 
+  const handleConfirmPayment = async (transaction: Transaction) => {
+    if (confirmingPaymentId) return;
+
+    setConfirmingPaymentId(transaction.documentId);
+    try {
+      const result = await confirmPayment(transaction.documentId);
+      if (result.success) {
+        // Оновлюємо транзакцію в списку
+        setTransactions((prev) =>
+          prev.map((t) =>
+            t.documentId === transaction.documentId
+              ? { ...t, paymentStatus: 'paid' as const }
+              : t
+          )
+        );
+
+        // Перераховуємо pendingPayment для клієнта
+        const newPendingPayment = transactions
+          .filter(t => t.documentId !== transaction.documentId && (t.paymentStatus === 'expected' || t.paymentStatus === 'pending'))
+          .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+        // Оновлюємо дані клієнта
+        if (selected) {
+          setUpdatedClients((prev) => ({
+            ...prev,
+            [selected.id]: {
+              ...prev[selected.id],
+              pendingPayment: newPendingPayment,
+            },
+          }));
+          setSelected((prev) => prev ? { ...prev, pendingPayment: newPendingPayment } : null);
+        }
+
+        // Логуємо активність з повними деталями замовлення
+        if (onLogActivity) {
+          await onLogActivity('paymentConfirm', {
+            transactionId: transaction.documentId,
+            customerName: selected?.name,
+            amount: transaction.amount,
+            orderDate: transaction.date,
+            paymentItems: transaction.items?.map(item => ({
+              name: item.name,
+              qty: item.qty,
+              price: item.price,
+              length: item.length,
+              subtotal: item.subtotal || item.price * item.qty,
+            })),
+            notes: transaction.notes,
+          });
+        }
+
+        // Закриваємо діалог підтвердження
+        setPaymentToConfirm(null);
+      }
+    } catch (error) {
+      console.error('Failed to confirm payment:', error);
+    } finally {
+      setConfirmingPaymentId(null);
+    }
+  };
+
   return (
     <>
     <Card className="admin-card border border-slate-100 dark:border-[#30363d] bg-white/90 dark:bg-admin-surface shadow-md">
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <CardTitle className="text-2xl">Клієнти</CardTitle>
+          <CardTitle className="text-2xl flex items-center gap-2">
+            Клієнти
+            <Badge variant="secondary" className="text-sm font-normal">
+              {searchQuery ? `${filteredClients.length} / ${clients.length}` : clients.length}
+            </Badge>
+          </CardTitle>
           <CardDescription>Управління базою клієнтів та історією замовлень</CardDescription>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
@@ -294,16 +363,17 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-row">
+          <div className="flex gap-2">
             <Button
-              className="w-full bg-emerald-600 hover:bg-emerald-700 sm:w-auto"
+              className="bg-emerald-600 hover:bg-emerald-700"
               onClick={onOpenExport}
+              size="icon"
+              title="Експортувати"
             >
-              <Download className="mr-2 h-4 w-4" />
-              Експортувати
+              <Download className="h-4 w-4" />
             </Button>
             <Button className="w-full sm:w-auto" onClick={() => setAddModalOpen(true)}>
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4 mr-1" />
               Додати клієнта
             </Button>
           </div>
@@ -316,11 +386,6 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
           </div>
         ) : (
         <>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <StatPill label="Всього клієнтів" value={searchQuery ? `${filteredClients.length} / ${clients.length}` : clients.length.toString()} />
-          <StatPill label="Загальна виручка" value={`${totalSpent.toLocaleString("uk-UA")} грн`} />
-          <StatPill label="Середній чек" value={`${avgOrder.toLocaleString("uk-UA")} грн`} />
-        </div>
         {/* Мобільна історія — прибрано, тепер використовується модалка */}
         {false && selected && (
           <div className="sm:hidden">
@@ -394,22 +459,38 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                                 <p className="font-semibold text-emerald-700">
                                   {transaction.amount?.toLocaleString('uk-UA') || 0} грн
                                 </p>
-                                <Badge
-                                  tone={
-                                    transaction.paymentStatus === 'paid'
-                                      ? 'success'
+                                <div className="flex items-center gap-2 justify-end mt-1">
+                                  <Badge
+                                    tone={
+                                      transaction.paymentStatus === 'paid'
+                                        ? 'success'
+                                        : transaction.paymentStatus === 'expected'
+                                        ? 'warning'
+                                        : 'neutral'
+                                    }
+                                    className="text-xs"
+                                  >
+                                    {transaction.paymentStatus === 'paid'
+                                      ? 'Оплачено'
                                       : transaction.paymentStatus === 'expected'
-                                      ? 'warning'
-                                      : 'neutral'
-                                  }
-                                  className="text-xs"
-                                >
-                                  {transaction.paymentStatus === 'paid'
-                                    ? 'Оплачено'
-                                    : transaction.paymentStatus === 'expected'
-                                    ? 'Очікується'
-                                    : 'В очікуванні'}
-                                </Badge>
+                                      ? 'Очікується'
+                                      : 'В очікуванні'}
+                                  </Badge>
+                                  {(transaction.paymentStatus === 'expected' || transaction.paymentStatus === 'pending') && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-6 px-2 text-xs bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setPaymentToConfirm(transaction);
+                                      }}
+                                    >
+                                      <Check className="h-3 w-3 mr-1" />
+                                      Оплачено
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             {Array.isArray(transaction.items) && transaction.items.length > 0 && (
@@ -589,22 +670,38 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                                 <p className="font-semibold text-emerald-700">
                                   {transaction.amount?.toLocaleString('uk-UA') || 0} грн
                                 </p>
-                                <Badge
-                                  tone={
-                                    transaction.paymentStatus === 'paid'
-                                      ? 'success'
+                                <div className="flex items-center gap-2 justify-end mt-1">
+                                  <Badge
+                                    tone={
+                                      transaction.paymentStatus === 'paid'
+                                        ? 'success'
+                                        : transaction.paymentStatus === 'expected'
+                                        ? 'warning'
+                                        : 'neutral'
+                                    }
+                                    className="text-xs"
+                                  >
+                                    {transaction.paymentStatus === 'paid'
+                                      ? 'Оплачено'
                                       : transaction.paymentStatus === 'expected'
-                                      ? 'warning'
-                                      : 'neutral'
-                                  }
-                                  className="text-xs"
-                                >
-                                  {transaction.paymentStatus === 'paid'
-                                    ? 'Оплачено'
-                                    : transaction.paymentStatus === 'expected'
-                                    ? 'Очікується'
-                                    : 'В очікуванні'}
-                                </Badge>
+                                      ? 'Очікується'
+                                      : 'В очікуванні'}
+                                  </Badge>
+                                  {(transaction.paymentStatus === 'expected' || transaction.paymentStatus === 'pending') && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-6 px-2 text-xs bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setPaymentToConfirm(transaction);
+                                      }}
+                                    >
+                                      <Check className="h-3 w-3 mr-1" />
+                                      Оплачено
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             {Array.isArray(transaction.items) && transaction.items.length > 0 && (
@@ -741,6 +838,74 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
       <div className="text-sm text-slate-600 dark:text-admin-text-secondary">
         <p>Всі дані про клієнта та його замовлення будуть видалені назавжди.</p>
       </div>
+    </Modal>
+
+    {/* Модалка підтвердження оплати */}
+    <Modal
+      open={!!paymentToConfirm}
+      onOpenChange={(v) => {
+        if (!v) setPaymentToConfirm(null);
+      }}
+      title="Підтвердити оплату?"
+      size="sm"
+      footer={
+        <>
+          <Button variant="outline" onClick={() => setPaymentToConfirm(null)} disabled={!!confirmingPaymentId}>
+            Скасувати
+          </Button>
+          <Button
+            onClick={() => paymentToConfirm && handleConfirmPayment(paymentToConfirm)}
+            disabled={!!confirmingPaymentId}
+            className="bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-200"
+          >
+            {confirmingPaymentId ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+              <>
+                <Check className="h-4 w-4 mr-2" />
+                Підтвердити
+              </>
+            )}
+          </Button>
+        </>
+      }
+    >
+      {paymentToConfirm && (
+        <div className="space-y-4">
+          <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-emerald-700 dark:text-emerald-400">Сума до оплати</span>
+              <span className="text-2xl font-bold text-emerald-800 dark:text-emerald-300">
+                {Number(paymentToConfirm.amount).toLocaleString('uk-UA')} грн
+              </span>
+            </div>
+          </div>
+          <div className="text-sm text-slate-600 dark:text-admin-text-secondary space-y-2">
+            <p>
+              <span className="text-slate-500">Дата:</span>{' '}
+              <span className="font-medium text-slate-800 dark:text-admin-text-primary">
+                {new Date(paymentToConfirm.date).toLocaleDateString('uk-UA')}
+              </span>
+            </p>
+            {paymentToConfirm.items && paymentToConfirm.items.length > 0 && (
+              <div className="pt-2 border-t border-slate-100 dark:border-admin-border">
+                <p className="text-slate-500 mb-1">Товари:</p>
+                <ul className="space-y-1">
+                  {paymentToConfirm.items.slice(0, 3).map((item, idx) => (
+                    <li key={idx} className="text-slate-700 dark:text-admin-text-secondary">
+                      {item.name} × {item.qty}
+                    </li>
+                  ))}
+                  {paymentToConfirm.items.length > 3 && (
+                    <li className="text-slate-500">... та ще {paymentToConfirm.items.length - 3} товар(ів)</li>
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-slate-500 dark:text-admin-text-muted">
+            Після підтвердження статус оплати буде змінено на "Оплачено".
+          </p>
+        </div>
+      )}
     </Modal>
 
     </>

@@ -60,6 +60,22 @@ const defaultFormData: TaskFormData = {
   category: "other",
 };
 
+// Category labels and colors
+const categoryConfig: Record<TaskCategory, { label: string; color: string; bgColor: string }> = {
+  delivery: { label: "Доставка", color: "text-cyan-700 dark:text-cyan-400", bgColor: "bg-cyan-100 dark:bg-cyan-900/30" },
+  supply: { label: "Постачання", color: "text-violet-700 dark:text-violet-400", bgColor: "bg-violet-100 dark:bg-violet-900/30" },
+  maintenance: { label: "Обслуговування", color: "text-orange-700 dark:text-orange-400", bgColor: "bg-orange-100 dark:bg-orange-900/30" },
+  meeting: { label: "Зустріч", color: "text-pink-700 dark:text-pink-400", bgColor: "bg-pink-100 dark:bg-pink-900/30" },
+  other: { label: "Інше", color: "text-slate-600 dark:text-slate-400", bgColor: "bg-slate-100 dark:bg-slate-800" },
+};
+
+// Priority colors for left border
+const priorityBorderColor: Record<TaskPriority, string> = {
+  low: "border-l-emerald-400",
+  medium: "border-l-amber-400",
+  high: "border-l-rose-500",
+};
+
 export function TodoSection() {
   const [tasks, setTasks] = useState<GraphQLTask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -236,15 +252,18 @@ export function TodoSection() {
     const isInProgress = task.status === "in_progress";
     const isExpanded = expandedTaskId === task.documentId;
 
+    const categoryInfo = categoryConfig[task.category as TaskCategory] || categoryConfig.other;
+
     return (
       <div
         className={cn(
-          "rounded-xl border transition-colors",
+          "rounded-xl border border-l-4 transition-colors",
+          priorityBorderColor[task.priority as TaskPriority] || priorityBorderColor.medium,
           isCompleted
-            ? "bg-slate-50/50 dark:bg-admin-surface-elevated/30 border-transparent opacity-60"
+            ? "bg-slate-50/50 dark:bg-admin-surface-elevated/30 border-y-transparent border-r-transparent opacity-60"
             : overdue
-            ? "bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900/30"
-            : "bg-white dark:bg-admin-surface-elevated border-slate-100 dark:border-admin-border"
+            ? "bg-rose-50/50 dark:bg-rose-900/10 border-y-rose-100 border-r-rose-100 dark:border-y-rose-900/30 dark:border-r-rose-900/30"
+            : "bg-white dark:bg-admin-surface-elevated border-y-slate-100 border-r-slate-100 dark:border-y-admin-border dark:border-r-admin-border"
         )}
       >
         {/* Main row - always visible */}
@@ -287,7 +306,12 @@ export function TodoSection() {
             isExpanded && "rotate-180"
           )} />
 
-          {/* Priority badge - desktop only */}
+          {/* Category badge - desktop only */}
+          <Badge className={cn("text-xs shrink-0 hidden sm:inline-flex", categoryInfo.bgColor, categoryInfo.color)}>
+            {categoryInfo.label}
+          </Badge>
+
+          {/* Priority badge - desktop only (high only shows extra badge) */}
           {task.priority === "high" && !isCompleted && (
             <Badge className="bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs shrink-0 hidden sm:inline-flex">
               Терміново
@@ -352,6 +376,11 @@ export function TodoSection() {
 
             {/* Meta info */}
             <div className="flex flex-wrap gap-2">
+              {/* Category */}
+              <Badge className={cn("text-xs", categoryInfo.bgColor, categoryInfo.color)}>
+                {categoryInfo.label}
+              </Badge>
+
               {/* Priority */}
               {task.priority === "high" && (
                 <Badge className="bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs">
@@ -459,7 +488,13 @@ export function TodoSection() {
         ) : displayTasks.length === 0 ? (
           <div className="text-center py-12 text-slate-400">
             <Calendar className="h-10 w-10 mx-auto mb-2 opacity-50" />
-            <p>{activeTab === "pending" ? "Немає активних завдань" : "Немає виконаних завдань"}</p>
+            <p className="mb-4">{activeTab === "pending" ? "Немає активних завдань" : "Немає виконаних завдань"}</p>
+            {activeTab === "pending" && (
+              <Button onClick={openAddModal} className="bg-emerald-600 hover:bg-emerald-700">
+                <Plus className="h-4 w-4 mr-1" />
+                Створити завдання
+              </Button>
+            )}
           </div>
         ) : (
           <div className="space-y-2">

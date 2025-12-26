@@ -232,11 +232,15 @@ export function exportShift(
     ['', ''],
     ['Кількість продажів', summary.totalSales],
     ['Сума продажів (грн)', summary.totalSalesAmount],
+    ['', ''],
     ['Кількість списань', summary.totalWriteOffs],
     ['Списано штук', summary.totalWriteOffsQty],
+    ['Поставок', summary.totalSupplies || 0],
     ['Редагувань товарів', summary.productEdits],
     ['Нових клієнтів', summary.customersCreated],
     ['Всього дій', summary.activitiesCount],
+    ['', ''],
+    ['ОЧІКУЮТЬСЯ ОПЛАТИ (грн)', summary.totalSalesExpected || 0],
   ];
 
   const summaryData = [summaryHeaders, ...summaryRows];
@@ -291,7 +295,34 @@ export function exportShift(
   applyCenterAlignment(salesWs);
   setColumnWidths(salesWs, salesData);
 
-  // Sheet 3: All Activities
+  // Sheet 3: Payment Confirmations
+  const paymentConfirmActivities = activities.filter(a => a.type === 'paymentConfirm');
+  const paymentsHeaders = ['Дата підтвердження', 'Клієнт', 'Дата замовлення', 'Товари', 'Сума (грн)', 'Примітка'];
+  const paymentsRows: (string | number)[][] = paymentConfirmActivities.map(activity => {
+    const { details, timestamp } = activity;
+    const confirmDate = new Date(timestamp).toLocaleString('uk-UA');
+    const orderDate = details.orderDate ? new Date(details.orderDate).toLocaleDateString('uk-UA') : '-';
+    const items = Array.isArray(details.paymentItems)
+      ? details.paymentItems.map((item) =>
+          `${item.name}${item.length ? ` (${item.length} см)` : ''} × ${item.qty}`
+        ).join(', ')
+      : '-';
+    return [
+      confirmDate,
+      details.customerName || '-',
+      orderDate,
+      items,
+      Math.round(details.amount || 0),
+      details.notes || '',
+    ];
+  });
+
+  const paymentsData = [paymentsHeaders, ...paymentsRows];
+  const paymentsWs = XLSX.utils.aoa_to_sheet(paymentsData);
+  applyCenterAlignment(paymentsWs);
+  setColumnWidths(paymentsWs, paymentsData);
+
+  // Sheet 4: All Activities
   const activitiesHeaders = ['Час', 'Тип дії', 'Деталі'];
   const activitiesRows: (string | number)[][] = [...activities].reverse().map(activity => [
     new Date(activity.timestamp).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
@@ -308,6 +339,9 @@ export function exportShift(
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, summaryWs, 'Підсумок');
   XLSX.utils.book_append_sheet(wb, salesWs, 'Продажі');
+  if (paymentConfirmActivities.length > 0) {
+    XLSX.utils.book_append_sheet(wb, paymentsWs, 'Підтвердження оплат');
+  }
   XLSX.utils.book_append_sheet(wb, activitiesWs, 'Всі дії');
 
   const shiftDate = new Date(shiftStartedAt);

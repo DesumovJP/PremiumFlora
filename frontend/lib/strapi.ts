@@ -976,9 +976,16 @@ export async function confirmPayment(
 /**
  * Отримати повну аналітику dashboard
  */
-export async function getDashboardAnalytics(): Promise<ApiResponse<DashboardData>> {
+export async function getDashboardAnalytics(year?: number, month?: number): Promise<ApiResponse<DashboardData>> {
   try {
-    const response = await fetch(`${API_URL}/analytics/dashboard`, {
+    const params = new URLSearchParams();
+    if (year !== undefined) params.append('year', String(year));
+    if (month !== undefined) params.append('month', String(month));
+
+    const queryString = params.toString();
+    const url = `${API_URL}/analytics/dashboard${queryString ? `?${queryString}` : ''}`;
+
+    const response = await fetch(url, {
       cache: "no-store",
     });
 
@@ -1131,8 +1138,11 @@ export interface ShiftActivity {
 export interface ShiftSummary {
   totalSales: number;
   totalSalesAmount: number;
+  totalSalesPaid?: number;      // Оплачені продажі
+  totalSalesExpected?: number;  // Очікують оплати
   totalWriteOffs: number;
   totalWriteOffsQty: number;
+  totalSupplies?: number;       // Кількість поставок
   activitiesCount: number;
   productEdits: number;
   customersCreated: number;

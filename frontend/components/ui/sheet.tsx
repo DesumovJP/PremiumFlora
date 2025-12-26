@@ -54,12 +54,13 @@ SheetOverlay.displayName = DialogPrimitive.Overlay.displayName;
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
   side?: "left" | "right";
+  hideCloseButton?: boolean;
 }
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   SheetContentProps
->(({ className, children, side = "right", ...props }, ref) => (
+>(({ className, children, side = "right", hideCloseButton = false, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <DialogPrimitive.Content
@@ -88,20 +89,22 @@ const SheetContent = React.forwardRef<
       {...props}
     >
       {/* Premium close button */}
-      <SheetClose className={cn(
-        "absolute right-4 top-4 z-10",
-        "flex h-10 w-10 items-center justify-center rounded-full",
-        "bg-slate-100/80 dark:bg-white/10",
-        "text-slate-600 dark:text-white/70",
-        "backdrop-blur-sm",
-        "transition-all duration-200 ease-out",
-        "hover:bg-slate-200/90 dark:hover:bg-white/20 hover:scale-105",
-        "active:scale-95",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
-      )}>
-        <X className="h-5 w-5" strokeWidth={1.5} />
-        <span className="sr-only">Закрити меню</span>
-      </SheetClose>
+      {!hideCloseButton && (
+        <SheetClose className={cn(
+          "absolute right-4 top-4 z-10",
+          "flex h-10 w-10 items-center justify-center rounded-full",
+          "bg-slate-100/80 dark:bg-white/10",
+          "text-slate-600 dark:text-white/70",
+          "backdrop-blur-sm",
+          "transition-all duration-200 ease-out",
+          "hover:bg-slate-200/90 dark:hover:bg-white/20 hover:scale-105",
+          "active:scale-95",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+        )}>
+          <X className="h-5 w-5" strokeWidth={1.5} />
+          <span className="sr-only">Закрити меню</span>
+        </SheetClose>
+      )}
       {children}
     </DialogPrimitive.Content>
   </SheetPortal>

@@ -228,6 +228,12 @@ export interface SupplyPlanData {
   forecast: string;
 }
 
+export interface PendingCustomer {
+  customerId: string;
+  customerName: string;
+  amount: number;
+}
+
 export interface DashboardData {
   kpis: KpiData[];
   weeklyRevenue: number[];
@@ -240,6 +246,11 @@ export interface DashboardData {
   writeOffSummary: WriteOffSummary;
   topCustomers: TopCustomer[];
   topWriteOffFlowers: TopWriteOffFlower[];
+  paidAmount: number;            // Оплачені гроші (поточний місяць)
+  expectedAmount: number;        // Очікують оплати (поточний місяць)
+  totalPendingAmount: number;    // Загальна сума непогашених платежів (всі часи)
+  pendingOrdersCount: number;    // Кількість неоплачених замовлень
+  pendingByCustomer: PendingCustomer[];  // Непогашені платежі по клієнтах
 }
 
 // ============================================

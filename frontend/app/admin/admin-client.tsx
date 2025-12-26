@@ -118,10 +118,10 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
     }
   }, [tab]);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (year?: number, month?: number) => {
     setIsLoadingAnalytics(true);
     try {
-      const result = await getDashboardAnalytics();
+      const result = await getDashboardAnalytics(year, month);
       if (result.success && result.data) {
         setAnalyticsData(result.data);
       } else {
@@ -134,6 +134,11 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
       setIsLoadingAnalytics(false);
     }
   };
+
+  // Handle month change in analytics
+  const handleAnalyticsMonthChange = useCallback((year: number, month: number) => {
+    fetchAnalytics(year, month);
+  }, []);
 
   // Refresh products after operations
   const refreshProducts = useCallback(async () => {
@@ -558,6 +563,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             onOpenExport={() => exportClients(customers)}
             onAddCustomer={handleAddCustomer}
             onDeleteCustomer={handleDeleteCustomer}
+            onLogActivity={logActivity}
           />
         </TabsContent>
 
@@ -565,12 +571,13 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
           <AnalyticsSection
             data={analyticsData}
             isLoading={isLoadingAnalytics}
-            onRefresh={fetchAnalytics}
+            onRefresh={() => fetchAnalytics()}
             onOpenExport={() => {
               if (analyticsData) {
                 exportAnalytics(analyticsData);
               }
             }}
+            onMonthChange={handleAnalyticsMonthChange}
           />
         </TabsContent>
 
@@ -698,7 +705,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
                 )}
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80 p-0 admin-surface" suppressHydrationWarning>
+            <SheetContent side="right" className="w-80 p-0 admin-surface" hideCloseButton suppressHydrationWarning>
               <VisuallyHidden asChild>
                 <Dialog.Title>Кошик</Dialog.Title>
               </VisuallyHidden>
@@ -728,10 +735,8 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
         </header>
 
         {/* Mobile Content - scrollable */}
-        <main className="flex-1 overflow-y-auto py-2">
-          <div className="px-2">
-            {tabsContent}
-          </div>
+        <main className="flex-1 overflow-y-auto py-2 px-2">
+          {tabsContent}
         </main>
       </div>
 

@@ -7,9 +7,46 @@
  * - Продажі по періодах
  * - Списання
  * - Топ клієнти
+ *
+ * Включає in-memory кешування для оптимізації
  */
 
 import type { Core } from '@strapi/strapi';
+
+// ============================================
+// Cache Configuration
+// ============================================
+
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+const CACHE_TTL = 3 * 60 * 1000; // 3 хвилини
+
+// Глобальний кеш для аналітики
+const analyticsCache: {
+  dashboard?: CacheEntry<unknown>;
+  stock?: CacheEntry<unknown>;
+} = {};
+
+/**
+ * Інвалідувати кеш аналітики
+ * Викликати після операцій що змінюють дані (продажі, списання, тощо)
+ */
+export function invalidateAnalyticsCache(): void {
+  analyticsCache.dashboard = undefined;
+  analyticsCache.stock = undefined;
+  strapi.log.debug('[Analytics] Cache invalidated');
+}
+
+/**
+ * Перевірити чи кеш валідний
+ */
+function isCacheValid<T>(entry?: CacheEntry<T>): entry is CacheEntry<T> {
+  if (!entry) return false;
+  return Date.now() - entry.timestamp < CACHE_TTL;
+}
 
 // Types
 interface StockLevel {
@@ -246,18 +283,21 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   /**
-   * Отримати щоденні продажі та списання за поточний місяць
+   * Отримати щоденні продажі та списання за вказаний місяць
    */
-  async getDailySales(): Promise<DailySale[]> {
+  async getDailySales(year?: number, month?: number): Promise<DailySale[]> {
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const targetYear = year ?? now.getFullYear();
+    const targetMonth = month ?? now.getMonth();
+    const startOfMonth = new Date(targetYear, targetMonth, 1);
+    const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
+    const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
 
     // Отримуємо продажі
     const sales = await strapi.db.query('api::transaction.transaction').findMany({
       where: {
         type: 'sale',
-        date: { $gte: startOfMonth.toISOString() },
+        date: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
         paymentStatus: { $in: ['paid', 'expected'] },
       },
     });
@@ -266,7 +306,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const writeOffs = await strapi.db.query('api::transaction.transaction').findMany({
       where: {
         type: 'writeOff',
-        date: { $gte: startOfMonth.toISOString() },
+        date: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
       },
     });
 
@@ -305,8 +345,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const result: DailySale[] = [];
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(now.getFullYear(), now.getMonth(), day);
-      const key = `${String(day).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const date = new Date(targetYear, targetMonth, day);
+      const key = `${String(day).padStart(2, '0')}.${String(targetMonth + 1).padStart(2, '0')}`;
       const data = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0 };
 
       let status: 'high' | 'mid' | 'low' = 'low';
@@ -367,88 +407,112 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   /**
-   * Отримати тижневу виручку (4 тижні)
+   * Отримати тижневу виручку (4 тижні вибраного місяця)
    */
-  async getWeeklyRevenue(): Promise<number[]> {
+  async getWeeklyRevenue(year?: number, month?: number): Promise<number[]> {
     const now = new Date();
-    const result: number[] = [];
+    const targetYear = year ?? now.getFullYear();
+    const targetMonth = month ?? now.getMonth();
 
-    for (let week = 3; week >= 0; week--) {
-      const weekStart = new Date(now.getTime() - (week + 1) * 7 * 24 * 60 * 60 * 1000);
-      const weekEnd = new Date(now.getTime() - week * 7 * 24 * 60 * 60 * 1000);
+    // Отримуємо всі транзакції за місяць
+    const startOfMonth = new Date(targetYear, targetMonth, 1);
+    const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
 
-      const transactions = await strapi.db.query('api::transaction.transaction').findMany({
-        where: {
-          type: 'sale',
-          date: {
-            $gte: weekStart.toISOString(),
-            $lt: weekEnd.toISOString(),
-          },
-          paymentStatus: { $in: ['paid', 'expected'] },
-        },
-      });
-
-      const revenue = transactions.reduce((sum: number, t: { amount: number }) => sum + (t.amount || 0), 0);
-      result.push(revenue);
-    }
-
-    return result;
-  },
-
-  /**
-   * Отримати кількість замовлень по тижнях
-   */
-  async getOrdersPerWeek(): Promise<number[]> {
-    const now = new Date();
-    const result: number[] = [];
-
-    for (let week = 3; week >= 0; week--) {
-      const weekStart = new Date(now.getTime() - (week + 1) * 7 * 24 * 60 * 60 * 1000);
-      const weekEnd = new Date(now.getTime() - week * 7 * 24 * 60 * 60 * 1000);
-
-      const count = await strapi.db.query('api::transaction.transaction').count({
-        where: {
-          type: 'sale',
-          date: {
-            $gte: weekStart.toISOString(),
-            $lt: weekEnd.toISOString(),
-          },
-          paymentStatus: { $in: ['paid', 'expected'] },
-        },
-      });
-
-      result.push(count);
-    }
-
-    return result;
-  },
-
-  /**
-   * Отримати KPI метрики
-   */
-  async getKpis(): Promise<KpiData[]> {
-    // Поточний період (цей місяць)
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-
-    // Продажі цього місяця
-    const currentSales = await strapi.db.query('api::transaction.transaction').findMany({
+    const transactions = await strapi.db.query('api::transaction.transaction').findMany({
       where: {
         type: 'sale',
-        date: { $gte: startOfMonth.toISOString() },
+        date: {
+          $gte: startOfMonth.toISOString(),
+          $lte: endOfMonth.toISOString(),
+        },
         paymentStatus: { $in: ['paid', 'expected'] },
       },
     });
 
-    // Продажі минулого місяця
+    // Групуємо по тижнях місяця
+    const weeklyRevenue: number[] = [0, 0, 0, 0, 0];
+
+    transactions.forEach((t: { date: string; amount: number }) => {
+      const transDate = new Date(t.date);
+      const dayOfMonth = transDate.getDate();
+      const weekIndex = Math.min(Math.floor((dayOfMonth - 1) / 7), 4);
+      weeklyRevenue[weekIndex] += t.amount || 0;
+    });
+
+    // Повертаємо тільки заповнені тижні (до 4)
+    const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+    const weeksInMonth = Math.ceil(daysInMonth / 7);
+    return weeklyRevenue.slice(0, Math.min(weeksInMonth, 4));
+  },
+
+  /**
+   * Отримати кількість замовлень по тижнях вибраного місяця
+   */
+  async getOrdersPerWeek(year?: number, month?: number): Promise<number[]> {
+    const now = new Date();
+    const targetYear = year ?? now.getFullYear();
+    const targetMonth = month ?? now.getMonth();
+
+    // Отримуємо всі транзакції за місяць
+    const startOfMonth = new Date(targetYear, targetMonth, 1);
+    const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
+
+    const transactions = await strapi.db.query('api::transaction.transaction').findMany({
+      where: {
+        type: 'sale',
+        date: {
+          $gte: startOfMonth.toISOString(),
+          $lte: endOfMonth.toISOString(),
+        },
+        paymentStatus: { $in: ['paid', 'expected'] },
+      },
+    });
+
+    // Групуємо по тижнях місяця
+    const weeklyOrders: number[] = [0, 0, 0, 0, 0];
+
+    transactions.forEach((t: { date: string }) => {
+      const transDate = new Date(t.date);
+      const dayOfMonth = transDate.getDate();
+      const weekIndex = Math.min(Math.floor((dayOfMonth - 1) / 7), 4);
+      weeklyOrders[weekIndex] += 1;
+    });
+
+    // Повертаємо тільки заповнені тижні (до 4)
+    const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+    const weeksInMonth = Math.ceil(daysInMonth / 7);
+    return weeklyOrders.slice(0, Math.min(weeksInMonth, 4));
+  },
+
+  /**
+   * Отримати KPI метрики за вказаний місяць
+   */
+  async getKpis(year?: number, month?: number): Promise<KpiData[]> {
+    const now = new Date();
+    const targetYear = year ?? now.getFullYear();
+    const targetMonth = month ?? now.getMonth();
+
+    const startOfMonth = new Date(targetYear, targetMonth, 1);
+    const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
+    const startOfLastMonth = new Date(targetYear, targetMonth - 1, 1);
+    const endOfLastMonth = new Date(targetYear, targetMonth, 0, 23, 59, 59, 999);
+
+    // Продажі вибраного місяця
+    const currentSales = await strapi.db.query('api::transaction.transaction').findMany({
+      where: {
+        type: 'sale',
+        date: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
+        paymentStatus: { $in: ['paid', 'expected'] },
+      },
+    });
+
+    // Продажі попереднього місяця
     const lastSales = await strapi.db.query('api::transaction.transaction').findMany({
       where: {
         type: 'sale',
         date: {
           $gte: startOfLastMonth.toISOString(),
-          $lt: endOfLastMonth.toISOString(),
+          $lte: endOfLastMonth.toISOString(),
         },
         paymentStatus: { $in: ['paid', 'expected'] },
       },
@@ -572,6 +636,85 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   /**
+   * Отримати суми оплачених та очікуваних платежів за вказаний місяць
+   */
+  async getPaymentSummary(year?: number, month?: number): Promise<{ paidAmount: number; expectedAmount: number }> {
+    const now = new Date();
+    const targetYear = year ?? now.getFullYear();
+    const targetMonth = month ?? now.getMonth();
+
+    const startOfMonth = new Date(targetYear, targetMonth, 1);
+    const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
+
+    const transactions = await strapi.db.query('api::transaction.transaction').findMany({
+      where: {
+        type: 'sale',
+        date: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
+      },
+    });
+
+    let paidAmount = 0;
+    let expectedAmount = 0;
+
+    transactions.forEach((t: { amount: number; paymentStatus?: string }) => {
+      const amount = t.amount || 0;
+      // Без статусу (старі) або 'paid' = оплачено
+      if (!t.paymentStatus || t.paymentStatus === 'paid') {
+        paidAmount += amount;
+      } else if (t.paymentStatus === 'expected' || t.paymentStatus === 'pending') {
+        expectedAmount += amount;
+      }
+    });
+
+    return { paidAmount, expectedAmount };
+  },
+
+  /**
+   * Отримати загальну суму непогашених платежів (всі часи)
+   */
+  async getTotalPendingPayments(): Promise<{
+    totalPendingAmount: number;
+    pendingOrdersCount: number;
+    pendingByCustomer: Array<{ customerId: string; customerName: string; amount: number }>;
+  }> {
+    const transactions = await strapi.db.query('api::transaction.transaction').findMany({
+      where: {
+        type: 'sale',
+        paymentStatus: { $in: ['expected', 'pending'] },
+      },
+      populate: ['customer'],
+    });
+
+    let totalPendingAmount = 0;
+    const pendingByCustomerMap = new Map<string, { name: string; amount: number }>();
+
+    transactions.forEach((t: { amount: number; customer?: { documentId: string; name: string } }) => {
+      const amount = t.amount || 0;
+      totalPendingAmount += amount;
+
+      if (t.customer) {
+        const existing = pendingByCustomerMap.get(t.customer.documentId) || { name: t.customer.name, amount: 0 };
+        existing.amount += amount;
+        pendingByCustomerMap.set(t.customer.documentId, existing);
+      }
+    });
+
+    const pendingByCustomer = Array.from(pendingByCustomerMap.entries())
+      .map(([customerId, data]) => ({
+        customerId,
+        customerName: data.name,
+        amount: data.amount,
+      }))
+      .sort((a, b) => b.amount - a.amount);
+
+    return {
+      totalPendingAmount,
+      pendingOrdersCount: transactions.length,
+      pendingByCustomer,
+    };
+  },
+
+  /**
    * Отримати план поставок
    */
   async getSupplyPlan(): Promise<{
@@ -613,9 +756,24 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   /**
-   * Отримати повну аналітику dashboard
+   * Отримати повну аналітику dashboard (з кешуванням)
+   * @param year - рік (опційно, за замовчуванням поточний)
+   * @param month - місяць 0-11 (опційно, за замовчуванням поточний)
    */
-  async getDashboardData() {
+  async getDashboardData(year?: number, month?: number) {
+    // Кеш тільки для поточного місяця без параметрів
+    const now = new Date();
+    const isCurrentMonth = (year === undefined || year === now.getFullYear()) &&
+                           (month === undefined || month === now.getMonth());
+
+    // Перевірити кеш тільки для поточного місяця
+    if (isCurrentMonth && isCacheValid(analyticsCache.dashboard)) {
+      strapi.log.debug('[Analytics] Returning cached dashboard data');
+      return analyticsCache.dashboard.data;
+    }
+
+    strapi.log.debug('[Analytics] Fetching fresh dashboard data', { year, month });
+
     const [
       kpis,
       weeklyRevenue,
@@ -628,21 +786,25 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       writeOffSummary,
       topCustomers,
       topWriteOffFlowers,
+      paymentSummary,
+      pendingPayments,
     ] = await Promise.all([
-      this.getKpis(),
-      this.getWeeklyRevenue(),
-      this.getOrdersPerWeek(),
+      this.getKpis(year, month),
+      this.getWeeklyRevenue(year, month),
+      this.getOrdersPerWeek(year, month),
       this.getCategorySplit(),
       this.getTopProducts(),
       this.getSupplyPlan(),
-      this.getDailySales(),
+      this.getDailySales(year, month),
       this.getStockLevels(),
       this.getWriteOffSummary(),
       this.getTopCustomers(5),
       this.getTopWriteOffFlowers(),
+      this.getPaymentSummary(year, month),
+      this.getTotalPendingPayments(),
     ]);
 
-    return {
+    const data = {
       kpis,
       weeklyRevenue,
       ordersPerWeek,
@@ -654,6 +816,19 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       writeOffSummary,
       topCustomers,
       topWriteOffFlowers,
+      paidAmount: paymentSummary.paidAmount,
+      expectedAmount: paymentSummary.expectedAmount,
+      totalPendingAmount: pendingPayments.totalPendingAmount,
+      pendingOrdersCount: pendingPayments.pendingOrdersCount,
+      pendingByCustomer: pendingPayments.pendingByCustomer,
     };
+
+    // Зберегти в кеш
+    analyticsCache.dashboard = {
+      data,
+      timestamp: Date.now(),
+    };
+
+    return data;
   },
 });

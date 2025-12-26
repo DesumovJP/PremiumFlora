@@ -246,11 +246,10 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
     }
 
     // Створюємо CSV дані
-    const headers = ["Назва квітки", "Довжина (см)", "Поточний залишок", "Планова кількість"];
+    const headers = ["Назва квітки", "Довжина (см)", "Замовлення"];
     const rows = itemsToExport.map((item) => [
       item.flowerName,
       item.length,
-      item.currentStock,
       item.plannedQuantity,
     ]);
 
@@ -579,9 +578,10 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
             onClick={handleExport}
             disabled={itemsWithPlannedQty.length === 0}
             className="bg-emerald-600 hover:bg-emerald-700"
+            size="icon"
+            title="Експортувати"
           >
-            <Download className="mr-2 h-4 w-4" />
-            Експортувати
+            <Download className="h-4 w-4" />
           </Button>
         </div>
       </div>

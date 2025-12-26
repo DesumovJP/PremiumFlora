@@ -271,7 +271,7 @@ function CartPanel({
 
   return (
     <>
-    <Card className="admin-card flex h-full flex-col border border-slate-100 dark:border-[#30363d] bg-white/95 dark:bg-admin-surface-elevated shadow-lg shadow-emerald-500/10 rounded-none overflow-hidden">
+    <Card className="admin-card flex h-full max-h-full flex-col border border-slate-100 dark:border-[#30363d] bg-white/95 dark:bg-admin-surface-elevated shadow-lg shadow-emerald-500/10 rounded-none overflow-hidden">
       <CardHeader className="space-y-2 pb-2 p-3 sm:p-5 sm:pb-3 sm:space-y-3">
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           <CardTitle className="text-base sm:text-lg">Кошик</CardTitle>
@@ -311,7 +311,7 @@ function CartPanel({
       <CardContent className="flex-1 min-h-0 space-y-2 pt-0 p-3 sm:p-5 sm:pt-0 sm:space-y-4">
         <ScrollArea className="h-full max-h-none pr-2">
           {cart.length === 0 ? (
-            <div className="flex min-h-[27.5rem] items-center justify-center sm:min-h-[31.25rem]">
+            <div className="flex flex-1 items-center justify-center py-8">
               <EmptyCart />
             </div>
           ) : (
@@ -328,7 +328,7 @@ function CartPanel({
           )}
         </ScrollArea>
       </CardContent>
-      <CardFooter className="flex flex-col gap-2 p-3 sm:p-5 sm:pt-0 sm:gap-2.5">
+      <CardFooter className="flex flex-col gap-2 p-3 sm:p-5 sm:pt-0 sm:gap-2.5 shrink-0">
         <div className="flex w-full items-center justify-between text-xs text-slate-600 dark:text-admin-text-secondary sm:text-sm">
           <span>Сума</span>
           <span className="font-semibold text-slate-900 dark:text-admin-text-primary">{Math.round(cartTotal)} грн</span>
@@ -860,10 +860,41 @@ function CartGroupItem({
   onRemove: (id: string) => void;
   onUpdateQty: (id: string, delta: number) => void;
 }) {
+  const [editingQty, setEditingQty] = useState<string | null>(null);
+  const [qtyValue, setQtyValue] = useState<string>('');
+
+  const handleQtyClick = (lineId: string, currentQty: number) => {
+    setEditingQty(lineId);
+    setQtyValue(currentQty.toString());
+  };
+
+  const handleQtyChange = (lineId: string, value: string) => {
+    setQtyValue(value);
+  };
+
+  const handleQtyBlur = (lineId: string, currentQty: number) => {
+    const newQty = parseInt(qtyValue) || 0;
+    if (newQty !== currentQty && newQty > 0) {
+      const delta = newQty - currentQty;
+      onUpdateQty(lineId, delta);
+    }
+    setEditingQty(null);
+    setQtyValue('');
+  };
+
+  const handleQtyKeyDown = (e: React.KeyboardEvent, lineId: string, currentQty: number) => {
+    if (e.key === 'Enter') {
+      handleQtyBlur(lineId, currentQty);
+    } else if (e.key === 'Escape') {
+      setEditingQty(null);
+      setQtyValue('');
+    }
+  };
+
   return (
-    <div className="rounded-lg sm:rounded-xl border border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface-elevated shadow-sm overflow-hidden">
+    <div className="rounded-lg sm:rounded-xl border border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface-elevated shadow-sm overflow-hidden" style={{ borderWidth: '0.5px' }}>
       {/* Заголовок групи */}
-      <div className="flex items-center gap-2 p-2 sm:p-2.5 border-b border-slate-100 dark:border-[#30363d] bg-slate-50/50 dark:bg-slate-800/50">
+      <div className="flex items-center gap-2 p-2 sm:p-2.5 border-b border-slate-100 dark:border-[#30363d] bg-slate-50/50 dark:bg-slate-800/50" style={{ borderBottomWidth: '0.5px' }}>
         <div className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-admin-surface">
           {group.image ? (
             <img
@@ -894,11 +925,15 @@ function CartGroupItem({
       </div>
 
       {/* Варіанти */}
-      <div className="divide-y divide-slate-100 dark:divide-[#30363d]">
-        {group.lines.map((line) => (
+      <div>
+        {group.lines.map((line, index) => (
           <div
             key={line.id}
-            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 dark:bg-slate-800/30"
+            className={cn(
+              "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 dark:bg-slate-800/30",
+              index > 0 && "border-t border-slate-100 dark:border-[#30363d]"
+            )}
+            style={index > 0 ? { borderTopWidth: '0.5px' } : undefined}
           >
             <Badge tone="outline" className="shrink-0 text-[10px] sm:text-[11px] px-1 sm:px-1.5 py-0">
               {line.size}
@@ -910,13 +945,33 @@ function CartGroupItem({
               <button
                 onClick={() => onUpdateQty(line.id, -1)}
                 className="h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center rounded border border-slate-200 dark:border-admin-border text-slate-500 hover:bg-slate-100 dark:hover:bg-admin-surface-elevated"
+                style={{ borderWidth: '0.5px' }}
               >
                 <Minus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               </button>
-              <span className="text-[10px] sm:text-xs font-semibold w-5 sm:w-6 text-center">{line.qty}</span>
+              {editingQty === line.id ? (
+                <Input
+                  type="number"
+                  min="1"
+                  value={qtyValue}
+                  onChange={(e) => handleQtyChange(line.id, e.target.value)}
+                  onBlur={() => handleQtyBlur(line.id, line.qty)}
+                  onKeyDown={(e) => handleQtyKeyDown(e, line.id, line.qty)}
+                  className="h-5 w-8 sm:h-6 sm:w-10 text-[10px] sm:text-xs text-center p-0 font-semibold"
+                  autoFocus
+                />
+              ) : (
+                <span 
+                  onClick={() => handleQtyClick(line.id, line.qty)}
+                  className="text-[10px] sm:text-xs font-semibold w-5 sm:w-6 text-center cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                >
+                  {line.qty}
+                </span>
+              )}
               <button
                 onClick={() => onUpdateQty(line.id, 1)}
                 className="h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center rounded border border-slate-200 dark:border-admin-border text-slate-500 hover:bg-slate-100 dark:hover:bg-admin-surface-elevated"
+                style={{ borderWidth: '0.5px' }}
               >
                 <Plus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               </button>

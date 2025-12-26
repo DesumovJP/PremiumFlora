@@ -11,6 +11,7 @@
 
 import type { Core } from '@strapi/strapi';
 import type { Knex } from 'knex';
+import { invalidateAnalyticsCache } from '../../analytics/services/analytics';
 
 // Types
 interface SaleItem {
@@ -366,6 +367,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         hasCustomer: !!fullTransaction?.customer,
       });
 
+      // Інвалідуємо кеш аналітики
+      invalidateAnalyticsCache();
+
       return {
         success: true,
         idempotent: false,
@@ -553,6 +557,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         where: { id: result.transactionId },
       });
 
+      // Інвалідуємо кеш аналітики
+      invalidateAnalyticsCache();
+
       return {
         success: true,
         idempotent: false,
@@ -663,6 +670,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         where: { id: transaction.id },
         populate: ['customer'],
       });
+
+      // Інвалідуємо кеш аналітики
+      invalidateAnalyticsCache();
 
       return {
         success: true,

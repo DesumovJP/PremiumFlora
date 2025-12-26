@@ -197,7 +197,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
                       <span className="dark:text-admin-text-secondary">
                         {item.name} ({item.size}) x{item.qty}
                       </span>
-                      <span className="font-medium dark:text-admin-text-primary">{item.price * item.qty} грн</span>
+                      <span className="font-medium dark:text-admin-text-primary">{Math.round(item.price * item.qty)} грн</span>
                     </div>
                   ))}
                 </div>
@@ -211,7 +211,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
             )}
             <div className="flex justify-between border-t pt-2 dark:border-admin-border">
               <span className="font-medium dark:text-admin-text-primary">Сума:</span>
-              <span className="font-bold text-emerald-600">{details.totalAmount} грн</span>
+              <span className="font-bold text-emerald-600">{Math.round(details.totalAmount || 0)} грн</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500 dark:text-admin-text-tertiary">Статус оплати:</span>
@@ -310,15 +310,44 @@ function ActivityItem({ activity }: { activity: Activity }) {
 
       case 'paymentConfirm':
         return (
-          <div className="space-y-2 text-sm">
+          <div className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span className="text-slate-500 dark:text-admin-text-tertiary">Клієнт:</span>
               <span className="font-medium dark:text-admin-text-primary">{details.customerName}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500 dark:text-admin-text-tertiary">Сума:</span>
-              <span className="font-bold text-emerald-600">{details.amount} грн</span>
+              <span className="text-slate-500 dark:text-admin-text-tertiary">Сума оплати:</span>
+              <span className="font-bold text-emerald-600">{Math.round(details.amount || 0)} грн</span>
             </div>
+            {details.orderDate && (
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Дата замовлення:</span>
+                <span className="dark:text-admin-text-primary">{new Date(details.orderDate).toLocaleDateString('uk-UA')}</span>
+              </div>
+            )}
+            {Array.isArray(details.paymentItems) && details.paymentItems.length > 0 && (
+              <div className="pt-2 border-t border-slate-100 dark:border-admin-border">
+                <p className="text-slate-500 dark:text-admin-text-tertiary mb-2">Товари в замовленні:</p>
+                <div className="space-y-1.5 bg-slate-50 dark:bg-admin-surface rounded-lg p-2">
+                  {details.paymentItems.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center">
+                      <span className="text-slate-700 dark:text-admin-text-secondary">
+                        {item.name} {item.length ? `(${item.length} см)` : ''} × {item.qty}
+                      </span>
+                      <span className="font-medium text-slate-800 dark:text-admin-text-primary">
+                        {(item.subtotal || item.price * item.qty).toLocaleString('uk-UA')} грн
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {details.notes && (
+              <div className="pt-2 border-t border-slate-100 dark:border-admin-border">
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Примітка: </span>
+                <span className="text-slate-700 dark:text-admin-text-secondary italic">{details.notes}</span>
+              </div>
+            )}
           </div>
         );
 
@@ -390,7 +419,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
     const { details } = activity;
     switch (activity.type) {
       case 'sale':
-        return `${details.customerName} - ${details.totalAmount} грн`;
+        return `${details.customerName} - ${Math.round(details.totalAmount || 0)} грн`;
       case 'writeOff':
         return `${details.flowerName} (${details.length} см) - ${details.qty} шт`;
       case 'productEdit':
@@ -400,7 +429,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
       case 'variantDelete':
         return `${details.productName} - ${details.variantLength} см`;
       case 'paymentConfirm':
-        return `${details.customerName} - ${details.amount} грн`;
+        return `${details.customerName} - ${Math.round(details.amount || 0)} грн`;
       case 'customerCreate':
         return details.customerName || '';
       case 'customerDelete':
@@ -446,7 +475,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
         )}
       </button>
       {isExpanded && (
-        <div className="px-4 pb-4 pt-0 ml-12 animate-fade-in">
+        <div className="px-4 pb-4 pt-0 animate-fade-in">
           <div className="rounded-lg border border-slate-100 dark:border-admin-border bg-slate-50/70 dark:bg-admin-surface-elevated p-3">
             {renderDetails()}
           </div>
@@ -591,7 +620,7 @@ function ShiftCalendar({ shifts, onSelectShift, currentMonth, onMonthChange }: C
               >
                 <span
                   className={cn(
-                    'inline-flex h-6 w-6 items-center justify-center rounded-full text-sm',
+                    'inline-flex h-5 w-5 items-center justify-center rounded-full text-xs leading-none',
                     isToday && 'bg-emerald-600 text-white font-bold',
                     !isToday && 'text-slate-700 dark:text-admin-text-primary'
                   )}
@@ -599,19 +628,52 @@ function ShiftCalendar({ shifts, onSelectShift, currentMonth, onMonthChange }: C
                   {day}
                 </span>
                 {hasShifts && (
-                  <div className="mt-1 space-y-0.5">
-                    {dayShifts.slice(0, 2).map((shift) => (
-                      <button
-                        key={shift.documentId}
-                        onClick={() => onSelectShift(shift)}
-                        className="w-full text-left text-[10px] px-1 py-0.5 rounded bg-emerald-100 dark:bg-emerald-800/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-700/50 truncate transition-colors"
-                      >
-                        {shift.totalSalesAmount.toLocaleString()} грн
-                      </button>
-                    ))}
-                    {dayShifts.length > 2 && (
-                      <span className="text-[10px] text-slate-500 px-1">
-                        +{dayShifts.length - 2} ще
+                  <div className="mt-0.5 space-y-[1px]">
+                    {dayShifts.slice(0, 1).map((shift) => {
+                      // Підраховуємо суму поставок з activities
+                      const supplyAmount = (shift.activities || [])
+                        .filter((a: any) => a.type === 'supply')
+                        .reduce((sum: number, a: any) => {
+                          const amount = (a.details as any)?.totalAmount || (a.details as any)?.amount || 0;
+                          return sum + (typeof amount === 'number' ? amount : 0);
+                        }, 0);
+                      
+                      // Підраховуємо суму списань з activities
+                      const writeOffAmount = (shift.activities || [])
+                        .filter((a: any) => a.type === 'writeOff')
+                        .reduce((sum: number, a: any) => {
+                          const amount = (a.details as any)?.totalAmount || (a.details as any)?.amount || 0;
+                          return sum + (typeof amount === 'number' ? amount : 0);
+                        }, 0);
+                      
+                      return (
+                        <button
+                          key={shift.documentId}
+                          onClick={() => onSelectShift(shift)}
+                          className="w-full flex flex-col items-center space-y-[1px]"
+                        >
+                          {/* Виручка - просто число без "грн" */}
+                          <div className="text-[9px] leading-tight px-1 py-[1px] rounded bg-emerald-100 dark:bg-emerald-800/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-700/50 transition-colors inline-block text-center">
+                            {Math.round(shift.totalSalesAmount).toLocaleString()}
+                          </div>
+                          {/* Поставка - синій квадратик */}
+                          {supplyAmount > 0 && (
+                            <div className="text-[9px] leading-tight px-1 py-[1px] rounded bg-blue-100 dark:bg-blue-800/50 text-blue-700 dark:text-blue-300 inline-block text-center">
+                              {Math.round(supplyAmount).toLocaleString()}
+                            </div>
+                          )}
+                          {/* Списання - червоний квадратик */}
+                          {writeOffAmount > 0 && (
+                            <div className="text-[9px] leading-tight px-1 py-[1px] rounded bg-rose-100 dark:bg-rose-800/50 text-rose-700 dark:text-rose-300 inline-block text-center">
+                              {Math.round(writeOffAmount).toLocaleString()}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                    {dayShifts.length > 1 && (
+                      <span className="text-[8px] text-slate-500 px-0.5 leading-tight">
+                        +{dayShifts.length - 1}
                       </span>
                     )}
                   </div>
@@ -640,14 +702,44 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
   if (!shift) return null;
 
   const activities = (shift.activities || []) as Activity[];
-  const summary = shift.summary || {
-    totalSales: shift.totalSales || 0,
-    totalSalesAmount: shift.totalSalesAmount || 0,
-    totalWriteOffs: shift.totalWriteOffs || 0,
-    totalWriteOffsQty: shift.totalWriteOffsQty || 0,
-    activitiesCount: activities.length,
-    productEdits: 0,
-    customersCreated: 0,
+
+  // Підраховуємо paid/expected/supplies з activities
+  let totalSalesPaid = 0;
+  let totalSalesExpected = 0;
+  let totalSupplies = 0;
+  let confirmedPaymentsTotal = 0;
+
+  activities.forEach((a) => {
+    if (a.type === 'sale') {
+      const amount = a.details.totalAmount || 0;
+      const status = a.details.paymentStatus;
+      if (!status || status === 'paid') {
+        totalSalesPaid += amount;
+      } else if (status === 'expected' || status === 'pending') {
+        totalSalesExpected += amount;
+      }
+    } else if (a.type === 'supply') {
+      totalSupplies += 1;
+    } else if (a.type === 'paymentConfirm') {
+      confirmedPaymentsTotal += a.details.amount || 0;
+    }
+  });
+
+  // Коригуємо суми з урахуванням підтверджених оплат
+  totalSalesPaid += confirmedPaymentsTotal;
+  totalSalesExpected = Math.max(0, totalSalesExpected - confirmedPaymentsTotal);
+
+  const summary: ShiftSummary = {
+    totalSales: shift.summary?.totalSales ?? shift.totalSales ?? 0,
+    totalSalesAmount: shift.summary?.totalSalesAmount ?? shift.totalSalesAmount ?? 0,
+    totalSalesPaid: shift.summary?.totalSalesPaid ?? totalSalesPaid,
+    totalSalesExpected: shift.summary?.totalSalesExpected ?? totalSalesExpected,
+    totalWriteOffs: shift.summary?.totalWriteOffs ?? shift.totalWriteOffs ?? 0,
+    totalWriteOffsQty: shift.summary?.totalWriteOffsQty ?? shift.totalWriteOffsQty ?? 0,
+    totalSupplies: shift.summary?.totalSupplies ?? totalSupplies,
+    activitiesCount: shift.summary?.activitiesCount ?? activities.length,
+    productEdits: shift.summary?.productEdits ?? 0,
+    customersCreated: shift.summary?.customersCreated ?? 0,
   };
 
   return (
@@ -666,22 +758,28 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
       }
       footer={
         <>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            className="flex-1 sm:flex-initial"
+          >
             Закрити
           </Button>
           <Button
             className="bg-emerald-600 hover:bg-emerald-700"
             onClick={() => onExport(shift)}
+            size="icon"
+            title="Експортувати"
           >
-            <Download className="mr-2 h-4 w-4" />
-            Експортувати
+            <Download className="h-4 w-4" />
           </Button>
         </>
       }
+      fullscreenOnMobile
     >
-      <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+      <div className="space-y-4 flex flex-col flex-1 min-h-0">
         {/* Summary Stats */}
-        <div className="rounded-xl border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/60 dark:bg-emerald-900/20 p-4">
+        <div className="rounded-xl border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/60 dark:bg-emerald-900/20 p-4 shrink-0">
           <h4 className="font-semibold text-slate-900 dark:text-admin-text-primary mb-3">
             Підсумок зміни
           </h4>
@@ -707,9 +805,9 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
           </div>
         </div>
 
-        {/* Activities List */}
-        <div className="rounded-xl border border-slate-100 dark:border-admin-border bg-white dark:bg-admin-surface overflow-hidden">
-          <div className="px-4 py-2 bg-slate-50 dark:bg-admin-surface-elevated border-b border-slate-100 dark:border-admin-border">
+        {/* Activities List - займає вільне місце */}
+        <div className="rounded-xl border border-slate-100 dark:border-admin-border bg-white dark:bg-admin-surface overflow-hidden flex flex-col flex-1 min-h-0">
+          <div className="px-4 py-2 bg-slate-50 dark:bg-admin-surface-elevated border-b border-slate-100 dark:border-admin-border shrink-0">
             <span className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">
               Дії ({activities.length})
             </span>
@@ -719,7 +817,7 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
               Немає записів
             </div>
           ) : (
-            <div className="max-h-64 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto min-h-0">
               {activities.map((activity) => (
                 <ActivityItem key={activity.id} activity={activity} />
               ))}
@@ -800,6 +898,80 @@ function ArchiveTab({ onExportShift }: ArchiveTabProps) {
     );
   }
 
+  // Фільтруємо зміни за поточний місяць календаря
+  const shiftsInMonth = shifts.filter(shift => {
+    const shiftDate = new Date(shift.closedAt || shift.startedAt);
+    return shiftDate.getMonth() === currentMonth.getMonth() &&
+           shiftDate.getFullYear() === currentMonth.getFullYear();
+  });
+
+  // Функція експорту місячного звіту
+  const handleExportMonthSummary = () => {
+    if (shiftsInMonth.length === 0) return;
+
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const monthName = MONTHS[month];
+
+    // Агрегуємо дані по днях
+    const dailyData: Record<number, { sales: number; writeOffs: number; supplies: number }> = {};
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      dailyData[day] = { sales: 0, writeOffs: 0, supplies: 0 };
+    }
+
+    shiftsInMonth.forEach(shift => {
+      const shiftDate = new Date(shift.closedAt || shift.startedAt);
+      const day = shiftDate.getDate();
+
+      // Додаємо продажі
+      dailyData[day].sales += shift.totalSalesAmount || 0;
+
+      // Рахуємо списання та поставки з activities
+      (shift.activities || []).forEach((a: Activity) => {
+        if (a.type === 'writeOff') {
+          const amount = (a.details as { totalAmount?: number; amount?: number })?.totalAmount ||
+                        (a.details as { totalAmount?: number; amount?: number })?.amount || 0;
+          dailyData[day].writeOffs += amount;
+        } else if (a.type === 'supply') {
+          const amount = (a.details as { totalAmount?: number; amount?: number })?.totalAmount ||
+                        (a.details as { totalAmount?: number; amount?: number })?.amount || 0;
+          dailyData[day].supplies += amount;
+        }
+      });
+    });
+
+    // Формуємо CSV
+    let csv = 'День,Продажі (грн),Списання (грн),Поставки (грн)\n';
+    let totalSales = 0, totalWriteOffs = 0, totalSupplies = 0;
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const { sales, writeOffs, supplies } = dailyData[day];
+      csv += `${day},${Math.round(sales)},${Math.round(writeOffs)},${Math.round(supplies)}\n`;
+      totalSales += sales;
+      totalWriteOffs += writeOffs;
+      totalSupplies += supplies;
+    }
+
+    csv += `\nВСЬОГО,${Math.round(totalSales)},${Math.round(totalWriteOffs)},${Math.round(totalSupplies)}\n`;
+
+    // Завантажуємо файл
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Звіт_${monthName}_${year}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Масив назв місяців
+  const MONTHS = [
+    'Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень',
+    'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'
+  ];
+
   return (
     <>
       <ShiftCalendar
@@ -809,51 +981,19 @@ function ArchiveTab({ onExportShift }: ArchiveTabProps) {
         onMonthChange={setCurrentMonth}
       />
 
-      {/* Recent Shifts List */}
-      <div className="mt-6">
-        <h4 className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary mb-3">
-          Останні зміни
-        </h4>
-        <div className="space-y-2">
-          {shifts.slice(0, 5).map(shift => (
-            <div
-              key={shift.documentId}
-              className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-admin-border bg-white dark:bg-admin-surface hover:bg-slate-50 dark:hover:bg-[#21262d] transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/30">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <div className="font-medium text-slate-900 dark:text-admin-text-primary">
-                    {formatShortDate(shift.startedAt)}
-                  </div>
-                  <div className="text-sm text-slate-500 dark:text-admin-text-tertiary">
-                    {shift.totalSales} продажів • {shift.totalSalesAmount.toLocaleString()} грн
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSelectShift(shift)}
-                >
-                  <Eye className="h-4 w-4 mr-1" />
-                  Деталі
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleExportShift(shift)}
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
+      {/* Кнопка експорту місячного звіту */}
+      {shiftsInMonth.length > 0 && (
+        <div className="mt-4 flex justify-center">
+          <Button
+            variant="outline"
+            onClick={handleExportMonthSummary}
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Експортувати звіт за {MONTHS[currentMonth.getMonth()]}
+          </Button>
         </div>
-      </div>
+      )}
 
       <ShiftDetailModal
         shift={selectedShift}
@@ -900,14 +1040,43 @@ export function HistorySection({
 
   const handleExportArchivedShift = (shift: Shift) => {
     const shiftActivities = (shift.activities || []) as Activity[];
-    const shiftSummary: ShiftSummary = shift.summary || {
-      totalSales: shift.totalSales || 0,
-      totalSalesAmount: shift.totalSalesAmount || 0,
-      totalWriteOffs: shift.totalWriteOffs || 0,
-      totalWriteOffsQty: shift.totalWriteOffsQty || 0,
-      activitiesCount: shiftActivities.length,
-      productEdits: 0,
-      customersCreated: 0,
+    // Підраховуємо paid/expected/supplies з activities для архівних змін
+    let totalSalesPaid = 0;
+    let totalSalesExpected = 0;
+    let totalSupplies = 0;
+    let confirmedPaymentsTotal = 0;
+
+    shiftActivities.forEach((a) => {
+      if (a.type === 'sale') {
+        const amount = a.details.totalAmount || 0;
+        const status = a.details.paymentStatus;
+        if (!status || status === 'paid') {
+          totalSalesPaid += amount;
+        } else if (status === 'expected' || status === 'pending') {
+          totalSalesExpected += amount;
+        }
+      } else if (a.type === 'supply') {
+        totalSupplies += 1;
+      } else if (a.type === 'paymentConfirm') {
+        confirmedPaymentsTotal += a.details.amount || 0;
+      }
+    });
+
+    // Коригуємо суми з урахуванням підтверджених оплат
+    totalSalesPaid += confirmedPaymentsTotal;
+    totalSalesExpected = Math.max(0, totalSalesExpected - confirmedPaymentsTotal);
+
+    const shiftSummary: ShiftSummary = {
+      totalSales: shift.summary?.totalSales ?? shift.totalSales ?? 0,
+      totalSalesAmount: shift.summary?.totalSalesAmount ?? shift.totalSalesAmount ?? 0,
+      totalSalesPaid: shift.summary?.totalSalesPaid ?? totalSalesPaid,
+      totalSalesExpected: shift.summary?.totalSalesExpected ?? totalSalesExpected,
+      totalWriteOffs: shift.summary?.totalWriteOffs ?? shift.totalWriteOffs ?? 0,
+      totalWriteOffsQty: shift.summary?.totalWriteOffsQty ?? shift.totalWriteOffsQty ?? 0,
+      totalSupplies: shift.summary?.totalSupplies ?? totalSupplies,
+      activitiesCount: shift.summary?.activitiesCount ?? shiftActivities.length,
+      productEdits: shift.summary?.productEdits ?? 0,
+      customersCreated: shift.summary?.customersCreated ?? 0,
     };
     exportShift(shiftActivities, shiftSummary, shift.startedAt, shift.closedAt);
   };
@@ -943,7 +1112,7 @@ export function HistorySection({
                   disabled={isRefreshing || isLoading}
                   size="icon"
                   title="Оновити (синхронізація з іншими пристроями)"
-                  className="shrink-0"
+                  className="shrink-0 hidden sm:flex"
                 >
                   <RefreshCw
                     className={cn(
@@ -957,9 +1126,10 @@ export function HistorySection({
                 className="bg-emerald-600 hover:bg-emerald-700"
                 onClick={onExportShift}
                 disabled={activities.length === 0}
+                size="icon"
+                title="Експортувати"
               >
-                <Download className="mr-2 h-4 w-4" />
-                Експортувати
+                <Download className="h-4 w-4" />
               </Button>
               <Button
                 variant="outline"
@@ -1023,6 +1193,21 @@ export function HistorySection({
                   value={`${summary.activitiesCount}`}
                 />
               </div>
+
+              {/* Очікуються оплати - загальна сума */}
+              {(summary.totalSalesExpected || 0) > 0 && (
+                <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/70 dark:bg-amber-900/20 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase text-amber-700 dark:text-amber-400 mb-0.5">Очікуються оплати</p>
+                      <p className="text-xs text-amber-600 dark:text-amber-500">Загальна сума непогашених платежів</p>
+                    </div>
+                    <p className="text-2xl font-bold text-amber-800 dark:text-amber-300">
+                      {Math.round(summary.totalSalesExpected || 0).toLocaleString('uk-UA')} грн
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Activities List */}
               <div className="rounded-xl border border-slate-100 dark:border-admin-border bg-white dark:bg-admin-surface overflow-hidden">
@@ -1099,6 +1284,10 @@ export function HistorySection({
               <div className="flex justify-between">
                 <span className="text-slate-600 dark:text-admin-text-secondary">Нових клієнтів:</span>
                 <span className="font-medium dark:text-admin-text-primary">{summary.customersCreated}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-600 dark:text-admin-text-secondary">Поставок:</span>
+                <span className="font-medium text-cyan-600">{summary.totalSupplies || 0}</span>
               </div>
             </div>
           </div>

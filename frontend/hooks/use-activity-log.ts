@@ -68,6 +68,15 @@ export interface ActivityDetails {
   // Payment
   transactionId?: string;
   amount?: number;
+  orderDate?: string;
+  // Payment confirmation items (extended format)
+  paymentItems?: Array<{
+    name: string;
+    qty: number;
+    price: number;
+    length?: number;
+    subtotal?: number;
+  }>;
 
   // Supply
   filename?: string;
@@ -87,8 +96,11 @@ export interface Activity {
 export interface ShiftSummary {
   totalSales: number;
   totalSalesAmount: number;
+  totalSalesPaid: number;      // Оплачені продажі
+  totalSalesExpected: number;  // Очікують оплати
   totalWriteOffs: number;
   totalWriteOffsQty: number;
+  totalSupplies: number;       // Кількість поставок
   activitiesCount: number;
   productEdits: number;
   customersCreated: number;
@@ -199,13 +211,27 @@ export function useActivityLog(): UseActivityLogReturn {
   }, [fetchCurrentShift]);
 
   // Calculate summary
+  // Спочатку збираємо суму підтверджених оплат
+  const confirmedPaymentsTotal = activities
+    .filter((a) => a.type === 'paymentConfirm')
+    .reduce((sum, a) => sum + (a.details.amount || 0), 0);
+
   const summary: ShiftSummary = activities.reduce(
     (acc, activity) => {
       switch (activity.type) {
-        case 'sale':
+        case 'sale': {
+          const amount = activity.details.totalAmount || 0;
+          const status = activity.details.paymentStatus;
           acc.totalSales += 1;
-          acc.totalSalesAmount += activity.details.totalAmount || 0;
+          acc.totalSalesAmount += amount;
+          // Без статусу або 'paid' = оплачено
+          if (!status || status === 'paid') {
+            acc.totalSalesPaid += amount;
+          } else if (status === 'expected' || status === 'pending') {
+            acc.totalSalesExpected += amount;
+          }
           break;
+        }
         case 'writeOff':
           acc.totalWriteOffs += 1;
           acc.totalWriteOffsQty += activity.details.qty || 0;
@@ -219,6 +245,9 @@ export function useActivityLog(): UseActivityLogReturn {
         case 'customerCreate':
           acc.customersCreated += 1;
           break;
+        case 'supply':
+          acc.totalSupplies += 1;
+          break;
       }
       acc.activitiesCount += 1;
       return acc;
@@ -226,13 +255,21 @@ export function useActivityLog(): UseActivityLogReturn {
     {
       totalSales: 0,
       totalSalesAmount: 0,
+      totalSalesPaid: 0,
+      totalSalesExpected: 0,
       totalWriteOffs: 0,
       totalWriteOffsQty: 0,
+      totalSupplies: 0,
       activitiesCount: 0,
       productEdits: 0,
       customersCreated: 0,
     }
   );
+
+  // Коригуємо суми з урахуванням підтверджених оплат
+  // Підтверджені оплати переносимо з "очікується" в "оплачено"
+  summary.totalSalesPaid += confirmedPaymentsTotal;
+  summary.totalSalesExpected = Math.max(0, summary.totalSalesExpected - confirmedPaymentsTotal);
 
   return {
     activities,

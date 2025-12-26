@@ -216,9 +216,50 @@ body {
   background: var(--admin-bg);
 }
 
-/* Стабільний layout для скролящих областей в адмін-панелі */
-.admin-panel main {
-  scrollbar-gutter: stable;
+/* Приховуємо скроллбар в адмін-панелі (скрол працює, скроллбар невидимий) */
+.admin-panel,
+.admin-panel main,
+.admin-panel aside,
+.admin-panel [class*="overflow-y-auto"],
+.admin-panel [class*="overflow-auto"],
+.admin-panel [class*="ScrollArea"] {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.admin-panel::-webkit-scrollbar,
+.admin-panel main::-webkit-scrollbar,
+.admin-panel aside::-webkit-scrollbar,
+.admin-panel [class*="overflow-y-auto"]::-webkit-scrollbar,
+.admin-panel [class*="overflow-auto"]::-webkit-scrollbar,
+.admin-panel [class*="ScrollArea"]::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Виправлення однакових відступів для мобільного main */
+/* 
+ * ПРОБЛЕМА: scrollbar-gutter: stable резервує місце під скроллбар всередині елемента.
+ * На мобільних пристроях скроллбар зазвичай overlay (не займає місце в layout),
+ * але scrollbar-gutter все одно резервує місце, що створює асиметрію.
+ * 
+ * РІШЕННЯ: Приховуємо скроллбар на мобільних пристроях, щоб уникнути асиметрії.
+ * Скролл все одно працює через touch/swipe. Використовуємо padding-inline для
+ * однакових відступів з обох боків.
+ */
+@media (max-width: 639px) {
+  .admin-panel main {
+    /* Прибираємо scrollbar-gutter для мобільної версії */
+    scrollbar-gutter: auto;
+    /* Використовуємо padding-inline для однакових відступів з обох боків */
+    padding-inline: 0.5rem;
+    /* Приховуємо скроллбар на мобільних пристроях */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+  
+  .admin-panel main::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
 }
 
 /* Dark theme overrides for common background classes */
@@ -986,6 +1027,63 @@ select:focus-visible {
 .dark textarea:focus-visible,
 .dark select:focus-visible {
   outline-color: var(--brand-primary);
+}
+
+/* ============================================
+   FIX: Відступи для бордерів та ring ефектів
+   Забезпечуємо, щоб focus/active бордери не виходили за межі контейнерів
+   ============================================ */
+
+/* Ring offset для всіх елементів з ring ефектами - забезпечує відступ ring від елемента */
+/* Це запобігає виходу ring за межі елемента */
+.admin-panel input,
+.admin-panel textarea,
+.admin-panel select,
+.admin-panel button {
+  --tw-ring-offset-width: 2px;
+  --tw-ring-offset-color: var(--admin-bg);
+}
+
+/* Для темної теми */
+.dark .admin-panel input,
+.dark .admin-panel textarea,
+.dark .admin-panel select,
+.dark .admin-panel button {
+  --tw-ring-offset-color: var(--admin-bg);
+}
+
+/* Додатковий padding для контейнерів з формами - забезпечує місце для ring ефектів */
+.admin-panel form {
+  padding-left: calc(var(--space-4) + 4px);
+  padding-right: calc(var(--space-4) + 4px);
+}
+
+/* Для CardContent та CardHeader - додаємо відступ для ring ефектів */
+.admin-panel [class*="CardContent"],
+.admin-panel [class*="CardHeader"] {
+  padding-left: calc(var(--space-5) + 4px);
+  padding-right: calc(var(--space-5) + 4px);
+}
+
+/* Тонші бордери для кошика POS терміналу */
+.admin-panel .admin-card {
+  border-width: 0.5px !important;
+}
+
+.admin-panel .admin-card [class*="border-b"],
+.admin-panel .admin-card [class*="border-t"],
+.admin-panel .admin-card [class*="divide-y"] > * + * {
+  border-top-width: 0.5px !important;
+}
+
+.admin-panel .admin-card button[class*="border"],
+.admin-panel .admin-card [class*="Badge"][class*="border"] {
+  border-width: 0.5px !important;
+}
+
+.admin-panel .admin-card textarea[class*="border"],
+.admin-panel .admin-card input[class*="border"] {
+  border-width: 0.5px !important;
 }
 
 /* Footer headings override (smaller, no uppercase) */

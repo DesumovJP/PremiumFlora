@@ -22,6 +22,7 @@ import {
   type SupplyRowData,
   type SupplyStatus,
 } from '../../../services/excel';
+import { invalidateAnalyticsCache } from '../../analytics/services/analytics';
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   /**
@@ -191,7 +192,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         : null,
     });
 
-    // 10. Повернути результат
+    // 10. Інвалідуємо кеш аналітики (якщо не dry-run і були зміни)
+    if (!options.dryRun && valid.length > 0) {
+      invalidateAnalyticsCache();
+    }
+
+    // 11. Повернути результат
     return {
       supplyId: typeof supply.id === 'string' ? parseInt(supply.id, 10) : supply.id,
       status: supplyStatus,
