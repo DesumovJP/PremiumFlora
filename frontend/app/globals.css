@@ -178,6 +178,12 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Admin text colors for Tailwind utilities */
+  --color-admin-text-primary: var(--admin-text-primary);
+  --color-admin-text-secondary: var(--admin-text-secondary);
+  --color-admin-text-tertiary: var(--admin-text-tertiary);
+  --color-admin-text-muted: var(--admin-text-muted);
 }
 
 * {
@@ -1013,20 +1019,21 @@ html {
 }
 
 /* Focus visible improvements - Premium Style */
-/* Прибираємо глобальну обводку, залишаємо тільки для форм */
+/* Елегантний тонкий фокус для форм */
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--brand-primary);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-  transition: outline var(--transition-fast);
+  outline: none;
+  border-color: var(--brand-primary) !important;
+  box-shadow: 0 0 0 1px var(--brand-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .dark input:focus-visible,
 .dark textarea:focus-visible,
 .dark select:focus-visible {
-  outline-color: var(--brand-primary);
+  border-color: var(--brand-primary) !important;
+  box-shadow: 0 0 0 1px var(--brand-primary);
 }
 
 /* ============================================
@@ -1034,22 +1041,12 @@ select:focus-visible {
    Забезпечуємо, щоб focus/active бордери не виходили за межі контейнерів
    ============================================ */
 
-/* Ring offset для всіх елементів з ring ефектами - забезпечує відступ ring від елемента */
-/* Це запобігає виходу ring за межі елемента */
+/* Ring налаштування для елементів - тонкий стиль */
 .admin-panel input,
 .admin-panel textarea,
 .admin-panel select,
 .admin-panel button {
-  --tw-ring-offset-width: 2px;
-  --tw-ring-offset-color: var(--admin-bg);
-}
-
-/* Для темної теми */
-.dark .admin-panel input,
-.dark .admin-panel textarea,
-.dark .admin-panel select,
-.dark .admin-panel button {
-  --tw-ring-offset-color: var(--admin-bg);
+  --tw-ring-offset-width: 0px;
 }
 
 /* Додатковий padding для контейнерів з формами - забезпечує місце для ring ефектів */
@@ -1817,15 +1814,7 @@ select:focus-visible {
   border: 0;
 }
 
-/* Focus visible improvements - тільки для форм */
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-  outline: 3px solid var(--brand-primary);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-}
-
+/* Прибираємо outline для елементів без focus-visible */
 *:focus:not(:focus-visible) {
   outline: none;
 }

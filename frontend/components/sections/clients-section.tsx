@@ -17,7 +17,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import type { Customer, Transaction } from "@/lib/api-types";
 import type { ActivityType, ActivityDetails } from "@/hooks/use-activity-log";
-import { getTransactions, confirmPayment } from "@/lib/strapi";
+import { getTransactions, confirmPayment, invalidatePendingPaymentsCache } from "@/lib/strapi";
 
 type ClientsSectionProps = {
   customers: Customer[];
@@ -301,6 +301,9 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
     try {
       const result = await confirmPayment(transaction.documentId);
       if (result.success) {
+        // Інвалідуємо кеш очікуваних оплат
+        invalidatePendingPaymentsCache();
+
         // Оновлюємо транзакцію в списку
         setTransactions((prev) =>
           prev.map((t) =>
@@ -429,7 +432,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                   </div>
                   <button
                     onClick={() => setSelected(null)}
-                    className="rounded-full p-2 text-slate-500 dark:text-admin-text-tertiary transition hover:bg-slate-100 dark:hover:bg-admin-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200"
+                    className="rounded-full p-2 text-slate-500 dark:text-admin-text-tertiary transition hover:bg-slate-100 dark:hover:bg-admin-surface focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400/50"
                     aria-label="Закрити історію"
                   >
                     <X className="h-4 w-4" />

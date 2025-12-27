@@ -10,7 +10,7 @@ type ModalProps = {
   description?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "sm" | "md" | "lg" | "xl" | "2xl";
   fullscreenOnMobile?: boolean;
   showClose?: boolean;
   headerActions?: ReactNode;
@@ -21,6 +21,7 @@ const sizeMap = {
   md: "max-w-[480px]",
   lg: "max-w-[600px]",
   xl: "max-w-[720px]",
+  "2xl": "max-w-[900px]",
 };
 
 export function Modal({

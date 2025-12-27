@@ -967,26 +967,20 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
             <div className="rounded-lg bg-amber-50 dark:bg-amber-900/30 p-2">
               <p className="text-xs text-amber-600 dark:text-amber-400">Списання</p>
               <p className="font-bold text-amber-700 dark:text-amber-300">
-                {(summary.totalWriteOffsAmount || 0) > 0
-                  ? `${Math.round(summary.totalWriteOffsAmount || 0).toLocaleString()} ₴`
-                  : `${summary.totalWriteOffsQty || 0} шт`
-                }
+                {summary.totalWriteOffsQty || 0} шт
               </p>
               <p className="text-xs text-amber-600/70 dark:text-amber-400/70">
-                {(summary.totalWriteOffsAmount || 0) > 0 ? `${summary.totalWriteOffsQty || 0} шт` : `${summary.totalWriteOffs || 0} оп.`}
+                {summary.totalWriteOffs || 0} операцій
               </p>
             </div>
             {/* Поставки */}
             <div className="rounded-lg bg-blue-50 dark:bg-blue-900/30 p-2">
               <p className="text-xs text-blue-600 dark:text-blue-400">Поставки</p>
               <p className="font-bold text-blue-700 dark:text-blue-300">
-                {(summary.totalSuppliesAmount || 0) > 0
-                  ? `${Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} ₴`
-                  : `${summary.totalSuppliesQty || 0} шт`
-                }
+                {summary.totalSuppliesQty || 0} шт
               </p>
               <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
-                {(summary.totalSuppliesAmount || 0) > 0 ? `${summary.totalSuppliesQty || 0} шт` : `${summary.totalSupplies || 0} оп.`}
+                {summary.totalSupplies || 0} поставок
               </p>
             </div>
           </div>
@@ -1434,16 +1428,10 @@ export function HistorySection({
                 <div className="rounded-xl border border-amber-100 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/20 p-3">
                   <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">Списання</p>
                   <p className="text-lg font-bold text-amber-700 dark:text-amber-300">
-                    {(summary.totalWriteOffsAmount || 0) > 0
-                      ? `${Math.round(summary.totalWriteOffsAmount || 0).toLocaleString()} ₴`
-                      : `${summary.totalWriteOffsQty || 0} шт`
-                    }
+                    {summary.totalWriteOffsQty || 0} шт
                   </p>
                   <p className="text-xs text-amber-600/70 dark:text-amber-400/70">
-                    {(summary.totalWriteOffsAmount || 0) > 0
-                      ? `${summary.totalWriteOffsQty || 0} шт · ${summary.totalWriteOffs || 0} оп.`
-                      : `${summary.totalWriteOffs || 0} операцій`
-                    }
+                    {summary.totalWriteOffs || 0} операцій
                   </p>
                 </div>
 
@@ -1451,16 +1439,10 @@ export function HistorySection({
                 <div className="rounded-xl border border-blue-100 dark:border-blue-800/50 bg-blue-50/50 dark:bg-blue-900/20 p-3">
                   <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Поставки</p>
                   <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                    {(summary.totalSuppliesAmount || 0) > 0
-                      ? `${Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} ₴`
-                      : `${summary.totalSuppliesQty || 0} шт`
-                    }
+                    {summary.totalSuppliesQty || 0} шт
                   </p>
                   <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
-                    {(summary.totalSuppliesAmount || 0) > 0
-                      ? `${summary.totalSuppliesQty || 0} шт · ${summary.totalSupplies || 0} поставок`
-                      : `${summary.totalSupplies || 0} поставок`
-                    }
+                    {summary.totalSupplies || 0} поставок
                   </p>
                 </div>
               </div>
@@ -1529,26 +1511,20 @@ export function HistorySection({
               <div className="rounded-lg bg-amber-50 dark:bg-amber-900/30 p-2">
                 <p className="text-xs text-amber-600 dark:text-amber-400">Списання</p>
                 <p className="font-bold text-amber-700 dark:text-amber-300">
-                  {(summary.totalWriteOffsAmount || 0) > 0
-                    ? `${Math.round(summary.totalWriteOffsAmount || 0).toLocaleString()} ₴`
-                    : `${summary.totalWriteOffsQty || 0} шт`
-                  }
+                  {summary.totalWriteOffsQty || 0} шт
                 </p>
                 <p className="text-xs text-amber-600/70 dark:text-amber-400/70">
-                  {(summary.totalWriteOffsAmount || 0) > 0 ? `${summary.totalWriteOffsQty || 0} шт` : `${summary.totalWriteOffs || 0} оп.`}
+                  {summary.totalWriteOffs || 0} операцій
                 </p>
               </div>
               {/* Поставки */}
               <div className="rounded-lg bg-blue-50 dark:bg-blue-900/30 p-2">
                 <p className="text-xs text-blue-600 dark:text-blue-400">Поставки</p>
                 <p className="font-bold text-blue-700 dark:text-blue-300">
-                  {(summary.totalSuppliesAmount || 0) > 0
-                    ? `${Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} ₴`
-                    : `${summary.totalSuppliesQty || 0} шт`
-                  }
+                  {summary.totalSuppliesQty || 0} шт
                 </p>
                 <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
-                  {(summary.totalSuppliesAmount || 0) > 0 ? `${summary.totalSuppliesQty || 0} шт` : `${summary.totalSupplies || 0} оп.`}
+                  {summary.totalSupplies || 0} поставок
                 </p>
               </div>
             </div>

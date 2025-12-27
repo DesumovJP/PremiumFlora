@@ -37,6 +37,8 @@ import {
   getDashboardAnalytics,
   getFlowers,
   closeShift as closeShiftApi,
+  getPendingPaymentsTotal,
+  invalidatePendingPaymentsCache,
 } from "@/lib/strapi";
 import type { Customer, DashboardData, WriteOffInput } from "@/lib/api-types";
 
@@ -111,6 +113,19 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   useEffect(() => {
     fetchCustomers();
   }, [fetchCustomers]);
+
+  // Fetch pending payments on mount (кешується на 5 хвилин)
+  useEffect(() => {
+    const fetchPendingPayments = async () => {
+      try {
+        const total = await getPendingPaymentsTotal();
+        setClientsPendingTotal(total);
+      } catch (error) {
+        console.error("Failed to fetch pending payments:", error);
+      }
+    };
+    fetchPendingPayments();
+  }, []);
 
   // Fetch analytics when tab changes
   useEffect(() => {
@@ -200,6 +215,15 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
           result.alert?.title || "Замовлення створено",
           result.alert?.message || "Замовлення успішно оформлено"
         );
+
+        // Інвалідуємо кеш очікуваних оплат якщо статус "expected"
+        if (paymentStatus === 'expected') {
+          invalidatePendingPaymentsCache();
+          // Оновлюємо значення в сайдбарі
+          const newTotal = await getPendingPaymentsTotal(true);
+          setClientsPendingTotal(newTotal);
+        }
+
         setCart([]);
         setSelectedClient(undefined);
         setDiscount(0);

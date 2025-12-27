@@ -29,14 +29,14 @@ export function BlogPageClient({ posts }: BlogPageClientProps) {
 
   return (
     <>
-      <main>
+      <main className="pt-16 lg:pt-20">
         {/* Header Section */}
         <section className="relative overflow-hidden section-padding-sm">
           {/* Background image with soft overlay */}
           <div className="pointer-events-none absolute inset-0 -z-10">
             <div className="h-full w-full bg-[url('/blog.jpg')] bg-cover bg-center" />
-            {/* Main white overlay with light blur */}
-            <div className="absolute inset-0 bg-white/70 backdrop-blur-md" />
+            {/* Main white overlay */}
+            <div className="absolute inset-0 bg-white/85" />
             {/* Bottom gradient for smooth transition */}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-white" />
           </div>

@@ -258,7 +258,7 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
       onOpenChange={(v) => !v && handleClose()}
       title="Планування поставки"
       description="Товари з низькими залишками для замовлення"
-      size="lg"
+      size="2xl"
     >
       <div className="space-y-4">
         {/* Threshold control */}
@@ -391,7 +391,7 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
               <span>{groupSupplyItems(items).length} квіток</span>
             </div>
 
-            <div className="max-h-80 overflow-y-auto space-y-2">
+            <div className="max-h-[500px] overflow-y-auto space-y-2">
               {groupSupplyItems(items).map((group) => (
                 <div
                   key={group.groupKey}

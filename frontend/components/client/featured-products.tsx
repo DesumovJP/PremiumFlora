@@ -4,10 +4,9 @@ import { Product } from "@/lib/types";
 import { ProductCard } from "./product-card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Flower2 } from "lucide-react";
-import { useIntersection } from "@/hooks/use-intersection";
-import { useEffect } from "react";
-import { WaveDivider } from "@/components/ui/decorations";
+import { ArrowRight, Flower2, Sparkles } from "lucide-react";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
 
 type FeaturedProductsProps = {
   products: Product[];
@@ -15,79 +14,121 @@ type FeaturedProductsProps = {
 
 export function FeaturedProducts({ products }: FeaturedProductsProps) {
   const featured = products.slice(0, 8);
-  const { ref, isVisible } = useIntersection({ threshold: 0.1, triggerOnce: true });
+  const ref = useRef<HTMLElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
 
-  useEffect(() => {
-    if (ref.current && isVisible) {
-      ref.current.classList.add("visible");
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+        delayChildren: 0.2,
+      }
     }
-  }, [isVisible, ref]);
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30, scale: 0.95 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: 0.5,
+        ease: [0.16, 1, 0.3, 1] as const
+      }
+    }
+  };
 
   return (
     <section
-      ref={ref as React.RefObject<HTMLElement>}
-      className="relative overflow-hidden section-padding-sm fade-in-up-animate"
+      ref={ref}
+      className="relative overflow-hidden py-20 lg:py-28 bg-gradient-to-b from-white via-slate-50/30 to-white"
     >
-      {/* Premium background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white via-slate-50/50 to-white" />
-
-      {/* Top gradient glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-64 bg-gradient-radial from-emerald-100/40 via-emerald-50/20 to-transparent blur-3xl pointer-events-none" />
-
-      {/* Side decorative orbs */}
-      <div className="absolute top-1/3 left-0 w-64 h-64 bg-gradient-radial from-amber-100/30 to-transparent rounded-full blur-3xl -translate-x-1/2 pointer-events-none" />
-      <div className="absolute bottom-1/4 right-0 w-72 h-72 bg-gradient-radial from-rose-100/25 to-transparent rounded-full blur-3xl translate-x-1/2 pointer-events-none" />
-
-      {/* Subtle noise texture */}
-      <div className="absolute inset-0 noise-overlay pointer-events-none" />
-
-      {/* Wave divider at bottom */}
-      <WaveDivider position="bottom" variant="simple" color="white" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="mb-6 sm:mb-10 lg:mb-12 text-center fade-in-up">
-          <div className="mb-3 sm:mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold text-emerald-700 border border-emerald-100/50 shadow-sm">
-            <Flower2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span>Каталог</span>
-          </div>
-          <h2 className="mb-3 sm:mb-4 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900">
-            Популярні <span className="text-emerald-600">товари</span>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center mb-12 lg:mb-16"
+        >
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={isInView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mb-4"
+          >
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-sm font-medium border border-emerald-100/60">
+              <Flower2 className="h-4 w-4" />
+              Каталог
+            </span>
+          </motion.div>
+
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800 mb-4">
+            Популярні{' '}
+            <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+              товари
+            </span>
           </h2>
-          <p className="mx-auto max-w-2xl text-sm sm:text-base lg:text-lg text-slate-600 px-4">
+          <p className="text-lg text-slate-500 max-w-2xl mx-auto">
             Найбільш затребувані квіти серед наших клієнтів. Свіжість та якість гарантовані.
           </p>
-        </div>
+        </motion.div>
 
-        {/* Products Grid - Premium with animations */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+        {/* Products Grid */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate={isInView ? "visible" : "hidden"}
+          className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4"
+        >
           {featured.map((product, index) => (
-            <div
+            <motion.div
               key={product.id}
-              className="fade-in-up"
-              style={{
-                animationDelay: `${index * 50}ms`,
-              }}
+              variants={itemVariants}
+              whileHover={{ y: -8, transition: { duration: 0.3 } }}
+              className="group"
             >
               <ProductCard product={product} />
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
-        {/* CTA - Premium */}
-        <div className="mt-8 sm:mt-12 text-center fade-in-up">
-          <Button
-            asChild
-            variant="outline"
-            size="lg"
-            className="group h-11 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold border-2 border-slate-200 bg-white/80 backdrop-blur-sm hover:border-emerald-300 hover:bg-emerald-50/50 shadow-sm hover:shadow-md transition-all duration-300"
+        {/* CTA Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          className="mt-12 lg:mt-16 text-center"
+        >
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <Link href="/catalog" className="flex items-center gap-2">
-              Переглянути весь каталог
-              <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
-          </Button>
-        </div>
+            <Button
+              asChild
+              size="lg"
+              className="group relative overflow-hidden bg-white hover:bg-emerald-50 border-2 border-slate-200 hover:border-emerald-200 text-slate-700 hover:text-emerald-700 shadow-sm hover:shadow-md h-12 sm:h-14 px-8 text-base font-semibold transition-all duration-300"
+            >
+              <Link href="/catalog" className="flex items-center gap-2">
+                <span className="relative z-10">Переглянути весь каталог</span>
+                <motion.span
+                  className="relative z-10"
+                  initial={{ x: 0 }}
+                  whileHover={{ x: 4 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                >
+                  <ArrowRight className="h-5 w-5" />
+                </motion.span>
+              </Link>
+            </Button>
+          </motion.div>
+        </motion.div>
+
       </div>
     </section>
   );

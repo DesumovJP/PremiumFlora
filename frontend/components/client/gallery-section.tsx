@@ -102,10 +102,6 @@ export function GallerySection({
         {/* Background */}
         <div className="absolute inset-0 bg-gradient-to-b from-white via-emerald-50/20 to-slate-50/50" />
 
-        {/* Decorative orbs */}
-        <div className="pointer-events-none absolute -left-32 top-1/4 h-96 w-96 rounded-full bg-gradient-radial from-emerald-200/20 via-emerald-100/10 to-transparent blur-3xl" />
-        <div className="pointer-events-none absolute -right-32 bottom-1/4 h-80 w-80 rounded-full bg-gradient-radial from-teal-200/20 via-teal-100/10 to-transparent blur-3xl" />
-
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div

@@ -39,10 +39,10 @@ export function StatsSection() {
             return (
               <div
                 key={index}
-                className="group relative flex flex-col items-center rounded-xl bg-white/80 dark:bg-admin-surface/80 p-3 sm:p-6 text-center backdrop-blur-sm transition-all duration-300 hover:bg-white dark:hover:bg-admin-surface hover:shadow-xl hover:shadow-emerald-500/10 dark:hover:shadow-emerald-500/20"
+                className="group relative flex flex-col items-center rounded-xl bg-white dark:bg-admin-surface p-3 sm:p-6 text-center border border-slate-100 dark:border-admin-border transition-colors duration-200 hover:border-emerald-200 dark:hover:border-emerald-500/30"
               >
                 {/* Icon */}
-                <div className="mb-2 sm:mb-3 inline-flex h-8 w-8 sm:h-12 sm:w-12 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/25 transition-transform duration-300 group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-emerald-500/40">
+                <div className="mb-2 sm:mb-3 inline-flex h-8 w-8 sm:h-12 sm:w-12 items-center justify-center rounded-lg sm:rounded-xl bg-emerald-500 text-white">
                   <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
                 </div>
                 

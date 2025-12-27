@@ -25,43 +25,37 @@ const advantages = [
     icon: Snowflake,
     title: "Свіжість гарантована",
     description: "Квіти зберігаються при оптимальній температурі від плантації до вашого складу",
-    color: "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100",
-    gradient: "from-emerald-500/10 to-emerald-600/5",
+    color: "bg-emerald-50 text-emerald-600",
   },
   {
     icon: Truck,
     title: "Швидка доставка",
     description: "Доставка рефрижератором по Києву та всій Україні",
-    color: "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100",
-    gradient: "from-emerald-500/10 to-teal-600/5",
+    color: "bg-emerald-50 text-emerald-600",
   },
   {
     icon: FileCheck,
     title: "Документація якості",
     description: "Всі партії з повною документацією та сертифікатами",
-    color: "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100",
-    gradient: "from-teal-500/10 to-emerald-600/5",
+    color: "bg-emerald-50 text-emerald-600",
   },
   {
     icon: UserCheck,
     title: "Персональний менеджер",
     description: "Індивідуальний підхід та підтримка для кожного клієнта",
-    color: "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100",
-    gradient: "from-emerald-500/10 to-emerald-600/5",
+    color: "bg-emerald-50 text-emerald-600",
   },
   {
     icon: Coins,
     title: "Гнучкі умови",
     description: "Мінімальне замовлення від 50 шт, індивідуальні ціни для постійних клієнтів",
-    color: "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100",
-    gradient: "from-teal-500/10 to-emerald-600/5",
+    color: "bg-emerald-50 text-emerald-600",
   },
   {
     icon: RefreshCw,
     title: "Гарантія заміни",
     description: "Заміна або повернення коштів без зайвих питань",
-    color: "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100",
-    gradient: "from-emerald-500/10 to-teal-600/5",
+    color: "bg-emerald-50 text-emerald-600",
   },
 ];
 
@@ -136,32 +130,28 @@ export default function AboutPage() {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen">
+      <main className="min-h-screen pt-16 lg:pt-20">
         {/* Hero */}
         <section className="relative overflow-hidden border-b border-slate-100 py-16 sm:py-20 lg:py-24">
           {/* Background with gradient mesh */}
           <div className="pointer-events-none absolute inset-0 -z-10">
             <div className="h-full w-full bg-[url('/blog.jpg')] bg-cover bg-center" />
-            <div className="absolute inset-0 bg-white/85 backdrop-blur-md" />
+            <div className="absolute inset-0 bg-white/90" />
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/40 via-transparent to-blue-50/40" />
           </div>
-
-          {/* Decorative orbs */}
-          <div className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-gradient-radial from-emerald-200/30 via-emerald-100/10 to-transparent blur-3xl" />
-          <div className="pointer-events-none absolute -right-32 bottom-0 h-80 w-80 rounded-full bg-gradient-radial from-teal-200/25 via-teal-100/10 to-transparent blur-3xl" />
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-3xl text-center">
               {/* Premium badge */}
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-100/50 bg-emerald-50 px-4 py-1.5 text-sm font-medium text-emerald-700 shadow-sm">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-100/50 bg-emerald-50 px-4 py-1.5 text-xs sm:text-sm font-semibold text-emerald-700 shadow-sm">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
                 Ваш надійний партнер
               </div>
 
-              <h1 className="mb-4 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+              <h1 className="mb-4 text-display-sm font-extrabold tracking-tight text-slate-900">
                 Про <span className="text-emerald-600">Premium Flora</span>
               </h1>
-              <p className="text-lg leading-relaxed text-slate-600 sm:text-xl">
+              <p className="text-body-large text-slate-600">
                 Оптовий постачальник свіжих квітів преміальної якості для вашого квіткового бізнесу
               </p>
             </div>
@@ -175,10 +165,6 @@ export default function AboutPage() {
         >
           {/* Background */}
           <div className="absolute inset-0 bg-gradient-to-b from-white via-slate-50/50 to-white" />
-
-          {/* Decorative orbs */}
-          <div className="pointer-events-none absolute left-0 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-radial from-emerald-200/20 via-emerald-100/10 to-transparent blur-3xl" />
-          <div className="pointer-events-none absolute right-0 top-1/4 h-72 w-72 translate-x-1/3 rounded-full bg-gradient-radial from-teal-200/20 via-teal-100/10 to-transparent blur-3xl" />
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div
@@ -223,16 +209,13 @@ export default function AboutPage() {
                 return (
                   <div
                     key={stat.label}
-                    className="group relative overflow-hidden rounded-2xl border border-slate-100/80 bg-white/80 p-6 text-center shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-emerald-200/60 hover:bg-white hover:shadow-lg sm:p-8"
+                    className="group relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-6 text-center transition-colors duration-200 hover:border-emerald-200 sm:p-8"
                     style={{
                       transitionDelay: missionVisible ? `${index * 100}ms` : "0ms",
                     }}
                   >
-                    {/* Hover gradient */}
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500/5 to-teal-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
                     <div className="relative">
-                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-all duration-300 group-hover:scale-110 group-hover:bg-emerald-100 group-hover:shadow-md">
+                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                         <Icon className="h-6 w-6" />
                       </div>
                       <div className="mb-1 text-3xl font-bold text-slate-900 sm:text-4xl">
@@ -242,9 +225,6 @@ export default function AboutPage() {
                         {stat.label}
                       </div>
                     </div>
-
-                    {/* Corner decoration */}
-                    <div className="absolute right-3 top-3 h-2 w-2 scale-0 rounded-full bg-emerald-400 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
                   </div>
                 );
               })}
@@ -259,14 +239,6 @@ export default function AboutPage() {
         >
           {/* Background */}
           <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 via-white to-emerald-50/30" />
-
-          {/* Decorative orbs */}
-          <div className="pointer-events-none absolute -left-48 top-0 h-96 w-96 rounded-full bg-gradient-radial from-emerald-200/30 via-emerald-100/10 to-transparent blur-3xl" />
-          <div className="pointer-events-none absolute right-0 top-1/2 h-80 w-80 translate-x-1/2 rounded-full bg-gradient-radial from-teal-200/25 via-teal-100/10 to-transparent blur-3xl" />
-          <div className="pointer-events-none absolute bottom-0 left-1/3 h-72 w-72 translate-y-1/2 rounded-full bg-gradient-radial from-emerald-200/20 via-emerald-100/10 to-transparent blur-3xl" />
-
-          {/* Subtle noise texture */}
-          <div className="pointer-events-none absolute inset-0 opacity-30" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")", opacity: 0.03 }} />
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {/* Header */}
@@ -300,8 +272,8 @@ export default function AboutPage() {
                   <div
                     key={advantage.title}
                     className={cn(
-                      "group relative overflow-hidden rounded-xl sm:rounded-2xl border border-slate-100/80 bg-white/80 p-3 sm:p-6 shadow-sm backdrop-blur-sm",
-                      "transition-all duration-300 ease-out hover:border-emerald-200/60 hover:bg-white hover:shadow-lg",
+                      "group relative overflow-hidden rounded-xl sm:rounded-2xl border border-slate-100 bg-white p-3 sm:p-6",
+                      "transition-colors duration-200 hover:border-emerald-200",
                       advantagesVisible ? "opacity-100" : "opacity-0"
                     )}
                     style={{
@@ -309,19 +281,10 @@ export default function AboutPage() {
                       transform: advantagesVisible ? "translateY(0)" : "translateY(30px)",
                     }}
                   >
-                    {/* Hover gradient background */}
-                    <div
-                      className={cn(
-                        "absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100",
-                        advantage.gradient
-                      )}
-                    />
-
                     {/* Icon */}
                     <div
                       className={cn(
-                        "relative mb-2 sm:mb-4 flex h-9 w-9 sm:h-14 sm:w-14 items-center justify-center rounded-lg sm:rounded-xl transition-all duration-300",
-                        "group-hover:scale-110 group-hover:shadow-md",
+                        "relative mb-2 sm:mb-4 flex h-9 w-9 sm:h-14 sm:w-14 items-center justify-center rounded-lg sm:rounded-xl",
                         advantage.color
                       )}
                     >
@@ -329,15 +292,12 @@ export default function AboutPage() {
                     </div>
 
                     {/* Content */}
-                    <h3 className="relative mb-1 sm:mb-2 text-xs sm:text-lg font-semibold text-slate-900 transition-colors group-hover:text-emerald-700 leading-tight">
+                    <h3 className="relative mb-1 sm:mb-2 text-xs sm:text-lg font-semibold text-slate-900 leading-tight">
                       {advantage.title}
                     </h3>
                     <p className="relative text-[10px] sm:text-base leading-snug sm:leading-relaxed text-slate-600">
                       {advantage.description}
                     </p>
-
-                    {/* Corner decoration */}
-                    <div className="absolute right-2 top-2 sm:right-3 sm:top-3 h-1.5 w-1.5 sm:h-2 sm:w-2 scale-0 rounded-full bg-emerald-400 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
                   </div>
                 );
               })}
@@ -352,10 +312,6 @@ export default function AboutPage() {
         <section id="contact" className="relative overflow-hidden py-16 sm:py-20 lg:py-24">
           {/* Background */}
           <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/30 via-slate-50/50 to-white" />
-
-          {/* Decorative orbs */}
-          <div className="pointer-events-none absolute -right-32 top-0 h-80 w-80 rounded-full bg-gradient-radial from-emerald-200/20 via-emerald-100/10 to-transparent blur-3xl" />
-          <div className="pointer-events-none absolute -left-32 bottom-0 h-72 w-72 rounded-full bg-gradient-radial from-teal-200/20 via-teal-100/10 to-transparent blur-3xl" />
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mb-12 text-center">
@@ -416,21 +372,15 @@ export default function AboutPage() {
                 return (
                   <div
                     key={item.title}
-                    className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-slate-100/80 bg-white/80 p-3 sm:p-6 text-center shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-emerald-200/60 hover:bg-white hover:shadow-lg"
+                    className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-slate-100 bg-white p-3 sm:p-6 text-center transition-colors duration-200 hover:border-emerald-200"
                   >
-                    {/* Hover gradient */}
-                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500/5 to-teal-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
                     <div className="relative">
-                      <div className="mx-auto mb-2 sm:mb-3 flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-lg sm:rounded-xl bg-emerald-50 text-emerald-600 transition-all duration-300 group-hover:scale-110 group-hover:bg-emerald-100 group-hover:shadow-md">
+                      <div className="mx-auto mb-2 sm:mb-3 flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-lg sm:rounded-xl bg-emerald-50 text-emerald-600">
                         <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
                       </div>
                       <h3 className="mb-1 sm:mb-2 text-xs sm:text-base font-semibold text-slate-900">{item.title}</h3>
                       {item.content}
                     </div>
-
-                    {/* Corner decoration */}
-                    <div className="absolute right-2 top-2 sm:right-3 sm:top-3 h-1.5 w-1.5 sm:h-2 sm:w-2 scale-0 rounded-full bg-emerald-400 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
                   </div>
                 );
               })}

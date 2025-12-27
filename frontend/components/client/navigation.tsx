@@ -64,23 +64,23 @@ function ContactModalContent({ onClose }: { onClose?: () => void }) {
         </div>
       </div>
 
-      {/* Messengers */}
+      {/* Messengers - 50% width each */}
       <div>
         <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
           Месенджери
         </div>
-        <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-3">
           {/* Viber */}
           <a
             href={contacts.viber.href}
             onClick={onClose}
-            className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-purple-50 hover:text-purple-700 hover:shadow-sm"
+            className="flex flex-col items-center gap-2 rounded-xl bg-slate-50 px-4 py-4 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-purple-50 hover:text-purple-700 hover:shadow-sm"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
-              <ViberIcon className="h-5 w-5" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
+              <ViberIcon className="h-6 w-6" />
             </div>
-            <div className="flex flex-col">
-              <span>Viber</span>
+            <div className="flex flex-col items-center text-center">
+              <span className="font-semibold">Viber</span>
               <span className="text-xs text-slate-500">{contacts.viber.number}</span>
             </div>
           </a>
@@ -91,13 +91,13 @@ function ContactModalContent({ onClose }: { onClose?: () => void }) {
             target="_blank"
             rel="noopener noreferrer"
             onClick={onClose}
-            className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-sky-50 hover:text-sky-700 hover:shadow-sm"
+            className="flex flex-col items-center gap-2 rounded-xl bg-slate-50 px-4 py-4 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-sky-50 hover:text-sky-700 hover:shadow-sm"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
-              <TelegramIcon className="h-5 w-5" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
+              <TelegramIcon className="h-6 w-6" />
             </div>
-            <div className="flex flex-col">
-              <span>Telegram</span>
+            <div className="flex flex-col items-center text-center">
+              <span className="font-semibold">Telegram</span>
               <span className="text-xs text-slate-500">{contacts.telegram.username}</span>
             </div>
           </a>
@@ -263,7 +263,7 @@ export function Navigation() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200/80">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8 lg:py-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group">

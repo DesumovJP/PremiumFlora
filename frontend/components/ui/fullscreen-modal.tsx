@@ -50,7 +50,7 @@ export function FullscreenModal({
           <header
             className={cn(
               "sticky top-0 z-20 shrink-0",
-              "bg-white/80 dark:bg-[#0d1117]/80 backdrop-blur-md",
+              "bg-white dark:bg-[#0d1117]",
               "border-b border-slate-100 dark:border-white/5",
               "safe-area-inset-top"
             )}

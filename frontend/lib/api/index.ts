@@ -54,7 +54,11 @@ export {
 } from './customers';
 
 // Transactions API
-export { getTransactions } from './transactions';
+export {
+  getTransactions,
+  getPendingPaymentsTotal,
+  invalidatePendingPaymentsCache,
+} from './transactions';
 
 // POS API
 export {

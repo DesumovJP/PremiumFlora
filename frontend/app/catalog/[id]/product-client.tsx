@@ -27,9 +27,9 @@ export function ProductPageClient({ product }: { product: Product }) {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen">
+      <main className="min-h-screen pt-16 lg:pt-20">
         {/* Breadcrumb - Premium Style */}
-        <section className="border-b border-slate-100 dark:border-admin-border bg-white/80 dark:bg-admin-surface/80 backdrop-blur-sm py-4">
+        <section className="border-b border-slate-100 dark:border-admin-border bg-white/80 dark:bg-admin-surface/80 backdrop-blur-sm pt-6 pb-4">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <nav className="flex items-center gap-2 text-sm" aria-label="Breadcrumb">
               <Link

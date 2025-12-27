@@ -1,124 +1,90 @@
 'use client';
 
-import { ArrowRight, Phone, MessageCircle } from 'lucide-react';
-import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useIntersection } from '@/hooks/use-intersection';
+import { motion, useInView } from 'framer-motion';
+import { useRef } from 'react';
+import { cn } from '@/lib/utils';
 
-export function CtaSection() {
-  const { ref, isVisible } = useIntersection({ threshold: 0.2, triggerOnce: true });
+interface CtaSectionProps {
+  onContactClick?: () => void;
+  variant?: 'home' | 'catalog';
+}
+
+export function CtaSection({ onContactClick, variant = 'home' }: CtaSectionProps) {
+  const ref = useRef<HTMLElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  const content = {
+    home: {
+      badge: 'Готові до співпраці?',
+      title: 'Отримайте персональну пропозицію',
+      titleAccent: 'для вашого бізнесу',
+      subtitle: 'Залиште заявку і наш менеджер зв\'яжеться з вами протягом 30 хвилин',
+      buttonText: 'Залишити заявку',
+    },
+    catalog: {
+      badge: 'Не знайшли потрібне?',
+      title: 'Зв\'яжіться з нами для',
+      titleAccent: 'індивідуальної пропозиції',
+      subtitle: 'Маємо широкий асортимент квітів під замовлення. Наш менеджер допоможе підібрати оптимальний варіант.',
+      buttonText: 'Залишити заявку',
+    },
+  };
+
+  const c = content[variant];
 
   return (
     <section
-      ref={ref as React.RefObject<HTMLElement>}
-      className="relative overflow-hidden py-12 sm:py-16 lg:py-20"
+      ref={ref}
+      id="contact-form"
+      className="relative overflow-hidden py-16 lg:py-24"
     >
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
+      {/* Background image with overlay - using brand color #0f9c6e */}
+      <div className="absolute inset-0 bg-[url('/bg.webp')] bg-cover bg-center" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0a7a56]/90 via-[#0f9c6e]/85 to-[#0d8a5f]/90" />
 
-      {/* Decorative pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 left-0 w-72 h-72 bg-white/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-400/30 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
-        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-white/10 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2" />
-      </div>
 
-      {/* Subtle grid pattern */}
-      <div
-        className="absolute inset-0 opacity-5"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)`,
-          backgroundSize: '40px 40px',
-        }}
-      />
-
-      <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
-        {/* Badge */}
-        <div
-          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-white/90 text-xs sm:text-sm font-medium mb-4 sm:mb-6 border border-white/20 transition-all duration-700 ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-          }`}
+      <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }}
+          className="text-center"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
-          Готові почати співпрацю?
-        </div>
+          {/* Badge */}
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 text-white/90 text-sm font-medium mb-6 border border-white/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            {c.badge}
+          </span>
 
-        {/* Heading */}
-        <h2
-          className={`text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight transition-all duration-700 delay-100 ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-          }`}
-        >
-          Отримайте персональну пропозицію
-          <br className="hidden sm:block" />
-          <span className="text-emerald-200">для вашого бізнесу</span>
-        </h2>
+          {/* Heading */}
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 leading-tight">
+            {c.title}{' '}
+            <span className="text-white">{c.titleAccent}</span>
+          </h2>
 
-        {/* Subtext */}
-        <p
-          className={`text-sm sm:text-base lg:text-lg text-emerald-100/90 mb-6 sm:mb-8 max-w-2xl mx-auto transition-all duration-700 delay-200 ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-          }`}
-        >
-          Залиште заявку і наш менеджер зв'яжеться з вами протягом 30 хвилин
-          у робочий час. Підберемо оптимальні умови співпраці.
-        </p>
+          {/* Subtext */}
+          <p className="text-base text-white/80 mb-8 max-w-lg mx-auto">
+            {c.subtitle}
+          </p>
 
-        {/* CTA Buttons */}
-        <div
-          className={`flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center transition-all duration-700 delay-300 ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-          }`}
-        >
-          <Button
-            size="lg"
-            asChild
-            className="w-full sm:w-auto bg-white text-emerald-700 hover:bg-emerald-50 shadow-lg hover:shadow-xl font-semibold text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 transition-all duration-300"
+          {/* CTA Button */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="inline-block"
           >
-            <Link href="#contact-form" className="flex items-center gap-2">
-              Залишити заявку
-              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
-            </Link>
-          </Button>
-
-          <Button
-            size="lg"
-            variant="outline"
-            asChild
-            className="w-full sm:w-auto border-2 border-white/30 bg-white/10 text-white hover:bg-white/20 hover:border-white/50 backdrop-blur-sm font-semibold text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 transition-all duration-300"
-          >
-            <a href="tel:+380671234567" className="flex items-center gap-2">
-              <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
-              Зателефонувати
-            </a>
-          </Button>
-        </div>
-
-        {/* Trust badges */}
-        <div
-          className={`mt-8 sm:mt-10 flex flex-wrap justify-center gap-4 sm:gap-6 text-xs sm:text-sm text-emerald-100/80 transition-all duration-700 delay-500 ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-          }`}
-        >
-          <div className="flex items-center gap-1.5">
-            <svg className="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            <span>Безкоштовна консультація</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <svg className="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            <span>Гнучкі умови</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <svg className="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            <span>Доставка по Україні</span>
-          </div>
-        </div>
+            <Button
+              size="lg"
+              onClick={onContactClick}
+              className="bg-white hover:bg-white/95 text-emerald-700 shadow-xl font-semibold px-8 h-12 text-base transition-all duration-300"
+            >
+              {c.buttonText}
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   );

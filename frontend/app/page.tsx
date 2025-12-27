@@ -1,10 +1,6 @@
 import { Navigation } from "@/components/client/navigation";
 import { Footer } from "@/components/client/footer";
-import { HeroSectionPremium } from "@/components/client/hero-section-premium";
-import { ValueStackingSection } from "@/components/client/value-stacking";
-import { FeaturedProducts } from "@/components/client/featured-products";
-import { BlogSection } from "@/components/client/blog-section";
-import { CtaSection } from "@/components/client/cta-section";
+import { HomePageClient } from "@/components/client/home-page-client";
 import { blogPosts } from "@/lib/mock-data";
 import { getFlowers, getBlogPosts } from "@/lib/strapi";
 
@@ -21,20 +17,7 @@ export default async function Home() {
     <>
       <Navigation />
       <main>
-        {/* Hero з value proposition */}
-        <HeroSectionPremium />
-
-        {/* Чому обирають нас */}
-        <ValueStackingSection />
-
-        {/* Каталог товарів */}
-        <FeaturedProducts products={products} />
-
-        {/* Блог */}
-        <BlogSection posts={displayPosts} />
-
-        {/* CTA */}
-        <CtaSection />
+        <HomePageClient products={products} posts={displayPosts} />
       </main>
       <Footer />
     </>

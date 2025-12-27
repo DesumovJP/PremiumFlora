@@ -542,7 +542,7 @@ export function ArticlesSection() {
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               placeholder="Напишіть вміст статті...&#10;&#10;# Заголовок&#10;## Підзаголовок&#10;&#10;Текст параграфу..."
-              className="w-full px-3 py-2 border border-slate-200 dark:border-admin-border rounded-lg bg-white dark:bg-admin-surface-elevated text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-sm"
+              className="w-full px-3 py-2 border border-slate-200 dark:border-admin-border rounded-lg bg-white dark:bg-admin-surface-elevated text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 font-mono text-sm transition-colors"
               rows={10}
             />
           </div>
@@ -557,7 +557,7 @@ export function ArticlesSection() {
                 onChange={(e) =>
                   setFormData({ ...formData, category: e.target.value as ArticleCategory })
                 }
-                className="w-full px-3 py-2 border border-slate-200 dark:border-admin-border rounded-lg bg-white dark:bg-admin-surface-elevated text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2 border border-slate-200 dark:border-admin-border rounded-lg bg-white dark:bg-admin-surface-elevated text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition-colors"
               >
                 <option value="note">Нотатка</option>
                 <option value="guide">Гайд</option>
@@ -576,7 +576,7 @@ export function ArticlesSection() {
                 onChange={(e) =>
                   setFormData({ ...formData, priority: e.target.value as ArticlePriority })
                 }
-                className="w-full px-3 py-2 border border-slate-200 dark:border-admin-border rounded-lg bg-white dark:bg-admin-surface-elevated text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2 border border-slate-200 dark:border-admin-border rounded-lg bg-white dark:bg-admin-surface-elevated text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition-colors"
               >
                 <option value="low">Низький</option>
                 <option value="medium">Середній</option>

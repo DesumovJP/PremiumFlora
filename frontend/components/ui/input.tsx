@@ -17,9 +17,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           "text-stone-800 dark:text-white placeholder:text-stone-400 dark:placeholder:text-slate-500",
           // Effects
           "transition-all duration-200",
-          // Focus states with glow
-          "focus:outline-none focus:border-emerald-500/50 dark:focus:border-emerald-500/50",
-          "focus:ring-2 focus:ring-emerald-500/10 dark:focus:ring-emerald-500/20",
+          // Focus states - elegant thin border
+          "focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500",
+          "focus:ring-1 focus:ring-emerald-500/20 dark:focus:ring-emerald-500/30",
           // Hover
           "hover:border-stone-300 dark:hover:border-slate-600",
           // Touch
