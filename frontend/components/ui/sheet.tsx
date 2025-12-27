@@ -41,9 +41,9 @@ const SheetOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]",
-      "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-300",
-      "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-200",
+      "fixed inset-0 z-40 bg-black/20 dark:bg-black/40 backdrop-blur-[2px]",
+      "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-200",
+      "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-150",
       className
     )}
     {...props}
@@ -67,20 +67,21 @@ const SheetContent = React.forwardRef<
       ref={ref}
       className={cn(
         // Base styles
-        "fixed z-50 flex h-full flex-col bg-white dark:bg-[#0d1117]",
-        "shadow-[-8px_0_32px_rgba(0,0,0,0.12)] dark:shadow-[-8px_0_32px_rgba(0,0,0,0.4)]",
-        // Width
-        "w-[min(85vw,320px)] sm:w-[360px]",
-        // Animations - smoother cubic bezier for Apple-like feel
+        "fixed z-50 flex h-full flex-col",
+        "bg-white dark:bg-[#0d1117]",
+        "border-r border-slate-100 dark:border-white/5",
+        // Width - more compact
+        "w-[280px] sm:w-[300px]",
+        // Animations - fast and snappy
         side === "left" && [
           "left-0 top-0",
-          "data-[state=open]:animate-in data-[state=open]:slide-in-from-left data-[state=open]:duration-500 data-[state=open]:ease-[cubic-bezier(0.32,0.72,0,1)]",
-          "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=closed]:duration-300 data-[state=closed]:ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "data-[state=open]:animate-in data-[state=open]:slide-in-from-left data-[state=open]:duration-200",
+          "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=closed]:duration-150",
         ],
         side === "right" && [
-          "right-0 top-0",
-          "data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=open]:duration-500 data-[state=open]:ease-[cubic-bezier(0.32,0.72,0,1)]",
-          "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=closed]:duration-300 data-[state=closed]:ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "right-0 top-0 border-l border-r-0",
+          "data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=open]:duration-200",
+          "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=closed]:duration-150",
         ],
         // Focus trap styling
         "focus:outline-none",
@@ -88,20 +89,17 @@ const SheetContent = React.forwardRef<
       )}
       {...props}
     >
-      {/* Premium close button */}
+      {/* Minimal close button */}
       {!hideCloseButton && (
         <SheetClose className={cn(
-          "absolute right-4 top-4 z-10",
-          "flex h-10 w-10 items-center justify-center rounded-full",
-          "bg-slate-100/80 dark:bg-white/10",
-          "text-slate-600 dark:text-white/70",
-          "backdrop-blur-sm",
-          "transition-all duration-200 ease-out",
-          "hover:bg-slate-200/90 dark:hover:bg-white/20 hover:scale-105",
-          "active:scale-95",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+          "absolute right-3 top-3 z-10",
+          "flex h-8 w-8 items-center justify-center rounded-lg",
+          "text-slate-400 dark:text-admin-text-muted",
+          "transition-colors duration-150",
+          "hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-white",
+          "focus:outline-none"
         )}>
-          <X className="h-5 w-5" strokeWidth={1.5} />
+          <X className="h-4 w-4" />
           <span className="sr-only">Закрити меню</span>
         </SheetClose>
       )}

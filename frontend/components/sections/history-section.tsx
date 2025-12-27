@@ -261,13 +261,37 @@ function ActivityItem({ activity }: { activity: Activity }) {
 
       case 'productEdit':
       case 'productCreate':
-      case 'productDelete':
         return (
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-slate-500 dark:text-admin-text-tertiary">Товар:</span>
               <span className="font-medium dark:text-admin-text-primary">{details.productName}</span>
             </div>
+            {details.variants && details.variants.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Варіанти:</span>
+                <div className="space-y-1">
+                  {details.variants.map((v, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-slate-50 dark:bg-admin-surface text-xs"
+                    >
+                      <span className="font-medium text-slate-700 dark:text-admin-text-primary">
+                        {v.length} см
+                      </span>
+                      <span className="text-slate-400">·</span>
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        {v.price.toLocaleString('uk-UA')} грн
+                      </span>
+                      <span className="text-slate-400">·</span>
+                      <span className="text-slate-600 dark:text-admin-text-secondary">
+                        {v.stock} шт
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {details.changes && Object.keys(details.changes).length > 0 && (
               <div className="space-y-1">
                 <span className="text-slate-500 dark:text-admin-text-tertiary">Зміни:</span>
@@ -277,6 +301,47 @@ function ActivityItem({ activity }: { activity: Activity }) {
                       <span className="text-slate-600 dark:text-admin-text-secondary">{key}:</span>
                       <span className="dark:text-admin-text-primary">
                         {String(value.from)} → {String(value.to)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+
+      case 'productDelete':
+        return (
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-500 dark:text-admin-text-tertiary">Товар:</span>
+              <span className="font-medium dark:text-admin-text-primary">{details.productName}</span>
+            </div>
+            {details.totalStock !== undefined && details.totalStock > 0 && (
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Списано:</span>
+                <span className="font-medium text-rose-600 dark:text-rose-400">{details.totalStock} шт</span>
+              </div>
+            )}
+            {details.variants && details.variants.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Варіанти ({details.variantsCount || details.variants.length}):</span>
+                <div className="space-y-1">
+                  {details.variants.map((v, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-xs"
+                    >
+                      <span className="font-medium text-slate-700 dark:text-admin-text-primary">
+                        {v.length} см
+                      </span>
+                      <span className="text-slate-400">·</span>
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        {v.price.toLocaleString('uk-UA')} грн
+                      </span>
+                      <span className="text-slate-400">·</span>
+                      <span className="text-rose-600 dark:text-rose-400">
+                        {v.stock} шт
                       </span>
                     </div>
                   ))}
@@ -375,7 +440,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
 
       case 'supply':
         return (
-          <div className="space-y-2 text-sm">
+          <div className="space-y-3 text-sm">
             {details.filename && (
               <div className="flex justify-between">
                 <span className="text-slate-500 dark:text-admin-text-tertiary">Файл:</span>
@@ -400,6 +465,63 @@ function ActivityItem({ activity }: { activity: Activity }) {
                 <span className="ml-2 font-medium dark:text-admin-text-primary">{details.variantsUpdated || 0}</span>
               </div>
             </div>
+
+            {/* Детальний список товарів */}
+            {details.supplyItems && details.supplyItems.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-admin-border">
+                <div className="text-xs font-medium text-slate-500 dark:text-admin-text-tertiary mb-2">
+                  Деталі по товарах ({details.supplyItems.length})
+                </div>
+                <div className="max-h-48 overflow-y-auto space-y-1.5">
+                  {details.supplyItems.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className={cn(
+                        "flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg text-xs",
+                        item.isNew
+                          ? "bg-emerald-50 dark:bg-emerald-900/20"
+                          : "bg-slate-50 dark:bg-admin-surface"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        {item.isNew && (
+                          <span className="shrink-0 px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-800/50 text-emerald-700 dark:text-emerald-400 text-[10px] font-medium">
+                            NEW
+                          </span>
+                        )}
+                        <span className="truncate font-medium dark:text-admin-text-primary">
+                          {item.flowerName}
+                        </span>
+                        {item.length && (
+                          <span className="shrink-0 text-slate-400 dark:text-admin-text-muted">
+                            {item.length}см
+                          </span>
+                        )}
+                      </div>
+                      <div className="shrink-0 text-right flex items-center gap-2">
+                        <span className="text-slate-500 dark:text-admin-text-tertiary">
+                          {item.stockBefore !== undefined ? (
+                            <>
+                              <span className="text-slate-400">{item.stockBefore}</span>
+                              <span className="mx-1">→</span>
+                            </>
+                          ) : null}
+                          <span className="font-medium text-slate-700 dark:text-admin-text-primary">
+                            {item.stockAfter}
+                          </span>
+                          <span className="text-slate-400 ml-0.5">шт</span>
+                        </span>
+                        {item.priceAfter !== undefined && item.priceAfter > 0 && (
+                          <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                            {item.priceAfter} ₴
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -729,14 +851,56 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
   totalSalesPaid += confirmedPaymentsTotal;
   totalSalesExpected = Math.max(0, totalSalesExpected - confirmedPaymentsTotal);
 
+  // Підраховуємо нові поля з activities
+  let totalSalesQty = 0;
+  let totalWriteOffsQty = 0;
+  let totalWriteOffsAmount = 0;
+  let totalSuppliesQty = 0;
+  let totalSuppliesAmount = 0;
+
+  activities.forEach((a) => {
+    if (a.type === 'sale' && a.details.items) {
+      totalSalesQty += a.details.items.reduce((sum, item) => sum + (item.qty || 0), 0);
+    } else if (a.type === 'writeOff') {
+      totalWriteOffsQty += a.details.qty || 0;
+      totalWriteOffsAmount += a.details.amount || 0;
+    } else if (a.type === 'productDelete') {
+      const stock = a.details.totalStock || 0;
+      totalWriteOffsQty += stock;
+      if (a.details.variants) {
+        totalWriteOffsAmount += a.details.variants.reduce(
+          (sum, v) => sum + (v.stock || 0) * (v.price || 0),
+          0
+        );
+      }
+    } else if (a.type === 'supply' && a.details.supplyItems) {
+      for (const item of a.details.supplyItems) {
+        totalSuppliesQty += item.stockAfter || 0;
+        totalSuppliesAmount += (item.stockAfter || 0) * (item.priceAfter || 0);
+      }
+    } else if (a.type === 'productCreate' && a.details.variants) {
+      // Створення товару з варіантами зі складом - рахуємо як поставку
+      const variants = a.details.variants as Array<{ stock?: number; price?: number }>;
+      const createdStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+      if (createdStock > 0) {
+        totalSuppliesQty += createdStock;
+        totalSuppliesAmount += variants.reduce((sum, v) => sum + (v.stock || 0) * (v.price || 0), 0);
+      }
+    }
+  });
+
   const summary: ShiftSummary = {
     totalSales: shift.summary?.totalSales ?? shift.totalSales ?? 0,
     totalSalesAmount: shift.summary?.totalSalesAmount ?? shift.totalSalesAmount ?? 0,
+    totalSalesQty: shift.summary?.totalSalesQty ?? totalSalesQty,
     totalSalesPaid: shift.summary?.totalSalesPaid ?? totalSalesPaid,
     totalSalesExpected: shift.summary?.totalSalesExpected ?? totalSalesExpected,
     totalWriteOffs: shift.summary?.totalWriteOffs ?? shift.totalWriteOffs ?? 0,
-    totalWriteOffsQty: shift.summary?.totalWriteOffsQty ?? shift.totalWriteOffsQty ?? 0,
+    totalWriteOffsQty: shift.summary?.totalWriteOffsQty ?? totalWriteOffsQty,
+    totalWriteOffsAmount: shift.summary?.totalWriteOffsAmount ?? totalWriteOffsAmount,
     totalSupplies: shift.summary?.totalSupplies ?? totalSupplies,
+    totalSuppliesQty: shift.summary?.totalSuppliesQty ?? totalSuppliesQty,
+    totalSuppliesAmount: shift.summary?.totalSuppliesAmount ?? totalSuppliesAmount,
     activitiesCount: shift.summary?.activitiesCount ?? activities.length,
     productEdits: shift.summary?.productEdits ?? 0,
     customersCreated: shift.summary?.customersCreated ?? 0,
@@ -748,59 +912,82 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
       onOpenChange={onOpenChange}
       title={`Зміна ${formatShortDate(shift.startedAt)}`}
       description={
-        <span className="flex items-center gap-2">
-          <Clock className="h-4 w-4" />
-          {formatDateTime(shift.startedAt)} — {shift.closedAt ? formatDateTime(shift.closedAt) : 'Активна'}
-          <span className="text-emerald-600 font-medium">
+        <span className="flex items-center gap-1 sm:gap-2">
+          <Clock className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+          <span className="whitespace-nowrap">{formatDateTime(shift.startedAt)}</span>
+          <span className="shrink-0">—</span>
+          <span className="whitespace-nowrap">{shift.closedAt ? formatDateTime(shift.closedAt) : 'Активна'}</span>
+          <span className="text-emerald-600 font-medium whitespace-nowrap">
             ({formatDuration(shift.startedAt, shift.closedAt)})
           </span>
         </span>
       }
+      size="lg"
+      showClose={false}
+      headerActions={
+        <Button
+          variant="outline"
+          className="text-slate-500 dark:text-admin-text-tertiary"
+          onClick={() => onExport(shift)}
+          size="icon"
+          title="Експортувати"
+        >
+          <Download className="h-4 w-4" />
+        </Button>
+      }
       footer={
-        <>
-          <Button 
-            variant="outline" 
-            onClick={() => onOpenChange(false)}
-            className="flex-1 sm:flex-initial"
-          >
-            Закрити
-          </Button>
-          <Button
-            className="bg-emerald-600 hover:bg-emerald-700"
-            onClick={() => onExport(shift)}
-            size="icon"
-            title="Експортувати"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-        </>
+        <Button
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+          className="flex-1 sm:flex-initial"
+        >
+          Закрити
+        </Button>
       }
       fullscreenOnMobile
     >
       <div className="space-y-4 flex flex-col flex-1 min-h-0">
         {/* Summary Stats */}
-        <div className="rounded-xl border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/60 dark:bg-emerald-900/20 p-4 shrink-0">
+        <div className="rounded-xl border border-slate-100 dark:border-admin-border bg-slate-50/50 dark:bg-admin-surface-elevated p-4 shrink-0">
           <h4 className="font-semibold text-slate-900 dark:text-admin-text-primary mb-3">
             Підсумок зміни
           </h4>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-admin-text-secondary">Продажів:</span>
-              <span className="font-medium dark:text-admin-text-primary">{summary.totalSales}</span>
+          <div className="grid grid-cols-3 gap-3 text-sm">
+            {/* Продажі */}
+            <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 p-2">
+              <p className="text-xs text-emerald-600 dark:text-emerald-400">Продажі</p>
+              <p className="font-bold text-emerald-700 dark:text-emerald-300">
+                {Math.round(summary.totalSalesAmount || 0).toLocaleString()} ₴
+              </p>
+              <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">
+                {summary.totalSalesQty || 0} шт
+              </p>
             </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-admin-text-secondary">Виручка:</span>
-              <span className="font-medium text-emerald-600">
-                {Math.round(summary.totalSalesAmount).toLocaleString()} грн
-              </span>
+            {/* Списання */}
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-900/30 p-2">
+              <p className="text-xs text-amber-600 dark:text-amber-400">Списання</p>
+              <p className="font-bold text-amber-700 dark:text-amber-300">
+                {(summary.totalWriteOffsAmount || 0) > 0
+                  ? `${Math.round(summary.totalWriteOffsAmount || 0).toLocaleString()} ₴`
+                  : `${summary.totalWriteOffsQty || 0} шт`
+                }
+              </p>
+              <p className="text-xs text-amber-600/70 dark:text-amber-400/70">
+                {(summary.totalWriteOffsAmount || 0) > 0 ? `${summary.totalWriteOffsQty || 0} шт` : `${summary.totalWriteOffs || 0} оп.`}
+              </p>
             </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-admin-text-secondary">Списань:</span>
-              <span className="font-medium dark:text-admin-text-primary">{summary.totalWriteOffs}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-admin-text-secondary">Списано шт:</span>
-              <span className="font-medium text-amber-600">{summary.totalWriteOffsQty}</span>
+            {/* Поставки */}
+            <div className="rounded-lg bg-blue-50 dark:bg-blue-900/30 p-2">
+              <p className="text-xs text-blue-600 dark:text-blue-400">Поставки</p>
+              <p className="font-bold text-blue-700 dark:text-blue-300">
+                {(summary.totalSuppliesAmount || 0) > 0
+                  ? `${Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} ₴`
+                  : `${summary.totalSuppliesQty || 0} шт`
+                }
+              </p>
+              <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
+                {(summary.totalSuppliesAmount || 0) > 0 ? `${summary.totalSuppliesQty || 0} шт` : `${summary.totalSupplies || 0} оп.`}
+              </p>
             </div>
           </div>
         </div>
@@ -898,6 +1085,12 @@ function ArchiveTab({ onExportShift }: ArchiveTabProps) {
     );
   }
 
+  // Масив назв місяців
+  const MONTHS = [
+    'Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень',
+    'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'
+  ];
+
   // Фільтруємо зміни за поточний місяць календаря
   const shiftsInMonth = shifts.filter(shift => {
     const shiftDate = new Date(shift.closedAt || shift.startedAt);
@@ -966,12 +1159,6 @@ function ArchiveTab({ onExportShift }: ArchiveTabProps) {
     URL.revokeObjectURL(url);
   };
 
-  // Масив назв місяців
-  const MONTHS = [
-    'Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень',
-    'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'
-  ];
-
   return (
     <>
       <ShiftCalendar
@@ -981,16 +1168,17 @@ function ArchiveTab({ onExportShift }: ArchiveTabProps) {
         onMonthChange={setCurrentMonth}
       />
 
-      {/* Кнопка експорту місячного звіту */}
+      {/* Кнопка експорту місячного звіту - по центру під календарем */}
       {shiftsInMonth.length > 0 && (
-        <div className="mt-4 flex justify-center">
+        <div className="flex justify-center mt-4">
           <Button
             variant="outline"
             onClick={handleExportMonthSummary}
             className="gap-2"
           >
             <Download className="h-4 w-4" />
-            Експортувати звіт за {MONTHS[currentMonth.getMonth()]}
+            <span className="hidden sm:inline">Експортувати звіт за {MONTHS[currentMonth.getMonth()]}</span>
+            <span className="sm:hidden">Експорт {MONTHS[currentMonth.getMonth()]}</span>
           </Button>
         </div>
       )}
@@ -1040,11 +1228,16 @@ export function HistorySection({
 
   const handleExportArchivedShift = (shift: Shift) => {
     const shiftActivities = (shift.activities || []) as Activity[];
-    // Підраховуємо paid/expected/supplies з activities для архівних змін
+    // Підраховуємо paid/expected/supplies та нові поля з activities для архівних змін
     let totalSalesPaid = 0;
     let totalSalesExpected = 0;
     let totalSupplies = 0;
     let confirmedPaymentsTotal = 0;
+    let totalSalesQty = 0;
+    let totalWriteOffsQty = 0;
+    let totalWriteOffsAmount = 0;
+    let totalSuppliesQty = 0;
+    let totalSuppliesAmount = 0;
 
     shiftActivities.forEach((a) => {
       if (a.type === 'sale') {
@@ -1055,10 +1248,39 @@ export function HistorySection({
         } else if (status === 'expected' || status === 'pending') {
           totalSalesExpected += amount;
         }
+        if (a.details.items) {
+          totalSalesQty += a.details.items.reduce((sum, item) => sum + (item.qty || 0), 0);
+        }
       } else if (a.type === 'supply') {
         totalSupplies += 1;
+        if (a.details.supplyItems) {
+          for (const item of a.details.supplyItems) {
+            totalSuppliesQty += item.stockAfter || 0;
+            totalSuppliesAmount += (item.stockAfter || 0) * (item.priceAfter || 0);
+          }
+        }
       } else if (a.type === 'paymentConfirm') {
         confirmedPaymentsTotal += a.details.amount || 0;
+      } else if (a.type === 'writeOff') {
+        totalWriteOffsQty += a.details.qty || 0;
+        totalWriteOffsAmount += a.details.amount || 0;
+      } else if (a.type === 'productDelete') {
+        const stock = a.details.totalStock || 0;
+        totalWriteOffsQty += stock;
+        if (a.details.variants) {
+          totalWriteOffsAmount += a.details.variants.reduce(
+            (sum, v) => sum + (v.stock || 0) * (v.price || 0),
+            0
+          );
+        }
+      } else if (a.type === 'productCreate' && a.details.variants) {
+        // Створення товару з варіантами зі складом - рахуємо як поставку
+        const variants = a.details.variants as Array<{ stock?: number; price?: number }>;
+        const createdStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+        if (createdStock > 0) {
+          totalSuppliesQty += createdStock;
+          totalSuppliesAmount += variants.reduce((sum, v) => sum + (v.stock || 0) * (v.price || 0), 0);
+        }
       }
     });
 
@@ -1069,11 +1291,15 @@ export function HistorySection({
     const shiftSummary: ShiftSummary = {
       totalSales: shift.summary?.totalSales ?? shift.totalSales ?? 0,
       totalSalesAmount: shift.summary?.totalSalesAmount ?? shift.totalSalesAmount ?? 0,
+      totalSalesQty: shift.summary?.totalSalesQty ?? totalSalesQty,
       totalSalesPaid: shift.summary?.totalSalesPaid ?? totalSalesPaid,
       totalSalesExpected: shift.summary?.totalSalesExpected ?? totalSalesExpected,
       totalWriteOffs: shift.summary?.totalWriteOffs ?? shift.totalWriteOffs ?? 0,
-      totalWriteOffsQty: shift.summary?.totalWriteOffsQty ?? shift.totalWriteOffsQty ?? 0,
+      totalWriteOffsQty: shift.summary?.totalWriteOffsQty ?? totalWriteOffsQty,
+      totalWriteOffsAmount: shift.summary?.totalWriteOffsAmount ?? totalWriteOffsAmount,
       totalSupplies: shift.summary?.totalSupplies ?? totalSupplies,
+      totalSuppliesQty: shift.summary?.totalSuppliesQty ?? totalSuppliesQty,
+      totalSuppliesAmount: shift.summary?.totalSuppliesAmount ?? totalSuppliesAmount,
       activitiesCount: shift.summary?.activitiesCount ?? shiftActivities.length,
       productEdits: shift.summary?.productEdits ?? 0,
       customersCreated: shift.summary?.customersCreated ?? 0,
@@ -1084,66 +1310,69 @@ export function HistorySection({
   return (
     <>
       <Card className="admin-card border-none bg-white/90 dark:bg-admin-surface shadow-md">
-        <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-2xl">Історія зміни</CardTitle>
-            <CardDescription>
-              {activeTab === 'current' && shiftStartedAt ? (
-                <span className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Зміна розпочата: {formatDateTime(shiftStartedAt)}
-                  <span className="text-emerald-600 font-medium">
-                    ({formatDuration(shiftStartedAt)})
+        <CardHeader className="space-y-3">
+          {/* Title and Export Button Row */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="space-y-1 flex-1">
+              <CardTitle className="text-2xl">Історія зміни</CardTitle>
+              <CardDescription>
+                {activeTab === 'current' && shiftStartedAt ? (
+                  <span className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                    <span className="whitespace-nowrap">Зміна розпочата:</span>
+                    <span className="whitespace-nowrap">{formatDateTime(shiftStartedAt)}</span>
+                    <span className="text-emerald-600 font-medium whitespace-nowrap">
+                      ({formatDuration(shiftStartedAt)})
+                    </span>
                   </span>
-                </span>
-              ) : activeTab === 'current' ? (
-                'Історія дій поточної робочої зміни'
-              ) : (
-                'Архів закритих змін з можливістю експорту'
-              )}
-            </CardDescription>
-          </div>
-          {activeTab === 'current' && (
-            <div className="flex flex-col gap-2 sm:flex-row">
-              {onRefresh && (
+                ) : activeTab === 'current' ? (
+                  'Історія дій поточної робочої зміни'
+                ) : (
+                  'Архів закритих змін з можливістю експорту'
+                )}
+              </CardDescription>
+            </div>
+            {activeTab === 'current' ? (
+              <div className="flex gap-2">
+                {onRefresh && (
+                  <Button
+                    variant="outline"
+                    onClick={handleRefresh}
+                    disabled={isRefreshing || isLoading}
+                    size="icon"
+                    title="Оновити (синхронізація з іншими пристроями)"
+                    className="shrink-0 hidden sm:flex"
+                  >
+                    <RefreshCw
+                      className={cn(
+                        "h-4 w-4",
+                        (isRefreshing || isLoading) && "animate-spin"
+                      )}
+                    />
+                  </Button>
+                )}
                 <Button
                   variant="outline"
-                  onClick={handleRefresh}
-                  disabled={isRefreshing || isLoading}
+                  className="text-slate-500 dark:text-admin-text-tertiary"
+                  onClick={onExportShift}
+                  disabled={activities.length === 0}
                   size="icon"
-                  title="Оновити (синхронізація з іншими пристроями)"
-                  className="shrink-0 hidden sm:flex"
+                  title="Експортувати"
                 >
-                  <RefreshCw
-                    className={cn(
-                      "h-4 w-4",
-                      (isRefreshing || isLoading) && "animate-spin"
-                    )}
-                  />
+                  <Download className="h-4 w-4" />
                 </Button>
-              )}
-              <Button
-                className="bg-emerald-600 hover:bg-emerald-700"
-                onClick={onExportShift}
-                disabled={activities.length === 0}
-                size="icon"
-                title="Експортувати"
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setCloseModalOpen(true)}
-                disabled={activities.length === 0}
-              >
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Закрити зміну
-              </Button>
-            </div>
-          )}
-        </CardHeader>
+                <Button
+                  onClick={() => setCloseModalOpen(true)}
+                  disabled={activities.length === 0}
+                  className="hidden sm:flex"
+                >
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Закрити зміну
+                </Button>
+              </div>
+            ) : null}
+          </div>
 
-        <CardContent className="space-y-4">
           {/* Tab Switcher */}
           <div className="flex gap-1 p-1 bg-slate-100 dark:bg-admin-surface-elevated rounded-lg">
             <button
@@ -1172,42 +1401,69 @@ export function HistorySection({
             </button>
           </div>
 
+          {/* Close Shift Button - on mobile below tab switcher */}
+          {activeTab === 'current' && (
+            <Button
+              onClick={() => setCloseModalOpen(true)}
+              disabled={activities.length === 0}
+              className="w-full sm:hidden"
+            >
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Закрити зміну
+            </Button>
+          )}
+        </CardHeader>
+
+        <CardContent className="space-y-4">
           {activeTab === 'current' ? (
             <>
               {/* Summary Stats */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <StatPill
-                  label="Продажів"
-                  value={`${summary.totalSales}`}
-                />
-                <StatPill
-                  label="Виручка"
-                  value={`${Math.round(summary.totalSalesAmount)} грн`}
-                />
-                <StatPill
-                  label="Списань"
-                  value={`${summary.totalWriteOffs}`}
-                />
-                <StatPill
-                  label="Всього дій"
-                  value={`${summary.activitiesCount}`}
-                />
-              </div>
-
-              {/* Очікуються оплати - загальна сума */}
-              {(summary.totalSalesExpected || 0) > 0 && (
-                <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/70 dark:bg-amber-900/20 p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs uppercase text-amber-700 dark:text-amber-400 mb-0.5">Очікуються оплати</p>
-                      <p className="text-xs text-amber-600 dark:text-amber-500">Загальна сума непогашених платежів</p>
-                    </div>
-                    <p className="text-2xl font-bold text-amber-800 dark:text-amber-300">
-                      {Math.round(summary.totalSalesExpected || 0).toLocaleString('uk-UA')} грн
-                    </p>
-                  </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {/* Продажі */}
+                <div className="rounded-xl border border-emerald-100 dark:border-emerald-800/50 bg-emerald-50/50 dark:bg-emerald-900/20 p-3">
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1">Продажі</p>
+                  <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
+                    {Math.round(summary.totalSalesAmount || 0).toLocaleString()} ₴
+                  </p>
+                  <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">
+                    {summary.totalSalesQty || 0} шт · {summary.totalSales || 0} продажів
+                  </p>
                 </div>
-              )}
+
+                {/* Списання */}
+                <div className="rounded-xl border border-amber-100 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/20 p-3">
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">Списання</p>
+                  <p className="text-lg font-bold text-amber-700 dark:text-amber-300">
+                    {(summary.totalWriteOffsAmount || 0) > 0
+                      ? `${Math.round(summary.totalWriteOffsAmount || 0).toLocaleString()} ₴`
+                      : `${summary.totalWriteOffsQty || 0} шт`
+                    }
+                  </p>
+                  <p className="text-xs text-amber-600/70 dark:text-amber-400/70">
+                    {(summary.totalWriteOffsAmount || 0) > 0
+                      ? `${summary.totalWriteOffsQty || 0} шт · ${summary.totalWriteOffs || 0} оп.`
+                      : `${summary.totalWriteOffs || 0} операцій`
+                    }
+                  </p>
+                </div>
+
+                {/* Поставки */}
+                <div className="rounded-xl border border-blue-100 dark:border-blue-800/50 bg-blue-50/50 dark:bg-blue-900/20 p-3">
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Поставки</p>
+                  <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                    {(summary.totalSuppliesAmount || 0) > 0
+                      ? `${Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} ₴`
+                      : `${summary.totalSuppliesQty || 0} шт`
+                    }
+                  </p>
+                  <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
+                    {(summary.totalSuppliesAmount || 0) > 0
+                      ? `${summary.totalSuppliesQty || 0} шт · ${summary.totalSupplies || 0} поставок`
+                      : `${summary.totalSupplies || 0} поставок`
+                    }
+                  </p>
+                </div>
+              </div>
 
               {/* Activities List */}
               <div className="rounded-xl border border-slate-100 dark:border-admin-border bg-white dark:bg-admin-surface overflow-hidden">
@@ -1254,40 +1510,57 @@ export function HistorySection({
         }
       >
         <div className="space-y-4">
-          <div className="rounded-xl border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/60 dark:bg-emerald-900/20 p-4">
+          <div className="rounded-xl border border-slate-100 dark:border-admin-border bg-slate-50/50 dark:bg-admin-surface-elevated p-4">
             <h4 className="font-semibold text-slate-900 dark:text-admin-text-primary mb-3">
               Підсумок зміни
             </h4>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-600 dark:text-admin-text-secondary">Продажів:</span>
-                <span className="font-medium dark:text-admin-text-primary">{summary.totalSales}</span>
+            <div className="grid grid-cols-3 gap-3 text-sm">
+              {/* Продажі */}
+              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 p-2">
+                <p className="text-xs text-emerald-600 dark:text-emerald-400">Продажі</p>
+                <p className="font-bold text-emerald-700 dark:text-emerald-300">
+                  {Math.round(summary.totalSalesAmount || 0).toLocaleString()} ₴
+                </p>
+                <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">
+                  {summary.totalSalesQty || 0} шт · {summary.totalSales || 0} оп.
+                </p>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600 dark:text-admin-text-secondary">Виручка:</span>
-                <span className="font-medium text-emerald-600">
-                  {Math.round(summary.totalSalesAmount)} грн
-                </span>
+              {/* Списання */}
+              <div className="rounded-lg bg-amber-50 dark:bg-amber-900/30 p-2">
+                <p className="text-xs text-amber-600 dark:text-amber-400">Списання</p>
+                <p className="font-bold text-amber-700 dark:text-amber-300">
+                  {(summary.totalWriteOffsAmount || 0) > 0
+                    ? `${Math.round(summary.totalWriteOffsAmount || 0).toLocaleString()} ₴`
+                    : `${summary.totalWriteOffsQty || 0} шт`
+                  }
+                </p>
+                <p className="text-xs text-amber-600/70 dark:text-amber-400/70">
+                  {(summary.totalWriteOffsAmount || 0) > 0 ? `${summary.totalWriteOffsQty || 0} шт` : `${summary.totalWriteOffs || 0} оп.`}
+                </p>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600 dark:text-admin-text-secondary">Списань:</span>
-                <span className="font-medium dark:text-admin-text-primary">{summary.totalWriteOffs}</span>
+              {/* Поставки */}
+              <div className="rounded-lg bg-blue-50 dark:bg-blue-900/30 p-2">
+                <p className="text-xs text-blue-600 dark:text-blue-400">Поставки</p>
+                <p className="font-bold text-blue-700 dark:text-blue-300">
+                  {(summary.totalSuppliesAmount || 0) > 0
+                    ? `${Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} ₴`
+                    : `${summary.totalSuppliesQty || 0} шт`
+                  }
+                </p>
+                <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
+                  {(summary.totalSuppliesAmount || 0) > 0 ? `${summary.totalSuppliesQty || 0} шт` : `${summary.totalSupplies || 0} оп.`}
+                </p>
               </div>
+            </div>
+            {/* Додаткова статистика */}
+            <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-admin-border text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-600 dark:text-admin-text-secondary">Списано шт:</span>
-                <span className="font-medium text-amber-600">{summary.totalWriteOffsQty}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600 dark:text-admin-text-secondary">Редагувань:</span>
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Редагувань:</span>
                 <span className="font-medium dark:text-admin-text-primary">{summary.productEdits}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-600 dark:text-admin-text-secondary">Нових клієнтів:</span>
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Нових клієнтів:</span>
                 <span className="font-medium dark:text-admin-text-primary">{summary.customersCreated}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600 dark:text-admin-text-secondary">Поставок:</span>
-                <span className="font-medium text-cyan-600">{summary.totalSupplies || 0}</span>
               </div>
             </div>
           </div>

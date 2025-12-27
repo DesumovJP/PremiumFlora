@@ -62,6 +62,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true);
+  const [clientsPendingTotal, setClientsPendingTotal] = useState(0);
 
   // Alerts
   const { alerts, showSuccess, showError, showWarning, dismiss } = useAlerts();
@@ -236,7 +237,16 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
 
       if (result.success) {
         // Log activity for shift history
-        const flower = products.find(p => p.id === data.flowerSlug || p.slug === data.flowerSlug);
+        const flower = products.find(p =>
+          p.id === data.flowerSlug ||
+          p.slug === data.flowerSlug ||
+          p.documentId === data.flowerSlug
+        );
+        // Порівнюємо як числа на випадок різних типів
+        const variant = flower?.variants.find(v => Number(v.length) === Number(data.length));
+        const price = variant?.price || 0;
+        const amount = price * data.qty;
+
         const reasonLabels: Record<string, string> = {
           damage: 'Пошкодження',
           expiry: 'Закінчення терміну',
@@ -247,6 +257,8 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
           flowerName: flower?.name || data.flowerSlug,
           length: data.length,
           qty: data.qty,
+          price: price,
+          amount: amount,
           reason: reasonLabels[data.reason] || data.reason,
           notes: data.notes,
         });
@@ -366,12 +378,16 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
     [cart]
   );
 
-  // Calculate pending payments count from shift activities
-  const pendingPaymentsCount = useMemo(() => {
-    return activities.filter(
-      (a) => a.type === 'sale' && a.details.paymentStatus === 'expected'
-    ).length;
-  }, [activities]);
+  // Use pending payments total from ClientsSection
+  const pendingPaymentsAmount = clientsPendingTotal;
+
+  // Calculate items to reorder (low stock items - stock < 50)
+  const itemsToReorder = useMemo(() => {
+    const LOW_STOCK_THRESHOLD = 50;
+    return products.reduce((count, product) => {
+      return count + product.variants.filter(v => v.stock < LOW_STOCK_THRESHOLD).length;
+    }, 0);
+  }, [products]);
 
   // Handler to show pending payments (navigate to clients tab)
   const handleShowPendingPayments = () => {
@@ -564,6 +580,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             onAddCustomer={handleAddCustomer}
             onDeleteCustomer={handleDeleteCustomer}
             onLogActivity={logActivity}
+            onPendingPaymentsChange={setClientsPendingTotal}
           />
         </TabsContent>
 
@@ -650,8 +667,9 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             brand={brandCard}
             supplyCard={supplyCard}
             onOpenSupply={() => setSupplyOpen(true)}
-            pendingPaymentsCount={pendingPaymentsCount}
+            pendingPaymentsAmount={pendingPaymentsAmount}
             onShowPendingPayments={handleShowPendingPayments}
+            itemsToReorder={itemsToReorder}
           />
         </aside>
 
@@ -669,14 +687,14 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
       </div>
 
       {/* ===================== MOBILE LAYOUT ===================== */}
-      <div className="flex h-full flex-col sm:hidden">
+      <div className="flex h-full min-h-0 flex-col sm:hidden">
         {/* Mobile Header */}
-        <header className="flex items-center justify-between px-2 py-2 border-b border-slate-100 dark:border-[#30363d]">
+        <header className="flex shrink-0 items-center justify-between px-2 py-2 border-b border-slate-100 dark:border-[#30363d]">
           <Sheet>
             <SheetTrigger asChild>
               <MobileMenuButton />
             </SheetTrigger>
-            <SheetContent side="left" className="w-80 p-4 pb-8" suppressHydrationWarning>
+            <SheetContent side="left" className="pt-12 px-3 pb-6" suppressHydrationWarning>
               <VisuallyHidden asChild>
                 <Dialog.Title>Меню</Dialog.Title>
               </VisuallyHidden>
@@ -687,8 +705,9 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
                 brand={brandCard}
                 supplyCard={supplyCard}
                 onOpenSupply={() => setSupplyOpen(true)}
-                pendingPaymentsCount={pendingPaymentsCount}
+                pendingPaymentsAmount={pendingPaymentsAmount}
                 onShowPendingPayments={handleShowPendingPayments}
+                itemsToReorder={itemsToReorder}
               />
             </SheetContent>
           </Sheet>
@@ -735,7 +754,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
         </header>
 
         {/* Mobile Content - scrollable */}
-        <main className="flex-1 overflow-y-auto py-2 px-2">
+        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain py-2 px-2">
           {tabsContent}
         </main>
       </div>

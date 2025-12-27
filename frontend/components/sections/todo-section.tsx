@@ -260,7 +260,7 @@ export function TodoSection() {
           "rounded-xl border border-l-4 transition-colors",
           priorityBorderColor[task.priority as TaskPriority] || priorityBorderColor.medium,
           isCompleted
-            ? "bg-slate-50/50 dark:bg-admin-surface-elevated/30 border-y-transparent border-r-transparent opacity-60"
+            ? "bg-slate-50/50 dark:bg-slate-800/40 border-y-transparent border-r-transparent opacity-70"
             : overdue
             ? "bg-rose-50/50 dark:bg-rose-900/10 border-y-rose-100 border-r-rose-100 dark:border-y-rose-900/30 dark:border-r-rose-900/30"
             : "bg-white dark:bg-admin-surface-elevated border-y-slate-100 border-r-slate-100 dark:border-y-admin-border dark:border-r-admin-border"
@@ -518,28 +518,30 @@ export function TodoSection() {
         title={editingTask ? "Редагувати завдання" : "Нове завдання"}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Назва *
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Назва завдання <span className="text-red-500">*</span>
             </label>
             <Input
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="Що потрібно зробити?"
               required
+              autoFocus
             />
+            <p className="text-xs text-slate-500 dark:text-slate-400">Коротко опишіть завдання</p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Опис
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Додаткові деталі..."
-              className="w-full px-3 py-2 border border-slate-200 dark:border-admin-border rounded-lg bg-white dark:bg-admin-surface-elevated text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
-              rows={2}
+              placeholder="Додаткові деталі, примітки, контакти..."
+              className="w-full px-3 py-2 border border-slate-200 dark:border-admin-border rounded-lg bg-white dark:bg-admin-surface-elevated text-slate-900 dark:text-white focus:border-emerald-500 dark:focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 dark:focus:ring-emerald-400/20 resize-none transition-colors duration-200"
+              rows={3}
             />
           </div>
 
@@ -568,34 +570,34 @@ export function TodoSection() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Категорія
               </label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value as TaskCategory })}
-                className="w-full px-3 py-2 border border-slate-200 dark:border-admin-border rounded-lg bg-white dark:bg-admin-surface-elevated text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full h-11 px-3 py-2 border border-slate-200 dark:border-admin-border rounded-xl bg-white dark:bg-admin-surface-elevated text-slate-900 dark:text-white focus:border-emerald-500 dark:focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 dark:focus:ring-emerald-400/20 transition-colors duration-200"
               >
-                <option value="delivery">Доставка</option>
-                <option value="supply">Поставка</option>
-                <option value="maintenance">Обслуговування</option>
-                <option value="meeting">Зустріч</option>
-                <option value="other">Інше</option>
+                <option value="delivery">🚚 Доставка</option>
+                <option value="supply">📦 Поставка</option>
+                <option value="maintenance">🔧 Обслуговування</option>
+                <option value="meeting">👥 Зустріч</option>
+                <option value="other">📝 Інше</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Пріоритет
               </label>
               <select
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value as TaskPriority })}
-                className="w-full px-3 py-2 border border-slate-200 dark:border-admin-border rounded-lg bg-white dark:bg-admin-surface-elevated text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full h-11 px-3 py-2 border border-slate-200 dark:border-admin-border rounded-xl bg-white dark:bg-admin-surface-elevated text-slate-900 dark:text-white focus:border-emerald-500 dark:focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 dark:focus:ring-emerald-400/20 transition-colors duration-200"
               >
-                <option value="low">Низький</option>
-                <option value="medium">Середній</option>
-                <option value="high">Високий</option>
+                <option value="low">⬇️ Низький</option>
+                <option value="medium">➡️ Середній</option>
+                <option value="high">⬆️ Високий</option>
               </select>
             </div>
           </div>

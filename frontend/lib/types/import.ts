@@ -1,0 +1,123 @@
+/**
+ * Import Types
+ *
+ * Типи для функціоналу імпорту Excel
+ */
+
+// ============================================
+// Import Options & Modes
+// ============================================
+
+export type StockMode = 'replace' | 'add' | 'skip';
+export type PriceMode = 'replace' | 'lower' | 'skip';
+export type SupplyStatus = 'success' | 'failed' | 'dry-run';
+
+export interface ImportOptions {
+  dryRun?: boolean;
+  stockMode?: StockMode;
+  priceMode?: PriceMode;
+  awb?: string;
+  supplier?: string;
+  forceImport?: boolean;
+  exchangeRate?: number;
+  marginMultiplier?: number;
+  applyPriceCalculation?: boolean;
+}
+
+// ============================================
+// Import Results
+// ============================================
+
+export interface ImportError {
+  row: number;
+  field: string;
+  message: string;
+  value: unknown;
+}
+
+export interface ImportWarning {
+  row: number;
+  field: string;
+  message: string;
+  originalValue: unknown;
+  normalizedValue: unknown;
+}
+
+export interface ImportStats {
+  totalRows: number;
+  validRows: number;
+  flowersCreated: number;
+  flowersUpdated: number;
+  variantsCreated: number;
+  variantsUpdated: number;
+}
+
+// ============================================
+// Upsert Operations
+// ============================================
+
+export interface UpsertOperation {
+  type: 'create' | 'update';
+  entity: 'flower' | 'variant';
+  documentId: string;
+  data: {
+    name?: string;
+    slug?: string;
+    length?: number;
+    stock?: number;
+    price?: number;
+    flowerId?: number;
+  };
+  before?: {
+    stock?: number;
+    price?: number;
+  };
+  after?: {
+    stock?: number;
+    price?: number;
+  };
+}
+
+export interface NormalizedRow {
+  flowerName: string;
+  slug: string;
+  length: number | null;
+  grade: string | null;
+  stock: number;
+  price: number;
+  supplier: string | null;
+  awb: string | null;
+  rowIndex: number;
+  hash: string;
+  original: Record<string, unknown>;
+}
+
+// ============================================
+// Import Response
+// ============================================
+
+export interface ImportResultData {
+  supplyId: number;
+  status: SupplyStatus;
+  stats: ImportStats;
+  errors: ImportError[];
+  warnings: ImportWarning[];
+  rows?: NormalizedRow[];
+  operations?: UpsertOperation[];
+}
+
+export interface ImportSuccessResponse {
+  success: true;
+  data: ImportResultData;
+}
+
+export interface ImportErrorResponse {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+    existingSupplyId?: number;
+  };
+}
+
+export type ImportResponse = ImportSuccessResponse | ImportErrorResponse;

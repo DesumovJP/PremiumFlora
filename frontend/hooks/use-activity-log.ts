@@ -48,12 +48,21 @@ export interface ActivityDetails {
   flowerName?: string;
   length?: number;
   qty?: number;
+  price?: number;   // Ціна за одиницю
+  amount?: number;  // Загальна сума (price * qty)
   reason?: string;
   notes?: string;
 
   // Product
   productName?: string;
   productId?: string;
+  variantsCount?: number;
+  totalStock?: number; // Загальна кількість при видаленні (рахується як списання)
+  variants?: Array<{
+    length: number;
+    price: number;
+    stock: number;
+  }>;
   changes?: Record<string, { from: unknown; to: unknown }>;
 
   // Variant delete
@@ -67,7 +76,7 @@ export interface ActivityDetails {
 
   // Payment
   transactionId?: string;
-  amount?: number;
+  // amount is shared with WriteOff above
   orderDate?: string;
   // Payment confirmation items (extended format)
   paymentItems?: Array<{
@@ -84,6 +93,16 @@ export interface ActivityDetails {
   flowersUpdated?: number;
   variantsCreated?: number;
   variantsUpdated?: number;
+  // Детальний список змін по товарах
+  supplyItems?: Array<{
+    flowerName: string;
+    length: number | null;
+    stockBefore?: number;
+    stockAfter: number;
+    priceBefore?: number;
+    priceAfter: number;
+    isNew: boolean;
+  }>;
 }
 
 export interface Activity {
@@ -96,11 +115,15 @@ export interface Activity {
 export interface ShiftSummary {
   totalSales: number;
   totalSalesAmount: number;
+  totalSalesQty: number;       // Кількість проданих квіток (шт)
   totalSalesPaid: number;      // Оплачені продажі
   totalSalesExpected: number;  // Очікують оплати
   totalWriteOffs: number;
   totalWriteOffsQty: number;
+  totalWriteOffsAmount: number; // Сума списань (грн)
   totalSupplies: number;       // Кількість поставок
+  totalSuppliesQty: number;    // Кількість поставлених квіток (шт)
+  totalSuppliesAmount: number; // Сума поставок (грн)
   activitiesCount: number;
   productEdits: number;
   customersCreated: number;
@@ -224,6 +247,9 @@ export function useActivityLog(): UseActivityLogReturn {
           const status = activity.details.paymentStatus;
           acc.totalSales += 1;
           acc.totalSalesAmount += amount;
+          // Рахуємо кількість проданих квіток
+          const salesQty = activity.details.items?.reduce((sum, item) => sum + (item.qty || 0), 0) || 0;
+          acc.totalSalesQty += salesQty;
           // Без статусу або 'paid' = оплачено
           if (!status || status === 'paid') {
             acc.totalSalesPaid += amount;
@@ -232,22 +258,69 @@ export function useActivityLog(): UseActivityLogReturn {
           }
           break;
         }
-        case 'writeOff':
+        case 'writeOff': {
           acc.totalWriteOffs += 1;
-          acc.totalWriteOffsQty += activity.details.qty || 0;
+          const qty = activity.details.qty || 0;
+          acc.totalWriteOffsQty += qty;
+          acc.totalWriteOffsAmount += activity.details.amount || 0;
           break;
+        }
         case 'productEdit':
-        case 'productCreate':
-        case 'productDelete':
         case 'variantDelete':
           acc.productEdits += 1;
           break;
+        case 'productCreate': {
+          acc.productEdits += 1;
+          // Якщо створено товар з варіантами зі складом - рахуємо як поставку
+          if (activity.details.variants) {
+            const totalStock = activity.details.variants.reduce(
+              (sum, v) => sum + (v.stock || 0),
+              0
+            );
+            if (totalStock > 0) {
+              acc.totalSupplies += 1;
+              acc.totalSuppliesQty += totalStock;
+              const totalAmount = activity.details.variants.reduce(
+                (sum, v) => sum + (v.stock || 0) * (v.price || 0),
+                0
+              );
+              acc.totalSuppliesAmount += totalAmount;
+            }
+          }
+          break;
+        }
+        case 'productDelete': {
+          acc.productEdits += 1;
+          // Якщо був залишок - рахуємо як списання
+          const deletedStock = activity.details.totalStock || 0;
+          if (deletedStock > 0) {
+            acc.totalWriteOffs += 1;
+            acc.totalWriteOffsQty += deletedStock;
+            // Рахуємо суму списання з варіантів (stock * price)
+            if (activity.details.variants) {
+              const deletedAmount = activity.details.variants.reduce(
+                (sum, v) => sum + (v.stock || 0) * (v.price || 0),
+                0
+              );
+              acc.totalWriteOffsAmount += deletedAmount;
+            }
+          }
+          break;
+        }
         case 'customerCreate':
           acc.customersCreated += 1;
           break;
-        case 'supply':
+        case 'supply': {
           acc.totalSupplies += 1;
+          // Рахуємо кількість та суму поставлених квіток
+          if (activity.details.supplyItems) {
+            for (const item of activity.details.supplyItems) {
+              acc.totalSuppliesQty += item.stockAfter || 0;
+              acc.totalSuppliesAmount += (item.stockAfter || 0) * (item.priceAfter || 0);
+            }
+          }
           break;
+        }
       }
       acc.activitiesCount += 1;
       return acc;
@@ -255,11 +328,15 @@ export function useActivityLog(): UseActivityLogReturn {
     {
       totalSales: 0,
       totalSalesAmount: 0,
+      totalSalesQty: 0,
       totalSalesPaid: 0,
       totalSalesExpected: 0,
       totalWriteOffs: 0,
       totalWriteOffsQty: 0,
+      totalWriteOffsAmount: 0,
       totalSupplies: 0,
+      totalSuppliesQty: 0,
+      totalSuppliesAmount: 0,
       activitiesCount: 0,
       productEdits: 0,
       customersCreated: 0,

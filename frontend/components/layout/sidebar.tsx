@@ -11,9 +11,7 @@ import {
   LogOut,
   Package,
   CreditCard,
-  Zap,
   Clock,
-  Loader2,
 } from "lucide-react";
 import { logout } from "@/lib/auth";
 import { useRouter } from "next/navigation";
@@ -26,12 +24,13 @@ type SidebarProps = {
   brand: { title: string; subtitle: string; icon: ComponentType<{ className?: string }> };
   supplyCard: { title: string; subtitle: string; icon: ComponentType<{ className?: string }> };
   onOpenSupply?: () => void;
-  pendingPaymentsCount?: number;
+  pendingPaymentsAmount?: number;
   onShowPendingPayments?: () => void;
+  itemsToReorder?: number;
 };
 
 
-export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenSupply, pendingPaymentsCount = 0, onShowPendingPayments }: SidebarProps) {
+export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenSupply, pendingPaymentsAmount = 0, onShowPendingPayments, itemsToReorder = 0 }: SidebarProps) {
   const router = useRouter();
   const BrandIcon = brand.icon;
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -121,130 +120,147 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
   };
 
   return (
-    <div className="flex h-full w-full max-w-[16.25rem] flex-col gap-3">
-      <div className="flex items-center gap-3 px-2">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 shadow-sm">
-          <BrandIcon className="h-6 w-6" />
+    <div className="flex h-full w-full max-w-[16rem] flex-col">
+      {/* Brand */}
+      <div className="flex items-center gap-3 px-3 pb-6">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white">
+          <BrandIcon className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-xs uppercase tracking-wide text-slate-500">{brand.title}</p>
-          <p className="font-semibold text-lg text-slate-900 dark:text-admin-text-primary">{brand.subtitle}</p>
+          <p className="text-[11px] font-medium uppercase tracking-wider text-stone-400 dark:text-admin-text-muted">{brand.title}</p>
+          <p className="font-semibold text-stone-900 dark:text-admin-text-primary">{brand.subtitle}</p>
         </div>
       </div>
-      <nav className="grid gap-2 text-sm font-semibold animate-stagger">
+
+      {/* Navigation */}
+      <nav className="space-y-1 px-2">
         {navItems.map(({ id, label, icon: Icon, badge }) => (
-          <Button
+          <button
             key={id}
-            variant={active === id ? "default" : "ghost"}
             className={cn(
-              "group justify-start rounded-2xl px-4 py-3 text-base transition-all duration-200",
+              "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all duration-150",
               active === id
-                ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 animate-scale-in"
-                : "bg-white dark:bg-admin-surface border border-slate-100 dark:border-admin-border shadow-sm text-slate-800 dark:text-admin-text-primary hover:border-emerald-200 dark:hover:border-emerald-500 hover-scale"
+                ? "bg-stone-100 dark:bg-white/10 text-stone-900 dark:text-white"
+                : "text-stone-600 dark:text-admin-text-secondary hover:bg-stone-50 dark:hover:bg-white/5 hover:text-stone-900 dark:hover:text-white"
             )}
             onClick={() => onChange(id)}
           >
-            <Icon className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
-            {label}
+            <Icon className={cn(
+              "h-[18px] w-[18px] transition-colors",
+              active === id
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-stone-400 dark:text-admin-text-muted group-hover:text-stone-500 dark:group-hover:text-admin-text-secondary"
+            )} />
+            <span className="flex-1 text-left">{label}</span>
             {badge && (
-              <Badge className={cn(
-                "ml-auto text-[10px] px-1.5 py-0",
+              <span className={cn(
+                "text-[11px] font-medium tabular-nums",
                 active === id
-                  ? "bg-white/20 text-white"
-                  : "bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-stone-400 dark:text-admin-text-muted"
               )}>
                 {badge}
-              </Badge>
+              </span>
             )}
-          </Button>
+          </button>
         ))}
       </nav>
 
-      {/* Upcoming Tasks - compact list */}
+      {/* Upcoming Tasks */}
       {!isLoadingTasks && upcomingTasks.length > 0 && (
-        <div className="space-y-1">
-          {upcomingTasks.slice(0, 3).map((task) => {
-            const dueInfo = formatDueDate(task.dueDate);
-            return (
-              <button
-                key={task.documentId}
-                onClick={() => onChange("todo")}
-                className={cn(
-                  "w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left transition-colors",
-                  "hover:bg-slate-50 dark:hover:bg-admin-surface-elevated",
-                  dueInfo.urgent && "bg-rose-50/50 dark:bg-rose-900/10"
-                )}
-              >
-                <Clock className={cn(
-                  "h-3.5 w-3.5 shrink-0",
-                  dueInfo.urgent ? "text-rose-500" : "text-slate-400"
-                )} />
-                <span className="text-sm text-slate-700 dark:text-admin-text-primary truncate flex-1">
-                  {task.title}
-                </span>
-                <span className={cn(
-                  "text-[11px] shrink-0",
-                  dueInfo.urgent
-                    ? "text-rose-600 dark:text-rose-400 font-medium"
-                    : "text-slate-400 dark:text-admin-text-tertiary"
-                )}>
-                  {dueInfo.text}
-                </span>
-              </button>
-            );
-          })}
+        <div className="mt-6 px-2">
+          <p className="mb-2 px-3 text-[11px] font-medium uppercase tracking-wider text-stone-400 dark:text-admin-text-muted">
+            Найближчі завдання
+          </p>
+          <div className="space-y-0.5">
+            {upcomingTasks.slice(0, 3).map((task) => {
+              const dueInfo = formatDueDate(task.dueDate);
+              return (
+                <button
+                  key={task.documentId}
+                  onClick={() => onChange("todo")}
+                  className={cn(
+                    "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors",
+                    "hover:bg-stone-50 dark:hover:bg-white/5",
+                    dueInfo.urgent && "bg-rose-50/50 dark:bg-rose-500/5"
+                  )}
+                >
+                  <Clock className={cn(
+                    "h-3.5 w-3.5 shrink-0",
+                    dueInfo.urgent ? "text-rose-500" : "text-stone-300 dark:text-admin-text-muted"
+                  )} />
+                  <span className="text-sm text-stone-600 dark:text-admin-text-secondary truncate flex-1">
+                    {task.title}
+                  </span>
+                  <span className={cn(
+                    "text-[11px] shrink-0 tabular-nums",
+                    dueInfo.urgent
+                      ? "text-rose-500 font-medium"
+                      : "text-stone-400 dark:text-admin-text-muted"
+                  )}>
+                    {dueInfo.text}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
-      <div className="mt-auto space-y-3">
-        {/* Quick Actions Block */}
-        <div className="rounded-2xl border border-slate-100 dark:border-[#30363d] bg-white dark:bg-admin-surface p-3 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-admin-text-tertiary px-1">
-            <Zap className="h-3 w-3" />
-            Швидкі дії
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full justify-start gap-2 text-sm border-emerald-100 dark:border-emerald-800/50 bg-emerald-50/50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:border-emerald-200 dark:hover:border-emerald-700"
+      {/* Bottom section */}
+      <div className="mt-auto space-y-4 px-2 pt-4">
+        {/* Quick Actions */}
+        <div className="space-y-1">
+          <button
             onClick={onOpenSupply}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors hover:bg-stone-50 dark:hover:bg-white/5 group"
           >
-            <Package className="h-4 w-4" />
-            Наступна поставка
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full justify-start gap-2 text-sm border-amber-100 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:border-amber-200 dark:hover:border-amber-700"
-            onClick={onShowPendingPayments}
-          >
-            <CreditCard className="h-4 w-4" />
-            Очікує оплати
-            {pendingPaymentsCount > 0 && (
-              <Badge className="ml-auto bg-amber-500 text-white text-xs px-1.5 py-0">
-                {pendingPaymentsCount}
+            <Package className="h-[18px] w-[18px] text-stone-400 dark:text-admin-text-muted group-hover:text-emerald-500 transition-colors" />
+            <span className="flex-1 text-[15px] font-medium text-stone-600 dark:text-admin-text-secondary group-hover:text-stone-900 dark:group-hover:text-white">
+              Поставка
+            </span>
+            {itemsToReorder > 0 && (
+              <Badge className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-[11px] px-1.5 py-0 font-medium">
+                {itemsToReorder}
               </Badge>
             )}
-          </Button>
-        </div>
-        <div className="flex gap-1.5">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 justify-center px-2 text-xs dark:bg-admin-surface dark:border-[#30363d] dark:text-admin-text-secondary dark:hover:border-emerald-500"
-            onClick={toggleTheme}
-            title={theme === "light" ? "Світла тема" : "Темна тема"}
+          </button>
+          <button
+            onClick={onShowPendingPayments}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors hover:bg-stone-50 dark:hover:bg-white/5 group"
           >
-            {theme === "light" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 justify-center px-2 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:bg-admin-surface dark:border-[#30363d] dark:text-rose-400 dark:hover:bg-rose-900/20 dark:hover:border-rose-500"
+            <CreditCard className="h-[18px] w-[18px] text-stone-400 dark:text-admin-text-muted group-hover:text-amber-500 transition-colors" />
+            <span className="flex-1 text-[15px] font-medium text-stone-600 dark:text-admin-text-secondary group-hover:text-stone-900 dark:group-hover:text-white">
+              Очікує оплати
+            </span>
+            {pendingPaymentsAmount > 0 && (
+              <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 tabular-nums">
+                {Math.round(pendingPaymentsAmount).toLocaleString('uk-UA')}₴
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div className="h-px bg-stone-100 dark:bg-white/5" />
+
+        {/* Theme & Logout */}
+        <div className="flex items-center gap-1 px-1">
+          <button
+            onClick={toggleTheme}
+            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-stone-500 dark:text-admin-text-tertiary hover:bg-stone-50 dark:hover:bg-white/5 hover:text-stone-700 dark:hover:text-white transition-colors"
+            title={theme === "light" ? "Темна тема" : "Світла тема"}
+          >
+            {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            <span className="text-sm">{theme === "light" ? "Темна" : "Світла"}</span>
+          </button>
+          <div className="w-px h-5 bg-stone-100 dark:bg-white/5" />
+          <button
             onClick={handleLogout}
+            className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-stone-500 dark:text-admin-text-tertiary hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
           >
             <LogOut className="h-4 w-4" />
-          </Button>
+          </button>
         </div>
       </div>
     </div>

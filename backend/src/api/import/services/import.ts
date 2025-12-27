@@ -204,11 +204,15 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       stats: {
         totalRows: parsedRows.length,
         validRows: valid.length,
-        ...upsertResult,
+        flowersCreated: upsertResult.flowersCreated,
+        flowersUpdated: upsertResult.flowersUpdated,
+        variantsCreated: upsertResult.variantsCreated,
+        variantsUpdated: upsertResult.variantsUpdated,
       },
       errors,
       warnings: allWarnings,
       rows: normalized,
+      operations: upsertResult.operations,
     };
   },
 });

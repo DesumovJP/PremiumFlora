@@ -20,7 +20,7 @@ export function Badge({
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium w-auto",
+        "inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium w-auto transition-all duration-150 hover:scale-[1.02] hover:shadow-sm",
         tone ? toneStyles[tone] : "",
         className
       )}

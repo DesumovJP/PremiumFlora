@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Cormorant_Garamond, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { StickyCTA } from "@/components/client/sticky-cta";
 import { ScrollToTop } from "@/components/client/scroll-to-top";
@@ -14,6 +14,31 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+  display: "swap",
+  preload: false,
+});
+
+// Premium display font - elegant serif for headings
+const cormorant = Cormorant_Garamond({
+  variable: "--font-display",
+  subsets: ["latin", "cyrillic"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: true,
+});
+
+// Modern body font
+const inter = Inter({
+  variable: "--font-body",
+  subsets: ["latin", "cyrillic"],
+  display: "swap",
+  preload: true,
+});
+
+// Mono font for prices
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono-alt",
   subsets: ["latin"],
   display: "swap",
   preload: false,
@@ -46,7 +71,7 @@ export default function RootLayout({
   return (
     <html lang="uk" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-[#f9fbfa] dark:bg-[#0d1117] text-slate-900 dark:text-[var(--admin-text-primary)]`}
+        className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased min-h-screen bg-[#f9fbfa] dark:bg-[#0d1117] text-slate-900 dark:text-[var(--admin-text-primary)]`}
       >
         {/* Scroll to top on route change */}
         <ScrollToTop />

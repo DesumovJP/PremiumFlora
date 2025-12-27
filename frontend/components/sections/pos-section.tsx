@@ -23,7 +23,6 @@ import { CartLine, Client, Product, Variant } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
   Minus,
-  NotebookText,
   Plus,
   Search,
   Trash,
@@ -236,6 +235,7 @@ function CartPanel({
   const payable = Math.max(0, cartTotal - discount);
   const canCheckout = selectedClient && cart.length > 0 && !isCheckingOut;
   const groupedCart = groupCartItems(cart);
+  const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
 
   // Filter clients by search
   const filteredClients = useMemo(() => {
@@ -271,23 +271,49 @@ function CartPanel({
 
   return (
     <>
-    <Card className="admin-card flex h-full max-h-full flex-col border border-slate-100 dark:border-[#30363d] bg-white/95 dark:bg-admin-surface-elevated shadow-lg shadow-emerald-500/10 rounded-none overflow-hidden">
-      <CardHeader className="space-y-2 pb-2 p-3 sm:p-5 sm:pb-3 sm:space-y-3">
-        <div className="flex items-center justify-between gap-2 sm:gap-3">
-          <CardTitle className="text-base sm:text-lg">Кошик</CardTitle>
-          <Badge tone="outline" className="text-xs shrink-0">
-            {cart.length} поз.
-          </Badge>
+    <Card className="admin-card flex h-full max-h-full flex-col border border-slate-100 dark:border-[#30363d] bg-white dark:bg-admin-surface-elevated shadow-xl shadow-slate-200/50 dark:shadow-black/20 rounded-none overflow-hidden">
+      {/* Header - Compact and clean */}
+      <CardHeader className="pb-3 p-4 sm:p-5 sm:pb-4 border-b border-slate-100 dark:border-[#30363d]">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-lg sm:text-xl font-semibold tracking-tight">Кошик</CardTitle>
+            {cart.length > 0 && (
+              <Badge tone="success" className="text-xs font-medium px-2 py-0.5">
+                {totalItems} шт
+              </Badge>
+            )}
+          </div>
         </div>
+        {/* Client selector - prominent */}
         {useModal ? (
           <Button
             variant="outline"
-            className="w-full justify-between text-left font-normal"
+            className={cn(
+              "w-full justify-between text-left font-normal h-11 px-4",
+              !selectedClientObj && "border-dashed border-slate-300 dark:border-admin-border"
+            )}
             onClick={() => setClientModalOpen(true)}
           >
-            <span className="flex items-center gap-2 truncate">
-              <User className="h-4 w-4 shrink-0 text-slate-400" />
-              <span className={selectedClientObj ? "text-slate-900 dark:text-admin-text-primary" : "text-slate-500 dark:text-admin-text-muted"}>
+            <span className="flex items-center gap-3 truncate">
+              <div className={cn(
+                "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
+                selectedClientObj
+                  ? "bg-emerald-100 dark:bg-emerald-900/30"
+                  : "bg-slate-100 dark:bg-admin-surface"
+              )}>
+                <User className={cn(
+                  "h-4 w-4",
+                  selectedClientObj
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-slate-400"
+                )} />
+              </div>
+              <span className={cn(
+                "text-sm",
+                selectedClientObj
+                  ? "text-slate-900 dark:text-admin-text-primary font-medium"
+                  : "text-slate-500 dark:text-admin-text-muted"
+              )}>
                 {selectedClientObj?.name || "Оберіть клієнта"}
               </span>
             </span>
@@ -295,7 +321,7 @@ function CartPanel({
           </Button>
         ) : (
           <Select value={selectedClient} onValueChange={onClientChange}>
-            <SelectTrigger>
+            <SelectTrigger className="h-11">
               <SelectValue placeholder="Оберіть клієнта" />
             </SelectTrigger>
             <SelectContent>
@@ -308,14 +334,16 @@ function CartPanel({
           </Select>
         )}
       </CardHeader>
-      <CardContent className="flex-1 min-h-0 space-y-2 pt-0 p-3 sm:p-5 sm:pt-0 sm:space-y-4">
-        <ScrollArea className="h-full max-h-none pr-2">
+
+      {/* Cart Items */}
+      <CardContent className="flex-1 min-h-0 pt-0 p-0">
+        <ScrollArea className="h-full max-h-none">
           {cart.length === 0 ? (
-            <div className="flex flex-1 items-center justify-center py-8">
+            <div className="flex h-full items-center justify-center py-12">
               <EmptyCart />
             </div>
           ) : (
-            <div className="space-y-3 sm:space-y-4">
+            <div className="p-4 sm:p-5 space-y-3">
               {groupedCart.map((group) => (
                 <CartGroupItem
                   key={group.name}
@@ -328,105 +356,146 @@ function CartPanel({
           )}
         </ScrollArea>
       </CardContent>
-      <CardFooter className="flex flex-col gap-2 p-3 sm:p-5 sm:pt-0 sm:gap-2.5 shrink-0">
-        <div className="flex w-full items-center justify-between text-xs text-slate-600 dark:text-admin-text-secondary sm:text-sm">
-          <span>Сума</span>
-          <span className="font-semibold text-slate-900 dark:text-admin-text-primary">{Math.round(cartTotal)} грн</span>
-        </div>
-        <div className="flex w-full items-center justify-between gap-2 text-xs text-slate-600 dark:text-admin-text-secondary sm:text-sm">
-          <span>Знижка</span>
-          {!showDiscount ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-emerald-700"
-              onClick={() => setShowDiscount(true)}
-            >
-              {discount > 0 ? `-${discount} грн` : "Додати"}
-            </Button>
-          ) : (
-            <Input
-              type="number"
-              className="h-9 w-28 text-right text-sm sm:h-9"
-              value={Number.isNaN(discount) ? "" : discount}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === "") {
-                  setDiscount(0);
-                  return;
-                }
-                const num = Number(val);
-                setDiscount(Math.max(0, Number.isNaN(num) ? 0 : num));
-              }}
-              onBlur={() => setShowDiscount(false)}
-              autoFocus
-            />
-          )}
-        </div>
-        <Separator />
-        {onPaymentStatusChange && (
-          <div className="w-full">
-            <label className="mb-1.5 block text-xs text-slate-600 dark:text-admin-text-secondary">Статус оплати</label>
-            <Select value={paymentStatus} onValueChange={onPaymentStatusChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Статус оплати" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="paid">Сплачено</SelectItem>
-                <SelectItem value="expected">Очікується</SelectItem>
-              </SelectContent>
-            </Select>
+
+      {/* Footer - Order Summary */}
+      <CardFooter className="flex flex-col gap-0 p-0 shrink-0 border-t border-slate-100 dark:border-[#30363d] bg-slate-50/50 dark:bg-slate-800/30">
+        {/* Summary Section */}
+        <div className="w-full p-4 sm:p-5 space-y-3">
+          {/* Subtotal */}
+          <div className="flex w-full items-center justify-between text-sm text-slate-600 dark:text-admin-text-secondary">
+            <span>Сума товарів</span>
+            <span className="font-medium text-slate-900 dark:text-admin-text-primary">{Math.round(cartTotal)} ₴</span>
           </div>
-        )}
-        {/* Comment section */}
-        {onCommentChange && (
-          <div className="w-full space-y-2">
-            <button
-              type="button"
-              className="flex items-center gap-2 text-xs text-slate-600 dark:text-admin-text-secondary hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-              onClick={() => {
-                setShowComment(!showComment);
-                if (showComment && comment) {
-                  onCommentChange('');
-                }
-              }}
-            >
-              <div className={cn(
-                "h-4 w-4 rounded border flex items-center justify-center transition-colors",
-                showComment
-                  ? "bg-emerald-600 border-emerald-600"
-                  : "border-slate-300 dark:border-admin-border"
-              )}>
-                {showComment && (
-                  <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
+
+          {/* Discount */}
+          <div className="flex w-full items-center justify-between text-sm text-slate-600 dark:text-admin-text-secondary">
+            <span>Знижка</span>
+            {!showDiscount ? (
+              <button
+                type="button"
+                className={cn(
+                  "text-sm font-medium transition-colors",
+                  discount > 0
+                    ? "text-rose-600 dark:text-rose-400"
+                    : "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
                 )}
-              </div>
-              <span>Додати коментар</span>
-            </button>
-            {showComment && (
-              <textarea
-                value={comment}
-                onChange={(e) => onCommentChange(e.target.value)}
-                placeholder="Введіть коментар до замовлення..."
-                className="w-full rounded-lg border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface px-3 py-2 text-sm text-slate-900 dark:text-admin-text-primary placeholder:text-slate-400 dark:placeholder:text-admin-text-muted focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
-                rows={2}
+                onClick={() => setShowDiscount(true)}
+              >
+                {discount > 0 ? `−${discount} ₴` : "+ Додати"}
+              </button>
+            ) : (
+              <Input
+                type="number"
+                className="h-8 w-24 text-right text-sm"
+                value={Number.isNaN(discount) ? "" : discount}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "") {
+                    setDiscount(0);
+                    return;
+                  }
+                  const num = Number(val);
+                  setDiscount(Math.max(0, Number.isNaN(num) ? 0 : num));
+                }}
+                onBlur={() => setShowDiscount(false)}
+                autoFocus
               />
             )}
           </div>
-        )}
-        <div className="flex w-full items-center justify-between text-sm font-semibold sm:text-base">
-          <span>До сплати</span>
-          <span className="text-emerald-700">{Math.round(payable)} грн</span>
+
+          {/* Payment Status */}
+          {onPaymentStatusChange && (
+            <div className="flex w-full items-center justify-between text-sm">
+              <span className="text-slate-600 dark:text-admin-text-secondary">Статус</span>
+              <Select value={paymentStatus} onValueChange={onPaymentStatusChange}>
+                <SelectTrigger className="h-8 w-32 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="paid">
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      Сплачено
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="expected">
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      Очікується
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Comment Toggle */}
+          {onCommentChange && (
+            <div className="w-full">
+              <button
+                type="button"
+                className="flex items-center gap-2 text-sm text-slate-600 dark:text-admin-text-secondary hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                onClick={() => {
+                  setShowComment(!showComment);
+                  if (showComment && comment) {
+                    onCommentChange('');
+                  }
+                }}
+              >
+                <div className={cn(
+                  "h-4 w-4 rounded border flex items-center justify-center transition-colors",
+                  showComment
+                    ? "bg-emerald-600 border-emerald-600"
+                    : "border-slate-300 dark:border-admin-border"
+                )}>
+                  {showComment && (
+                    <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+                <span>Додати коментар</span>
+              </button>
+              {showComment && (
+                <textarea
+                  value={comment}
+                  onChange={(e) => onCommentChange(e.target.value)}
+                  placeholder="Коментар до замовлення..."
+                  className="mt-2 w-full rounded-lg border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface px-3 py-2 text-sm text-slate-900 dark:text-admin-text-primary placeholder:text-slate-400 dark:placeholder:text-admin-text-muted focus:border-emerald-500 dark:focus:border-emerald-400 focus:outline-none resize-none transition-colors"
+                  rows={2}
+                />
+              )}
+            </div>
+          )}
         </div>
-        <Button
-          className="w-full rounded-xl py-2.5 text-sm sm:py-3 sm:text-sm"
-          disabled={!canCheckout}
-          onClick={onCheckout}
-        >
-          {isCheckingOut ? "Оформлення..." : "Оформити замовлення"}
-        </Button>
+
+        {/* Total & Checkout - Prominent */}
+        <div className="w-full p-4 sm:p-5 pt-0 space-y-3">
+          <Separator className="mb-3" />
+          <div className="flex w-full items-center justify-between">
+            <span className="text-base font-semibold text-slate-900 dark:text-admin-text-primary">До сплати</span>
+            <span className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">
+              {Math.round(payable)} ₴
+            </span>
+          </div>
+          <Button
+            className="w-full h-12 rounded-xl text-base font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all"
+            disabled={!canCheckout}
+            onClick={onCheckout}
+          >
+            {isCheckingOut ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Оформлення...
+              </span>
+            ) : (
+              "Оформити замовлення"
+            )}
+          </Button>
+        </div>
       </CardFooter>
     </Card>
 
@@ -891,11 +960,14 @@ function CartGroupItem({
     }
   };
 
+  const totalQty = group.lines.reduce((sum, line) => sum + line.qty, 0);
+
   return (
-    <div className="rounded-lg sm:rounded-xl border border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface-elevated shadow-sm overflow-hidden" style={{ borderWidth: '0.5px' }}>
-      {/* Заголовок групи */}
-      <div className="flex items-center gap-2 p-2 sm:p-2.5 border-b border-slate-100 dark:border-[#30363d] bg-slate-50/50 dark:bg-slate-800/50" style={{ borderBottomWidth: '0.5px' }}>
-        <div className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-admin-surface">
+    <div className="rounded-xl border border-slate-200/80 dark:border-[#30363d] bg-white dark:bg-admin-surface overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+      {/* Product Header */}
+      <div className="flex items-center gap-3 p-3 sm:p-3.5 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-800/30">
+        {/* Product Image */}
+        <div className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-admin-surface ring-1 ring-slate-200/50 dark:ring-slate-700/50">
           {group.image ? (
             <img
               src={group.image}
@@ -904,51 +976,62 @@ function CartGroupItem({
               loading="lazy"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-slate-400 dark:text-admin-text-muted">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+            <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-admin-text-muted">
+              <Package className="h-6 w-6" />
             </div>
           )}
         </div>
+
+        {/* Product Info */}
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary truncate leading-tight">
+          <h4 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-admin-text-primary truncate leading-tight">
             {group.name}
           </h4>
-          <p className="text-[11px] text-slate-500 dark:text-admin-text-tertiary">
-            {group.lines.length} {group.lines.length === 1 ? 'варіант' : group.lines.length < 5 ? 'варіанти' : 'варіантів'}
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-xs text-slate-500 dark:text-admin-text-tertiary">
+              {totalQty} шт
+            </span>
+            <span className="text-xs text-slate-300 dark:text-slate-600">•</span>
+            <span className="text-xs text-slate-500 dark:text-admin-text-tertiary">
+              {group.lines.length} {group.lines.length === 1 ? 'варіант' : 'варіанти'}
+            </span>
+          </div>
+        </div>
+
+        {/* Total Price */}
+        <div className="text-right shrink-0">
+          <p className="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400">
+            {Math.round(group.total)} ₴
           </p>
         </div>
-        <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
-          {Math.round(group.total)}₴
-        </p>
       </div>
 
-      {/* Варіанти */}
-      <div>
-        {group.lines.map((line, index) => (
+      {/* Variants List */}
+      <div className="divide-y divide-slate-100 dark:divide-[#30363d]">
+        {group.lines.map((line) => (
           <div
             key={line.id}
-            className={cn(
-              "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 dark:bg-slate-800/30",
-              index > 0 && "border-t border-slate-100 dark:border-[#30363d]"
-            )}
-            style={index > 0 ? { borderTopWidth: '0.5px' } : undefined}
+            className="flex items-center gap-2 sm:gap-3 px-3 sm:px-3.5 py-2.5 sm:py-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors"
           >
-            <Badge tone="outline" className="shrink-0 text-[10px] sm:text-[11px] px-1 sm:px-1.5 py-0">
+            {/* Size Badge */}
+            <Badge tone="outline" className="shrink-0 text-xs font-medium px-2 py-0.5 min-w-[50px] justify-center">
               {line.size}
             </Badge>
-            <span className="text-[10px] sm:text-[11px] text-slate-400 dark:text-admin-text-muted flex-1 truncate">
-              {Math.round(line.price)}₴
+
+            {/* Unit Price */}
+            <span className="text-xs sm:text-sm text-slate-500 dark:text-admin-text-muted flex-1">
+              {Math.round(line.price)} ₴/шт
             </span>
-            <div className="flex items-center gap-0.5 sm:gap-1">
+
+            {/* Quantity Controls */}
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => onUpdateQty(line.id, -1)}
-                className="h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center rounded border border-slate-200 dark:border-admin-border text-slate-500 hover:bg-slate-100 dark:hover:bg-admin-surface-elevated"
-                style={{ borderWidth: '0.5px' }}
+                className="h-7 w-7 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-admin-border text-slate-500 hover:bg-slate-100 hover:border-slate-300 dark:hover:bg-admin-surface-elevated active:scale-95 transition-all"
               >
-                <Minus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                <Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               </button>
+
               {editingQty === line.id ? (
                 <Input
                   type="number"
@@ -957,30 +1040,32 @@ function CartGroupItem({
                   onChange={(e) => handleQtyChange(line.id, e.target.value)}
                   onBlur={() => handleQtyBlur(line.id, line.qty)}
                   onKeyDown={(e) => handleQtyKeyDown(e, line.id, line.qty)}
-                  className="h-5 w-8 sm:h-6 sm:w-10 text-[10px] sm:text-xs text-center p-0 font-semibold"
+                  className="h-7 w-10 sm:h-8 sm:w-12 text-xs sm:text-sm text-center p-0 font-semibold"
                   autoFocus
                 />
               ) : (
-                <span 
+                <button
                   onClick={() => handleQtyClick(line.id, line.qty)}
-                  className="text-[10px] sm:text-xs font-semibold w-5 sm:w-6 text-center cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                  className="h-7 w-8 sm:h-8 sm:w-10 flex items-center justify-center text-xs sm:text-sm font-semibold text-slate-900 dark:text-admin-text-primary hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                 >
                   {line.qty}
-                </span>
+                </button>
               )}
+
               <button
                 onClick={() => onUpdateQty(line.id, 1)}
-                className="h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center rounded border border-slate-200 dark:border-admin-border text-slate-500 hover:bg-slate-100 dark:hover:bg-admin-surface-elevated"
-                style={{ borderWidth: '0.5px' }}
+                className="h-7 w-7 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-admin-border text-slate-500 hover:bg-slate-100 hover:border-slate-300 dark:hover:bg-admin-surface-elevated active:scale-95 transition-all"
               >
-                <Plus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               </button>
+
+              {/* Delete Button */}
               <button
                 onClick={() => onRemove(line.id)}
                 aria-label="Видалити"
-                className="h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center text-slate-300 hover:text-rose-500"
+                className="h-7 w-7 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 active:scale-95 transition-all ml-1"
               >
-                <Trash className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                <Trash className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </button>
             </div>
           </div>
@@ -992,9 +1077,16 @@ function CartGroupItem({
 
 function EmptyCart() {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl px-6 py-10 text-center">
-      <NotebookText className="mx-auto h-10 w-10 text-slate-300" />
-      <p className="mt-3 font-medium text-slate-300">Додайте позиції до кошика</p>
+    <div className="flex flex-col items-center justify-center px-6 py-8 text-center">
+      <div className="h-16 w-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+        <Package className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+      </div>
+      <p className="text-base font-medium text-slate-400 dark:text-slate-500 mb-1">
+        Кошик порожній
+      </p>
+      <p className="text-sm text-slate-400 dark:text-slate-600">
+        Оберіть товари зі списку
+      </p>
     </div>
   );
 }

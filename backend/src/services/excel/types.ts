@@ -182,6 +182,7 @@ export interface ImportResult {
   errors: ImportError[];
   warnings: ImportWarning[];
   rows: NormalizedRow[];
+  operations?: UpsertOperation[];
 }
 
 // ============================================

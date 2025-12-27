@@ -97,6 +97,7 @@ interface DailySale {
   avg: number;
   status: 'high' | 'mid' | 'low';
   writeOffs: number; // Кількість списань за день
+  supplyAmount: number; // Сума поставки за день
 }
 
 interface TopWriteOffFlower {
@@ -310,18 +311,26 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       },
     });
 
+    // Отримуємо поставки за цей місяць
+    const supplies = await strapi.db.query('api::transaction.transaction').findMany({
+      where: {
+        type: 'supply',
+        date: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
+      },
+    });
+
     // Групувати продажі по днях
-    const dailyMap = new Map<string, { orders: number; revenue: number; writeOffs: number }>();
+    const dailyMap = new Map<string, { orders: number; revenue: number; writeOffs: number; supplyAmount: number }>();
 
     sales.forEach((t: { date: string; amount: number }) => {
       const date = new Date(t.date);
       const key = `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}`;
 
-      const existing = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0 };
+      const existing = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0, supplyAmount: 0 };
       dailyMap.set(key, {
+        ...existing,
         orders: existing.orders + 1,
         revenue: existing.revenue + (t.amount || 0),
-        writeOffs: existing.writeOffs,
       });
     });
 
@@ -333,11 +342,22 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       const items = wo.items || [];
       const totalQty = items.reduce((sum, item) => sum + (item.qty || 0), 0);
 
-      const existing = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0 };
+      const existing = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0, supplyAmount: 0 };
       dailyMap.set(key, {
-        orders: existing.orders,
-        revenue: existing.revenue,
+        ...existing,
         writeOffs: existing.writeOffs + totalQty,
+      });
+    });
+
+    // Додаємо поставки по днях
+    supplies.forEach((s: { date: string; amount: number }) => {
+      const date = new Date(s.date);
+      const key = `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+      const existing = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0, supplyAmount: 0 };
+      dailyMap.set(key, {
+        ...existing,
+        supplyAmount: existing.supplyAmount + (s.amount || 0),
       });
     });
 
@@ -347,7 +367,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(targetYear, targetMonth, day);
       const key = `${String(day).padStart(2, '0')}.${String(targetMonth + 1).padStart(2, '0')}`;
-      const data = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0 };
+      const data = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0, supplyAmount: 0 };
 
       let status: 'high' | 'mid' | 'low' = 'low';
       if (data.orders >= 7) status = 'high';
@@ -361,6 +381,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         avg: data.orders > 0 ? Math.round(data.revenue / data.orders) : 0,
         status,
         writeOffs: data.writeOffs,
+        supplyAmount: data.supplyAmount,
       });
     }
 

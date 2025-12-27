@@ -24,13 +24,12 @@ import {
 } from "@/components/ui/select";
 import { StatPill } from "@/components/ui/stat-pill";
 import { Product, Variant } from "@/lib/types";
-import { AlertTriangle, CheckCircle2, Trash, PackageMinus, Plus, X, Pencil, Eye, Download, Package, ArrowUpDown } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Trash, PackageMinus, Plus, X, Pencil, Eye, Download, Package, ArrowUpDown, Upload, FileSpreadsheet } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { ImportModal } from "@/components/ui/import-modal";
 import { useState, useMemo, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { WriteOffInput } from "@/lib/api-types";
 import { getFlowers, searchFlowers, getFlowerForEdit, updateFlower, updateVariant } from "@/lib/strapi";
 import { getAuthHeaders } from "@/lib/auth";
@@ -49,12 +48,15 @@ type ProductsSectionProps = {
   onOpenExport: () => void;
   onWriteOff?: (data: Omit<WriteOffInput, "operationId">) => Promise<boolean>;
   onRefresh?: () => void;
-  onLogActivity?: (type: 'variantDelete' | 'productEdit', details: {
+  onLogActivity?: (type: 'variantDelete' | 'productEdit' | 'productCreate' | 'productDelete', details: {
     productName?: string;
     productId?: string;
     variantLength?: number;
+    variantsCount?: number;
     variantPrice?: number;
     variantStock?: number;
+    totalStock?: number;
+    variants?: Array<{ length: number; price: number; stock: number }>;
     changes?: Record<string, { from: unknown; to: unknown }>;
   }) => void;
   showSuccess?: (title: string, message: string) => void;
@@ -711,6 +713,26 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         return;
       }
 
+      // Логуємо видалення товару
+      if (onLogActivity) {
+        // Рахуємо загальну кількість по всіх варіантах
+        const totalStock = deleteTarget.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+
+        onLogActivity('productDelete', {
+          productName: deleteTarget.name,
+          productId: deleteTarget.documentId,
+          variantsCount: deleteTarget.variants.length,
+          totalStock: totalStock, // Буде враховано як списання якщо > 0
+          variants: deleteTarget.variants.map(v => ({
+            length: v.length,
+            price: v.price,
+            stock: v.stock,
+          })),
+        });
+      }
+
+      notify.success("Успіх", `Товар "${deleteTarget.name}" успішно видалено`);
+
       // Оновити список продуктів
       if (onRefresh) {
         onRefresh();
@@ -851,9 +873,30 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         flowerSlug = flowerData.data.slug;
       } else {
         // Створити нову квітку
-        // Slug генерується автоматично backend lifecycle hook (не дублюємо логіку тут)
+        // Генеруємо slug з назви
+        const generateSlug = (name: string): string => {
+          const translitMap: Record<string, string> = {
+            'а': 'a', 'б': 'b', 'в': 'v', 'г': 'h', 'ґ': 'g', 'д': 'd', 'е': 'e', 'є': 'ie',
+            'ж': 'zh', 'з': 'z', 'и': 'y', 'і': 'i', 'ї': 'i', 'й': 'i', 'к': 'k', 'л': 'l',
+            'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+            'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ь': '',
+            'ю': 'iu', 'я': 'ia', "'": '', 'ъ': '', 'ы': 'y', 'э': 'e',
+          };
+          return name
+            .toLowerCase()
+            .split('')
+            .map(char => translitMap[char] || char)
+            .join('')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .substring(0, 100);
+        };
+
+        const slug = generateSlug(draft.flowerName) + '-' + Date.now();
+
         const createData: any = {
           name: draft.flowerName,
+          slug: slug,
           locale: "en", // Strapi v5 uses "en" as default locale
           publishedAt: new Date().toISOString(),
         };
@@ -960,6 +1003,23 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         }
       }
 
+      // Логуємо створення товару
+      if (onLogActivity) {
+        onLogActivity('productCreate', {
+          productName: draft.flowerName,
+          productId: flowerDocumentId,
+          variantsCount: draft.variants.length,
+          variants: draft.variants.map(v => ({
+            length: parseInt(v.length) || 0,
+            price: parseFloat(v.price) || 0,
+            stock: parseInt(v.stock) || 0,
+          })),
+        });
+      }
+
+      // Сповіщення про успіх
+      notify.success("Успіх", `Товар "${draft.flowerName}" успішно створено`);
+
       // Оновити список продуктів
       if (onRefresh) {
         onRefresh();
@@ -967,8 +1027,8 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         window.location.reload();
       }
 
-    resetForm();
-    setOpen(false);
+      resetForm();
+      setOpen(false);
     } catch (error) {
       console.error("Помилка збереження:", error);
       const errorMessage = error instanceof Error ? error.message : "Невідома помилка";
@@ -989,22 +1049,30 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
     <>
     <Card className="admin-card border-none bg-white/90 dark:bg-admin-surface shadow-md">
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <CardTitle className="text-2xl">Управління товарами</CardTitle>
-          <CardDescription>Каталог квітів з варіантами висоти, залишками та діями</CardDescription>
+        <div className="flex items-start justify-between gap-2 sm:block">
+          <div>
+            <CardTitle className="text-2xl">Управління товарами</CardTitle>
+            <CardDescription>Каталог квітів з варіантами висоти, залишками та діями</CardDescription>
+          </div>
+          {/* Mobile: Export button next to title */}
+          <Button variant="outline" className="sm:hidden shrink-0 text-slate-500 dark:text-admin-text-tertiary" onClick={onOpenExport} size="icon" title="Експортувати">
+            <Download className="h-4 w-4" />
+          </Button>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
-          <Button variant="outline" onClick={onOpenSupply} className="w-full sm:w-auto">
-            Заплановані закупки
-          </Button>
-          <div className="flex gap-2">
-            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={onOpenExport} size="icon" title="Експортувати">
-              <Download className="h-4 w-4" />
+          {/* Mobile: 50/50 buttons */}
+          <div className="flex gap-2 sm:contents">
+            <Button variant="outline" onClick={onOpenSupply} className="flex-1 sm:flex-none sm:w-auto">
+              Заплановані закупки
             </Button>
-            <Button onClick={() => setOpen(true)} className="w-full sm:w-auto">
+            <Button onClick={() => setOpen(true)} className="flex-1 sm:flex-none sm:w-auto">
               Додати товар
             </Button>
           </div>
+          {/* Desktop: Export button */}
+          <Button variant="outline" className="hidden sm:flex text-slate-500 dark:text-admin-text-tertiary" onClick={onOpenExport} size="icon" title="Експортувати">
+            <Download className="h-4 w-4" />
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -1310,19 +1378,32 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       }
     >
       <div className="flex flex-col gap-3">
-        <ToggleGroup
-          type="single"
-          value={addMode}
-          onValueChange={(v) => v && setAddMode(v as "manual" | "invoice")}
-          className="w-full sm:w-auto"
-        >
-          <ToggleGroupItem value="manual" className="flex-1 sm:flex-none">
+        <div className="flex gap-1 p-1 bg-slate-100 dark:bg-admin-surface-elevated rounded-lg">
+          <button
+            type="button"
+            onClick={() => setAddMode("manual")}
+            className={cn(
+              "flex-1 flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium transition-colors",
+              addMode === "manual"
+                ? "bg-white dark:bg-admin-surface text-slate-900 dark:text-admin-text-primary shadow-sm"
+                : "text-slate-600 dark:text-admin-text-tertiary hover:text-slate-900 dark:hover:text-admin-text-primary"
+            )}
+          >
             Поштучно
-          </ToggleGroupItem>
-          <ToggleGroupItem value="invoice" className="flex-1 sm:flex-none">
+          </button>
+          <button
+            type="button"
+            onClick={() => setAddMode("invoice")}
+            className={cn(
+              "flex-1 flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium transition-colors",
+              addMode === "invoice"
+                ? "bg-white dark:bg-admin-surface text-slate-900 dark:text-admin-text-primary shadow-sm"
+                : "text-slate-600 dark:text-admin-text-tertiary hover:text-slate-900 dark:hover:text-admin-text-primary"
+            )}
+          >
             За накладною
-          </ToggleGroupItem>
-        </ToggleGroup>
+          </button>
+        </div>
 
         {addMode === "manual" ? (
           <div className="space-y-4">
@@ -1421,21 +1502,8 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                   </div>
                 ) : (
                   <label className="group flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-200 dark:border-admin-border bg-slate-50 dark:bg-admin-surface px-4 py-3 text-sm text-slate-600 dark:text-admin-text-secondary transition hover:border-emerald-300 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 shadow-sm ring-1 ring-emerald-100">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.5"
-                          d="M12 4v12m0 0 4-4m-4 4-4-4m3 7h14a2 2 0 0 0 2-2V7.828a2 2 0 0 0-.586-1.414l-2.828-2.828A2 2 0 0 0 15.172 3H7a2 2 0 0 0-2 2v14Z"
-                        />
-                      </svg>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm ring-1 ring-emerald-100 dark:ring-emerald-800/50">
+                      <Upload className="h-5 w-5" />
                     </div>
                     <span className="font-semibold text-slate-900 dark:text-admin-text-primary">Завантажити зображення</span>
                     <input
@@ -1530,14 +1598,12 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
               }}
               className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-dashed border-emerald-200 dark:border-emerald-800 bg-white dark:bg-admin-surface px-4 py-3 text-sm text-slate-600 dark:text-admin-text-secondary transition hover:border-emerald-300 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 shadow-sm ring-1 ring-emerald-100">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4v12m0 0 4-4m-4 4-4-4m-3 7h14a2 2 0 0 0 2-2V7.828a2 2 0 0 0-.586-1.414l-2.828-2.828A2 2 0 0 0 15.172 3H7a2 2 0 0 0-2 2v14Z" />
-                </svg>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm ring-1 ring-emerald-100 dark:ring-emerald-800/50">
+                <FileSpreadsheet className="h-5 w-5" />
               </div>
               <div className="flex flex-col text-left">
-                <span className="font-semibold text-slate-900">Завантажити накладну</span>
-                <span className="text-xs text-slate-500">xlsx, xls</span>
+                <span className="font-semibold text-slate-900 dark:text-admin-text-primary">Завантажити накладну</span>
+                <span className="text-xs text-slate-500 dark:text-admin-text-muted">xlsx, xls</span>
               </div>
             </button>
           </div>
@@ -1736,56 +1802,33 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         </div>
       ) : editingProduct ? (
         <div className="space-y-4">
-          {/* Image */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Зображення</label>
-            <div className="flex items-center gap-3">
-              {editData.imagePreview ? (
-                <div className="relative">
-                  <img
-                    src={editData.imagePreview}
-                    alt="Preview"
-                    className="h-32 w-32 rounded-lg object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditData((prev) => ({
-                        ...prev,
-                        image: null,
-                        imagePreview: editingProduct.image || null,
-                      }));
-                    }}
-                    className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ) : (
-                <div className="h-32 w-32 rounded-lg bg-slate-100 dark:bg-admin-surface flex items-center justify-center">
-                  <span className="text-sm text-slate-400">Немає зображення</span>
-                </div>
-              )}
-              <label className="group flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 transition hover:border-emerald-300 hover:bg-emerald-50">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 shadow-sm ring-1 ring-emerald-100">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1.5"
-                      d="M12 4v12m0 0 4-4m-4 4-4-4m3 7h14a2 2 0 0 0 2-2V7.828a2 2 0 0 0-.586-1.414l-2.828-2.828A2 2 0 0 0 15.172 3H7a2 2 0 0 0-2 2v14Z"
+          {/* Image & Description - Two columns */}
+          <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-4">
+            {/* Image */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Зображення</label>
+              <label className="group block cursor-pointer">
+                <div className={cn(
+                  "relative h-32 w-32 sm:h-[120px] sm:w-[120px] rounded-xl overflow-hidden transition-all",
+                  "ring-1 ring-slate-200 dark:ring-slate-700",
+                  "group-hover:ring-2 group-hover:ring-emerald-400 dark:group-hover:ring-emerald-500"
+                )}>
+                  {editData.imagePreview ? (
+                    <img
+                      src={editData.imagePreview}
+                      alt="Preview"
+                      className="h-full w-full object-cover"
                     />
-                  </svg>
+                  ) : (
+                    <div className="h-full w-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                      <Package className="h-10 w-10 text-slate-300 dark:text-slate-600" />
+                    </div>
+                  )}
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
+                    <Upload className="h-6 w-6 text-white" />
+                  </div>
                 </div>
-                <span className="font-semibold text-slate-900">
-                  {editData.imagePreview ? "Змінити зображення" : "Завантажити зображення"}
-                </span>
                 <input
                   type="file"
                   accept="image/*"
@@ -1794,18 +1837,17 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                 />
               </label>
             </div>
-          </div>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Опис</label>
-            <textarea
-              value={editData.description}
-              onChange={(e) => setEditData((prev) => ({ ...prev, description: e.target.value }))}
-              placeholder="Введіть опис квітки..."
-              className="w-full min-h-[100px] rounded-lg border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface px-3 py-2 text-sm text-slate-900 dark:text-admin-text-primary focus:border-emerald-300 dark:focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-500/30"
-              rows={4}
-            />
+            {/* Description */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Опис</label>
+              <textarea
+                value={editData.description}
+                onChange={(e) => setEditData((prev) => ({ ...prev, description: e.target.value }))}
+                placeholder="Введіть опис квітки..."
+                className="w-full h-[120px] rounded-xl border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface px-3 py-2 text-sm text-slate-900 dark:text-admin-text-primary focus:border-emerald-500 dark:focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 dark:focus:ring-emerald-400/20 transition-colors duration-200 resize-none"
+              />
+            </div>
           </div>
 
           {/* Variants */}
@@ -1892,13 +1934,13 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                         className="mt-1"
                       />
                     </div>
-                    <div className="flex items-end">
+                    <div className="flex items-center self-center">
                       <Button
                         type="button"
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         onClick={() => removeEditVariant(variant.documentId)}
-                        className="text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                        className="h-9 w-9 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
                         title="Видалити варіант"
                       >
                         <Trash className="h-4 w-4" />

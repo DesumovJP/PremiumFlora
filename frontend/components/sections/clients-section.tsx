@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Client } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Mail, MapPin, Phone, Plus, X, Loader2, Trash, Download, Check } from "lucide-react";
+import { Mail, MapPin, Phone, Plus, X, Loader2, Trash, Download, Check, ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import type { Customer, Transaction } from "@/lib/api-types";
@@ -26,9 +26,10 @@ type ClientsSectionProps = {
   onAddCustomer: (data: { name: string; phone: string; email: string; address: string }) => Promise<void>;
   onDeleteCustomer: (documentId: string) => Promise<void>;
   onLogActivity?: (type: ActivityType, details: ActivityDetails) => Promise<void>;
+  onPendingPaymentsChange?: (total: number) => void;
 };
 
-export function ClientsSection({ customers, isLoading = false, onOpenExport, onAddCustomer, onDeleteCustomer, onLogActivity }: ClientsSectionProps) {
+export function ClientsSection({ customers, isLoading = false, onOpenExport, onAddCustomer, onDeleteCustomer, onLogActivity, onPendingPaymentsChange }: ClientsSectionProps) {
   // State for payment confirmation
   const [confirmingPaymentId, setConfirmingPaymentId] = useState<string | null>(null);
   // State for confirmation dialog
@@ -60,8 +61,19 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
     });
   }, [baseClients, updatedClients]);
 
+  // Розраховуємо загальну суму боргів і повідомляємо батьківський компонент
+  useEffect(() => {
+    if (onPendingPaymentsChange) {
+      const total = clients.reduce((sum, client) => {
+        return sum + (client.pendingPayment || 0);
+      }, 0);
+      onPendingPaymentsChange(total);
+    }
+  }, [clients, onPendingPaymentsChange]);
+
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Client | null>(null);
+  const [expandedTransactions, setExpandedTransactions] = useState<Set<string>>(new Set());
   const [isDesktop, setIsDesktop] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -346,35 +358,54 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
   return (
     <>
     <Card className="admin-card border border-slate-100 dark:border-[#30363d] bg-white/90 dark:bg-admin-surface shadow-md">
-      <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <CardTitle className="text-2xl flex items-center gap-2">
-            Клієнти
-            <Badge variant="secondary" className="text-sm font-normal">
-              {searchQuery ? `${filteredClients.length} / ${clients.length}` : clients.length}
-            </Badge>
-          </CardTitle>
-          <CardDescription>Управління базою клієнтів та історією замовлень</CardDescription>
-        </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
-          <Input
-            placeholder="Пошук клієнтів..."
-            className="w-full sm:w-56"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <div className="flex gap-2">
+      <CardHeader className="space-y-3 md:space-y-0">
+        {/* Desktop: Single row | Mobile: Title + Export, then Search + Add */}
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          {/* Title row with Export on mobile */}
+          <div className="flex items-start justify-between gap-2 md:justify-start">
+            <div className="space-y-1 shrink-0">
+              <CardTitle className="text-2xl flex items-center gap-2">
+                Клієнти
+                <Badge className="text-sm font-normal bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  {searchQuery ? `${filteredClients.length} / ${clients.length}` : clients.length}
+                </Badge>
+              </CardTitle>
+              <CardDescription>Управління базою клієнтів та історією замовлень</CardDescription>
+            </div>
+            {/* Export button - only on mobile */}
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700"
+              variant="outline"
+              className="text-slate-500 dark:text-admin-text-tertiary shrink-0 md:hidden"
               onClick={onOpenExport}
               size="icon"
               title="Експортувати"
             >
               <Download className="h-4 w-4" />
             </Button>
-            <Button className="w-full sm:w-auto" onClick={() => setAddModalOpen(true)}>
+          </div>
+
+          {/* Search + Add + Export (desktop) */}
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Пошук клієнтів..."
+              className="flex-1 md:w-48 lg:w-64"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Button className="shrink-0" onClick={() => setAddModalOpen(true)}>
               <Plus className="h-4 w-4 mr-1" />
-              Додати клієнта
+              <span className="hidden sm:inline">Додати клієнта</span>
+              <span className="sm:hidden">Додати</span>
+            </Button>
+            {/* Export button - only on desktop */}
+            <Button
+              variant="outline"
+              className="text-slate-500 dark:text-admin-text-tertiary shrink-0 hidden md:flex"
+              onClick={onOpenExport}
+              size="icon"
+              title="Експортувати"
+            >
+              <Download className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -540,54 +571,74 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
               <Card
                 key={client.id}
                 className={cn(
-                  "admin-card border-slate-100 dark:border-[#30363d] cursor-pointer hover-lift animate-fade-in",
-                  selected?.id === client.id ? "border-emerald-300 dark:border-emerald-500 shadow-md ring-2 ring-emerald-200 dark:ring-emerald-500/30" : ""
+                  "admin-card border cursor-pointer transition-all duration-200 group",
+                  "bg-gradient-to-br from-white to-slate-50/30 dark:from-admin-surface dark:to-admin-surface",
+                  "hover:shadow-lg hover:shadow-emerald-100/50 dark:hover:shadow-emerald-900/20",
+                  "hover:-translate-y-0.5",
+                  selected?.id === client.id
+                    ? "border-emerald-400 dark:border-emerald-500 shadow-lg shadow-emerald-100/50 dark:shadow-emerald-900/30 ring-2 ring-emerald-200 dark:ring-emerald-500/30 -translate-y-0.5"
+                    : "border-slate-200 dark:border-[#30363d]"
                 )}
                 onClick={() => handleSelect(client)}
               >
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-3 p-3 sm:p-6 sm:pb-4">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1">
-                      <CardTitle>{client.name}</CardTitle>
-                      <CardDescription className="text-slate-600 dark:text-admin-text-secondary">{client.city}</CardDescription>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <CardTitle className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white truncate">
+                          {client.name}
+                        </CardTitle>
+                        {client.isVip && (
+                          <Badge tone="success" className="text-[10px] sm:text-xs font-semibold shrink-0">
+                            VIP
+                          </Badge>
+                        )}
+                      </div>
+                      <CardDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5 sm:mt-1">
+                        <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
+                        <span className="truncate">{client.city}</span>
+                      </CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {client.isVip && <Badge tone="success">VIP</Badge>}
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      {client.pendingPayment && client.pendingPayment > 0 && (
+                        <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-amber-700 dark:text-amber-400">
+                          <span className="hidden sm:inline">Очікується</span> {client.pendingPayment.toLocaleString('uk-UA')} ₴
+                        </span>
+                      )}
                       <button
                         onClick={(e) => handleDeleteClick(e, client)}
-                        className="rounded-full p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200"
+                        className="rounded-full p-1.5 text-slate-400 dark:text-slate-500 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover:opacity-100"
                         aria-label="Видалити клієнта"
                         title="Видалити клієнта"
                       >
-                        <Trash className="h-4 w-4" />
+                        <Trash className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
-                  {client.pendingPayment && client.pendingPayment > 0 && (
-                    <Badge tone="warning" className="mt-2 w-fit">
-                      Очікується оплата: {client.pendingPayment.toLocaleString('uk-UA')} грн
-                    </Badge>
-                  )}
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2 text-xs text-slate-700 dark:text-admin-text-secondary sm:text-sm">
-                    <p className="flex items-center gap-1.5 truncate">
-                      <Phone className="h-3.5 w-3.5 shrink-0 text-emerald-600 sm:h-4 sm:w-4" />
-                      <span className="truncate">{client.contact}</span>
-                    </p>
-                    <p className="flex items-center gap-1.5 truncate">
-                      <Mail className="h-3.5 w-3.5 shrink-0 text-emerald-600 sm:h-4 sm:w-4" />
-                      <span className="truncate">{client.email}</span>
-                    </p>
-                    <p className="flex items-center gap-1.5 truncate col-span-2">
-                      <MapPin className="h-3.5 w-3.5 shrink-0 text-emerald-600 sm:h-4 sm:w-4" />
-                      <span className="truncate">{client.city}</span>
-                    </p>
+                <CardContent className="space-y-2.5 sm:space-y-4 p-3 pt-0 sm:p-6 sm:pt-0">
+                  {/* Contact Info - phone and email 50/50 */}
+                  <div className="rounded-lg sm:rounded-xl bg-slate-50/80 dark:bg-slate-800/50 p-2 sm:p-3 grid grid-cols-2 gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm min-w-0">
+                      <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span className="truncate text-slate-700 dark:text-slate-300 font-medium">{client.contact}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm min-w-0">
+                      <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-sky-600 dark:text-sky-400 shrink-0" />
+                      <span className="truncate text-slate-700 dark:text-slate-300 font-medium">{client.email}</span>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-sm">
-                    <MetricBox label="Замовлень" value={client.orders.toString()} />
-                    <MetricBox label="Витрачено" value={`${client.spent.toLocaleString("uk-UA")} грн`} />
-                    <MetricBox label="Останнє" value={client.lastOrder} />
+
+                  {/* Metrics - компактніші */}
+                  <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                    <div className="rounded-lg border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface p-1.5 sm:p-2.5 text-center">
+                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-admin-text-muted mb-0.5">Замовлень</p>
+                      <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-admin-text-primary">{client.orders}</p>
+                    </div>
+                    <div className="rounded-lg border border-emerald-200 dark:border-emerald-800/50 bg-gradient-to-br from-emerald-50 to-teal-50/50 dark:from-emerald-900/20 dark:to-teal-900/10 p-1.5 sm:p-2.5 text-center col-span-2">
+                      <p className="text-[10px] sm:text-xs text-emerald-700 dark:text-emerald-400 mb-0.5 font-medium">Витрачено</p>
+                      <p className="text-sm sm:text-base font-bold text-emerald-800 dark:text-emerald-300">{client.spent.toLocaleString("uk-UA")} ₴</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -603,21 +654,20 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
               }}
               title="Історія замовлень"
               description={selected?.name}
-              size="md"
+              size="lg"
+              fullscreenOnMobile
             >
-              <ScrollArea className="max-h-[calc(100vh-12rem)] pr-2">
+              <div className="flex flex-col max-h-[calc(100vh-6rem)] overflow-hidden">
                 <div className="space-y-3">
-                  <div className="space-y-2 rounded-2xl bg-white dark:bg-admin-surface p-3 text-sm text-slate-700 dark:text-admin-text-secondary">
-                    <p className="font-semibold text-slate-900">{selected.name}</p>
-                    <p className="text-slate-500">{selected.city}</p>
-                    <div className="space-y-1 pt-2">
+                  <div className="rounded-2xl bg-white dark:bg-admin-surface p-3 text-sm text-slate-700 dark:text-admin-text-secondary">
+                    <div className="grid grid-cols-2 gap-2">
                       <p className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-emerald-600" />
-                        {selected.contact}
+                        <Phone className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <span className="truncate">{selected.contact}</span>
                       </p>
                       <p className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-emerald-600" />
-                        {selected.email}
+                        <Mail className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <span className="truncate">{selected.email}</span>
                       </p>
                     </div>
                   </div>
@@ -636,7 +686,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                       </div>
                     </div>
                   )}
-                  <div>
+                  <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide">
                   {isLoadingTransactions ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-5 w-5 animate-spin text-emerald-600" />
@@ -645,32 +695,49 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                     <div className="space-y-2">
                       {transactions.map((transaction) => {
                         const itemsCount = Array.isArray(transaction.items) ? transaction.items.length : 0;
+                        const isExpanded = expandedTransactions.has(transaction.documentId);
+
                         return (
                           <div
                             key={transaction.documentId}
-                            className="rounded-xl border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface p-3 text-sm"
+                            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden transition-all"
                           >
-                            <div className="flex items-start justify-between gap-2 mb-2">
+                            {/* Кликабельний заголовок */}
+                            <button
+                              onClick={() => {
+                                setExpandedTransactions(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(transaction.documentId)) {
+                                    next.delete(transaction.documentId);
+                                  } else {
+                                    next.add(transaction.documentId);
+                                  }
+                                  return next;
+                                });
+                              }}
+                              className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                            >
+                            <div className="flex items-center justify-between gap-2">
                               <div className="flex-1">
-                                <p className="font-semibold text-slate-900 dark:text-admin-text-primary">
+                                <p className="font-medium text-slate-900 dark:text-white text-sm">
                                   {new Date(transaction.date).toLocaleDateString('uk-UA', {
                                     day: '2-digit',
                                     month: '2-digit',
                                     year: 'numeric',
                                   })}
                                 </p>
-                                <p className="text-xs text-slate-500 dark:text-admin-text-tertiary">
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
                                   {new Date(transaction.date).toLocaleTimeString('uk-UA', {
                                     hour: '2-digit',
                                     minute: '2-digit',
                                   })} · {itemsCount} позицій
                                 </p>
                               </div>
-                              <div className="text-right">
-                                <p className="font-semibold text-emerald-700">
-                                  {transaction.amount?.toLocaleString('uk-UA') || 0} грн
-                                </p>
-                                <div className="flex items-center gap-2 justify-end mt-1">
+                              <div className="flex items-center gap-3">
+                                <div className="text-right">
+                                  <p className="font-medium text-emerald-600 dark:text-emerald-400 text-sm mb-1">
+                                    {transaction.amount?.toLocaleString('uk-UA') || '—'} грн
+                                  </p>
                                   <Badge
                                     tone={
                                       transaction.paymentStatus === 'paid'
@@ -687,41 +754,59 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                                       ? 'Очікується'
                                       : 'В очікуванні'}
                                   </Badge>
-                                  {(transaction.paymentStatus === 'expected' || transaction.paymentStatus === 'pending') && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-6 px-2 text-xs bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setPaymentToConfirm(transaction);
-                                      }}
-                                    >
-                                      <Check className="h-3 w-3 mr-1" />
-                                      Оплачено
-                                    </Button>
-                                  )}
                                 </div>
+                                <ChevronDown className={cn(
+                                  "h-5 w-5 text-slate-400 transition-transform shrink-0",
+                                  isExpanded && "rotate-180"
+                                )} />
                               </div>
                             </div>
-                            {Array.isArray(transaction.items) && transaction.items.length > 0 && (
-                              <div className="mt-2 pt-2 border-t border-slate-100 dark:border-admin-border space-y-1">
-                                {transaction.items.map((item, idx) => (
-                                  <div key={idx} className="flex items-start justify-between gap-2 text-xs">
-                                    <span className="text-slate-700 dark:text-admin-text-secondary flex-1">
-                                      {item.name} {item.length ? `(${item.length}см)` : ''} × {item.qty}
-                                    </span>
-                                    <span className="text-slate-600 dark:text-admin-text-secondary font-medium">
-                                      {((item.subtotal || item.price * item.qty) || 0).toLocaleString('uk-UA')} грн
-                                    </span>
+                            </button>
+
+                            {/* Розгорнутий контент */}
+                            {isExpanded && (
+                              <div className="border-t border-slate-100 dark:border-slate-700 p-3 space-y-3 bg-slate-50/50 dark:bg-slate-800/50">
+                                {/* Позиції замовлення */}
+                                {Array.isArray(transaction.items) && transaction.items.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Позиції:</p>
+                                    <div className="space-y-1">
+                                      {transaction.items.map((item, idx) => (
+                                        <div key={idx} className="flex items-start justify-between gap-2 text-sm bg-white dark:bg-slate-800 rounded-lg p-2">
+                                          <span className="text-slate-700 dark:text-slate-300 flex-1">
+                                            {item.name} {item.length ? `(${item.length}см)` : ''} × {item.qty}
+                                          </span>
+                                          <span className="text-slate-900 dark:text-white font-medium">
+                                            {((item.subtotal || item.price * item.qty) || 0)?.toLocaleString('uk-UA') || '—'} грн
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
-                                ))}
-                              </div>
-                            )}
-                            {transaction.notes && (
-                              <div className="mt-2 pt-2 border-t border-slate-100 dark:border-admin-border">
-                                <p className="text-xs text-slate-500 dark:text-admin-text-tertiary">Коментар:</p>
-                                <p className="text-xs text-slate-700 dark:text-admin-text-secondary mt-0.5">{transaction.notes}</p>
+                                )}
+
+                                {/* Коментар */}
+                                {transaction.notes && (
+                                  <div>
+                                    <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Коментар:</p>
+                                    <p className="text-sm text-slate-700 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg p-2">{transaction.notes}</p>
+                                  </div>
+                                )}
+
+                                {/* Кнопка підтвердження оплати */}
+                                {(transaction.paymentStatus === 'expected' || transaction.paymentStatus === 'pending') && (
+                                  <Button
+                                    size="sm"
+                                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setPaymentToConfirm(transaction);
+                                    }}
+                                  >
+                                    <Check className="h-4 w-4 mr-2" />
+                                    Підтвердити оплату
+                                  </Button>
+                                )}
                               </div>
                             )}
                           </div>
@@ -737,7 +822,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                   )}
                   </div>
                 </div>
-              </ScrollArea>
+              </div>
             </Modal>
           )}
         </div>
@@ -786,27 +871,53 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
         </>
       }
     >
-      <div className="grid gap-3">
-        <Input
-          placeholder="Ім'я або назва компанії"
-          value={newClient.name}
-          onChange={(e) => setNewClient((d) => ({ ...d, name: e.target.value }))}
-        />
-        <Input
-          placeholder="Телефон"
-          value={newClient.phone}
-          onChange={(e) => setNewClient((d) => ({ ...d, phone: e.target.value }))}
-        />
-        <Input
-          placeholder="Email"
-          value={newClient.email}
-          onChange={(e) => setNewClient((d) => ({ ...d, email: e.target.value }))}
-        />
-        <Input
-          placeholder="Місто / адреса"
-          value={newClient.city}
-          onChange={(e) => setNewClient((d) => ({ ...d, city: e.target.value }))}
-        />
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Імʼя або назва компанії <span className="text-red-500">*</span>
+          </label>
+          <Input
+            placeholder="Введіть імʼя клієнта або назву компанії"
+            value={newClient.name}
+            onChange={(e) => setNewClient((d) => ({ ...d, name: e.target.value }))}
+            autoFocus
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Телефон
+          </label>
+          <Input
+            type="tel"
+            placeholder="+380 XX XXX XX XX"
+            value={newClient.phone}
+            onChange={(e) => setNewClient((d) => ({ ...d, phone: e.target.value }))}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Email
+          </label>
+          <Input
+            type="email"
+            placeholder="example@email.com"
+            value={newClient.email}
+            onChange={(e) => setNewClient((d) => ({ ...d, email: e.target.value }))}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Місто / адреса
+          </label>
+          <Input
+            placeholder="Місто або повна адреса"
+            value={newClient.city}
+            onChange={(e) => setNewClient((d) => ({ ...d, city: e.target.value }))}
+          />
+        </div>
       </div>
     </Modal>
 

@@ -1,9 +1,11 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+/**
+ * Utils Re-export
+ *
+ * Backward compatibility: реекспорт з нової структури utils/
+ * Всі нові імпорти мають використовувати @/lib/utils (папку)
+ */
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+export * from './utils/index';
 
 
 
