@@ -132,7 +132,7 @@ export default function AboutPage() {
       <Navigation />
       <main className="min-h-screen pt-16 lg:pt-20">
         {/* Hero */}
-        <section className="relative overflow-hidden border-b border-slate-100 py-16 sm:py-20 lg:py-24">
+        <section className="relative overflow-hidden border-b border-slate-100 section-padding-sm">
           {/* Background with gradient mesh */}
           <div className="pointer-events-none absolute inset-0 -z-10">
             <div className="h-full w-full bg-[url('/blog.jpg')] bg-cover bg-center" />
