@@ -85,6 +85,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       flowersUpdated: 0,
       variantsCreated: 0,
       variantsUpdated: 0,
+      operations: [] as Array<{ type: string; entity: string; id: number; name: string; details?: string }>,
     };
 
     strapi.log.info(`🔍 Checking upsert conditions: dryRun=${options.dryRun}, validRows=${valid.length}, willUpsert=${!options.dryRun && valid.length > 0}`);
