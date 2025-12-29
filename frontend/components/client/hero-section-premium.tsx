@@ -204,7 +204,7 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                 initial={{ opacity: 0 }}
                 animate={mounted ? { opacity: 1 } : {}}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-200/60"
+                className="mt-8 sm:mt-12 border-t border-slate-200/60"
               >
                 <div className="flex flex-wrap justify-center sm:justify-start gap-x-6 sm:gap-x-8 gap-y-3 sm:gap-y-4">
                   {[
