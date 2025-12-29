@@ -521,26 +521,50 @@ p:not([class*="text-xs"]):not([class*="text-sm"]):not([class*="text-base"]):not(
 
 /* Enhanced text utilities - Premium System */
 .text-display {
-  /* Використовуємо статичний розмір для стабільності layout */
-  font-size: 2.25rem;
+  /* Responsive: mobile-first */
+  font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: var(--tracking-tighter);
   line-height: var(--leading-tight);
   color: var(--admin-text-primary);
 }
 
+@media (min-width: 640px) {
+  .text-display {
+    font-size: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .text-display {
+    font-size: 2.25rem;
+  }
+}
+
 .text-display-sm {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: var(--tracking-tighter);
   line-height: var(--leading-snug);
   color: var(--admin-text-primary);
 }
 
+@media (min-width: 640px) {
+  .text-display-sm {
+    font-size: 1.75rem;
+  }
+}
+
 .text-body-large {
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   line-height: var(--leading-relaxed);
   color: var(--admin-text-secondary);
+}
+
+@media (min-width: 640px) {
+  .text-body-large {
+    font-size: var(--text-lg);
+  }
 }
 
 .text-body {

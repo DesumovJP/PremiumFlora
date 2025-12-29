@@ -107,6 +107,39 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
               transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               className="max-w-xl text-center sm:text-left"
             >
+              {/* Mobile floating badge - above eyebrow */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={mounted ? {
+                  opacity: 1,
+                  scale: 1,
+                  y: [0, -4, 0]
+                } : {}}
+                transition={{
+                  opacity: { duration: 0.4, delay: 0.05 },
+                  scale: { duration: 0.4, delay: 0.05 },
+                  y: { duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.4 }
+                }}
+                className="flex justify-end mb-3 lg:hidden"
+              >
+                <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-2.5 will-change-transform">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center flex-shrink-0">
+                      <span className="text-base">🌷</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold text-slate-800 leading-tight">Щоп&apos;ятниці</p>
+                      <p className="text-[9px] text-slate-500 leading-tight">свіжі поставки</p>
+                    </div>
+                    <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
               {/* Eyebrow */}
               <motion.p
                 initial={{ opacity: 0 }}
@@ -164,39 +197,6 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                     Переглянути каталог
                   </Link>
                 </Button>
-              </motion.div>
-
-              {/* Mobile floating badge - under CTAs */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={mounted ? {
-                  opacity: 1,
-                  scale: 1,
-                  y: [0, -4, 0]
-                } : {}}
-                transition={{
-                  opacity: { duration: 0.4, delay: 0.35 },
-                  scale: { duration: 0.4, delay: 0.35 },
-                  y: { duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.6 }
-                }}
-                className="flex justify-end mt-4 lg:hidden"
-              >
-                <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-2.5 will-change-transform">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center flex-shrink-0">
-                      <span className="text-base">🌷</span>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-semibold text-slate-800 leading-tight">Щоп&apos;ятниці</p>
-                      <p className="text-[9px] text-slate-500 leading-tight">свіжі поставки</p>
-                    </div>
-                    <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
               </motion.div>
 
               {/* Trust indicators */}

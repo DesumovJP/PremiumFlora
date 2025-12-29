@@ -68,13 +68,13 @@ export function BlogSection({ posts }: BlogSectionProps) {
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="text-center mb-12 lg:mb-16"
           >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-700 mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-slate-700 mb-3 sm:mb-4">
               Корисні статті та{' '}
               <span className="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
                 поради
               </span>
             </h2>
-            <p className="text-lg text-slate-500 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base lg:text-lg text-slate-500 max-w-2xl mx-auto">
               Дізнайтеся про догляд за квітами, тренди та секрети професійних флористів
             </p>
           </motion.div>

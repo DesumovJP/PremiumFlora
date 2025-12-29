@@ -43,10 +43,10 @@ export function ContactFormSection() {
           <span className="inline-block px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-sm font-medium mb-4">
             Контакти
           </span>
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-3 sm:mb-4">
             Зв'яжіться з нами
           </h2>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base lg:text-lg text-slate-600 max-w-2xl mx-auto">
             Зателефонуйте або напишіть — відповімо протягом 15 хвилин
           </p>
         </div>

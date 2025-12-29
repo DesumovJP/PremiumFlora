@@ -54,13 +54,13 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-12 lg:mb-16"
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800 mb-4">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-slate-800 mb-3 sm:mb-4">
             Популярні{' '}
             <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
               товари
             </span>
           </h2>
-          <p className="text-lg text-slate-500 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base lg:text-lg text-slate-500 max-w-2xl mx-auto">
             Найбільш затребувані квіти серед наших клієнтів. Свіжість та якість гарантовані.
           </p>
         </motion.div>

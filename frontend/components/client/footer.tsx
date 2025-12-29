@@ -3,7 +3,7 @@ import { Leaf, Phone, Mail, MapPin } from "lucide-react";
 export function Footer() {
   return (
     <footer className="border-t border-slate-200/60 dark:border-admin-border glass glass-soft">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:py-12 sm:px-6 lg:px-8 lg:py-16">
         {/* Mobile Layout */}
         <div className="block sm:hidden w-full">
           <div className="flex flex-row flex-nowrap gap-4 w-full">
@@ -93,7 +93,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-slate-100 dark:border-admin-border pt-8 text-center space-y-2">
+        <div className="mt-6 sm:mt-12 border-t border-slate-100 dark:border-admin-border pt-4 sm:pt-8 text-center space-y-2">
           <p className="!text-[0.625rem] sm:!text-sm text-slate-500 dark:text-admin-text-muted">
             © {new Date().getFullYear()} Premium Flora. Всі права захищені.
           </p>

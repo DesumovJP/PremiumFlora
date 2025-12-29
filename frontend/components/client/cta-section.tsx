@@ -65,7 +65,7 @@ export function CtaSection({ onContactClick, variant = 'home' }: CtaSectionProps
         initial={{ opacity: 0, y: 20 }}
         animate={isInView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 py-12 sm:py-16 lg:py-20 px-6 sm:px-8"
+        className="relative z-10 py-8 sm:py-12 lg:py-16 xl:py-20 px-5 sm:px-6 lg:px-8"
       >
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
@@ -77,13 +77,13 @@ export function CtaSection({ onContactClick, variant = 'home' }: CtaSectionProps
           </div>
 
           {/* Heading */}
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4 leading-tight">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-slate-900 dark:text-white mb-3 sm:mb-4 leading-tight">
             {c.title}{' '}
             <span className="text-emerald-600 dark:text-emerald-400">{c.titleAccent}</span>
           </h2>
 
           {/* Subtitle */}
-          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 mb-8 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base lg:text-lg text-slate-600 dark:text-slate-400 mb-6 sm:mb-8 max-w-2xl mx-auto">
             {c.subtitle}
           </p>
 
