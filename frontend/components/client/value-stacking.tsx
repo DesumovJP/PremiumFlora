@@ -51,7 +51,7 @@ export function ValueStackingSection() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section ref={ref} className="relative sm:py-20 lg:py-28 bg-white overflow-hidden">
+    <section ref={ref} className="relative pb-10 sm:py-20 lg:py-28 bg-white overflow-hidden">
       {/* Decorative gradient blobs - positioned behind cards */}
       <div className="absolute inset-0 pointer-events-none">
         {/* Center blob - lower, behind cards */}

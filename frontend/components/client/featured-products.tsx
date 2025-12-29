@@ -43,7 +43,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
   return (
     <section
       ref={ref}
-      className="relative overflow-hidden pt-20 lg:pt-28 pb-10 lg:pb-14 bg-gradient-to-b from-white via-slate-50/30 to-white"
+      className="relative overflow-hidden pt-10 sm:pt-20 lg:pt-28 pb-10 lg:pb-14 bg-gradient-to-b from-white via-slate-50/30 to-white"
     >
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
