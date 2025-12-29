@@ -41,7 +41,7 @@ export function BlogPageClient({ posts }: BlogPageClientProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-white via-white/90 to-white/60" />
           </div>
 
-          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="relative mx-auto max-w-7xl px-6 sm:px-6 lg:px-8">
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tight text-slate-900 mb-2 sm:mb-3">
                 Корисні статті та{' '}
