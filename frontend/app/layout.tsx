@@ -49,6 +49,15 @@ export const metadata: Metadata = {
   description:
     "Преміальні оптові поставки свіжих квітів для флористів, готелів та івент-агентств. Холодний ланцюг -20°C, доставка 24/48h по Україні.",
   keywords: ["оптові квіти", "флористика", "доставка квітів", "Київ", "Україна", "premium flora"],
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Premium Flora",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     title: "Premium Flora — Оптові поставки квітів",
     description: "Преміальні оптові поставки свіжих квітів для флористів, готелів та івент-агентств.",
@@ -61,6 +70,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  themeColor: "#059669",
 };
 
 export default function RootLayout({
