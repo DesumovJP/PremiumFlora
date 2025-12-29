@@ -335,25 +335,25 @@ export function Navigation() {
                     index={0}
                   />
 
-                  {/* Viber & Telegram - 50% each */}
-                  <div className="flex gap-2.5">
-                    <MobileContactButton
-                      href={contacts.viber.href}
-                      iconComponent={ViberIcon}
-                      label="Viber"
-                      variant="purple"
-                      index={1}
-                      className="flex-1"
-                    />
-                    <MobileContactButton
-                      href={contacts.telegram.href}
-                      iconComponent={TelegramIcon}
-                      label="Telegram"
-                      variant="sky"
-                      index={2}
-                      className="flex-1"
-                    />
-                  </div>
+                  {/* Viber */}
+                  <MobileContactButton
+                    href={contacts.viber.href}
+                    iconComponent={ViberIcon}
+                    label="Viber"
+                    sublabel="Написати в месенджер"
+                    variant="purple"
+                    index={1}
+                  />
+
+                  {/* Telegram */}
+                  <MobileContactButton
+                    href={contacts.telegram.href}
+                    iconComponent={TelegramIcon}
+                    label="Telegram"
+                    sublabel={contacts.telegram.username}
+                    variant="sky"
+                    index={2}
+                  />
                 </div>
 
                 {/* Work hours */}

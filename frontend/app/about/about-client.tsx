@@ -93,7 +93,7 @@ export function AboutClient({ galleryImages }: AboutClientProps) {
 
             {/* Stats - Mobile only (FIRST on mobile) */}
             <div className="mb-8 lg:hidden">
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Наші досягнення</h3>
+              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 text-center">Наші досягнення</h3>
               <div className="grid grid-cols-2 gap-4 sm:gap-5">
                 {stats.map((stat, index) => (
                   <StatCard key={stat.label} {...stat} index={index} />
@@ -116,7 +116,7 @@ export function AboutClient({ galleryImages }: AboutClientProps) {
 
             {/* Contacts - Mobile only (after Mission) */}
             <div className="mb-8 lg:hidden">
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Контакти</h3>
+              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 text-center">Контакти</h3>
               <div className="grid grid-cols-2 gap-4 sm:gap-5">
                 <FeatureCard icon={Phone} title="Телефон" index={0} centered>
                   <div className="space-y-0.5">
@@ -151,7 +151,7 @@ export function AboutClient({ galleryImages }: AboutClientProps) {
             <div className="hidden lg:grid lg:grid-cols-2 gap-8 lg:gap-12 mb-10 lg:mb-14 items-stretch">
               {/* Left Column - Stats */}
               <div className="flex flex-col">
-                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Наші досягнення</h3>
+                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 text-center">Наші досягнення</h3>
                 <div className="grid grid-cols-2 gap-4 sm:gap-5 flex-1 auto-rows-fr">
                   {stats.map((stat, index) => (
                     <StatCard key={stat.label} {...stat} index={index} />
@@ -161,7 +161,7 @@ export function AboutClient({ galleryImages }: AboutClientProps) {
 
               {/* Right Column - Contacts */}
               <div className="flex flex-col">
-                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Контакти</h3>
+                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 text-center">Контакти</h3>
                 <div className="grid grid-cols-2 gap-4 sm:gap-5 flex-1 auto-rows-fr">
                   <FeatureCard icon={Phone} title="Телефон" index={0} centered>
                     <div className="space-y-0.5">
