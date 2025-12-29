@@ -243,19 +243,19 @@ export function GallerySection({
       {/* Modal */}
       {selectedIndex !== null && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm"
+          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm"
           onClick={closeModal}
         >
           {/* Close Button */}
           <button
             onClick={closeModal}
-            className="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-3 text-white backdrop-blur-sm transition-all hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+            className="absolute right-4 top-4 z-20 rounded-full bg-white/10 p-3 text-white backdrop-blur-sm transition-all hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
             aria-label="Закрити"
           >
             <X className="h-6 w-6" />
           </button>
 
-          {/* Navigation Buttons */}
+          {/* Navigation Buttons - vertically centered */}
           {images.length > 1 && (
             <>
               <Button
@@ -265,10 +265,10 @@ export function GallerySection({
                   e.stopPropagation();
                   goToPrevious();
                 }}
-                className="absolute left-4 h-14 w-14 rounded-full bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
                 aria-label="Попереднє зображення"
               >
-                <ChevronLeft className="h-8 w-8" />
+                <ChevronLeft className="h-6 w-6 sm:h-8 sm:w-8" />
               </Button>
               <Button
                 variant="ghost"
@@ -277,36 +277,38 @@ export function GallerySection({
                   e.stopPropagation();
                   goToNext();
                 }}
-                className="absolute right-4 h-14 w-14 rounded-full bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
                 aria-label="Наступне зображення"
               >
-                <ChevronRight className="h-8 w-8" />
+                <ChevronRight className="h-6 w-6 sm:h-8 sm:w-8" />
               </Button>
             </>
           )}
 
           {/* Image Counter */}
           {images.length > 1 && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-sm">
+            <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 rounded-full bg-black/60 px-4 py-2 sm:px-5 sm:py-2.5 text-sm font-medium text-white backdrop-blur-sm">
               {selectedIndex + 1} / {images.length}
             </div>
           )}
 
-          {/* Image Container - responsive and centered */}
+          {/* Image Container - absolutely positioned with insets for proper centering */}
           <div
-            className="relative w-[90vw] h-[70vh] max-w-5xl mx-auto my-auto"
+            className="absolute inset-0 top-16 bottom-16 left-4 right-4 sm:left-16 sm:right-16 sm:top-20 sm:bottom-20 flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <Image
-              src={images[selectedIndex]}
-              alt={`Gallery image ${selectedIndex + 1}`}
-              fill
-              className="rounded-xl object-contain shadow-2xl"
-              sizes="90vw"
-              priority
-              placeholder="blur"
-              blurDataURL={BLUR_DATA_URL}
-            />
+            <div className="relative w-full h-full max-w-5xl">
+              <Image
+                src={images[selectedIndex]}
+                alt={`Gallery image ${selectedIndex + 1}`}
+                fill
+                className="rounded-xl object-contain"
+                sizes="(max-width: 640px) 95vw, 85vw"
+                priority
+                placeholder="blur"
+                blurDataURL={BLUR_DATA_URL}
+              />
+            </div>
           </div>
         </div>
       )}
