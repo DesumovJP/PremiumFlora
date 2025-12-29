@@ -6,8 +6,8 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-// Shared blur placeholder for optimized image loading
-const BLUR_DATA_URL = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==";
+// Shared blur placeholder for optimized image loading - neutral light grey
+const BLUR_DATA_URL = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2Y4ZmFmYyIvPjwvc3ZnPg==";
 
 type GallerySectionProps = {
   images: string[];
@@ -232,8 +232,6 @@ export function GallerySection({
                       </div>
                     </div>
 
-                    {/* Corner decoration */}
-                    <div className="absolute right-2 top-2 h-2 w-2 scale-0 rounded-full bg-emerald-400 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
                   </button>
                 ))}
               </div>
@@ -294,9 +292,9 @@ export function GallerySection({
             </div>
           )}
 
-          {/* Image Container - responsive */}
+          {/* Image Container - responsive and centered */}
           <div
-            className="relative w-[90vw] h-[80vh] max-w-5xl"
+            className="relative w-[90vw] h-[70vh] max-w-5xl mx-auto my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <Image
