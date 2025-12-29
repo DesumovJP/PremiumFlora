@@ -73,7 +73,7 @@ export function StickyCTA() {
               </p>
             </div>
 
-            <Button size="default" asChild className="w-full sm:w-auto">
+            <Button size="default" asChild className="w-auto">
               <a href="tel:+380441234567" className="gap-2">
                 <Phone className="w-4 h-4" />
                 Зателефонувати

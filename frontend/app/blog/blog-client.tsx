@@ -3,11 +3,14 @@
 import { useState } from "react";
 import { FullscreenModal } from "@/components/ui/fullscreen-modal";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, User, BookOpen, Home, ChevronRight } from "lucide-react";
+import { Calendar, User, Home, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { BlogPost } from "@/lib/types";
 import { ArticleModalContent } from "@/components/client/article-modal-content";
+
+// Shared blur placeholder for optimized image loading
+const BLUR_DATA_URL = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==";
 
 type BlogPageClientProps = {
   posts: BlogPost[];
@@ -31,26 +34,25 @@ export function BlogPageClient({ posts }: BlogPageClientProps) {
     <>
       <main className="pt-16 lg:pt-20">
         {/* Header Section */}
-        <section className="relative overflow-hidden section-padding-sm">
-          {/* Background image with soft overlay */}
-          <div className="pointer-events-none absolute inset-0 -z-10">
-            <div className="h-full w-full bg-[url('/blog.jpg')] bg-cover bg-center" />
-            {/* Main white overlay */}
-            <div className="absolute inset-0 bg-white/85" />
-            {/* Bottom gradient for smooth transition */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-white" />
+        <section className="relative overflow-hidden py-6 sm:py-8 lg:py-10">
+          {/* Background Image with Gradient Overlay */}
+          <div className="absolute inset-0 -z-10">
+            <div className="h-full w-full bg-[url('https://mymediastorage.fra1.digitaloceanspaces.com/premiumFlora/2147760920_14fa35030d.jpg')] bg-cover bg-center" />
+            <div className="absolute inset-0 bg-gradient-to-t from-white via-white/90 to-white/60" />
           </div>
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-3xl text-center">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-1.5 text-xs sm:text-sm font-semibold text-amber-700 border border-amber-100/50 shadow-sm">
-                <BookOpen className="h-4 w-4" />
-                <span>Блог</span>
-              </div>
-              <h1 className="mb-4 text-display-sm font-extrabold tracking-tight text-slate-900">
-                Корисні статті та поради
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tight text-slate-900 mb-2 sm:mb-3">
+                Корисні статті та{' '}
+                <span className="relative inline-block">
+                  <span className="text-emerald-600">поради</span>
+                  <svg className="absolute -bottom-1 left-0 w-full h-2 text-emerald-300/50" viewBox="0 0 200 8" preserveAspectRatio="none">
+                    <path d="M0 6c40-3 80-3 120-1.5s80 3 80 0" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                  </svg>
+                </span>
               </h1>
-              <p className="text-body-large text-slate-600">
+              <p className="text-sm sm:text-base lg:text-lg text-slate-600 max-w-xl leading-relaxed">
                 Дізнайтеся про догляд за квітами, тренди та секрети професійних флористів
               </p>
             </div>
@@ -91,6 +93,8 @@ export function BlogPageClient({ posts }: BlogPageClientProps) {
                               className="object-cover transition-transform duration-500 group-hover:scale-110"
                               sizes="(max-width: 1024px) 50vw, 50vw"
                               loading="lazy"
+                              placeholder="blur"
+                              blurDataURL={BLUR_DATA_URL}
                             />
                             <div className="absolute top-3 left-3 z-10">
                               <span className="inline-block rounded-full bg-white/95 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-md border border-emerald-100/50">
@@ -144,6 +148,8 @@ export function BlogPageClient({ posts }: BlogPageClientProps) {
                               className="object-cover transition-transform duration-500 group-hover:scale-110"
                               sizes="(max-width: 1024px) 25vw, 25vw"
                               loading="lazy"
+                              placeholder="blur"
+                              blurDataURL={BLUR_DATA_URL}
                             />
                             <div className="absolute top-3 left-3 z-10">
                               <span className="inline-block rounded-full bg-white/95 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-md border border-emerald-100/50">
@@ -216,7 +222,11 @@ export function BlogPageClient({ posts }: BlogPageClientProps) {
             </nav>
           }
         >
-          <ArticleModalContent post={selectedPost} formatDate={formatDate} />
+          <ArticleModalContent
+            post={selectedPost}
+            formatDate={formatDate}
+            onBackToBlog={() => setSelectedPost(null)}
+          />
         </FullscreenModal>
       )}
     </>

@@ -1,35 +1,41 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, CheckCircle2, TrendingUp } from "lucide-react";
+
+// Shared blur placeholder for optimized image loading
+const BLUR_DATA_URL = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==";
 
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden section-padding min-h-[90vh] flex items-center">
-      {/* Video Background - Optimized */}
-      <div className="absolute inset-0 z-0 gpu-accelerated">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 h-full w-full object-cover"
-          poster="/hero-video-poster.jpg"
-          style={{ willChange: 'transform' }}
-        >
-          <source src="/hero-video.mp4" type="video/mp4" />
-          <source src="/hero-video.webm" type="video/webm" />
-          {/* Fallback gradient if video doesn't load */}
-        </video>
-        {/* Premium Overlay with Glassmorphism */}
+      {/* Mobile Background Image */}
+      <div className="absolute inset-0 z-0 lg:hidden">
+        <Image
+          src="https://mymediastorage.fra1.digitaloceanspaces.com/premiumFlora/2149408754_93d28191c1.jpg"
+          alt="Premium Flora - квіти"
+          fill
+          className="object-cover"
+          priority
+          placeholder="blur"
+          blurDataURL={BLUR_DATA_URL}
+        />
+        {/* Premium Overlay for mobile */}
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/80 via-white/70 to-blue-50/80 dark:from-emerald-900/60 dark:via-admin-bg/70 dark:to-blue-900/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-white/80 dark:from-transparent dark:via-admin-bg/40 dark:to-admin-bg/80" />
+      </div>
+
+      {/* Desktop Background - Gradient only */}
+      <div className="absolute inset-0 z-0 hidden lg:block gpu-accelerated">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/60 via-white/50 to-blue-50/60 dark:from-emerald-900/30 dark:via-admin-bg/50 dark:to-blue-900/30" />
         <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_10%_10%,rgba(236,248,241,0.4),transparent),radial-gradient(1400px_circle_at_90%_20%,rgba(238,242,255,0.4),transparent)] dark:bg-[radial-gradient(1200px_circle_at_10%_10%,rgba(13,17,23,0.6),transparent),radial-gradient(1400px_circle_at_90%_20%,rgba(22,27,34,0.4),transparent)]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/30 to-white/60 dark:from-transparent dark:via-admin-bg/30 dark:to-admin-bg/60" />
-        {/* Glass overlay for depth */}
         <div className="absolute inset-0 glass-soft opacity-30" />
       </div>
-      
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 gpu-accelerated">
-        <div className="mx-auto max-w-4xl text-center fade-in-up">
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 gpu-accelerated w-full">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+          {/* Text Content - Left side on desktop */}
+          <div className="text-center lg:text-left fade-in-up">
           {/* Premium Badge with Glassmorphism */}
           <div className="mb-6 inline-flex items-center gap-1.5 rounded-full glass glass-soft px-3.5 py-1.5 text-xs sm:text-[13px] font-semibold text-emerald-700 dark:text-emerald-400 shadow-premium transition-premium hover-lift-3d animate-float">
             <Sparkles className="h-3 w-3 animate-pulse" />
@@ -63,7 +69,7 @@ export function HeroSection() {
           </div>
           
           {/* Premium CTA Buttons */}
-          <div className="mb-10 sm:mb-12 flex flex-col gap-3 sm:gap-4 sm:flex-row sm:justify-center">
+          <div className="mb-10 sm:mb-12 flex flex-col gap-3 sm:gap-4 sm:flex-row sm:justify-center lg:justify-start">
             <Button asChild size="lg" className="group btn-premium h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-semibold shadow-colored-emerald transition-premium hover-lift-3d gpu-accelerated">
               <Link href="/catalog">
                 Переглянути каталог
@@ -76,7 +82,7 @@ export function HeroSection() {
           </div>
 
           {/* Trust indicators */}
-          <div className="grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-6 text-xs sm:text-[13px] font-medium text-slate-700 dark:text-admin-text-tertiary">
+          <div className="grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:items-center sm:justify-center lg:justify-start sm:gap-6 text-xs sm:text-[13px] font-medium text-slate-700 dark:text-admin-text-tertiary">
             {/* Left: Гарантія якості та свіжості */}
             <div className="flex items-center gap-1.5">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -88,9 +94,27 @@ export function HeroSection() {
               <span>Швидка та надійна доставка</span>
             </div>
             {/* Bottom center: Індивідуальний підхід */}
-            <div className="col-span-2 flex items-center justify-center gap-1.5">
+            <div className="col-span-2 flex items-center justify-center lg:justify-start gap-1.5">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               <span>Індивідуальний підхід до кожного клієнта</span>
+            </div>
+          </div>
+          </div>
+
+          {/* Image Block - Right side on desktop, hidden on mobile (shown as background) */}
+          <div className="hidden lg:block relative">
+            <div className="relative aspect-[4/5] w-full max-w-lg ml-auto rounded-3xl overflow-hidden shadow-2xl hover-lift-3d transition-premium">
+              <Image
+                src="https://mymediastorage.fra1.digitaloceanspaces.com/premiumFlora/2149408754_93d28191c1.jpg"
+                alt="Premium Flora - преміальні квіти"
+                fill
+                className="object-cover"
+                priority
+                placeholder="blur"
+                blurDataURL={BLUR_DATA_URL}
+              />
+              {/* Subtle gradient overlay for premium feel */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
             </div>
           </div>
         </div>

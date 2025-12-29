@@ -1289,9 +1289,10 @@ select:focus-visible {
     0 0 60px -15px rgba(16, 185, 129, 0.2);
 }
 
-/* Performance Optimizations - minimal will-change */
+/* Performance Optimizations - 120fps ready */
 .gpu-accelerated {
   transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .contain-layout {
@@ -1300,6 +1301,30 @@ select:focus-visible {
 
 .contain-strict {
   contain: strict;
+}
+
+/* Optimized scrolling */
+.scroll-smooth-gpu {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Force GPU compositing for animated elements */
+.force-gpu {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
 
 /* Smooth Transitions - Specific properties only */
@@ -1319,15 +1344,20 @@ select:focus-visible {
               opacity 400ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 3D Transform Utilities */
+/* 3D Transform Utilities - disabled on mobile for iOS Safari compatibility */
 .transform-3d {
-  transform-style: preserve-3d;
   perspective: 62.5rem;
+}
+
+/* Only enable preserve-3d on desktop - it breaks images on iOS Safari */
+@media (min-width: 1024px) {
+  .transform-3d {
+    transform-style: preserve-3d;
+  }
 }
 
 .hover-lift-3d {
   transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
 }
 
 .hover-lift-3d:hover {
@@ -1336,7 +1366,6 @@ select:focus-visible {
 
 .hover-scale-3d {
   transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
 }
 
 .hover-scale-3d:hover {
@@ -1424,8 +1453,13 @@ select:focus-visible {
 .image-optimized {
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
-  will-change: transform;
-  transform: translateZ(0);
+}
+
+/* GPU acceleration only on hover for desktop - prevents mobile memory issues */
+@media (hover: hover) {
+  .image-optimized {
+    will-change: transform;
+  }
 }
 
 .image-blur-load {
@@ -1814,9 +1848,15 @@ select:focus-visible {
   border: 0;
 }
 
-/* Прибираємо outline для елементів без focus-visible */
-*:focus:not(:focus-visible) {
-  outline: none;
+/* Прибираємо outline та ring для всіх елементів при фокусі */
+*:focus,
+*:focus-visible {
+  outline: none !important;
+}
+
+* {
+  --tw-ring-color: transparent !important;
+  --tw-ring-offset-color: transparent !important;
 }
 
 /* High contrast mode */

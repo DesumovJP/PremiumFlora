@@ -12,11 +12,17 @@ type ProductCardProps = {
   product: Product;
   className?: string;
   variant?: "grid" | "list";
+  /** Position in the list (0-indexed) for smart image loading */
+  index?: number;
 };
 
-export function ProductCard({ product, className, variant = "grid" }: ProductCardProps) {
+export function ProductCard({ product, className, variant = "grid", index = 0 }: ProductCardProps) {
   // Безпечна обробка варіантів
   const variants = product.variants || [];
+
+  // Smart image loading based on position
+  const isPriority = index < 4; // First 4 images get priority
+  const isEager = index < 8; // First 8 images load eagerly
   
   if (variants.length === 0) {
     return (
@@ -44,7 +50,7 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
 
   if (variant === "list") {
     return (
-      <Link href={`/catalog/${product.id}`} className="h-full gpu-accelerated">
+      <Link href={`/catalog/${product.id}`} className="h-full">
         <Card
           className={cn(
             "group flex h-full overflow-hidden rounded-2xl card-premium hover-lift-3d transform-3d",
@@ -53,7 +59,7 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
         >
           <div className="flex w-full flex-col lg:flex-row">
             {/* Image Container - Horizontal - Optimized */}
-            <div className="relative w-full lg:w-64 lg:flex-shrink-0 aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[180px] overflow-hidden bg-slate-50 dark:bg-admin-surface gpu-accelerated">
+            <div className="relative w-full lg:w-64 lg:flex-shrink-0 aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[180px] overflow-hidden bg-slate-50 dark:bg-admin-surface" style={{ transform: 'translateZ(0)' }}>
               {product.image && product.image.trim() !== "" ? (
                 <Image
                   src={product.image}
@@ -61,7 +67,8 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
                   fill
                   className="object-cover image-optimized transition-transform duration-700 ease-out group-hover:scale-110"
                   sizes="(max-width: 1024px) 100vw, 256px"
-                  loading="lazy"
+                  priority={isPriority}
+                  loading={isEager ? "eager" : "lazy"}
                   quality={85}
                   placeholder="blur"
                   blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
@@ -81,7 +88,7 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
               {/* Popular Badge */}
               {isPopular && (
                 <div className="absolute top-2 right-2 z-10 group/badge">
-                  <Badge className="!p-0 flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200/30 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm cursor-help relative">
+                  <Badge className="!p-0 flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200/30 bg-white/95 dark:bg-slate-800/95 shadow-sm cursor-help relative">
                     <Heart className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
                     <span className="sr-only">Популярне</span>
                     <span className="absolute bottom-full right-0 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-900 rounded whitespace-nowrap opacity-0 group-hover/badge:opacity-100 transition-opacity pointer-events-none shadow-lg z-20">
@@ -135,7 +142,7 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
 
   // Grid view (default) - Premium 3D Style
   return (
-    <Link href={`/catalog/${product.id}`} className="h-full gpu-accelerated">
+    <Link href={`/catalog/${product.id}`} className="h-full">
       <Card
           className={cn(
             "group relative flex h-full flex-col overflow-hidden rounded-2xl card-premium hover-lift-3d transform-3d",
@@ -145,7 +152,7 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
         {/* Popular Badge */}
         {isPopular && (
           <div className="absolute top-2 right-2 z-10 group/badge">
-            <Badge className="!p-0 flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200/30 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm cursor-help relative">
+            <Badge className="!p-0 flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200/30 bg-white/95 dark:bg-slate-800/95 shadow-sm cursor-help relative">
               <Heart className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
               <span className="sr-only">Популярне</span>
               <span className="absolute bottom-full right-0 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-900 rounded whitespace-nowrap opacity-0 group-hover/badge:opacity-100 transition-opacity pointer-events-none shadow-lg z-20">
@@ -157,7 +164,7 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
         )}
 
         {/* Image Container - Optimized */}
-        <div className="relative aspect-[4/3] w-full flex-shrink-0 overflow-hidden bg-slate-50 dark:bg-admin-surface gpu-accelerated">
+        <div className="relative aspect-[4/3] w-full flex-shrink-0 overflow-hidden bg-slate-50 dark:bg-admin-surface" style={{ transform: 'translateZ(0)' }}>
           {product.image && product.image.trim() !== "" ? (
             <Image
               src={product.image}
@@ -165,7 +172,8 @@ export function ProductCard({ product, className, variant = "grid" }: ProductCar
               fill
               className="object-cover image-optimized transition-transform duration-700 ease-out group-hover:scale-110"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
-              loading="lazy"
+              priority={isPriority}
+              loading={isEager ? "eager" : "lazy"}
               quality={85}
               placeholder="blur"
               blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="

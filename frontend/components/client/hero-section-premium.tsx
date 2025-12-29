@@ -7,6 +7,39 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 
+// Shared blur placeholder for optimized image loading
+const BLUR_DATA_URL = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==";
+
+// Floating animation for decorative elements
+const floatingAnimation = {
+  y: [-10, 10, -10],
+  transition: {
+    duration: 6,
+    repeat: Infinity,
+    ease: "easeInOut" as const
+  }
+};
+
+const floatingSlowAnimation = {
+  y: [-15, 15, -15],
+  x: [-5, 5, -5],
+  transition: {
+    duration: 8,
+    repeat: Infinity,
+    ease: "easeInOut" as const
+  }
+};
+
+const pulseAnimation = {
+  scale: [1, 1.05, 1],
+  opacity: [0.5, 0.8, 0.5],
+  transition: {
+    duration: 4,
+    repeat: Infinity,
+    ease: "easeInOut" as const
+  }
+};
+
 interface HeroSectionPremiumProps {
   onContactClick?: () => void;
 }
@@ -20,15 +53,41 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
 
   return (
     <section className="relative min-h-[100svh] flex items-center overflow-hidden pt-20 pb-24 sm:pt-0 sm:pb-0">
+      {/* Floating decorative elements - GPU accelerated */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          animate={floatingAnimation}
+          className="absolute top-[15%] right-[10%] w-32 h-32 rounded-full bg-gradient-to-br from-emerald-200/30 to-teal-200/20 will-change-transform"
+          style={{ transform: 'translateZ(0)' }}
+        />
+        <motion.div
+          animate={floatingSlowAnimation}
+          className="absolute top-[60%] right-[5%] w-24 h-24 rounded-full bg-gradient-to-br from-amber-200/25 to-orange-200/15 will-change-transform"
+          style={{ transform: 'translateZ(0)' }}
+        />
+        <motion.div
+          animate={pulseAnimation}
+          className="absolute top-[30%] left-[5%] w-40 h-40 rounded-full bg-gradient-to-br from-emerald-100/20 to-cyan-100/10 will-change-transform hidden lg:block"
+          style={{ transform: 'translateZ(0)' }}
+        />
+        <motion.div
+          animate={floatingAnimation}
+          className="absolute bottom-[20%] left-[15%] w-20 h-20 rounded-full bg-gradient-to-br from-rose-200/20 to-pink-200/10 will-change-transform hidden lg:block"
+          style={{ transform: 'translateZ(0)' }}
+        />
+      </div>
+
       {/* Background image layer */}
       <div className="absolute inset-0">
         <Image
-          src="/hero-flowers.jpg"
+          src="https://mymediastorage.fra1.digitaloceanspaces.com/premiumFlora/2149408754_93d28191c1.jpg"
           alt=""
           fill
           className="object-cover object-center"
           priority
           sizes="100vw"
+          placeholder="blur"
+          blurDataURL={BLUR_DATA_URL}
         />
         {/* Light overlay to ensure text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-white/70 lg:from-white/90 lg:via-white/75 lg:to-transparent" />
@@ -84,12 +143,12 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                 initial={{ opacity: 0, y: 20 }}
                 animate={mounted ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.6, delay: 0.25 }}
-                className="flex flex-col sm:flex-row gap-2 sm:gap-3"
+                className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3"
               >
                 <Button
                   size="lg"
                   onClick={onContactClick}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white h-11 sm:h-12 px-5 sm:px-6 text-sm sm:text-base font-medium rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/25"
+                  className="w-auto bg-emerald-600 hover:bg-emerald-700 text-white h-11 sm:h-12 px-5 sm:px-6 text-sm sm:text-base font-medium rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/25"
                 >
                   Отримати пропозицію
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -99,12 +158,45 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                   size="lg"
                   variant="ghost"
                   asChild
-                  className="text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 h-11 sm:h-12 px-5 sm:px-6 text-sm sm:text-base font-medium rounded-xl transition-all duration-200"
+                  className="w-auto text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 h-11 sm:h-12 px-5 sm:px-6 text-sm sm:text-base font-medium rounded-xl transition-all duration-200"
                 >
                   <Link href="/catalog">
                     Переглянути каталог
                   </Link>
                 </Button>
+              </motion.div>
+
+              {/* Mobile floating badge - under CTAs */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={mounted ? {
+                  opacity: 1,
+                  scale: 1,
+                  y: [0, -4, 0]
+                } : {}}
+                transition={{
+                  opacity: { duration: 0.4, delay: 0.35 },
+                  scale: { duration: 0.4, delay: 0.35 },
+                  y: { duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.6 }
+                }}
+                className="flex justify-end mt-4 lg:hidden"
+              >
+                <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-2.5 will-change-transform">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center flex-shrink-0">
+                      <span className="text-base">🌷</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold text-slate-800 leading-tight">Щоп&apos;ятниці</p>
+                      <p className="text-[9px] text-slate-500 leading-tight">свіжі поставки</p>
+                    </div>
+                    <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
               </motion.div>
 
               {/* Trust indicators */}
@@ -138,39 +230,48 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
             >
               <div className="relative aspect-[4/5] rounded-3xl overflow-hidden bg-slate-100">
                 <Image
-                  src="/hero-flowers.jpg"
+                  src="https://mymediastorage.fra1.digitaloceanspaces.com/premiumFlora/2149408754_93d28191c1.jpg"
                   alt="Преміальні квіти"
                   fill
                   className="object-cover"
                   priority
                   sizes="(max-width: 1024px) 0vw, 50vw"
+                  placeholder="blur"
+                  blurDataURL={BLUR_DATA_URL}
                 />
                 {/* Subtle overlay for depth */}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/10 via-transparent to-transparent" />
               </div>
 
-              {/* Floating card */}
+              {/* Floating card with continuous animation */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
-                animate={mounted ? { opacity: 1, x: 0 } : {}}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                className="absolute -left-8 bottom-12 bg-white rounded-2xl shadow-xl p-5 max-w-[240px]"
+                animate={mounted ? {
+                  opacity: 1,
+                  x: 0,
+                  y: [0, -8, 0]
+                } : {}}
+                transition={{
+                  opacity: { duration: 0.6, delay: 0.6 },
+                  x: { duration: 0.6, delay: 0.6 },
+                  y: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }
+                }}
+                className="absolute -left-8 bottom-12 bg-white rounded-2xl shadow-xl p-4 will-change-transform"
+                style={{ transform: 'translateZ(0)' }}
               >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center">
+                    <span className="text-2xl">🌷</span>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">Доставка щоп'ятниці</p>
-                    <p className="text-xs text-slate-500">Свіжий імпорт</p>
+                    <p className="text-sm font-semibold text-slate-800">Щоп&apos;ятниці</p>
+                    <p className="text-xs text-slate-500">свіжі поставки</p>
                   </div>
-                </div>
-                <div className="flex gap-1">
-                  {['🌷', '🌹', '🌸', '💐'].map((emoji, i) => (
-                    <span key={i} className="text-lg">{emoji}</span>
-                  ))}
+                  <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center ml-1">
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>

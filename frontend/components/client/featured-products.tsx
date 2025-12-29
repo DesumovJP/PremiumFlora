@@ -4,7 +4,7 @@ import { Product } from "@/lib/types";
 import { ProductCard } from "./product-card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Flower2, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 
@@ -15,27 +15,26 @@ type FeaturedProductsProps = {
 export function FeaturedProducts({ products }: FeaturedProductsProps) {
   const featured = products.slice(0, 8);
   const ref = useRef<HTMLElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const isInView = useInView(ref, { once: true, margin: "-100px 0px -200px 0px" });
 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.2,
+        staggerChildren: 0.05,
+        delayChildren: 0.1,
       }
     }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 30, scale: 0.95 },
+    hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
-      scale: 1,
       transition: {
-        duration: 0.5,
+        duration: 0.4,
         ease: [0.16, 1, 0.3, 1] as const
       }
     }
@@ -55,19 +54,6 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-12 lg:mb-16"
         >
-          {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={isInView ? { opacity: 1, scale: 1 } : {}}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="mb-4"
-          >
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-sm font-medium border border-emerald-100/60">
-              <Flower2 className="h-4 w-4" />
-              Каталог
-            </span>
-          </motion.div>
-
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800 mb-4">
             Популярні{' '}
             <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
@@ -93,7 +79,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
               whileHover={{ y: -8, transition: { duration: 0.3 } }}
               className="group"
             >
-              <ProductCard product={product} />
+              <ProductCard product={product} index={index} />
             </motion.div>
           ))}
         </motion.div>

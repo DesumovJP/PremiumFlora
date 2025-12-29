@@ -6,6 +6,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+// Shared blur placeholder for optimized image loading
+const BLUR_DATA_URL = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==";
+
 type ImageCarouselProps = {
   images: string[];
   className?: string;
@@ -39,6 +42,9 @@ export function ImageCarousel({ images, className }: ImageCarouselProps) {
           className="object-cover transition-opacity duration-300"
           sizes="100vw"
           priority={currentIndex === 0}
+          loading="eager"
+          placeholder="blur"
+          blurDataURL={BLUR_DATA_URL}
         />
         
         {/* Navigation Buttons */}
@@ -94,6 +100,9 @@ export function ImageCarousel({ images, className }: ImageCarouselProps) {
                 fill
                 className="object-cover"
                 sizes="80px"
+                loading="eager"
+                placeholder="blur"
+                blurDataURL={BLUR_DATA_URL}
               />
             </button>
           ))}

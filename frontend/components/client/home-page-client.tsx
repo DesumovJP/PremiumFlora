@@ -10,11 +10,11 @@ import { Modal } from '@/components/ui/modal';
 import { Phone } from 'lucide-react';
 import { Product, BlogPost } from '@/lib/types';
 
-// Viber icon component
+// Viber icon component - clean phone icon
 function ViberIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M11.4 0C9.473.028 5.333.344 3.027 2.467 1.2 4.24.535 6.867.472 10.093c-.063 3.227-.144 9.28 5.68 10.947v2.507s-.04.987.616 1.187c.793.24 1.253-.508 2.013-1.32.413-.453.987-1.12 1.413-1.627 3.893.333 6.88-.413 7.227-.533.8-.267 5.32-.84 6.053-6.84.76-6.2-.36-10.12-2.36-11.88C19.027.48 12.56-.012 11.4 0zm.4 2.08c4.147.04 7.36.88 8.907 2.293 1.573 1.44 2.28 4.28 1.64 9.347-.56 4.653-3.813 5.213-4.48 5.44-.28.093-2.88.733-6.12.52 0 0-2.427 2.933-3.187 3.707-.12.12-.253.16-.347.147-.133-.027-.173-.173-.173-.387l.027-4.04c-4.68-1.347-4.413-6.147-4.36-8.813.053-2.667.56-4.84 2.053-6.307C7.16 2.627 10.32 2.08 11.8 2.08zM11.52 4.6a.4.4 0 00-.28.12.4.4 0 000 .56c1.653 1.667 2.56 3.373 2.56 5.32a.4.4 0 00.8 0c0-2.173-1.013-4.067-2.8-5.88a.4.4 0 00-.28-.12zm-3.4.493c-.16-.013-.36.053-.56.16l-.04.027c-.373.24-.72.533-1 .84a1.88 1.88 0 00-.507.907c-.013.053-.02.107-.02.16-.027.36.04.747.173 1.133.347 1.013 1.08 2.267 2.253 3.573l.013.013.013.013.013.014.014.013c1.307 1.173 2.56 1.907 3.573 2.253.387.133.773.2 1.133.173.053 0 .107-.006.16-.02a1.88 1.88 0 00.907-.506c.307-.28.6-.627.84-1l.027-.04c.213-.4.24-.787.067-1.053a1.8 1.8 0 00-.16-.187l-1.52-1.52c-.307-.307-.747-.347-1.04-.107l-.76.627c-.107.08-.253.067-.347-.013L9.76 9.227c-.027-.013-.04-.04-.067-.067l-.36-.36-.36-.36c-.027-.027-.053-.04-.067-.067l-1.36-1.24c-.08-.093-.093-.24-.013-.347l.627-.76c.24-.293.2-.733-.107-1.04L6.56 5.08l-.187-.16c-.133-.093-.293-.147-.48-.16a.63.63 0 00-.173-.013v-.053zm3.72.627a.4.4 0 00-.107.027.4.4 0 00-.24.52c.24.627.6 1.2 1.08 1.693a4.69 4.69 0 001.693 1.08.4.4 0 00.28-.747 3.95 3.95 0 01-1.4-.893 3.95 3.95 0 01-.893-1.4.4.4 0 00-.413-.28zm-1.413.733a.4.4 0 00-.08.014.4.4 0 00-.28.493c.387 1.36 1.28 2.533 2.52 3.28a.4.4 0 00.413-.68c-1.053-.64-1.827-1.64-2.16-2.813a.4.4 0 00-.413-.294z"/>
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
     </svg>
   );
 }
@@ -28,87 +28,69 @@ function TelegramIcon({ className }: { className?: string }) {
   );
 }
 
-// Contact data
-const contacts = {
-  phones: [
-    { number: "+380 67 123 4567", href: "tel:+380671234567" },
-    { number: "+380 50 123 4567", href: "tel:+380501234567" },
-  ],
-  viber: { number: "+380 67 123 4567", href: "viber://chat?number=%2B380671234567" },
-  telegram: { username: "@premiumflora", href: "https://t.me/premiumflora" },
-  workHours: "Пн-Нд: 9:00-18:00",
-};
-
-// Contact Modal Content
+// Contact Modal Content - Notion-style minimal design
 function ContactModalContent({ onClose }: { onClose?: () => void }) {
   return (
-    <div className="space-y-4">
-      {/* Phones */}
-      <div>
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-          Телефони
+    <div className="space-y-6">
+      {/* Primary CTA - Phone */}
+      <a
+        href="tel:+380671234567"
+        onClick={onClose}
+        className="group flex items-center gap-4 p-4 -mx-1 rounded-xl transition-colors hover:bg-slate-50"
+      >
+        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-600 text-white shrink-0">
+          <Phone className="h-5 w-5" />
         </div>
-        <div className="space-y-2">
-          {contacts.phones.map((phone, index) => (
-            <a
-              key={index}
-              href={phone.href}
-              onClick={onClose}
-              className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-700 hover:shadow-sm"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
-                <Phone className="h-5 w-5" />
-              </div>
-              <span>{phone.number}</span>
-            </a>
-          ))}
+        <div className="min-w-0">
+          <div className="text-[15px] font-semibold text-slate-900">Зателефонувати</div>
+          <div className="text-sm text-slate-500">+380 67 123 4567</div>
         </div>
+        <div className="ml-auto text-slate-300 group-hover:text-slate-400 transition-colors">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </a>
+
+      {/* Divider */}
+      <div className="h-px bg-slate-100" />
+
+      {/* Secondary options */}
+      <div className="space-y-1">
+        <div className="text-xs font-medium text-slate-400 mb-2">Месенджери</div>
+
+        {/* Telegram */}
+        <a
+          href="https://t.me/premiumflora"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={onClose}
+          className="group flex items-center gap-3 p-3 -mx-1 rounded-lg transition-colors hover:bg-slate-50"
+        >
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#229ED9] text-white shrink-0">
+            <TelegramIcon className="h-4 w-4" />
+          </div>
+          <div className="text-sm font-medium text-slate-700">Telegram</div>
+          <div className="ml-auto text-xs text-slate-400">@premiumflora</div>
+        </a>
+
+        {/* Viber */}
+        <a
+          href="viber://chat?number=%2B380671234567"
+          onClick={onClose}
+          className="group flex items-center gap-3 p-3 -mx-1 rounded-lg transition-colors hover:bg-slate-50"
+        >
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#7360F2] text-white shrink-0">
+            <ViberIcon className="h-4 w-4" />
+          </div>
+          <div className="text-sm font-medium text-slate-700">Viber</div>
+          <div className="ml-auto text-xs text-slate-400">+380 67 123 4567</div>
+        </a>
       </div>
 
-      {/* Messengers - 50% width each */}
-      <div>
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-          Месенджери
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {/* Viber */}
-          <a
-            href={contacts.viber.href}
-            onClick={onClose}
-            className="flex flex-col items-center gap-2 rounded-xl bg-slate-50 px-4 py-4 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-purple-50 hover:text-purple-700 hover:shadow-sm"
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
-              <ViberIcon className="h-6 w-6" />
-            </div>
-            <div className="flex flex-col items-center text-center">
-              <span className="font-semibold">Viber</span>
-              <span className="text-xs text-slate-500">{contacts.viber.number}</span>
-            </div>
-          </a>
-
-          {/* Telegram */}
-          <a
-            href={contacts.telegram.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={onClose}
-            className="flex flex-col items-center gap-2 rounded-xl bg-slate-50 px-4 py-4 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-sky-50 hover:text-sky-700 hover:shadow-sm"
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
-              <TelegramIcon className="h-6 w-6" />
-            </div>
-            <div className="flex flex-col items-center text-center">
-              <span className="font-semibold">Telegram</span>
-              <span className="text-xs text-slate-500">{contacts.telegram.username}</span>
-            </div>
-          </a>
-        </div>
-      </div>
-
-      {/* Work hours */}
-      <div className="rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-3 text-center">
-        <div className="text-xs font-medium text-slate-500">Графік роботи</div>
-        <div className="text-sm font-semibold text-slate-700">{contacts.workHours}</div>
+      {/* Footer - Work hours */}
+      <div className="pt-2 text-center text-xs text-slate-400">
+        Пн-Нд: 9:00-18:00
       </div>
     </div>
   );
@@ -152,6 +134,7 @@ export function HomePageClient({ products, posts }: HomePageClientProps) {
         open={contactModalOpen}
         onOpenChange={setContactModalOpen}
         title="Зв'яжіться з нами"
+        description="Оберіть зручний спосіб зв'язку"
         size="sm"
       >
         <ContactModalContent onClose={() => setContactModalOpen(false)} />

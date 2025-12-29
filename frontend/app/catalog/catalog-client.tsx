@@ -13,11 +13,11 @@ import { Search, X, Grid3x3, List, Package, Truck, Sparkles, ArrowUpDown, Phone 
 import { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-// Viber icon component
+// Viber icon component - clean phone icon
 function ViberIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M11.4 0C9.473.028 5.333.344 3.027 2.467 1.2 4.24.535 6.867.472 10.093c-.063 3.227-.144 9.28 5.68 10.947v2.507s-.04.987.616 1.187c.793.24 1.253-.508 2.013-1.32.413-.453.987-1.12 1.413-1.627 3.893.333 6.88-.413 7.227-.533.8-.267 5.32-.84 6.053-6.84.76-6.2-.36-10.12-2.36-11.88C19.027.48 12.56-.012 11.4 0zm.4 2.08c4.147.04 7.36.88 8.907 2.293 1.573 1.44 2.28 4.28 1.64 9.347-.56 4.653-3.813 5.213-4.48 5.44-.28.093-2.88.733-6.12.52 0 0-2.427 2.933-3.187 3.707-.12.12-.253.16-.347.147-.133-.027-.173-.173-.173-.387l.027-4.04c-4.68-1.347-4.413-6.147-4.36-8.813.053-2.667.56-4.84 2.053-6.307C7.16 2.627 10.32 2.08 11.8 2.08zM11.52 4.6a.4.4 0 00-.28.12.4.4 0 000 .56c1.653 1.667 2.56 3.373 2.56 5.32a.4.4 0 00.8 0c0-2.173-1.013-4.067-2.8-5.88a.4.4 0 00-.28-.12zm-3.4.493c-.16-.013-.36.053-.56.16l-.04.027c-.373.24-.72.533-1 .84a1.88 1.88 0 00-.507.907c-.013.053-.02.107-.02.16-.027.36.04.747.173 1.133.347 1.013 1.08 2.267 2.253 3.573l.013.013.013.013.013.014.014.013c1.307 1.173 2.56 1.907 3.573 2.253.387.133.773.2 1.133.173.053 0 .107-.006.16-.02a1.88 1.88 0 00.907-.506c.307-.28.6-.627.84-1l.027-.04c.213-.4.24-.787.067-1.053a1.8 1.8 0 00-.16-.187l-1.52-1.52c-.307-.307-.747-.347-1.04-.107l-.76.627c-.107.08-.253.067-.347-.013L9.76 9.227c-.027-.013-.04-.04-.067-.067l-.36-.36-.36-.36c-.027-.027-.053-.04-.067-.067l-1.36-1.24c-.08-.093-.093-.24-.013-.347l.627-.76c.24-.293.2-.733-.107-1.04L6.56 5.08l-.187-.16c-.133-.093-.293-.147-.48-.16a.63.63 0 00-.173-.013v-.053zm3.72.627a.4.4 0 00-.107.027.4.4 0 00-.24.52c.24.627.6 1.2 1.08 1.693a4.69 4.69 0 001.693 1.08.4.4 0 00.28-.747 3.95 3.95 0 01-1.4-.893 3.95 3.95 0 01-.893-1.4.4.4 0 00-.413-.28zm-1.413.733a.4.4 0 00-.08.014.4.4 0 00-.28.493c.387 1.36 1.28 2.533 2.52 3.28a.4.4 0 00.413-.68c-1.053-.64-1.827-1.64-2.16-2.813a.4.4 0 00-.413-.294z"/>
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
     </svg>
   );
 }
@@ -165,12 +165,11 @@ export function CatalogClient({ products }: CatalogClientProps) {
   return (
     <main className="min-h-screen pt-16 lg:pt-20">
       {/* Hero Header - Compact Premium Design */}
-      <section className="relative overflow-hidden py-6 sm:py-8 lg:py-12">
-        {/* Background layers */}
+      <section className="relative overflow-hidden py-6 sm:py-8 lg:py-10">
+        {/* Background Image with Gradient Overlay */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/60 via-white to-amber-50/30" />
-          <div className="absolute inset-0 bg-[url('/bg.webp')] bg-cover bg-center opacity-[0.06]" />
-          <div className="absolute inset-0 noise-overlay pointer-events-none" />
+          <div className="h-full w-full bg-[url('https://mymediastorage.fra1.digitaloceanspaces.com/premiumFlora/2147760920_14fa35030d.jpg')] bg-cover bg-center" />
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/90 to-white/60" />
         </div>
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -433,7 +432,7 @@ export function CatalogClient({ products }: CatalogClientProps) {
                   className="animate-fade-in-up-premium"
                   style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}
                 >
-                  <ProductCard product={product} variant={viewMode} />
+                  <ProductCard product={product} variant={viewMode} index={index} />
                 </div>
               ))}
             </div>

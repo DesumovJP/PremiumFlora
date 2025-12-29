@@ -98,7 +98,7 @@ export function Footer() {
             © {new Date().getFullYear()} Premium Flora. Всі права захищені.
           </p>
           <p className="!text-[0.625rem] sm:!text-sm text-slate-500 dark:text-admin-text-muted">
-            Розробка сайту -{" "}
+            Розробка сайту 🌸 {" "}
             <a
               href="https://webbie.team"
               target="_blank"

@@ -6,6 +6,9 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+// Shared blur placeholder for optimized image loading
+const BLUR_DATA_URL = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==";
+
 type GallerySectionProps = {
   images: string[];
   title?: string;
@@ -16,7 +19,7 @@ type GallerySectionProps = {
 // Using seed-based randomization for consistent results across renders
 function generateAspectRatios(count: number): number[] {
   const ratios: number[] = [];
-  const possibleRatios = [0.7, 0.8, 1, 1.2, 1.4, 1.6]; // Various portrait to landscape ratios
+  const possibleRatios = [0.75, 0.85, 1, 1.15, 1.3]; // Narrower range for better balance
 
   for (let i = 0; i < count; i++) {
     // Simple seeded random based on index
@@ -26,6 +29,29 @@ function generateAspectRatios(count: number): number[] {
   return ratios;
 }
 
+// Distribute images across columns to balance heights
+function distributeToColumns(
+  images: string[],
+  aspectRatios: number[],
+  columnCount: number
+): { image: string; ratio: number; originalIndex: number }[][] {
+  const columns: { image: string; ratio: number; originalIndex: number }[][] =
+    Array.from({ length: columnCount }, () => []);
+  const columnHeights: number[] = Array(columnCount).fill(0);
+
+  images.forEach((image, index) => {
+    // Find the shortest column
+    const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+    const ratio = aspectRatios[index];
+
+    columns[shortestColumnIndex].push({ image, ratio, originalIndex: index });
+    // Height is inverse of aspect ratio (taller images have smaller ratio)
+    columnHeights[shortestColumnIndex] += 1 / ratio;
+  });
+
+  return columns;
+}
+
 export function GallerySection({
   images,
   title = "Наша галерея",
@@ -33,27 +59,57 @@ export function GallerySection({
 }: GallerySectionProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [columnCount, setColumnCount] = useState(2);
   const sectionRef = useRef<HTMLElement>(null);
 
   // Memoize aspect ratios to prevent recalculation
   const aspectRatios = useMemo(() => generateAspectRatios(images.length), [images.length]);
 
+  // Distribute images to columns for balanced heights
+  const columns = useMemo(
+    () => distributeToColumns(images, aspectRatios, columnCount),
+    [images, aspectRatios, columnCount]
+  );
+
+  // Update column count based on screen size
   useEffect(() => {
+    const updateColumns = () => {
+      const width = window.innerWidth;
+      if (width >= 1280) setColumnCount(5);
+      else if (width >= 1024) setColumnCount(4);
+      else if (width >= 640) setColumnCount(3);
+      else setColumnCount(2);
+    };
+
+    updateColumns();
+    window.addEventListener("resize", updateColumns);
+    return () => window.removeEventListener("resize", updateColumns);
+  }, []);
+
+  useEffect(() => {
+    // CRITICAL FIX: Set visible immediately to ensure images load
+    // Images must be visible from the start to trigger proper loading
+    // Animation will still work via CSS transitions
+    setIsVisible(true);
+
+    // Optional: Use IntersectionObserver for entrance animation timing
+    // but images will already be loading
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
           observer.disconnect();
         }
       },
-      { threshold: 0.1, rootMargin: "-50px" }
+      { threshold: 0.05, rootMargin: "100px" }
     );
 
     if (sectionRef.current) {
       observer.observe(sectionRef.current);
     }
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   const openModal = (index: number) => {
@@ -114,10 +170,6 @@ export function GallerySection({
               transform: isVisible ? "translateY(0)" : "translateY(20px)",
             }}
           >
-            <span className="mb-3 sm:mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-100/50 bg-emerald-50 px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-emerald-700 shadow-sm">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-              Галерея
-            </span>
             <h2 className="mb-3 sm:mb-4 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
               {title}
             </h2>
@@ -126,57 +178,65 @@ export function GallerySection({
             </p>
           </div>
 
-          {/* Pinterest-style Masonry Grid */}
+          {/* Balanced Masonry Grid */}
           <div
             className={cn(
-              "columns-2 gap-3 sm:columns-3 sm:gap-4 lg:columns-4 xl:columns-5",
+              "flex gap-3 sm:gap-4",
               isVisible ? "opacity-100" : "opacity-0"
             )}
             style={{
               transition: "opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s",
             }}
           >
-            {images.map((image, index) => (
-              <button
-                key={index}
-                onClick={() => openModal(index)}
-                className={cn(
-                  "group relative mb-3 block w-full overflow-hidden rounded-xl bg-slate-100 sm:mb-4",
-                  "transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10",
-                  "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2",
-                  isVisible ? "opacity-100" : "opacity-0"
-                )}
-                style={{
-                  aspectRatio: aspectRatios[index],
-                  transitionDelay: isVisible ? `${Math.min(index * 30, 500)}ms` : "0ms",
-                  transform: isVisible ? "translateY(0)" : "translateY(20px)",
-                }}
-                aria-label={`Відкрити зображення ${index + 1}`}
-              >
-                <Image
-                  src={image}
-                  alt={`Gallery image ${index + 1}`}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
-                  loading="lazy"
-                />
+            {columns.map((column, colIndex) => (
+              <div key={colIndex} className="flex-1 space-y-3 sm:space-y-4">
+                {column.map((item) => (
+                  <button
+                    key={item.originalIndex}
+                    onClick={() => openModal(item.originalIndex)}
+                    className={cn(
+                      "group relative block w-full overflow-hidden rounded-xl bg-slate-100",
+                      "transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10",
+                      "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2",
+                      isVisible ? "opacity-100" : "opacity-0"
+                    )}
+                    style={{
+                      aspectRatio: item.ratio,
+                      transitionDelay: isVisible ? `${Math.min(item.originalIndex * 30, 500)}ms` : "0ms",
+                      transform: isVisible ? "translateY(0) translateZ(0)" : "translateY(20px)",
+                    }}
+                    aria-label={`Відкрити зображення ${item.originalIndex + 1}`}
+                  >
+                    <Image
+                      src={item.image}
+                      alt={`Gallery image ${item.originalIndex + 1}`}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
+                      priority={item.originalIndex < 4}
+                      loading={item.originalIndex < 8 ? "eager" : "lazy"}
+                      placeholder="blur"
+                      blurDataURL={BLUR_DATA_URL}
+                    />
 
-                {/* Hover overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-                {/* Zoom icon on hover */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                  <div className="rounded-full bg-white/90 p-3 shadow-lg backdrop-blur-sm">
-                    <svg className="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                    </svg>
-                  </div>
-                </div>
+                    {/* Zoom icon on hover */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="flex items-center justify-center rounded-full bg-white p-3 shadow-xl ring-4 ring-white/20 backdrop-blur-md transition-all duration-300 ease-out scale-50 opacity-0 group-hover:scale-100 group-hover:opacity-100">
+                        <svg className="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <circle cx="11" cy="11" r="7" />
+                          <path strokeLinecap="round" d="M21 21l-4.35-4.35" />
+                        </svg>
+                      </div>
+                    </div>
 
-                {/* Corner decoration */}
-                <div className="absolute right-2 top-2 h-2 w-2 scale-0 rounded-full bg-emerald-400 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
-              </button>
+                    {/* Corner decoration */}
+                    <div className="absolute right-2 top-2 h-2 w-2 scale-0 rounded-full bg-emerald-400 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
+                  </button>
+                ))}
+              </div>
             ))}
           </div>
         </div>
@@ -234,18 +294,20 @@ export function GallerySection({
             </div>
           )}
 
-          {/* Image Container */}
+          {/* Image Container - responsive */}
           <div
-            className="relative max-h-[90vh] max-w-[90vw]"
+            className="relative w-[90vw] h-[80vh] max-w-5xl"
             onClick={(e) => e.stopPropagation()}
           >
             <Image
               src={images[selectedIndex]}
               alt={`Gallery image ${selectedIndex + 1}`}
-              width={1400}
-              height={1000}
-              className="max-h-[90vh] w-auto rounded-xl object-contain shadow-2xl"
+              fill
+              className="rounded-xl object-contain shadow-2xl"
+              sizes="90vw"
               priority
+              placeholder="blur"
+              blurDataURL={BLUR_DATA_URL}
             />
           </div>
         </div>

@@ -5,11 +5,14 @@ import { BlogPost } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { FullscreenModal } from "@/components/ui/fullscreen-modal";
 import { Button } from "@/components/ui/button";
-import { Calendar, User, ArrowRight, Home, ChevronRight, BookOpen } from "lucide-react";
+import { Calendar, User, ArrowRight, Home, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useInView } from "framer-motion";
 import { ArticleModalContent } from "./article-modal-content";
+
+// Shared blur placeholder for optimized image loading
+const BLUR_DATA_URL = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==";
 
 type BlogSectionProps = {
   posts: BlogPost[];
@@ -65,19 +68,6 @@ export function BlogSection({ posts }: BlogSectionProps) {
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="text-center mb-12 lg:mb-16"
           >
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={isInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="mb-4"
-            >
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-50 text-amber-700 text-sm font-medium border border-amber-100/60">
-                <BookOpen className="h-4 w-4" />
-                Блог
-              </span>
-            </motion.div>
-
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-700 mb-4">
               Корисні статті та{' '}
               <span className="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
@@ -117,6 +107,8 @@ export function BlogSection({ posts }: BlogSectionProps) {
                         className="object-cover"
                         sizes="280px"
                         loading="lazy"
+                        placeholder="blur"
+                        blurDataURL={BLUR_DATA_URL}
                       />
                       {/* Category Badge */}
                       <div className="absolute top-2 left-2 z-10">
@@ -172,6 +164,8 @@ export function BlogSection({ posts }: BlogSectionProps) {
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                         sizes="(max-width: 1024px) 50vw, 33vw"
                         loading="lazy"
+                        placeholder="blur"
+                        blurDataURL={BLUR_DATA_URL}
                       />
                       {/* Category Badge */}
                       <div className="absolute top-3 left-3 z-10">
@@ -278,7 +272,11 @@ export function BlogSection({ posts }: BlogSectionProps) {
             </nav>
           }
         >
-          <ArticleModalContent post={selectedPost} formatDate={formatDate} />
+          <ArticleModalContent
+            post={selectedPost}
+            formatDate={formatDate}
+            onBackToBlog={() => setSelectedPost(null)}
+          />
         </FullscreenModal>
       )}
     </>

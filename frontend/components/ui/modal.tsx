@@ -73,11 +73,11 @@ export function Modal({
           {/* Header */}
           <div className="flex items-start justify-between gap-4 px-5 pt-5 pb-0">
             <div className="flex-1 min-w-0">
-              <Dialog.Title className="text-sm font-medium text-stone-800 dark:text-white leading-tight">
+              <Dialog.Title className="text-base font-semibold text-slate-900 dark:text-white leading-tight">
                 {title}
               </Dialog.Title>
               {description && (
-                <Dialog.Description className="mt-1 text-xs text-stone-500 dark:text-slate-400">
+                <Dialog.Description className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                   {description}
                 </Dialog.Description>
               )}

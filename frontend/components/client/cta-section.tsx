@@ -1,10 +1,13 @@
 'use client';
 
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Leaf, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
-import { cn } from '@/lib/utils';
+import Image from 'next/image';
+
+// Shared blur placeholder for optimized image loading
+const BLUR_DATA_URL = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==";
 
 interface CtaSectionProps {
   onContactClick?: () => void;
@@ -38,54 +41,77 @@ export function CtaSection({ onContactClick, variant = 'home' }: CtaSectionProps
     <section
       ref={ref}
       id="contact-form"
-      className="relative overflow-hidden py-16 lg:py-24"
+      className="relative overflow-hidden"
     >
-      {/* Background image with overlay - using brand color #0f9c6e */}
-      <div className="absolute inset-0 bg-[url('/bg.webp')] bg-cover bg-center" />
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0a7a56]/90 via-[#0f9c6e]/85 to-[#0d8a5f]/90" />
+      {/* Background Image - Bottom layer */}
+      <div className="absolute inset-0">
+        <Image
+          src="https://mymediastorage.fra1.digitaloceanspaces.com/premiumFlora/2149408754_93d28191c1.jpg"
+          alt="Premium Flora - квіти"
+          fill
+          className="object-cover"
+          loading="eager"
+          placeholder="blur"
+          blurDataURL={BLUR_DATA_URL}
+          sizes="100vw"
+        />
+      </div>
 
+      {/* Gradient Overlay - Top layer */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#f9fbfa] via-[#f9fbfa]/95 to-[#f9fbfa]/70 dark:from-slate-900 dark:via-slate-900/95 dark:to-slate-900/70" />
 
-      <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }}
-          className="text-center"
-        >
+      {/* Content */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 py-12 sm:py-16 lg:py-20 px-6 sm:px-8"
+      >
+        <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 text-white/90 text-sm font-medium mb-6 border border-white/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            {c.badge}
-          </span>
+          <div className="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/50">
+            <Leaf className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+              {c.badge}
+            </span>
+          </div>
 
           {/* Heading */}
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 leading-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4 leading-tight">
             {c.title}{' '}
-            <span className="text-white">{c.titleAccent}</span>
+            <span className="text-emerald-600 dark:text-emerald-400">{c.titleAccent}</span>
           </h2>
 
-          {/* Subtext */}
-          <p className="text-base text-white/80 mb-8 max-w-lg mx-auto">
+          {/* Subtitle */}
+          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 mb-8 max-w-2xl mx-auto">
             {c.subtitle}
           </p>
 
-          {/* CTA Button */}
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="inline-block"
-          >
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <Button
               size="lg"
               onClick={onContactClick}
-              className="bg-white hover:bg-white/95 text-emerald-700 shadow-xl font-semibold px-8 h-12 text-base transition-all duration-300"
+              className="group w-auto h-12 sm:h-14 px-6 sm:px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-base rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/25"
             >
               {c.buttonText}
-              <ArrowRight className="w-5 h-5 ml-2" />
+              <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
             </Button>
-          </motion.div>
-        </motion.div>
-      </div>
+
+            <Button
+              size="lg"
+              variant="outline"
+              asChild
+              className="w-auto h-12 sm:h-14 px-6 sm:px-8 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-semibold text-base rounded-full transition-all duration-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-white/50 dark:hover:bg-slate-800/50"
+            >
+              <a href="tel:+380441234567">
+                <Phone className="w-5 h-5 mr-2" />
+                Зателефонувати
+              </a>
+            </Button>
+          </div>
+        </div>
+      </motion.div>
     </section>
   );
 }
