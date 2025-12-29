@@ -3,7 +3,7 @@ import { Leaf, Phone, Mail, MapPin } from "lucide-react";
 export function Footer() {
   return (
     <footer className="border-t border-slate-200/60 dark:border-admin-border glass glass-soft">
-      <div className="mx-auto max-w-7xl px-4 py-4 sm:py-8 sm:px-6 lg:px-8 lg:py-10">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:py-10 sm:px-6 lg:px-8 lg:py-12">
         {/* Mobile Layout */}
         <div className="block sm:hidden w-full">
           <div className="flex flex-row flex-nowrap gap-4 w-full">
@@ -40,9 +40,9 @@ export function Footer() {
         </div>
 
         {/* Desktop Layout */}
-        <div className="hidden gap-6 sm:grid sm:grid-cols-2 lg:grid-cols-3">
+        <div className="hidden gap-8 sm:grid sm:grid-cols-2 lg:grid-cols-3">
           {/* Brand */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center gap-2">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-lg shadow-emerald-500/25">
                 <Leaf className="h-5 w-5" />
@@ -58,7 +58,7 @@ export function Footer() {
           </div>
 
           {/* Contact Info */}
-          <div className="space-y-3 text-center">
+          <div className="space-y-4 text-center">
             <h3 className="footer-heading">Контакти</h3>
             <div className="mx-auto max-w-[17.5rem] flex flex-col gap-2">
               <a
@@ -83,7 +83,7 @@ export function Footer() {
           </div>
 
           {/* Business Hours */}
-          <div className="space-y-3 text-center">
+          <div className="space-y-4 text-center">
             <h3 className="footer-heading">Режим роботи</h3>
             <div className="mx-auto max-w-[17.5rem] space-y-2 text-sm text-slate-600 dark:text-admin-text-secondary">
               <div>Пн - Пт: 9:00 - 18:00</div>
@@ -93,7 +93,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-4 sm:mt-6 border-t border-slate-100 dark:border-admin-border pt-3 sm:pt-4 text-center space-y-1">
+        <div className="mt-6 sm:mt-8 border-t border-slate-100 dark:border-admin-border pt-4 sm:pt-6 text-center space-y-1.5">
           <p className="!text-[0.625rem] sm:!text-sm text-slate-500 dark:text-admin-text-muted">
             © {new Date().getFullYear()} Premium Flora. Всі права захищені.
           </p>
