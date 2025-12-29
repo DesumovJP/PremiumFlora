@@ -178,6 +178,7 @@ function MobileContactButton({
   sublabel,
   variant,
   index,
+  className,
 }: {
   href: string;
   icon?: typeof Phone;
@@ -186,6 +187,7 @@ function MobileContactButton({
   sublabel?: string;
   variant: "emerald" | "purple" | "sky";
   index: number;
+  className?: string;
 }) {
   const variantStyles = {
     emerald: {
@@ -220,6 +222,7 @@ function MobileContactButton({
         "active:scale-[0.98]",
         // Staggered animation
         "opacity-0 translate-y-2 animate-[slideUpFade_0.3s_ease-out_forwards]",
+        className,
       )}
       style={{ animationDelay: `${180 + index * 40}ms` }}
     >
@@ -406,25 +409,25 @@ export function Navigation() {
                     index={0}
                   />
 
-                  {/* Viber */}
-                  <MobileContactButton
-                    href={contacts.viber.href}
-                    iconComponent={ViberIcon}
-                    label="Viber"
-                    sublabel="Написати в месенджер"
-                    variant="purple"
-                    index={1}
-                  />
-
-                  {/* Telegram */}
-                  <MobileContactButton
-                    href={contacts.telegram.href}
-                    iconComponent={TelegramIcon}
-                    label="Telegram"
-                    sublabel={contacts.telegram.username}
-                    variant="sky"
-                    index={2}
-                  />
+                  {/* Viber & Telegram - 50% each */}
+                  <div className="flex gap-2.5">
+                    <MobileContactButton
+                      href={contacts.viber.href}
+                      iconComponent={ViberIcon}
+                      label="Viber"
+                      variant="purple"
+                      index={1}
+                      className="flex-1"
+                    />
+                    <MobileContactButton
+                      href={contacts.telegram.href}
+                      iconComponent={TelegramIcon}
+                      label="Telegram"
+                      variant="sky"
+                      index={2}
+                      className="flex-1"
+                    />
+                  </div>
                 </div>
 
                 {/* Work hours */}
