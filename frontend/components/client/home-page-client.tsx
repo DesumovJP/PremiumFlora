@@ -55,7 +55,6 @@ export function HomePageClient({ products, posts }: HomePageClientProps) {
         open={contactModalOpen}
         onOpenChange={setContactModalOpen}
         title="Зв'яжіться з нами"
-        description="Оберіть зручний спосіб зв'язку"
         size="sm"
       >
         <ContactModalContent onClose={() => setContactModalOpen(false)} />
