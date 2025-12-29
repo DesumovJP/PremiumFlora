@@ -7,6 +7,8 @@ import { useState } from "react";
 const BLUR_DATA_URL = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2Y4ZmFmYyIvPjwvc3ZnPg==";
 import { Navigation } from "@/components/client/navigation";
 import { Footer } from "@/components/client/footer";
+import { ContactModalContent } from "@/components/client/contact-modal-content";
+import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -272,6 +274,16 @@ export function ProductPageClient({ product }: { product: Product }) {
         </section>
       </main>
       <Footer />
+
+      {/* Contact Modal */}
+      <Modal
+        open={contactFormOpen}
+        onOpenChange={setContactFormOpen}
+        title="Зв'яжіться з нами"
+        size="sm"
+      >
+        <ContactModalContent onClose={() => setContactFormOpen(false)} />
+      </Modal>
     </>
   );
 }
