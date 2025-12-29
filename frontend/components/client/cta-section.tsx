@@ -68,8 +68,8 @@ export function CtaSection({ onContactClick, variant = 'home' }: CtaSectionProps
         className="relative z-10 py-8 sm:py-12 lg:py-16 xl:py-20 px-5 sm:px-6 lg:px-8"
       >
         <div className="max-w-4xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/50">
+          {/* Badge - hidden on mobile */}
+          <div className="hidden sm:inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/50">
             <Leaf className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
               {c.badge}
@@ -77,7 +77,7 @@ export function CtaSection({ onContactClick, variant = 'home' }: CtaSectionProps
           </div>
 
           {/* Heading */}
-          <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-slate-900 dark:text-white mb-3 sm:mb-4 leading-tight">
+          <h2 className="text-lg sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-slate-900 dark:text-white mb-2 sm:mb-4 leading-tight">
             {c.title}{' '}
             <span className="text-emerald-600 dark:text-emerald-400">{c.titleAccent}</span>
           </h2>
@@ -102,7 +102,7 @@ export function CtaSection({ onContactClick, variant = 'home' }: CtaSectionProps
               size="lg"
               variant="outline"
               asChild
-              className="w-auto h-12 sm:h-14 px-6 sm:px-8 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-semibold text-base rounded-full transition-all duration-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-white/50 dark:hover:bg-slate-800/50"
+              className="hidden sm:flex w-auto h-12 sm:h-14 px-6 sm:px-8 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-semibold text-base rounded-full transition-all duration-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-white/50 dark:hover:bg-slate-800/50"
             >
               <a href="tel:+380441234567">
                 <Phone className="w-5 h-5 mr-2" />
