@@ -109,9 +109,16 @@ export function HomePageClient({ products, posts }: HomePageClientProps) {
   return (
     <div className="relative">
       {/* Global background */}
-      <div className="fixed inset-0 -z-10 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-slate-50/30 to-white" />
-        <div className="absolute inset-0 bg-[url('/bg.webp')] bg-cover bg-center bg-fixed opacity-[0.02]" />
+      <div
+        className="fixed inset-0 -z-10 pointer-events-none"
+        style={{
+          overscrollBehavior: 'none',
+          overscrollBehaviorY: 'none',
+          touchAction: 'none'
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-slate-50/30 to-white dark:from-[#0d1117] dark:via-[#0d1117] dark:to-[#0d1117]" />
+        <div className="absolute inset-0 bg-[url('/bg.webp')] bg-cover bg-center bg-fixed opacity-[0.02] dark:opacity-[0.01]" />
       </div>
 
       {/* Hero з value proposition */}

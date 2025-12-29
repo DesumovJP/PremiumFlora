@@ -16,7 +16,7 @@ export default async function Home() {
   return (
     <>
       <Navigation />
-      <main>
+      <main className="overscroll-none">
         <HomePageClient products={products} posts={displayPosts} />
       </main>
       <Footer />

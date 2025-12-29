@@ -983,6 +983,33 @@ p:not([class*="text-xs"]):not([class*="text-sm"]):not([class*="text-base"]):not(
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
+  /* Prevent background bounce on overscroll (especially iOS Safari) */
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+}
+
+body {
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+main, section {
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+  touch-action: pan-y;
+}
+
+/* Prevent bounce on fixed background elements */
+div[class*="fixed"][class*="inset-0"] {
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+  overscroll-behavior-x: none !important;
+  touch-action: none !important;
+  will-change: transform;
 }
 
 /* Custom scrollbar - Premium Style */
