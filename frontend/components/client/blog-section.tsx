@@ -87,7 +87,7 @@ export function BlogSection({ posts }: BlogSectionProps) {
             className="relative -mx-4 sm:mx-0"
           >
             {/* Mobile: Horizontal scroll */}
-            <div className="flex gap-3 overflow-x-auto pb-4 px-4 sm:hidden snap-x snap-mandatory scrollbar-hide">
+            <div className="flex gap-3 overflow-x-auto pb-4 px-4 sm:hidden snap-x snap-mandatory scroll-pl-4 scrollbar-hide">
               {featuredPosts.map((post, index) => (
                 <motion.div
                   key={post.id}
