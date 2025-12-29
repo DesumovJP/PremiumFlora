@@ -58,7 +58,7 @@ export function BlogSection({ posts }: BlogSectionProps) {
 
   return (
     <>
-      <section ref={ref} className="relative overflow-hidden pt-10 lg:pt-14 pb-20 lg:pb-28 bg-gradient-to-b from-white via-amber-50/20 to-emerald-50/30">
+      <section ref={ref} className="relative overflow-hidden pt-10 lg:pt-14 pb-10 lg:pb-14 bg-gradient-to-b from-white via-amber-50/20 to-emerald-50/30">
 
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
