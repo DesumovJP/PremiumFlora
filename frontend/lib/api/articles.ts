@@ -181,3 +181,23 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
     return [];
   }
 }
+
+/**
+ * Отримати блог-пост за ID (documentId)
+ */
+export async function getBlogPostById(documentId: string): Promise<BlogPost | null> {
+  try {
+    const data = await graphqlRequest<ArticleResponse>(GET_ARTICLE_BY_ID, {
+      documentId,
+    });
+
+    if (!data.article) {
+      return null;
+    }
+
+    return convertArticleToBlogPost(data.article);
+  } catch (error) {
+    console.error('Error fetching blog post:', error);
+    return null;
+  }
+}

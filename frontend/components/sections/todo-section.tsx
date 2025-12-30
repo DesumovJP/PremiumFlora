@@ -32,7 +32,7 @@ import {
   PlayCircle,
   ChevronDown,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 const toast = {
   success: (msg: string) => console.log(`[SUCCESS] ${msg}`),
@@ -245,36 +245,76 @@ export function TodoSection() {
   const completedTasks = tasks.filter((t) => t.status === "completed");
   const displayTasks = activeTab === "pending" ? pendingTasks : completedTasks;
 
-  // Task row component
-  const TaskRow = ({ task }: { task: GraphQLTask }) => {
+  // Compact row for completed tasks
+  const CompletedTaskRow = ({ task }: { task: GraphQLTask }) => {
+    const categoryInfo = categoryConfig[task.category as TaskCategory] || categoryConfig.other;
+
+    return (
+      <div className="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--admin-bg)] transition-colors">
+        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+        <span className="flex-1 text-sm text-[var(--admin-text-muted)] line-through truncate">
+          {task.title}
+        </span>
+        <Badge className={cn("text-[10px] shrink-0 opacity-60", categoryInfo.bgColor, categoryInfo.color)}>
+          {categoryInfo.label}
+        </Badge>
+        <span className="text-xs text-[var(--admin-text-muted)] shrink-0">
+          {new Date(task.updatedAt || task.dueDate).toLocaleDateString('uk-UA')}
+        </span>
+        <button
+          onClick={() => handleDelete(task)}
+          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded transition-all"
+          title="Видалити"
+        >
+          <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+        </button>
+      </div>
+    );
+  };
+
+  // Pin Card component - styled like a pinned note
+  const TaskCard = ({ task }: { task: GraphQLTask }) => {
     const overdue = task.status !== "completed" && isOverdue(task.dueDate);
     const isCompleted = task.status === "completed";
     const isInProgress = task.status === "in_progress";
-    const isExpanded = expandedTaskId === task.documentId;
 
     const categoryInfo = categoryConfig[task.category as TaskCategory] || categoryConfig.other;
+
+    // Random rotation for pin effect (-2 to 2 degrees)
+    const rotation = useMemo(() => {
+      const hash = task.documentId.charCodeAt(0) + task.documentId.charCodeAt(1);
+      return (hash % 5) - 2;
+    }, [task.documentId]);
 
     return (
       <div
         className={cn(
-          "rounded-xl border border-l-4 transition-colors",
-          priorityBorderColor[task.priority as TaskPriority] || priorityBorderColor.medium,
+          "relative group rounded-lg border-2 p-4 transition-all duration-200",
+          "hover:shadow-lg hover:-translate-y-1",
+          // Pin effect - slight rotation
+          `hover:rotate-0`,
           isCompleted
-            ? "bg-slate-50/50 dark:bg-slate-800/40 border-y-transparent border-r-transparent opacity-70"
+            ? "bg-[var(--admin-bg)] border-[var(--admin-border-subtle)] opacity-60"
             : overdue
-            ? "bg-rose-50/50 dark:bg-rose-900/10 border-y-rose-100 border-r-rose-100 dark:border-y-rose-900/30 dark:border-r-rose-900/30"
-            : "bg-white dark:bg-admin-surface-elevated border-y-slate-100 border-r-slate-100 dark:border-y-admin-border dark:border-r-admin-border"
+            ? "bg-rose-50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800/50"
+            : "bg-[var(--admin-surface)] border-[var(--admin-border)]"
         )}
+        style={{ transform: `rotate(${rotation}deg)` }}
       >
-        {/* Main row - always visible */}
-        <div className="group flex items-center gap-3 px-4 py-3">
-          {/* Checkbox */}
+        {/* Pin icon */}
+        <div className={cn(
+          "absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full shadow-md",
+          task.priority === "high" ? "bg-rose-500" : task.priority === "medium" ? "bg-amber-500" : "bg-emerald-500"
+        )} />
+
+        {/* Header with checkbox and category */}
+        <div className="flex items-start justify-between gap-2 mb-2 pt-1">
           <button
             onClick={(e) => {
               e.stopPropagation();
               if (!isCompleted) handleComplete(task);
             }}
-            className="shrink-0"
+            className="shrink-0 mt-0.5"
             disabled={isCompleted}
           >
             {isCompleted ? (
@@ -282,168 +322,84 @@ export function TodoSection() {
             ) : isInProgress ? (
               <PlayCircle className="h-5 w-5 text-blue-500" />
             ) : (
-              <Circle className="h-5 w-5 text-slate-300 dark:text-slate-600 hover:text-emerald-500 transition-colors" />
+              <Circle className="h-5 w-5 text-[var(--admin-text-muted)] hover:text-emerald-500 transition-colors" />
             )}
           </button>
-
-
-          {/* Title - clickable on mobile to expand */}
-          <button
-            onClick={() => toggleExpand(task.documentId)}
-            className="flex-1 min-w-0 text-left sm:pointer-events-none"
-          >
-            <p className={cn(
-              "text-sm font-medium truncate",
-              isCompleted ? "text-slate-400 line-through" : "text-slate-800 dark:text-admin-text-primary"
-            )}>
-              {task.title}
-            </p>
-          </button>
-
-          {/* Mobile expand indicator */}
-          <ChevronDown className={cn(
-            "h-4 w-4 text-slate-400 shrink-0 sm:hidden transition-transform",
-            isExpanded && "rotate-180"
-          )} />
-
-          {/* Category badge - desktop only */}
-          <Badge className={cn("text-xs shrink-0 hidden sm:inline-flex", categoryInfo.bgColor, categoryInfo.color)}>
+          <Badge className={cn("text-[10px] shrink-0", categoryInfo.bgColor, categoryInfo.color)}>
             {categoryInfo.label}
           </Badge>
+        </div>
 
-          {/* Priority badge - desktop only (high only shows extra badge) */}
-          {task.priority === "high" && !isCompleted && (
-            <Badge className="bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs shrink-0 hidden sm:inline-flex">
-              Терміново
-            </Badge>
-          )}
+        {/* Title */}
+        <h4 className={cn(
+          "font-semibold text-sm mb-2 line-clamp-2",
+          isCompleted ? "text-[var(--admin-text-muted)] line-through" : "text-[var(--admin-text-primary)]"
+        )}>
+          {task.title}
+        </h4>
 
-          {/* In progress badge - desktop only */}
-          {isInProgress && (
-            <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs shrink-0 hidden sm:inline-flex">
-              В роботі
-            </Badge>
-          )}
+        {/* Description */}
+        {task.description && (
+          <p className="text-xs text-[var(--admin-text-tertiary)] mb-3 line-clamp-3">
+            {task.description}
+          </p>
+        )}
 
-          {/* Date - desktop only */}
+        {/* Footer: date + badges */}
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-[var(--admin-border-subtle)]">
           <div className={cn(
-            "text-xs shrink-0 hidden sm:block",
-            overdue ? "text-rose-500 font-medium" : "text-slate-400"
+            "flex items-center gap-1 text-xs",
+            overdue ? "text-rose-500 font-medium" : "text-[var(--admin-text-muted)]"
           )}>
+            <Clock className="h-3 w-3" />
             {formatDate(task.dueDate)}
           </div>
-
-          {/* Actions - desktop only */}
-          <div className="hidden sm:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-            {task.status === "pending" && (
-              <button
-                onClick={() => handleStartProgress(task)}
-                className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
-                title="Почати"
-              >
-                <PlayCircle className="h-4 w-4 text-blue-500" />
-              </button>
+          <div className="flex items-center gap-1">
+            {isInProgress && (
+              <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] px-1.5">
+                В роботі
+              </Badge>
             )}
-            <button
-              onClick={() => handleEdit(task)}
-              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
-              title="Редагувати"
-            >
-              <Edit2 className="h-4 w-4 text-slate-400" />
-            </button>
-            <button
-              onClick={() => handleDelete(task)}
-              className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"
-              title="Видалити"
-            >
-              <Trash2 className="h-4 w-4 text-rose-400" />
-            </button>
+            {task.priority === "high" && !isCompleted && (
+              <Badge className="bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-[10px] px-1.5">
+                !
+              </Badge>
+            )}
           </div>
         </div>
 
-        {/* Expanded content - mobile only */}
-        <div className={cn(
-          "sm:hidden overflow-hidden transition-all duration-200",
-          isExpanded ? "max-h-96" : "max-h-0"
-        )}>
-          <div className="px-4 pb-4 pt-1 space-y-3 border-t border-slate-100 dark:border-admin-border">
-            {/* Description */}
-            {task.description && (
-              <p className="text-sm text-slate-600 dark:text-admin-text-secondary">
-                {task.description}
-              </p>
-            )}
-
-            {/* Meta info */}
-            <div className="flex flex-wrap gap-2">
-              {/* Category */}
-              <Badge className={cn("text-xs", categoryInfo.bgColor, categoryInfo.color)}>
-                {categoryInfo.label}
-              </Badge>
-
-              {/* Priority */}
-              {task.priority === "high" && (
-                <Badge className="bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs">
-                  Терміново
-                </Badge>
-              )}
-
-              {/* Status */}
-              {isInProgress && (
-                <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs">
-                  В роботі
-                </Badge>
-              )}
-            </div>
-
-            {/* Date */}
-            <div className={cn(
-              "flex items-center gap-1.5 text-sm",
-              overdue ? "text-rose-500 font-medium" : "text-slate-500"
-            )}>
-              <Clock className="h-4 w-4" />
-              {formatDate(task.dueDate)}
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-2 pt-2">
-              {task.status === "pending" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleStartProgress(task)}
-                  className="flex-1"
-                >
-                  <PlayCircle className="h-4 w-4 mr-1.5" />
-                  Почати
-                </Button>
-              )}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleEdit(task)}
-                className="flex-1"
-              >
-                <Edit2 className="h-4 w-4 mr-1.5" />
-                Редагувати
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleDelete(task)}
-                className="text-rose-500 hover:text-rose-600 hover:bg-rose-50"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+        {/* Actions on hover */}
+        <div className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {task.status === "pending" && (
+            <button
+              onClick={() => handleStartProgress(task)}
+              className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+              title="Почати"
+            >
+              <PlayCircle className="h-3.5 w-3.5 text-blue-500" />
+            </button>
+          )}
+          <button
+            onClick={() => handleEdit(task)}
+            className="p-1 hover:bg-[var(--admin-bg)] rounded"
+            title="Редагувати"
+          >
+            <Edit2 className="h-3.5 w-3.5 text-[var(--admin-text-muted)]" />
+          </button>
+          <button
+            onClick={() => handleDelete(task)}
+            className="p-1 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded"
+            title="Видалити"
+          >
+            <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+          </button>
         </div>
       </div>
     );
   };
 
   return (
-    <Card className="border border-slate-100 dark:border-[#30363d] bg-white/90 dark:bg-admin-surface shadow-md">
+    <Card className="border border-slate-100 dark:border-[var(--admin-border)] bg-white/90 dark:bg-admin-surface shadow-md">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">Завдання</CardTitle>
@@ -486,7 +442,7 @@ export function TodoSection() {
             <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
           </div>
         ) : displayTasks.length === 0 ? (
-          <div className="text-center py-12 text-slate-400">
+          <div className="text-center py-12 text-[var(--admin-text-muted)]">
             <Calendar className="h-10 w-10 mx-auto mb-2 opacity-50" />
             <p className="mb-4">{activeTab === "pending" ? "Немає активних завдань" : "Немає виконаних завдань"}</p>
             {activeTab === "pending" && (
@@ -496,10 +452,18 @@ export function TodoSection() {
               </Button>
             )}
           </div>
-        ) : (
-          <div className="space-y-2">
+        ) : activeTab === "pending" ? (
+          /* Активні завдання - картки на дошці */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 py-2">
             {displayTasks.map((task) => (
-              <TaskRow key={task.documentId} task={task} />
+              <TaskCard key={task.documentId} task={task} />
+            ))}
+          </div>
+        ) : (
+          /* Виконані завдання - компактний список */
+          <div className="space-y-1">
+            {displayTasks.map((task) => (
+              <CompletedTaskRow key={task.documentId} task={task} />
             ))}
           </div>
         )}

@@ -287,7 +287,7 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
               }}
               min="0"
               max="1000"
-              className="pr-12"
+              className="pr-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="Поріг залишків"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-stone-400">
@@ -386,9 +386,26 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
         {/* Items list */}
         {items.length > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs text-stone-500 dark:text-slate-400">
-              <span>{items.length} варіантів</span>
-              <span>{groupSupplyItems(items).length} квіток</span>
+            {/* Статус-бар */}
+            <div className="flex items-center justify-between p-2 rounded-lg bg-[var(--admin-bg)]">
+              <div className="flex items-center gap-3 text-xs">
+                <span className="text-[var(--admin-text-tertiary)]">
+                  <span className="font-medium text-[var(--admin-text-primary)]">{items.length}</span> варіантів
+                </span>
+                <span className="text-[var(--admin-text-tertiary)]">
+                  <span className="font-medium text-[var(--admin-text-primary)]">{groupSupplyItems(items).length}</span> квіток
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-[10px]">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                  критично
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  низько
+                </span>
+              </div>
             </div>
 
             <div className="max-h-[500px] overflow-y-auto space-y-2">
@@ -460,7 +477,7 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
                                   onChange={(e) =>
                                     updateNewItem(item.id, "length", parseInt(e.target.value) || 0)
                                   }
-                                  className="h-8 text-xs pr-6"
+                                  className="h-8 text-xs pr-6 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-stone-400">см</span>
                               </div>
@@ -487,7 +504,19 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
                           </div>
                         )}
 
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1">
+                          {/* Швидкі кнопки */}
+                          <div className="flex gap-0.5">
+                            {[50, 100, 200].map((qty) => (
+                              <button
+                                key={qty}
+                                onClick={() => updatePlannedQuantity(item.id, item.plannedQuantity + qty)}
+                                className="px-1.5 py-1 text-[10px] font-medium rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
+                              >
+                                +{qty}
+                              </button>
+                            ))}
+                          </div>
                           <Input
                             type="number"
                             value={item.plannedQuantity}
@@ -496,7 +525,7 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
                             }
                             min="0"
                             step="25"
-                            className="w-20 h-8 text-sm text-center"
+                            className="w-16 h-7 text-xs text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <button
                             onClick={() => removeItem(item.id)}

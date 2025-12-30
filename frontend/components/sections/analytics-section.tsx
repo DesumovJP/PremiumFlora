@@ -169,7 +169,7 @@ export function AnalyticsSection({
 
 
   return (
-    <Card className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161b22]">
+    <Card className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-[var(--admin-surface)]">
       <CardHeader className="flex flex-row items-center justify-between gap-3 pb-4">
         <div>
           <CardTitle className="text-lg font-semibold text-slate-900 dark:text-white">Аналітика продажів</CardTitle>

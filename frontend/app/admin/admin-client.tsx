@@ -54,7 +54,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [supplyOpen, setSupplyOpen] = useState(false);
   const [discount, setDiscount] = useState<number>(0);
-  const [paymentStatus, setPaymentStatus] = useState<'paid' | 'expected'>('expected');
+  const [paymentStatus, setPaymentStatus] = useState<'paid' | 'expected'>('paid');
   const [posComment, setPosComment] = useState<string>('');
 
   // Real data states

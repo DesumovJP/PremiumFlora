@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Phone, X } from 'lucide-react';
+import { Phone, X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -47,47 +47,58 @@ export function StickyCTA() {
   return (
     <div
       className={cn(
-        'fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-0',
-        'transform transition-transform duration-300 ease-out',
-        isVisible ? 'translate-y-0' : 'translate-y-full'
+        'fixed bottom-0 left-0 right-0 z-50 px-3 pb-3 sm:px-4 sm:pb-4',
+        'transform transition-all duration-500 ease-out',
+        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
       )}
+      style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
     >
-      <div className="mx-auto max-w-4xl">
-        <div className="relative bg-white rounded-2xl sm:rounded-b-none shadow-xl border border-slate-200 p-4 sm:p-6">
-          {/* Close button */}
-          <button
-            onClick={handleDismiss}
-            className="absolute top-3 right-3 p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-            aria-label="Закрити"
-          >
-            <X className="w-5 h-5" />
-          </button>
+      <div className="mx-auto max-w-lg sm:max-w-2xl">
+        {/* Premium card with subtle gradient border */}
+        <div className="relative rounded-2xl bg-gradient-to-r from-emerald-400/60 via-teal-400/60 to-emerald-400/60 p-0.5 shadow-2xl shadow-slate-900/10">
+          <div className="relative bg-white rounded-[14px] px-4 py-4 sm:px-5 sm:py-3.5">
+            {/* Close button */}
+            <button
+              onClick={handleDismiss}
+              className="absolute top-2.5 right-2.5 sm:top-1/2 sm:-translate-y-1/2 sm:right-3 p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors z-10"
+              aria-label="Закрити"
+            >
+              <X className="w-4 h-4" />
+            </button>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 pr-8 sm:pr-10">
-            <div className="text-center sm:text-left sm:pr-4">
-              <p className="text-base sm:text-lg font-semibold text-slate-900">
-                Готові обговорити оптову співпрацю?
-              </p>
-              <p className="text-sm text-slate-600">
-                Отримайте персональну пропозицію за 24 години
-              </p>
+            {/* Content - stacked on mobile, horizontal on desktop */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:pr-8">
+              {/* Text content */}
+              <div className="pr-6 sm:pr-0">
+                <div className="flex items-center gap-1.5 mb-1 sm:mb-0.5">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                  <span className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wide">
+                    Оптова пропозиція
+                  </span>
+                </div>
+                <h3 className="text-base sm:text-[15px] font-semibold text-slate-900 leading-snug">
+                  Готові до співпраці?
+                </h3>
+                <p className="text-sm sm:text-[13px] text-slate-500 mt-0.5 sm:mt-0">
+                  Персональна пропозиція за 24 години
+                </p>
+              </div>
+
+              {/* CTA Button - full width on mobile, auto on desktop */}
+              <Button
+                size="lg"
+                asChild
+                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white h-11 sm:h-10 px-5 rounded-xl font-medium shadow-lg shadow-emerald-500/25 transition-all duration-200 flex-shrink-0"
+              >
+                <a href="tel:+380441234567" className="gap-2">
+                  <Phone className="w-4 h-4" />
+                  Зателефонувати
+                </a>
+              </Button>
             </div>
-
-            <Button size="default" asChild className="w-auto">
-              <a href="tel:+380441234567" className="gap-2">
-                <Phone className="w-4 h-4" />
-                Зателефонувати
-              </a>
-            </Button>
           </div>
         </div>
       </div>
-
-      {/* Safe area spacer for iOS */}
-      <div
-        className="h-0 sm:hidden"
-        style={{ height: 'env(safe-area-inset-bottom)' }}
-      />
     </div>
   );
 }

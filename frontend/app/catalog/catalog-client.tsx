@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Modal } from "@/components/ui/modal";
 import { ContactModalContent } from "@/components/client/contact-modal-content";
 import { CtaSection } from "@/components/client/cta-section";
-import { Search, X, Grid3x3, List, Package, Truck, Sparkles, ArrowUpDown } from "lucide-react";
+import { Search, X, Grid3x3, List, ArrowUpDown, Package, Truck, Sparkles } from "lucide-react";
 import { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -61,67 +61,45 @@ export function CatalogClient({ products }: CatalogClientProps) {
 
   return (
     <main className="min-h-screen pt-16 lg:pt-20">
-      {/* Hero Header - Compact Premium Design */}
-      <section className="relative overflow-hidden py-6 sm:py-8 lg:py-10">
-        {/* Background Image with Gradient Overlay */}
-        <div className="absolute inset-0 -z-10">
-          <div className="h-full w-full bg-[url('https://mymediastorage.fra1.digitaloceanspaces.com/premiumFlora/2147760920_14fa35030d.jpg')] bg-cover bg-center" />
-          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/90 to-white/60" />
-        </div>
-
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 lg:gap-12">
-            {/* Left: Title & Description */}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tight text-slate-900 mb-2 sm:mb-3">
-                Каталог{' '}
-                <span className="relative inline-block">
-                  <span className="text-emerald-600">квітів</span>
-                  <svg className="absolute -bottom-1 left-0 w-full h-2 text-emerald-300/50" viewBox="0 0 200 8" preserveAspectRatio="none">
-                    <path d="M0 6c40-3 80-3 120-1.5s80 3 80 0" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round"/>
-                  </svg>
-                </span>
+      {/* Hero Header - Clean Minimal Design */}
+      <section className="border-b border-slate-100 bg-slate-50/50 py-4 sm:py-5 lg:py-6">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-8">
+            {/* Left: Title */}
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">
+                Каталог <span className="text-emerald-600">квітів</span>
               </h1>
-              <p className="text-sm sm:text-base lg:text-lg text-slate-600 max-w-xl leading-relaxed">
-                Широкий вибір свіжих квітів для вашого бізнесу — від класичних троянд до екзотичних орхідей
+              <p className="mt-1 text-sm text-slate-500">
+                Свіжі квіти преміальної якості для вашого бізнесу
               </p>
             </div>
 
-            {/* Right: Feature badges */}
-            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 lg:flex lg:gap-3">
+            {/* Right: Feature badges - centered on mobile */}
+            <div className="flex justify-center sm:justify-end gap-2 sm:gap-3 flex-shrink-0 w-full sm:w-auto">
               {[
-                { icon: Package, title: 'Від 50 шт', desc: 'Мін. замовлення', color: 'emerald' },
-                { icon: Truck, title: 'Щоп\'ятниці', desc: 'Свіжа поставка', color: 'cyan' },
-                { icon: Sparkles, title: '7+ днів', desc: 'Гарантія свіжості', color: 'amber' },
+                { icon: Package, label: 'Від 50 шт', color: 'emerald' },
+                { icon: Truck, label: 'Щоп\'ятниці', color: 'cyan' },
+                { icon: Sparkles, label: '7+ днів', color: 'amber' },
               ].map((f) => (
                 <div
-                  key={f.title}
+                  key={f.label}
                   className={cn(
-                    "flex flex-col sm:flex-row items-center gap-1 sm:gap-2.5 px-2 py-2 sm:px-3.5 sm:py-2.5 rounded-lg sm:rounded-xl",
-                    "bg-white border border-slate-100",
-                    "transition-colors duration-150 hover:border-slate-200"
+                    "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium",
+                    "bg-white border border-slate-200/60 shadow-sm",
+                    "flex-1 sm:flex-initial max-w-[120px] sm:max-w-none",
+                    f.color === 'emerald' && "text-emerald-700",
+                    f.color === 'cyan' && "text-cyan-700",
+                    f.color === 'amber' && "text-amber-700",
                   )}
                 >
-                  <div className={cn(
-                    "flex-shrink-0 w-7 h-7 sm:w-9 sm:h-9 rounded-md sm:rounded-lg flex items-center justify-center",
-                    f.color === 'emerald' && "bg-emerald-50 text-emerald-600",
-                    f.color === 'cyan' && "bg-cyan-50 text-cyan-600",
-                    f.color === 'amber' && "bg-amber-50 text-amber-600",
-                  )}>
-                    <f.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  </div>
-                  <div className="min-w-0 text-center sm:text-left">
-                    <div className="font-semibold text-slate-900 text-[0.625rem] sm:text-sm leading-tight">{f.title}</div>
-                    <div className="text-[0.5625rem] sm:text-[0.6875rem] text-slate-500 leading-tight hidden sm:block">{f.desc}</div>
-                  </div>
+                  <f.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate">{f.label}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
-
-        {/* Bottom border */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
       </section>
 
       {/* Search and Filters - Premium Sticky Bar */}

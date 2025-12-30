@@ -8,30 +8,30 @@
    ============================================ */
 
 :root {
-  /* Base Colors - Light Theme */
-  --background: #f8fbf9;
-  --foreground: #0f172a;
-  --muted: #64748b;
+  /* Base Colors - Light Theme (ще темніші, комфортні для очей) */
+  --background: #e8ece9;
+  --foreground: #1a2332;
+  --muted: #5c6b7a;
   --brand: #0f9c6e;
-  --brand-soft: #e6f4ef;
-  --border: #e2e8f0;
-  
-  /* Surface Colors - Light Theme */
-  --surface: #ffffff;
-  --surface-elevated: rgba(255, 255, 255, 0.95);
-  --surface-overlay: rgba(255, 255, 255, 0.85);
+  --brand-soft: #d9ebe3;
+  --border: #cdd6d0;
 
-  /* Admin Panel Colors - Light Theme */
-  --admin-bg: #f9fbfa;
-  --admin-surface: #ffffff;
-  --admin-surface-elevated: rgba(255, 255, 255, 0.95);
-  --admin-surface-overlay: rgba(255, 255, 255, 0.85);
-  --admin-border: #e2e8f0;
-  --admin-border-subtle: #f1f5f9;
-  --admin-text-primary: #0f172a;
-  --admin-text-secondary: #334155;
-  --admin-text-tertiary: #64748b;
-  --admin-text-muted: #94a3b8;
+  /* Surface Colors - Light Theme (теплий сірий з зеленим відтінком) */
+  --surface: #f2f5f3;
+  --surface-elevated: rgba(242, 245, 243, 0.98);
+  --surface-overlay: rgba(242, 245, 243, 0.95);
+
+  /* Admin Panel Colors - Light Theme (приглушені, не б'ють по очах) */
+  --admin-bg: #e5e9e6;
+  --admin-surface: #eef1ef;
+  --admin-surface-elevated: rgba(238, 241, 239, 0.98);
+  --admin-surface-overlay: rgba(238, 241, 239, 0.95);
+  --admin-border: #c8d1cb;
+  --admin-border-subtle: #dae1dc;
+  --admin-text-primary: #1a2332;
+  --admin-text-secondary: #3d4a5c;
+  --admin-text-tertiary: #5c6b7a;
+  --admin-text-muted: #7d8a96;
   
   /* Brand Colors */
   --brand-primary: #0f9c6e;
@@ -108,10 +108,16 @@
   --tracking-wide: 0.025em;
   --tracking-wider: 0.05em;
   
-  /* Transitions */
+  /* Transitions - Premium timing functions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Premium easing curves */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-out-circ: cubic-bezier(0.85, 0, 0.15, 1);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
   
   /* Backdrop Blur */
   --blur-sm: 0.25rem;
@@ -129,12 +135,12 @@
   --brand: #10b981;
   --brand-soft: rgba(16, 185, 129, 0.15);
   --border: #1c2128;
-  
+
   /* Surface Colors - Dark Theme (GitHub style) */
   --surface: #161b22;
   --surface-elevated: rgba(22, 27, 34, 0.95);
   --surface-overlay: rgba(22, 27, 34, 0.85);
-  
+
   /* Admin Panel Colors - Dark Theme */
   --admin-bg: #0d1117;
   --admin-surface: #161b22;
@@ -191,24 +197,17 @@
 }
 
 body {
-  background: #f9fbfa;
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   letter-spacing: var(--tracking-tight);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /*
-   * Стабільний layout без з'їдання правого паддінгу:
-   * - замість примусового scroll використовуємо scrollbar-gutter
-   * - скролбар з'являється лише коли потрібен, але місце під нього резервується
-   *   ➜ відступ справа стабільний (не стрибає при появі скролбару)
-   */
   overflow-y: auto;
-  scrollbar-gutter: stable;
 }
 
 .dark body {
-  background: #0d1117;
+  background: var(--background);
   color: var(--foreground);
 }
 
@@ -289,7 +288,7 @@ body {
 
 /* Виняток для ховеру таблиць - темний ховер для кращої читабельності (тільки для таблиць) */
 .dark table tbody tr:hover {
-  background-color: #21262d !important;
+  background-color: var(--admin-border-subtle) !important;
 }
 
 .dark .bg-slate-100:not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-rose"]):not([class*="bg-slate-50"]) {
@@ -307,24 +306,24 @@ body {
 .dark [class*="border-slate-100"],
 .dark [class*="border-slate-200"],
 .dark [class*="border-admin-border"] {
-  border-color: #2e3640 !important;
+  border-color: var(--admin-border-subtle) !important;
   border-width: 0.5px !important;
 }
 
 /* Тонші бордери для всіх стандартних бордерів в темній темі */
 .dark .border:not([class*="border-0"]):not([class*="border-2"]):not([class*="border-4"]):not([class*="border-8"]):not([class*="ring-"]) {
   border-width: 0.5px !important;
-  border-color: #2e3640 !important;
+  border-color: var(--admin-border-subtle) !important;
 }
 
 /* Більш темні лінії для таблиць та карток в темній темі - менш контрастні та тонші */
 .dark table tbody tr {
-  border-color: #2e3640 !important;
+  border-color: var(--admin-border-subtle) !important;
   border-width: 0.5px !important;
 }
 
 .dark .divide-y > * + * {
-  border-top-color: #2e3640 !important;
+  border-top-color: var(--admin-border-subtle) !important;
   border-top-width: 0.5px !important;
 }
 
@@ -335,8 +334,8 @@ body {
 
 /* Темніші варіанти в картках POS терміналу - тільки для темної теми */
 .dark .pos-variant-item {
-  background-color: #161b22 !important;
-  border-color: #2e3640 !important;
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border-subtle) !important;
 }
 
 /* Ховер ефект для варіантів в POS терміналі - світла тема */
@@ -356,7 +355,7 @@ body {
 }
 
 .dark .table-divider-dark {
-  border-top-color: #2e3640 !important;
+  border-top-color: var(--admin-border-subtle) !important;
   border-top-width: 0.5px !important;
 }
 
@@ -365,7 +364,7 @@ body {
 }
 
 .dark .table-hover-dark:hover {
-  background-color: #21262d !important;
+  background-color: var(--admin-border-subtle) !important;
 }
 
 .table-border-dark {
@@ -373,7 +372,7 @@ body {
 }
 
 .dark .table-border-dark {
-  border-color: #2e3640 !important;
+  border-color: var(--admin-border-subtle) !important;
   border-width: 0.5px !important;
 }
 
@@ -627,7 +626,7 @@ p:not([class*="text-xs"]):not([class*="text-sm"]):not([class*="text-base"]):not(
 
 .dark .admin-card {
   box-shadow: var(--shadow-md), 0 10px 15px -3px transparent, 0 4px 6px -4px transparent;
-  border-color: #30363d;
+  border-color: var(--admin-border);
 }
 
 .dark .admin-card:hover {
@@ -641,14 +640,14 @@ p:not([class*="text-xs"]):not([class*="text-sm"]):not([class*="text-base"]):not(
 
 /* Subtle borders for dark mode elements */
 .dark .admin-surface {
-  border-color: #30363d;
+  border-color: var(--admin-border);
 }
 
 /* Cards, panels, containers in dark mode */
 .dark .rounded-2xl,
 .dark .rounded-xl,
 .dark .rounded-lg {
-  border: 1px solid #30363d;
+  border: 1px solid var(--admin-border);
 }
 
 /* Exclude buttons and badges from border */
@@ -674,7 +673,7 @@ p:not([class*="text-xs"]):not([class*="text-sm"]):not([class*="text-base"]):not(
 .dark input,
 .dark textarea,
 .dark select {
-  border: 1px solid #30363d !important;
+  border: 1px solid var(--admin-border) !important;
 }
 
 .dark input:focus,
@@ -724,12 +723,12 @@ p:not([class*="text-xs"]):not([class*="text-sm"]):not([class*="text-base"]):not(
 
 /* Table rows in dark mode */
 .dark table {
-  border: 1px solid #30363d;
+  border: 1px solid var(--admin-border);
 }
 
 .dark table th,
 .dark table td {
-  border-bottom: 1px solid #21262d;
+  border-bottom: 1px solid var(--admin-border-subtle);
 }
 
 /* Dividers in dark mode */
@@ -737,19 +736,19 @@ p:not([class*="text-xs"]):not([class*="text-sm"]):not([class*="text-base"]):not(
 .dark .divide-y > * + *,
 .dark [class*="border-b"],
 .dark [class*="border-t"] {
-  border-color: #30363d;
+  border-color: var(--admin-border);
 }
 
 /* Sheet/Modal content in dark mode */
 .dark [data-radix-popper-content-wrapper] > div,
 .dark [role="dialog"] {
-  border: 1px solid #30363d;
+  border: 1px solid var(--admin-border);
 }
 
 /* Dropdown menus in dark mode */
 .dark [role="menu"],
 .dark [role="listbox"] {
-  border: 1px solid #30363d;
+  border: 1px solid var(--admin-border);
 }
 
 /* Performance Optimizations */
@@ -798,6 +797,222 @@ p:not([class*="text-xs"]):not([class*="text-sm"]):not([class*="text-base"]):not(
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* iOS-style Spring Slide Up for Bottom Sheets */
+@keyframes slideUpSpring {
+  0% {
+    transform: translateY(100%);
+  }
+  60% {
+    transform: translateY(-3%);
+  }
+  80% {
+    transform: translateY(1%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* Zoom In for Gallery Modal Images */
+@keyframes zoomIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ============================================
+   UNIFIED ANIMATION SYSTEM
+   Premium, reusable animation classes
+   ============================================ */
+
+/* Premium easing - iOS-style spring */
+:root {
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Modal/Sheet Overlay */
+.animate-overlay-in {
+  animation: fadeIn 0.3s var(--ease-spring);
+}
+
+.animate-overlay-out {
+  animation: fadeOut 0.2s var(--ease-spring);
+}
+
+/* Modal Content */
+.animate-modal-in {
+  animation: modalIn 0.35s var(--ease-spring);
+}
+
+.animate-modal-out {
+  animation: modalOut 0.2s ease-out;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modalOut {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(5px);
+  }
+}
+
+/* Fullscreen Modal - Slide Up */
+.animate-fullscreen-in {
+  animation: slideUpFullscreen 0.4s var(--ease-spring);
+}
+
+.animate-fullscreen-out {
+  animation: slideDownFullscreen 0.25s ease-out;
+}
+
+@keyframes slideUpFullscreen {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDownFullscreen {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+}
+
+/* Bottom Sheet - iOS Spring */
+.animate-sheet-up {
+  animation: slideUpSpring 0.5s var(--ease-spring);
+}
+
+.animate-sheet-down {
+  animation: slideDownSheet 0.3s ease-out forwards;
+}
+
+@keyframes slideDownSheet {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+/* Side Sheet Animations */
+.animate-slide-in-left {
+  animation: slideInFromLeft 0.35s var(--ease-spring);
+}
+
+.animate-slide-in-right {
+  animation: slideInFromRight 0.35s var(--ease-spring);
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Gallery Image Zoom */
+.animate-gallery-zoom-in {
+  animation: zoomIn 0.4s var(--ease-spring);
+}
+
+/* Crossfade for image transitions */
+.animate-crossfade-out {
+  opacity: 0;
+  transform: scale(1.02);
+  transition: opacity 0.3s var(--ease-smooth), transform 0.3s var(--ease-smooth);
+}
+
+.animate-crossfade-in {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.5s var(--ease-smooth), transform 0.5s var(--ease-smooth);
+}
+
+/* Button hover animations */
+.animate-hover-lift {
+  transition: transform 0.2s var(--ease-bounce), box-shadow 0.2s ease;
+}
+
+.animate-hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+.animate-hover-lift:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.animate-hover-scale {
+  transition: transform 0.2s var(--ease-bounce);
+}
+
+.animate-hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.animate-hover-scale:active {
+  transform: scale(0.95);
+}
+
+/* Backdrop blur overlay class */
+.overlay-blur {
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.overlay-blur-subtle {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* Fade animations */
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 /* Slide In From Right */
@@ -1036,31 +1251,14 @@ div[class*="fixed"][class*="inset-0"] {
   will-change: transform;
 }
 
-/* Custom scrollbar - Premium Style */
+/* Hide scrollbar globally - scroll still works */
 ::-webkit-scrollbar {
-  width: clamp(0.5rem, 0.625rem, 0.75rem);
+  display: none;
 }
 
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #cbd5e1, #94a3b8);
-  border-radius: var(--radius-full);
-  transition: background var(--transition-base);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #94a3b8, #64748b);
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #475569, #334155);
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #334155, #1e293b);
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
 /* Selection styling */
@@ -1124,15 +1322,6 @@ select:focus-visible {
   border-top-width: 0.5px !important;
 }
 
-.admin-panel .admin-card button[class*="border"],
-.admin-panel .admin-card [class*="Badge"][class*="border"] {
-  border-width: 0.5px !important;
-}
-
-.admin-panel .admin-card textarea[class*="border"],
-.admin-panel .admin-card input[class*="border"] {
-  border-width: 0.5px !important;
-}
 
 /* Footer headings override (smaller, no uppercase) */
 .footer-heading {
@@ -1611,8 +1800,8 @@ select:focus-visible {
 }
 
 .dark .card-premium {
-  background: #161b22;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
 }
 
 .dark .card-premium:hover {
@@ -1642,9 +1831,8 @@ select:focus-visible {
    PREMIUM 120FPS ANIMATIONS
    ============================================ */
 
-/* GPU-accelerated base - use for animated elements */
+/* GPU-accelerated base - use sparingly for actively animating elements */
 .gpu-accelerated {
-  will-change: transform, opacity;
   transform: translateZ(0);
   backface-visibility: hidden;
 }

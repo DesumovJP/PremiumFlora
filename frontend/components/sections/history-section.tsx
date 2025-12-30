@@ -567,7 +567,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
     <div className="border-b border-slate-100 dark:border-admin-border last:border-b-0">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left bg-white dark:bg-admin-surface hover:bg-slate-50 dark:hover:bg-[#21262d] transition-colors"
+        className="flex w-full items-center gap-3 px-4 py-3 text-left bg-white dark:bg-admin-surface hover:bg-slate-50 dark:hover:bg-[var(--admin-border-subtle)] transition-colors"
       >
         <div
           className={cn(
@@ -1414,7 +1414,7 @@ export function HistorySection({
               {/* Summary Stats */}
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {/* Продажі */}
-                <div className="rounded-xl border border-emerald-100 dark:border-emerald-800/50 bg-emerald-50/50 dark:bg-emerald-900/20 p-3">
+                <div className="rounded-xl border border-emerald-100 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 p-3">
                   <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1">Продажі</p>
                   <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
                     {Math.round(summary.totalSalesAmount || 0).toLocaleString()} ₴
@@ -1425,7 +1425,7 @@ export function HistorySection({
                 </div>
 
                 {/* Списання */}
-                <div className="rounded-xl border border-amber-100 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/20 p-3">
+                <div className="rounded-xl border border-amber-100 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 p-3">
                   <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">Списання</p>
                   <p className="text-lg font-bold text-amber-700 dark:text-amber-300">
                     {Math.round(summary.totalWriteOffsAmount || 0).toLocaleString()} ₴
@@ -1436,7 +1436,7 @@ export function HistorySection({
                 </div>
 
                 {/* Поставки */}
-                <div className="rounded-xl border border-blue-100 dark:border-blue-800/50 bg-blue-50/50 dark:bg-blue-900/20 p-3">
+                <div className="rounded-xl border border-blue-100 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-900/20 p-3">
                   <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Поставки</p>
                   <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
                     {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} ₴

@@ -89,9 +89,9 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
           placeholder="blur"
           blurDataURL={BLUR_DATA_URL}
         />
-        {/* Light overlay to ensure text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-white/70 lg:from-white/90 lg:via-white/75 lg:to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-transparent to-white/80" />
+        {/* Light overlay to ensure text readability - more subtle on mobile to show image */}
+        <div className="absolute inset-0 bg-gradient-to-r from-white/80 via-white/65 to-white/40 lg:from-white/90 lg:via-white/75 lg:to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-white/70 lg:from-white/60 lg:via-transparent lg:to-white/80" />
       </div>
 
 

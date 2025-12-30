@@ -10,18 +10,20 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         type={type}
         className={cn(
           // Base styles
-          "flex h-9 w-full rounded-md border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3",
+          "flex h-9 w-full rounded-md px-3",
+          // Border & Background - CSS змінні
+          "border border-[var(--admin-border)] bg-[var(--admin-surface)]",
           // Typography
           "text-base sm:text-sm",
-          // Colors
-          "text-stone-800 dark:text-white placeholder:text-stone-400 dark:placeholder:text-slate-500",
+          // Colors - CSS змінні
+          "text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-muted)]",
           // Effects
           "transition-all duration-200",
           // Focus states - elegant thin border
-          "focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500",
-          "focus:ring-1 focus:ring-emerald-500/20 dark:focus:ring-emerald-500/30",
+          "focus:outline-none focus:border-emerald-500",
+          "focus:ring-1 focus:ring-emerald-500/20",
           // Hover
-          "hover:border-stone-300 dark:hover:border-slate-600",
+          "hover:border-[var(--admin-border)]",
           // Touch
           "touch-manipulation",
           className

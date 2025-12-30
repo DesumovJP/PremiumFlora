@@ -8,7 +8,12 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-xl border border-stone-200/60 dark:border-slate-700 bg-white dark:bg-slate-800 transition-all duration-200 ease-out",
+      // Base - використовуємо CSS змінні для консистентності
+      "rounded-xl transition-all duration-200 ease-out",
+      // Border - тонкий, м'який
+      "border border-[var(--admin-border)]",
+      // Background - surface колір
+      "bg-[var(--admin-surface)]",
       className
     )}
     {...props}
@@ -30,7 +35,11 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("text-sm font-medium text-stone-800 dark:text-white", className)}
+    className={cn(
+      "text-sm font-medium",
+      "text-[var(--admin-text-primary)]",
+      className
+    )}
     {...props}
   />
 ));
@@ -42,7 +51,11 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-xs text-stone-500 dark:text-slate-400", className)}
+    className={cn(
+      "text-xs",
+      "text-[var(--admin-text-tertiary)]",
+      className
+    )}
     {...props}
   />
 ));

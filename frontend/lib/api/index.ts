@@ -96,6 +96,7 @@ export {
   updateArticle,
   deleteArticle,
   getBlogPosts,
+  getBlogPostById,
 } from './articles';
 export type { GraphQLArticle, CreateArticleInput, UpdateArticleInput } from './articles';
 

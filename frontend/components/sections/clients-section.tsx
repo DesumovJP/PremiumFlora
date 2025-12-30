@@ -360,7 +360,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
 
   return (
     <>
-    <Card className="admin-card border border-slate-100 dark:border-[#30363d] bg-white/90 dark:bg-admin-surface shadow-md">
+    <Card className="admin-card border border-slate-100 dark:border-[var(--admin-border)] bg-white/90 dark:bg-admin-surface shadow-md">
       <CardHeader className="space-y-3 md:space-y-0">
         {/* Desktop: Single row | Mobile: Title + Export, then Search + Add */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -574,74 +574,76 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
               <Card
                 key={client.id}
                 className={cn(
-                  "admin-card border cursor-pointer transition-all duration-200 group",
-                  "bg-gradient-to-br from-white to-slate-50/30 dark:from-admin-surface dark:to-admin-surface",
-                  "hover:shadow-lg hover:shadow-emerald-100/50 dark:hover:shadow-emerald-900/20",
-                  "hover:-translate-y-0.5",
+                  "border cursor-pointer transition-all duration-200 group bg-white dark:bg-slate-800/60",
+                  "hover:shadow-md",
                   selected?.id === client.id
-                    ? "border-emerald-400 dark:border-emerald-500 shadow-lg shadow-emerald-100/50 dark:shadow-emerald-900/30 ring-2 ring-emerald-200 dark:ring-emerald-500/30 -translate-y-0.5"
-                    : "border-slate-200 dark:border-[#30363d]"
+                    ? "border-emerald-400 dark:border-emerald-500 shadow-md ring-1 ring-emerald-200 dark:ring-emerald-500/30"
+                    : "border-[var(--admin-border)]"
                 )}
                 onClick={() => handleSelect(client)}
               >
-                <CardHeader className="pb-3 p-3 sm:p-6 sm:pb-4">
-                  <div className="flex items-start justify-between gap-2">
+                <CardContent className="p-4">
+                  {/* Header: Name + VIP + Pending + Delete */}
+                  <div className="flex items-start justify-between gap-2 mb-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 sm:gap-2">
-                        <CardTitle className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white truncate">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-[var(--admin-text-primary)] truncate">
                           {client.name}
-                        </CardTitle>
+                        </h3>
                         {client.isVip && (
-                          <Badge tone="success" className="text-[10px] sm:text-xs font-semibold shrink-0">
+                          <Badge tone="success" className="text-[10px] font-medium shrink-0">
                             VIP
                           </Badge>
                         )}
                       </div>
-                      <CardDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5 sm:mt-1">
-                        <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
-                        <span className="truncate">{client.city}</span>
-                      </CardDescription>
+                      <p className="text-xs text-[var(--admin-text-tertiary)] mt-0.5 truncate">
+                        {client.city}
+                      </p>
                     </div>
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      {client.pendingPayment && client.pendingPayment > 0 && (
-                        <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-amber-700 dark:text-amber-400">
-                          <span className="hidden sm:inline">Очікується</span> {client.pendingPayment.toLocaleString('uk-UA')} ₴
-                        </span>
-                      )}
-                      <button
-                        onClick={(e) => handleDeleteClick(e, client)}
-                        className="rounded-full p-1.5 text-slate-400 dark:text-slate-500 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover:opacity-100"
-                        aria-label="Видалити клієнта"
-                        title="Видалити клієнта"
-                      >
-                        <Trash className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={(e) => handleDeleteClick(e, client)}
+                      className="rounded-lg p-1.5 text-[var(--admin-text-muted)] hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                      aria-label="Видалити"
+                    >
+                      <Trash className="h-3.5 w-3.5" />
+                    </button>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-2.5 sm:space-y-4 p-3 pt-0 sm:p-6 sm:pt-0">
-                  {/* Contact Info - phone and email 50/50 */}
-                  <div className="rounded-lg sm:rounded-xl bg-slate-50/80 dark:bg-slate-800/50 p-2 sm:p-3 grid grid-cols-2 gap-2">
-                    <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm min-w-0">
-                      <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                      <span className="truncate text-slate-700 dark:text-slate-300 font-medium">{client.contact}</span>
+
+                  {/* Key metrics - clean and simple */}
+                  <div className="flex items-center justify-between gap-4 py-2 border-t border-[var(--admin-border-subtle)]">
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-[var(--admin-text-primary)]">{client.orders}</p>
+                      <p className="text-[10px] text-[var(--admin-text-muted)] uppercase tracking-wide">замовлень</p>
                     </div>
-                    <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm min-w-0">
-                      <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-sky-600 dark:text-sky-400 shrink-0" />
-                      <span className="truncate text-slate-700 dark:text-slate-300 font-medium">{client.email}</span>
+                    <div className="text-center flex-1">
+                      <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{client.spent.toLocaleString("uk-UA")} ₴</p>
+                      <p className="text-[10px] text-[var(--admin-text-muted)] uppercase tracking-wide">витрачено</p>
+                    </div>
+                    <div className="text-center">
+                      <p className={cn(
+                        "text-lg font-bold",
+                        client.pendingPayment && client.pendingPayment > 0
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-[var(--admin-text-muted)]"
+                      )}>
+                        {(client.pendingPayment || 0).toLocaleString('uk-UA')} ₴
+                      </p>
+                      <p className="text-[10px] text-[var(--admin-text-muted)] uppercase tracking-wide">борг</p>
                     </div>
                   </div>
 
-                  {/* Metrics - компактніші */}
-                  <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-                    <div className="rounded-lg border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface p-1.5 sm:p-2.5 text-center">
-                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-admin-text-muted mb-0.5">Замовлень</p>
-                      <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-admin-text-primary">{client.orders}</p>
-                    </div>
-                    <div className="rounded-lg border border-emerald-200 dark:border-emerald-800/50 bg-gradient-to-br from-emerald-50 to-teal-50/50 dark:from-emerald-900/20 dark:to-teal-900/10 p-1.5 sm:p-2.5 text-center col-span-2">
-                      <p className="text-[10px] sm:text-xs text-emerald-700 dark:text-emerald-400 mb-0.5 font-medium">Витрачено</p>
-                      <p className="text-sm sm:text-base font-bold text-emerald-800 dark:text-emerald-300">{client.spent.toLocaleString("uk-UA")} ₴</p>
-                    </div>
+                  {/* Contact - subtle, on demand */}
+                  <div className="flex items-center gap-3 pt-2 border-t border-[var(--admin-border-subtle)] text-xs text-[var(--admin-text-tertiary)]">
+                    <span className="flex items-center gap-1 truncate">
+                      <Phone className="h-3 w-3 shrink-0" />
+                      {client.contact}
+                    </span>
+                    {client.email !== '-' && (
+                      <span className="flex items-center gap-1 truncate">
+                        <Mail className="h-3 w-3 shrink-0" />
+                        {client.email}
+                      </span>
+                    )}
                   </div>
                 </CardContent>
               </Card>

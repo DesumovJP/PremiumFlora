@@ -50,6 +50,7 @@ export function ArticleModalContent({ post, formatDate, onBackToBlog }: ArticleM
           priority
           placeholder="blur"
           blurDataURL={BLUR_DATA_URL}
+          unoptimized={post.image.includes('digitaloceanspaces.com')}
         />
       </div>
 

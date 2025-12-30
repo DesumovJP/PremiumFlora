@@ -109,6 +109,7 @@ export function BlogSection({ posts }: BlogSectionProps) {
                         loading="lazy"
                         placeholder="blur"
                         blurDataURL={BLUR_DATA_URL}
+                        unoptimized={post.image.includes('digitaloceanspaces.com')}
                       />
                       {/* Category Badge */}
                       <div className="absolute top-2 left-2 z-10">
@@ -166,6 +167,7 @@ export function BlogSection({ posts }: BlogSectionProps) {
                         loading="lazy"
                         placeholder="blur"
                         blurDataURL={BLUR_DATA_URL}
+                        unoptimized={post.image.includes('digitaloceanspaces.com')}
                       />
                       {/* Category Badge */}
                       <div className="absolute top-3 left-3 z-10">

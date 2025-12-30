@@ -1062,7 +1062,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
           {/* Mobile: 50/50 buttons */}
           <div className="flex gap-2 sm:contents">
-            <Button variant="outline" onClick={onOpenSupply} className="flex-1 sm:flex-none sm:w-auto">
+            <Button variant="outline" onClick={onOpenSupply} className="flex-1 sm:flex-none sm:w-auto bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700">
               Заплановані закупки
             </Button>
             <Button onClick={() => setOpen(true)} className="flex-1 sm:flex-none sm:w-auto">

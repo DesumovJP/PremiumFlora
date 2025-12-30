@@ -24,22 +24,14 @@ export function FullscreenModal({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        {/* Overlay - subtle */}
+        {/* Overlay - subtle blur with CSS animation */}
         <Dialog.Overlay
-          className={cn(
-            "fixed inset-0 z-50 bg-black/10 dark:bg-black/40",
-            "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-150",
-            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-100"
-          )}
+          className="fixed inset-0 z-50 bg-black/10 dark:bg-black/40 overlay-blur-subtle animate-overlay-in"
         />
 
-        {/* Content */}
+        {/* Content - slide up from bottom with CSS animation */}
         <Dialog.Content
-          className={cn(
-            "fixed inset-0 z-50 flex flex-col bg-white dark:bg-[#0d1117] outline-none",
-            "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-150",
-            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-100"
-          )}
+          className="fixed inset-0 z-50 flex flex-col bg-[var(--admin-surface)] outline-none animate-fullscreen-in"
         >
           {/* Visually hidden title for accessibility */}
           <VisuallyHidden.Root>
@@ -50,13 +42,13 @@ export function FullscreenModal({
           <header
             className={cn(
               "sticky top-0 z-20 shrink-0",
-              "bg-white dark:bg-[#0d1117]",
-              "border-b border-slate-100 dark:border-white/5",
+              "bg-[var(--admin-surface)]",
+              "border-b border-[var(--admin-border-subtle)]",
               "safe-area-inset-top"
             )}
           >
-            <div className="mx-auto max-w-4xl px-4 sm:px-6">
-              <div className="flex h-14 items-center justify-between gap-4">
+            <div className="mx-auto max-w-4xl px-3 sm:px-6">
+              <div className="flex h-11 sm:h-14 items-center justify-between gap-2 sm:gap-4">
                 {/* Breadcrumb */}
                 {breadcrumb ? (
                   <div className="flex-1 min-w-0 overflow-hidden">
@@ -73,9 +65,9 @@ export function FullscreenModal({
                   className={cn(
                     "shrink-0",
                     "flex h-8 w-8 items-center justify-center rounded-lg",
-                    "text-slate-400 dark:text-slate-500",
-                    "transition-colors duration-100",
-                    "hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-slate-300",
+                    "text-[var(--admin-text-muted)]",
+                    "animate-hover-scale",
+                    "hover:bg-[var(--admin-bg)] hover:text-[var(--admin-text-primary)]",
                     "focus:outline-none"
                   )}
                 >

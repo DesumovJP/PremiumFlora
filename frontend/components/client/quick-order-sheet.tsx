@@ -70,23 +70,20 @@ export function QuickOrderSheet({ isOpen, onClose }: QuickOrderSheetProps) {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop with blur */}
       <div
         onClick={onClose}
-        className={cn(
-          'fixed inset-0 z-50 bg-black/40 backdrop-blur-sm',
-          'animate-fade-in'
-        )}
+        className="fixed inset-0 z-50 bg-black/50 overlay-blur animate-overlay-in"
       />
 
-      {/* Sheet */}
+      {/* Sheet with iOS-style spring animation */}
       <div
         className={cn(
           'fixed bottom-0 left-0 right-0 z-50',
-          'bg-white rounded-t-3xl shadow-2xl',
+          'bg-white rounded-t-[28px] shadow-2xl',
           'max-h-[90vh] max-h-[90dvh]',
-          'animate-slide-in-up',
-          isDragging && 'transition-none'
+          isDragging ? 'transition-none' : 'transition-transform duration-[400ms]',
+          !isDragging && 'animate-sheet-up'
         )}
         style={{
           transform: `translateY(${dragY}px)`,

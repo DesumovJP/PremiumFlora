@@ -127,8 +127,8 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
           <BrandIcon className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-wider text-stone-400 dark:text-admin-text-muted">{brand.title}</p>
-          <p className="font-semibold text-stone-900 dark:text-admin-text-primary">{brand.subtitle}</p>
+          <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--admin-text-muted)]">{brand.title}</p>
+          <p className="font-semibold text-[var(--admin-text-primary)]">{brand.subtitle}</p>
         </div>
       </div>
 
@@ -140,8 +140,8 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
             className={cn(
               "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all duration-150",
               active === id
-                ? "bg-stone-100 dark:bg-white/10 text-stone-900 dark:text-white"
-                : "text-stone-600 dark:text-admin-text-secondary hover:bg-stone-50 dark:hover:bg-white/5 hover:text-stone-900 dark:hover:text-white"
+                ? "bg-[var(--admin-bg)] text-[var(--admin-text-primary)]"
+                : "text-[var(--admin-text-secondary)] hover:bg-[var(--admin-border-subtle)] hover:text-[var(--admin-text-primary)]"
             )}
             onClick={() => onChange(id)}
           >
@@ -149,7 +149,7 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
               "h-[18px] w-[18px] transition-colors",
               active === id
                 ? "text-emerald-600 dark:text-emerald-400"
-                : "text-stone-400 dark:text-admin-text-muted group-hover:text-stone-500 dark:group-hover:text-admin-text-secondary"
+                : "text-[var(--admin-text-muted)] group-hover:text-[var(--admin-text-tertiary)]"
             )} />
             <span className="flex-1 text-left">{label}</span>
             {badge && (
@@ -157,7 +157,7 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
                 "text-[11px] font-medium tabular-nums",
                 active === id
                   ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-stone-400 dark:text-admin-text-muted"
+                  : "text-[var(--admin-text-muted)]"
               )}>
                 {badge}
               </span>
@@ -169,7 +169,7 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
       {/* Upcoming Tasks */}
       {!isLoadingTasks && upcomingTasks.length > 0 && (
         <div className="mt-6 px-2">
-          <p className="mb-2 px-3 text-[11px] font-medium uppercase tracking-wider text-stone-400 dark:text-admin-text-muted">
+          <p className="mb-2 px-3 text-[11px] font-medium uppercase tracking-wider text-[var(--admin-text-muted)]">
             Найближчі завдання
           </p>
           <div className="space-y-0.5">
@@ -181,22 +181,22 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
                   onClick={() => onChange("todo")}
                   className={cn(
                     "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors",
-                    "hover:bg-stone-50 dark:hover:bg-white/5",
-                    dueInfo.urgent && "bg-rose-50/50 dark:bg-rose-500/5"
+                    "hover:bg-[var(--admin-border-subtle)]",
+                    dueInfo.urgent && "bg-rose-50/50 dark:bg-rose-500/10"
                   )}
                 >
                   <Clock className={cn(
                     "h-3.5 w-3.5 shrink-0",
-                    dueInfo.urgent ? "text-rose-500" : "text-stone-300 dark:text-admin-text-muted"
+                    dueInfo.urgent ? "text-rose-500" : "text-[var(--admin-text-muted)]"
                   )} />
-                  <span className="text-sm text-stone-600 dark:text-admin-text-secondary truncate flex-1">
+                  <span className="text-sm text-[var(--admin-text-secondary)] truncate flex-1">
                     {task.title}
                   </span>
                   <span className={cn(
                     "text-[11px] shrink-0 tabular-nums",
                     dueInfo.urgent
                       ? "text-rose-500 font-medium"
-                      : "text-stone-400 dark:text-admin-text-muted"
+                      : "text-[var(--admin-text-muted)]"
                   )}>
                     {dueInfo.text}
                   </span>
@@ -213,10 +213,10 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
         <div className="space-y-1">
           <button
             onClick={onOpenSupply}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors hover:bg-stone-50 dark:hover:bg-white/5 group"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors hover:bg-[var(--admin-border-subtle)] group"
           >
-            <Package className="h-[18px] w-[18px] text-stone-400 dark:text-admin-text-muted group-hover:text-emerald-500 transition-colors" />
-            <span className="flex-1 text-[15px] font-medium text-stone-600 dark:text-admin-text-secondary group-hover:text-stone-900 dark:group-hover:text-white">
+            <Package className="h-[18px] w-[18px] text-[var(--admin-text-muted)] group-hover:text-emerald-500 transition-colors" />
+            <span className="flex-1 text-[15px] font-medium text-[var(--admin-text-secondary)] group-hover:text-[var(--admin-text-primary)]">
               Поставка
             </span>
             {itemsToReorder > 0 && (
@@ -227,10 +227,10 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
           </button>
           <button
             onClick={onShowPendingPayments}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors hover:bg-stone-50 dark:hover:bg-white/5 group"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors hover:bg-[var(--admin-border-subtle)] group"
           >
-            <CreditCard className="h-[18px] w-[18px] text-stone-400 dark:text-admin-text-muted group-hover:text-amber-500 transition-colors" />
-            <span className="flex-1 text-[15px] font-medium text-stone-600 dark:text-admin-text-secondary group-hover:text-stone-900 dark:group-hover:text-white">
+            <CreditCard className="h-[18px] w-[18px] text-[var(--admin-text-muted)] group-hover:text-amber-500 transition-colors" />
+            <span className="flex-1 text-[15px] font-medium text-[var(--admin-text-secondary)] group-hover:text-[var(--admin-text-primary)]">
               Очікує оплати
             </span>
             {pendingPaymentsAmount > 0 && (
@@ -242,22 +242,22 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-stone-100 dark:bg-white/5" />
+        <div className="h-px bg-[var(--admin-border-subtle)]" />
 
         {/* Theme & Logout */}
         <div className="flex items-center gap-1 px-1">
           <button
             onClick={toggleTheme}
-            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-stone-500 dark:text-admin-text-tertiary hover:bg-stone-50 dark:hover:bg-white/5 hover:text-stone-700 dark:hover:text-white transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[var(--admin-text-tertiary)] hover:bg-[var(--admin-border-subtle)] hover:text-[var(--admin-text-primary)] transition-colors"
             title={theme === "light" ? "Темна тема" : "Світла тема"}
           >
             {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
             <span className="text-sm">{theme === "light" ? "Темна" : "Світла"}</span>
           </button>
-          <div className="w-px h-5 bg-stone-100 dark:bg-white/5" />
+          <div className="w-px h-5 bg-[var(--admin-border-subtle)]" />
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-stone-500 dark:text-admin-text-tertiary hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+            className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-[var(--admin-text-tertiary)] hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
           >
             <LogOut className="h-4 w-4" />
           </button>

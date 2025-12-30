@@ -7,7 +7,7 @@ const Table = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <table
     ref={ref}
-    className={cn("w-full text-sm text-slate-700 dark:text-admin-text-secondary", className)}
+    className={cn("w-full text-sm text-[var(--admin-text-secondary)]", className)}
     {...props}
   />
 ));
@@ -17,7 +17,7 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("text-xs uppercase text-slate-400 dark:text-admin-text-muted", className)} {...props} />
+  <thead ref={ref} className={cn("text-xs uppercase text-[var(--admin-text-muted)]", className)} {...props} />
 ));
 TableHeader.displayName = "TableHeader";
 
@@ -25,7 +25,7 @@ const TableBody = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <tbody ref={ref} className={cn("divide-y divide-slate-100 table-divider-dark", className)} {...props} />
+  <tbody ref={ref} className={cn("divide-y divide-[var(--admin-border-subtle)]", className)} {...props} />
 ));
 TableBody.displayName = "TableBody";
 
@@ -33,13 +33,13 @@ const TableRow = React.forwardRef<
   HTMLTableRowElement,
   React.HTMLAttributes<HTMLTableRowElement>
 >(({ className, ...props }, ref) => (
-  <tr 
-    ref={ref} 
+  <tr
+    ref={ref}
     className={cn(
-      "hover:bg-slate-50/60 table-hover-dark transition-colors duration-150 animate-fade-in",
+      "hover:bg-[var(--admin-bg)] transition-colors duration-150 animate-fade-in",
       className
-    )} 
-    {...props} 
+    )}
+    {...props}
   />
 ));
 TableRow.displayName = "TableRow";
@@ -50,7 +50,7 @@ const TableHead = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <th
     ref={ref}
-    className={cn("py-3 text-left font-semibold tracking-wide text-slate-900 dark:text-admin-text-primary", className)}
+    className={cn("py-3 text-left font-semibold tracking-wide text-[var(--admin-text-primary)]", className)}
     {...props}
   />
 ));
@@ -60,7 +60,7 @@ const TableCell = React.forwardRef<
   HTMLTableCellElement,
   React.TdHTMLAttributes<HTMLTableCellElement>
 >(({ className, ...props }, ref) => (
-  <td ref={ref} className={cn("py-4 align-top text-slate-900 dark:text-admin-text-primary", className)} {...props} />
+  <td ref={ref} className={cn("py-4 align-top text-[var(--admin-text-primary)]", className)} {...props} />
 ));
 TableCell.displayName = "TableCell";
 

@@ -16,7 +16,7 @@ const SheetTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold text-slate-900 dark:text-admin-text-primary", className)}
+    className={cn("text-lg font-semibold text-[var(--admin-text-primary)]", className)}
     {...props}
   />
 ));
@@ -28,7 +28,7 @@ const SheetDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-slate-500 dark:text-admin-text-secondary", className)}
+    className={cn("text-sm text-[var(--admin-text-tertiary)]", className)}
     {...props}
   />
 ));
@@ -41,9 +41,7 @@ const SheetOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-40 bg-black/20 dark:bg-black/40 backdrop-blur-[2px]",
-      "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-200",
-      "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-150",
+      "fixed inset-0 z-40 bg-black/50 dark:bg-black/60 overlay-blur-subtle animate-overlay-in",
       className
     )}
     {...props}
@@ -68,21 +66,14 @@ const SheetContent = React.forwardRef<
       className={cn(
         // Base styles
         "fixed z-50 flex h-full flex-col",
-        "bg-white dark:bg-[#0d1117]",
-        "border-r border-slate-100 dark:border-white/5",
+        // Background & Border - CSS змінні
+        "bg-[var(--admin-surface)]",
+        "border-r border-[var(--admin-border-subtle)]",
         // Width - more compact
         "w-[280px] sm:w-[300px]",
-        // Animations - fast and snappy
-        side === "left" && [
-          "left-0 top-0",
-          "data-[state=open]:animate-in data-[state=open]:slide-in-from-left data-[state=open]:duration-200",
-          "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=closed]:duration-150",
-        ],
-        side === "right" && [
-          "right-0 top-0 border-l border-r-0",
-          "data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=open]:duration-200",
-          "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=closed]:duration-150",
-        ],
+        // Position and animations using our CSS classes
+        side === "left" && "left-0 top-0 animate-slide-in-left",
+        side === "right" && "right-0 top-0 border-l border-r-0 animate-slide-in-right",
         // Focus trap styling
         "focus:outline-none",
         className
@@ -94,9 +85,9 @@ const SheetContent = React.forwardRef<
         <SheetClose className={cn(
           "absolute right-3 top-3 z-10",
           "flex h-8 w-8 items-center justify-center rounded-lg",
-          "text-slate-400 dark:text-admin-text-muted",
-          "transition-colors duration-150",
-          "hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-white",
+          "text-[var(--admin-text-muted)]",
+          "animate-hover-scale",
+          "hover:bg-[var(--admin-bg)] hover:text-[var(--admin-text-primary)]",
           "focus:outline-none"
         )}>
           <X className="h-4 w-4" />

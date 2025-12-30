@@ -1,3 +1,5 @@
+"use client";
+
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -39,16 +41,12 @@ export function Modal({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        {/* Overlay - subtle with blur */}
+        {/* Overlay - premium blur effect with CSS animation */}
         <Dialog.Overlay
-          className={cn(
-            "fixed inset-0 z-50 bg-stone-900/20 dark:bg-black/60 backdrop-blur-[2px]",
-            "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-200",
-            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-150"
-          )}
+          className="fixed inset-0 z-50 bg-stone-900/40 dark:bg-black/70 overlay-blur animate-overlay-in"
         />
 
-        {/* Content */}
+        {/* Content with CSS animation */}
         <Dialog.Content
           className={cn(
             // Base
@@ -60,9 +58,8 @@ export function Modal({
             // Position
             "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
             "w-[calc(100%-2rem)]",
-            // Animation
-            "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.98] data-[state=open]:duration-150",
-            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-[0.98] data-[state=closed]:duration-100",
+            // Animation - using our CSS classes
+            "animate-modal-in",
             // Height
             fullscreenOnMobile
               ? "max-h-[calc(100vh-2rem)]"
@@ -95,7 +92,7 @@ export function Modal({
                   "shrink-0 -mr-1 -mt-1",
                   "flex h-7 w-7 items-center justify-center rounded-md",
                   "text-stone-400 dark:text-slate-500",
-                  "transition-colors duration-100",
+                  "animate-hover-scale",
                   "hover:bg-stone-100 dark:hover:bg-slate-700 hover:text-stone-600 dark:hover:text-slate-300",
                   "focus:outline-none"
                 )}

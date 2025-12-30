@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,45 +16,70 @@ type ImageCarouselProps = {
 
 export function ImageCarousel({ images, className }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [direction, setDirection] = useState<'next' | 'prev'>('next');
 
   const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    if (isTransitioning) return;
+    setDirection('prev');
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+      setIsTransitioning(false);
+    }, 150);
   };
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    if (isTransitioning) return;
+    setDirection('next');
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+      setIsTransitioning(false);
+    }, 150);
   };
 
   const goToSlide = (index: number) => {
-    setCurrentIndex(index);
+    if (isTransitioning || index === currentIndex) return;
+    setDirection(index > currentIndex ? 'next' : 'prev');
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentIndex(index);
+      setIsTransitioning(false);
+    }, 150);
   };
 
   if (images.length === 0) return null;
 
   return (
     <div className={cn("relative w-full", className)}>
-      {/* Main Image */}
+      {/* Main Image with crossfade + subtle scale */}
       <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-slate-100">
         <Image
           src={images[currentIndex]}
           alt={`Gallery image ${currentIndex + 1}`}
           fill
-          className="object-cover transition-opacity duration-300"
+          className={cn(
+            "object-cover",
+            isTransitioning ? "animate-crossfade-out" : "animate-crossfade-in"
+          )}
           sizes="100vw"
           priority={currentIndex === 0}
           loading="eager"
           placeholder="blur"
           blurDataURL={BLUR_DATA_URL}
+          unoptimized={images[currentIndex].includes('digitaloceanspaces.com')}
         />
         
-        {/* Navigation Buttons */}
+        {/* Navigation Buttons with hover animation */}
         {images.length > 1 && (
           <>
             <Button
               variant="ghost"
               size="icon"
               onClick={goToPrevious}
-              className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white transition-all"
+              disabled={isTransitioning}
+              className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white animate-hover-scale disabled:opacity-50"
               aria-label="Попереднє зображення"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -63,7 +88,8 @@ export function ImageCarousel({ images, className }: ImageCarouselProps) {
               variant="ghost"
               size="icon"
               onClick={goToNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white transition-all"
+              disabled={isTransitioning}
+              className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white animate-hover-scale disabled:opacity-50"
               aria-label="Наступне зображення"
             >
               <ChevronRight className="h-5 w-5" />
@@ -71,26 +97,33 @@ export function ImageCarousel({ images, className }: ImageCarouselProps) {
           </>
         )}
 
-        {/* Image Counter */}
+        {/* Image Counter with subtle animation */}
         {images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 backdrop-blur-sm px-4 py-1.5 text-xs font-medium text-white">
+          <div
+            className={cn(
+              "absolute bottom-4 left-1/2 rounded-full bg-black/50 backdrop-blur-sm px-4 py-1.5 text-xs font-medium text-white transition-transform duration-300",
+              isTransitioning ? "-translate-x-1/2 scale-95" : "-translate-x-1/2 scale-100"
+            )}
+          >
             {currentIndex + 1} / {images.length}
           </div>
         )}
       </div>
 
-      {/* Thumbnail Navigation */}
+      {/* Thumbnail Navigation with smooth selection */}
       {images.length > 1 && (
         <div className="mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {images.map((image, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
+              disabled={isTransitioning}
               className={cn(
-                "relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all",
+                "relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
                 currentIndex === index
-                  ? "border-emerald-500 shadow-md scale-105"
-                  : "border-slate-200 hover:border-emerald-300 opacity-70 hover:opacity-100"
+                  ? "border-emerald-500 shadow-lg shadow-emerald-500/20 scale-105"
+                  : "border-slate-200 hover:border-emerald-300 opacity-60 hover:opacity-100 hover:scale-[1.02]",
+                isTransitioning && "pointer-events-none"
               )}
               aria-label={`Перейти до зображення ${index + 1}`}
             >
@@ -98,11 +131,15 @@ export function ImageCarousel({ images, className }: ImageCarouselProps) {
                 src={image}
                 alt={`Thumbnail ${index + 1}`}
                 fill
-                className="object-cover"
+                className={cn(
+                  "object-cover transition-transform duration-300",
+                  currentIndex === index && "scale-[1.05]"
+                )}
                 sizes="80px"
                 loading="eager"
                 placeholder="blur"
                 blurDataURL={BLUR_DATA_URL}
+                unoptimized={image.includes('digitaloceanspaces.com')}
               />
             </button>
           ))}

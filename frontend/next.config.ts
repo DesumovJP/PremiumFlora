@@ -23,17 +23,25 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.up.railway.app",
       },
-      // DigitalOcean Spaces - matches any region
+      // DigitalOcean Spaces
       {
         protocol: "https",
-        hostname: "**.digitaloceanspaces.com",
+        hostname: "mymediastorage.fra1.digitaloceanspaces.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.digitaloceanspaces.com",
       },
     ],
     formats: ["image/avif", "image/webp"],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     // Cache images for 1 year (immutable assets from CDN)
     minimumCacheTTL: 31536000,
+    // Відключаємо перевірку приватних IP для DigitalOcean Spaces
+    // (NAT64 резолвить в 64:ff9b::/96 що Next.js вважає "приватним")
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "inline",
   },
   // Performance optimizations
   compress: true,

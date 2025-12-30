@@ -6,10 +6,10 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const toneStyles: Record<NonNullable<BadgeProps["tone"]>, string> = {
-  neutral: "bg-slate-100 dark:bg-admin-surface text-slate-700 dark:text-admin-text-secondary",
+  neutral: "bg-[var(--admin-bg)] text-[var(--admin-text-secondary)]",
   success: "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-100 dark:ring-emerald-800/50",
   warning: "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 ring-1 ring-amber-100 dark:ring-amber-800/50",
-  outline: "border border-slate-200 dark:border-admin-border text-slate-700 dark:text-admin-text-secondary",
+  outline: "border border-[var(--admin-border)] text-[var(--admin-text-secondary)]",
 };
 
 export function Badge({

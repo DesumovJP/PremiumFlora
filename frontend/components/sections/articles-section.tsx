@@ -447,7 +447,7 @@ export function ArticlesSection() {
   };
 
   return (
-    <Card className="admin-card border border-slate-100 dark:border-[#30363d] bg-white/90 dark:bg-admin-surface shadow-md">
+    <Card className="admin-card border border-slate-100 dark:border-[var(--admin-border)] bg-white/90 dark:bg-admin-surface shadow-md">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="space-y-1">

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 // Shared blur placeholder for optimized image loading - neutral light grey
@@ -60,6 +60,8 @@ export function GallerySection({
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [columnCount, setColumnCount] = useState(2);
+  const [isModalAnimating, setIsModalAnimating] = useState(false);
+  const [isImageTransitioning, setIsImageTransitioning] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
   // Memoize aspect ratios to prevent recalculation
@@ -114,23 +116,38 @@ export function GallerySection({
 
   const openModal = (index: number) => {
     setSelectedIndex(index);
+    setIsModalAnimating(true);
     document.body.style.overflow = "hidden";
+    // Allow animation to complete
+    setTimeout(() => setIsModalAnimating(false), 400);
   };
 
   const closeModal = () => {
-    setSelectedIndex(null);
-    document.body.style.overflow = "";
+    setIsModalAnimating(true);
+    setTimeout(() => {
+      setSelectedIndex(null);
+      document.body.style.overflow = "";
+      setIsModalAnimating(false);
+    }, 250);
   };
 
   const goToPrevious = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex(selectedIndex === 0 ? images.length - 1 : selectedIndex - 1);
+    if (selectedIndex !== null && !isImageTransitioning) {
+      setIsImageTransitioning(true);
+      setTimeout(() => {
+        setSelectedIndex(selectedIndex === 0 ? images.length - 1 : selectedIndex - 1);
+        setIsImageTransitioning(false);
+      }, 150);
     }
   };
 
   const goToNext = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex(selectedIndex === images.length - 1 ? 0 : selectedIndex + 1);
+    if (selectedIndex !== null && !isImageTransitioning) {
+      setIsImageTransitioning(true);
+      setTimeout(() => {
+        setSelectedIndex(selectedIndex === images.length - 1 ? 0 : selectedIndex + 1);
+        setIsImageTransitioning(false);
+      }, 150);
     }
   };
 
@@ -217,6 +234,7 @@ export function GallerySection({
                       loading={item.originalIndex < 8 ? "eager" : "lazy"}
                       placeholder="blur"
                       blurDataURL={BLUR_DATA_URL}
+                      unoptimized={item.image.includes('digitaloceanspaces.com')}
                     />
 
                     {/* Hover overlay */}
@@ -240,77 +258,74 @@ export function GallerySection({
         </div>
       </section>
 
-      {/* Modal */}
-      {selectedIndex !== null && (
+      {/* Modal - rendered via Portal to escape any transform/filter parent contexts */}
+      {selectedIndex !== null && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm"
+          className="fixed inset-0 z-[9999] bg-black/98 overlay-blur-subtle flex items-center justify-center p-4 animate-overlay-in"
           onClick={closeModal}
         >
-          {/* Close Button */}
+          {/* Close Button with hover animation */}
           <button
             onClick={closeModal}
-            className="absolute right-4 top-4 z-20 rounded-full bg-white/10 p-3 text-white backdrop-blur-sm transition-all hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+            className="absolute right-4 top-4 z-20 rounded-full bg-white/10 p-3 text-white backdrop-blur-sm animate-hover-scale focus:outline-none"
             aria-label="Закрити"
           >
             <X className="h-6 w-6" />
           </button>
 
-          {/* Navigation Buttons - vertically centered */}
+          {/* Navigation Buttons with hover animation */}
           {images.length > 1 && (
             <>
-              <Button
-                variant="ghost"
-                size="icon"
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   goToPrevious();
                 }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                disabled={isImageTransitioning}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-white/10 text-white backdrop-blur-sm animate-hover-scale focus:outline-none disabled:opacity-50 flex items-center justify-center"
                 aria-label="Попереднє зображення"
               >
                 <ChevronLeft className="h-6 w-6 sm:h-8 sm:w-8" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
+              </button>
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   goToNext();
                 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                disabled={isImageTransitioning}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-white/10 text-white backdrop-blur-sm animate-hover-scale focus:outline-none disabled:opacity-50 flex items-center justify-center"
                 aria-label="Наступне зображення"
               >
                 <ChevronRight className="h-6 w-6 sm:h-8 sm:w-8" />
-              </Button>
+              </button>
             </>
           )}
 
-          {/* Image Counter */}
+          {/* Image Counter with transition */}
           {images.length > 1 && (
-            <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 rounded-full bg-black/60 px-4 py-2 sm:px-5 sm:py-2.5 text-sm font-medium text-white backdrop-blur-sm">
+            <div
+              className={cn(
+                "absolute bottom-4 sm:bottom-6 left-1/2 z-20 rounded-full bg-black/60 px-4 py-2 sm:px-5 sm:py-2.5 text-sm font-medium text-white backdrop-blur-sm transition-transform duration-300",
+                isImageTransitioning ? "-translate-x-1/2 scale-95" : "-translate-x-1/2 scale-100"
+              )}
+            >
               {selectedIndex + 1} / {images.length}
             </div>
           )}
 
-          {/* Image Container - absolutely positioned with insets for proper centering */}
-          <div
-            className="absolute inset-0 top-16 bottom-16 left-4 right-4 sm:left-16 sm:right-16 sm:top-20 sm:bottom-20 flex items-center justify-center"
+          {/* Image with zoom + crossfade animation */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={images[selectedIndex]}
+            alt={`Gallery image ${selectedIndex + 1}`}
+            className={cn(
+              "max-w-[calc(100vw-2rem)] max-h-[calc(100vh-8rem)] sm:max-w-[calc(100vw-8rem)] sm:max-h-[calc(100vh-6rem)] w-auto h-auto object-contain rounded-xl",
+              isImageTransitioning ? "animate-crossfade-out" : "animate-crossfade-in animate-gallery-zoom-in"
+            )}
             onClick={(e) => e.stopPropagation()}
-          >
-            <div className="relative w-full h-full max-w-5xl">
-              <Image
-                src={images[selectedIndex]}
-                alt={`Gallery image ${selectedIndex + 1}`}
-                fill
-                className="rounded-xl object-contain"
-                sizes="(max-width: 640px) 95vw, 85vw"
-                priority
-                placeholder="blur"
-                blurDataURL={BLUR_DATA_URL}
-              />
-            </div>
-          </div>
-        </div>
+          />
+        </div>,
+        document.body
       )}
     </>
   );

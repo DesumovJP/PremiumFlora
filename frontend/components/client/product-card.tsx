@@ -72,7 +72,7 @@ export function ProductCard({ product, className, variant = "grid", index = 0 }:
                   quality={85}
                   placeholder="blur"
                   blurDataURL="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2Y4ZmFmYyIvPjwvc3ZnPg=="
-                  unoptimized={false}
+                  unoptimized={product.image.includes('digitaloceanspaces.com')}
                 />
               ) : (
                 <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
@@ -177,7 +177,7 @@ export function ProductCard({ product, className, variant = "grid", index = 0 }:
               quality={85}
               placeholder="blur"
               blurDataURL="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2Y4ZmFmYyIvPjwvc3ZnPg=="
-              unoptimized={false}
+              unoptimized={product.image.includes('digitaloceanspaces.com')}
             />
           ) : (
             <div className="relative flex h-full w-full items-center justify-center overflow-hidden">

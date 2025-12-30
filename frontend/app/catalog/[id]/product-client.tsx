@@ -34,25 +34,25 @@ export function ProductPageClient({ product }: { product: Product }) {
       <Navigation />
       <main className="min-h-screen pt-16 lg:pt-20">
         {/* Breadcrumb - Premium Style */}
-        <section className="border-b border-slate-100 dark:border-admin-border bg-white/80 dark:bg-admin-surface/80 backdrop-blur-sm pt-6 pb-4">
+        <section className="border-b border-slate-100 dark:border-admin-border bg-white/80 dark:bg-admin-surface/80 backdrop-blur-sm pt-4 pb-3 sm:pt-6 sm:pb-4">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <nav className="flex items-center gap-2 text-sm" aria-label="Breadcrumb">
+            <nav className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm" aria-label="Breadcrumb">
               <Link
                 href="/"
-                className="inline-flex items-center gap-1.5 text-slate-600 dark:text-admin-text-secondary transition-colors hover:text-emerald-600 dark:hover:text-emerald-400 group"
+                className="inline-flex items-center gap-1 sm:gap-1.5 text-slate-600 dark:text-admin-text-secondary transition-colors hover:text-emerald-600 dark:hover:text-emerald-400 group"
               >
-                <Home className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
-                <span className="font-medium">Головна</span>
+                <Home className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:scale-110" />
+                <span className="font-medium hidden sm:inline">Головна</span>
               </Link>
-              <ChevronRight className="h-4 w-4 text-slate-400 dark:text-admin-text-tertiary" />
+              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 text-slate-400 dark:text-admin-text-tertiary" />
               <Link
                 href="/catalog"
                 className="text-slate-600 dark:text-admin-text-secondary transition-colors hover:text-emerald-600 dark:hover:text-emerald-400 font-medium"
               >
                 Каталог
               </Link>
-              <ChevronRight className="h-4 w-4 text-slate-400 dark:text-admin-text-tertiary" />
-              <span className="text-slate-900 dark:text-admin-text-primary font-semibold truncate max-w-[200px] sm:max-w-none">
+              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 text-slate-400 dark:text-admin-text-tertiary" />
+              <span className="text-slate-900 dark:text-admin-text-primary font-semibold truncate max-w-[140px] sm:max-w-[200px] md:max-w-none">
                 {product.name}
               </span>
             </nav>
@@ -75,6 +75,7 @@ export function ProductPageClient({ product }: { product: Product }) {
                     priority
                     placeholder="blur"
                     blurDataURL={BLUR_DATA_URL}
+                    unoptimized={product.image.includes('digitaloceanspaces.com')}
                   />
                 ) : (
                   <div className="relative flex h-full w-full items-center justify-center overflow-hidden">

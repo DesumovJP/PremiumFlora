@@ -4,22 +4,22 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] hover:-translate-y-[1px]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 active:scale-[0.96] hover:-translate-y-[2px]",
   {
     variants: {
       variant: {
         default:
-          "bg-emerald-600 text-white hover:bg-emerald-500 hover:shadow-lg hover:shadow-emerald-500/25",
+          "bg-emerald-600 text-white hover:bg-emerald-500 hover:shadow-lg hover:shadow-emerald-500/40 active:bg-emerald-700",
         primary:
-          "bg-emerald-600 text-white hover:bg-emerald-500 hover:shadow-lg hover:shadow-emerald-500/25",
+          "bg-emerald-600 text-white hover:bg-emerald-500 hover:shadow-lg hover:shadow-emerald-500/40 active:bg-emerald-700",
         outline:
-          "border border-stone-200 dark:border-slate-700 bg-white dark:bg-transparent text-stone-600 dark:text-slate-300 hover:bg-stone-50 dark:hover:bg-slate-800 hover:text-stone-800 dark:hover:text-white hover:border-stone-300 dark:hover:border-slate-600",
+          "border border-[var(--admin-border)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-bg)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-border)] hover:shadow-md",
         ghost:
-          "text-stone-500 dark:text-slate-400 hover:text-stone-800 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-slate-800",
+          "text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-bg)]",
         muted:
-          "bg-stone-100 dark:bg-slate-800 text-stone-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700",
+          "bg-[var(--admin-bg)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-border-subtle)]",
         danger:
-          "bg-rose-600 text-white hover:bg-rose-500 hover:shadow-lg hover:shadow-rose-500/25",
+          "bg-rose-600 text-white hover:bg-rose-500 hover:shadow-lg hover:shadow-rose-500/40 active:bg-rose-700",
       },
       size: {
         default: "h-9 px-4",

@@ -45,10 +45,14 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Premium Flora — Оптові поставки квітів",
+  metadataBase: new URL("https://premium-flora.vercel.app"),
+  title: {
+    default: "Premium Flora — Оптові поставки квітів",
+    template: "%s | Premium Flora",
+  },
   description:
-    "Преміальні оптові поставки свіжих квітів для флористів, готелів та івент-агентств. Холодний ланцюг -20°C, доставка 24/48h по Україні.",
-  keywords: ["оптові квіти", "флористика", "доставка квітів", "Київ", "Україна", "premium flora"],
+    "Преміальні оптові поставки свіжих квітів для флористів, готелів та івент-агентств. Холодний ланцюг, доставка по Україні. Нові поставки щоп'ятниці.",
+  keywords: ["оптові квіти", "квіти оптом", "флористика", "доставка квітів", "купити квіти оптом", "Київ", "Україна", "premium flora", "свіжі квіти"],
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
@@ -60,9 +64,30 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Premium Flora — Оптові поставки квітів",
-    description: "Преміальні оптові поставки свіжих квітів для флористів, готелів та івент-агентств.",
+    description: "Преміальні оптові поставки свіжих квітів для флористів, готелів та івент-агентств. Нові поставки щоп'ятниці.",
     locale: "uk_UA",
     type: "website",
+    siteName: "Premium Flora",
+    url: "https://premium-flora.vercel.app",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Premium Flora — Оптові поставки квітів",
+    description: "Преміальні оптові поставки свіжих квітів для флористів, готелів та івент-агентств.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: "https://premium-flora.vercel.app",
   },
 };
 
