@@ -8,20 +8,20 @@
    ============================================ */
 
 :root {
-  /* Base Colors - Light Theme (ще темніші, комфортні для очей) */
-  --background: #e8ece9;
+  /* Base Colors - Light Theme (CLIENT - яскраві, чисті кольори) */
+  --background: #f8fbf9;
   --foreground: #1a2332;
-  --muted: #5c6b7a;
+  --muted: #64748b;
   --brand: #0f9c6e;
-  --brand-soft: #d9ebe3;
-  --border: #cdd6d0;
+  --brand-soft: #e6f4ef;
+  --border: #e2e8f0;
 
-  /* Surface Colors - Light Theme (теплий сірий з зеленим відтінком) */
-  --surface: #f2f5f3;
-  --surface-elevated: rgba(242, 245, 243, 0.98);
-  --surface-overlay: rgba(242, 245, 243, 0.95);
+  /* Surface Colors - Light Theme (CLIENT - білі та чисті) */
+  --surface: #ffffff;
+  --surface-elevated: rgba(255, 255, 255, 0.98);
+  --surface-overlay: rgba(255, 255, 255, 0.95);
 
-  /* Admin Panel Colors - Light Theme (приглушені, не б'ють по очах) */
+  /* Admin Panel Colors - Light Theme (ADMIN - приглушені, не б'ють по очах) */
   --admin-bg: #e5e9e6;
   --admin-surface: #eef1ef;
   --admin-surface-elevated: rgba(238, 241, 239, 0.98);
