@@ -607,7 +607,7 @@ function CartPanel({
                       "w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors",
                       selectedClient === client.id
                         ? "bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700"
-                        : "hover:bg-slate-50 dark:hover:bg-admin-surface-elevated border border-transparent"
+                        : "hover:bg-[var(--admin-bg)] dark:hover:bg-slate-700 border border-transparent"
                     )}
                     onClick={() => handleSelectClient(client.id)}
                   >
