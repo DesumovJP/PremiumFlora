@@ -63,8 +63,13 @@ export function ProductPageClient({ product }: { product: Product }) {
         <section className="py-4 sm:py-8 md:py-12">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:gap-8 lg:grid-cols-2">
-              {/* Image */}
-              <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-slate-100">
+              {/* Image - Neumorphic */}
+              <div
+                className="relative aspect-square w-full overflow-hidden rounded-2xl bg-[#f4f7fa]"
+                style={{
+                  boxShadow: '3px 3px 8px rgba(174, 186, 199, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                }}
+              >
                 {product.image ? (
                   <Image
                     src={product.image}
@@ -146,11 +151,15 @@ export function ProductPageClient({ product }: { product: Product }) {
                           key={variant.size}
                           onClick={() => setSelectedVariant(variant)}
                           className={cn(
-                            "group relative rounded-lg border-2 p-2.5 text-left transition-all sm:rounded-xl sm:p-3 md:p-4",
-                            isSelected
-                              ? "border-emerald-600 bg-emerald-50 shadow-md"
-                              : "border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/50"
+                            "group relative rounded-xl p-2.5 text-left transition-all sm:rounded-2xl sm:p-3 md:p-4 border-0",
+                            "bg-[#f4f7fa]",
+                            isSelected && "ring-2 ring-emerald-500"
                           )}
+                          style={{
+                            boxShadow: isSelected
+                              ? 'inset 2px 2px 4px rgba(174, 186, 199, 0.3), inset -2px -2px 4px rgba(255, 255, 255, 0.5)'
+                              : '3px 3px 8px rgba(174, 186, 199, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                          }}
                         >
                           {isSelected && (
                             <CheckCircle2 className="absolute right-1.5 top-1.5 h-3.5 w-3.5 text-emerald-600 sm:right-2 sm:top-2 sm:h-4 sm:w-4 md:h-5 md:w-5" />
@@ -167,7 +176,12 @@ export function ProductPageClient({ product }: { product: Product }) {
 
                 {/* Selected Variant Info */}
                 {selectedVariant && (
-                  <Card className="border-emerald-100 bg-emerald-50/50">
+                  <Card
+                    className="border-0 bg-[#f4f7fa]"
+                    style={{
+                      boxShadow: 'inset 2px 2px 4px rgba(174, 186, 199, 0.2), inset -2px -2px 4px rgba(255, 255, 255, 0.4)',
+                    }}
+                  >
                     <CardContent className="p-3 sm:p-4">
                       <div className="space-y-2 sm:space-y-3">
                         <div className="flex items-center justify-between">
@@ -253,7 +267,12 @@ export function ProductPageClient({ product }: { product: Product }) {
                 </div>
 
                 {/* Info */}
-                <Card className="border-slate-100 bg-slate-50/50">
+                <Card
+                  className="border-0 bg-[#f4f7fa]"
+                  style={{
+                    boxShadow: '3px 3px 8px rgba(174, 186, 199, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                  }}
+                >
                   <CardContent className="p-3 sm:p-4">
                     <div className="flex items-start gap-2 sm:gap-3">
                       <Package className="h-4 w-4 flex-shrink-0 text-emerald-600 mt-0.5 sm:h-5 sm:w-5" />

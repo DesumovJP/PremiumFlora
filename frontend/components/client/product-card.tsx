@@ -53,9 +53,14 @@ export function ProductCard({ product, className, variant = "grid", index = 0 }:
       <Link href={`/catalog/${product.id}`} className="h-full">
         <Card
           className={cn(
-            "group flex h-full overflow-hidden rounded-2xl card-premium hover-lift-3d transform-3d",
+            "group flex h-full overflow-hidden rounded-2xl border-0 transition-all duration-300",
+            "bg-[#f4f7fa] dark:bg-[#1a1f2e]",
+            "hover:-translate-y-1",
             className
           )}
+          style={{
+            boxShadow: '3px 3px 8px rgba(174, 186, 199, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+          }}
         >
           <div className="flex w-full flex-col lg:flex-row">
             {/* Image Container - Horizontal - Optimized */}
@@ -140,14 +145,19 @@ export function ProductCard({ product, className, variant = "grid", index = 0 }:
     );
   }
 
-  // Grid view (default) - Premium 3D Style
+  // Grid view (default) - Neumorphic Style
   return (
     <Link href={`/catalog/${product.id}`} className="h-full">
       <Card
           className={cn(
-            "group relative flex h-full flex-col overflow-hidden rounded-2xl card-premium hover-lift-3d transform-3d",
+            "group relative flex h-full flex-col overflow-hidden rounded-2xl border-0 transition-all duration-300",
+            "bg-[#f4f7fa] dark:bg-[#1a1f2e]",
+            "hover:-translate-y-1",
             className
           )}
+          style={{
+            boxShadow: '3px 3px 8px rgba(174, 186, 199, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+          }}
       >
         {/* Popular Badge */}
         {isPopular && (
