@@ -86,12 +86,12 @@ export function StickyCTA() {
 
               {/* CTA Button - full width on mobile, auto on desktop */}
               <Button
-                size="lg"
+                size="sm"
                 asChild
-                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white h-11 sm:h-10 px-5 rounded-xl font-medium shadow-lg shadow-emerald-500/25 transition-all duration-200 flex-shrink-0"
+                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white h-9 sm:h-8 px-4 text-[13px] rounded-lg font-medium shadow-md shadow-emerald-500/20 transition-all duration-200 flex-shrink-0"
               >
-                <a href="tel:+380441234567" className="gap-2">
-                  <Phone className="w-4 h-4" />
+                <a href="tel:+380441234567" className="gap-1.5">
+                  <Phone className="w-3.5 h-3.5" />
                   Зателефонувати
                 </a>
               </Button>
