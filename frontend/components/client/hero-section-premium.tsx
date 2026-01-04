@@ -122,9 +122,19 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                 }}
                 className="flex justify-end mb-3 lg:hidden"
               >
-                <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-2.5 will-change-transform">
+                <div
+                  className="bg-[#faf8f5] rounded-xl p-2.5 will-change-transform"
+                  style={{
+                    boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                  }}
+                >
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center flex-shrink-0">
+                    <div
+                      className="w-8 h-8 rounded-lg bg-[#f8f6f3] flex items-center justify-center flex-shrink-0"
+                      style={{
+                        boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.15), inset -1px -1px 2px rgba(255, 255, 255, 0.4)',
+                      }}
+                    >
                       <span className="text-base">🌷</span>
                     </div>
                     <div className="min-w-0">
@@ -204,9 +214,14 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                 initial={{ opacity: 0 }}
                 animate={mounted ? { opacity: 1 } : {}}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                className="mt-8 sm:mt-12 border-t border-slate-200/60"
+                className="mt-8 sm:mt-12 pt-4 sm:pt-6"
               >
-                <div className="flex flex-wrap justify-center sm:justify-start gap-x-6 sm:gap-x-8 gap-y-3 sm:gap-y-4">
+                <div
+                  className="inline-flex flex-wrap justify-center sm:justify-start gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4 px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-[#faf8f5]"
+                  style={{
+                    boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                  }}
+                >
                   {[
                     { value: '500+', label: 'клієнтів' },
                     { value: '7+ днів', label: 'свіжість' },
@@ -256,11 +271,19 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                   x: { duration: 0.6, delay: 0.6 },
                   y: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }
                 }}
-                className="absolute -left-8 bottom-12 bg-white rounded-2xl shadow-xl p-4 will-change-transform"
-                style={{ transform: 'translateZ(0)' }}
+                className="absolute -left-8 bottom-12 bg-[#faf8f5] rounded-2xl p-4 will-change-transform"
+                style={{
+                  transform: 'translateZ(0)',
+                  boxShadow: '4px 4px 12px rgba(200, 190, 175, 0.35), -4px -4px 12px rgba(255, 255, 255, 0.6)',
+                }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center">
+                  <div
+                    className="w-12 h-12 rounded-xl bg-[#f8f6f3] flex items-center justify-center"
+                    style={{
+                      boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.15), inset -1px -1px 2px rgba(255, 255, 255, 0.4)',
+                    }}
+                  >
                     <span className="text-2xl">🌷</span>
                   </div>
                   <div>

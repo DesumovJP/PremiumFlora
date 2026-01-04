@@ -41,7 +41,7 @@ const SheetOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-40 bg-black/50 dark:bg-black/60 overlay-blur-subtle animate-overlay-in",
+      "fixed inset-0 z-40 bg-slate-900/20 dark:bg-black/60 backdrop-blur-sm animate-overlay-in",
       className
     )}
     {...props}
@@ -66,31 +66,37 @@ const SheetContent = React.forwardRef<
       className={cn(
         // Base styles
         "fixed z-50 flex h-full flex-col",
-        // Background & Border - CSS змінні
-        "bg-[var(--admin-surface)]",
-        "border-r border-[var(--admin-border-subtle)]",
-        // Width - more compact
+        // Background - neumorphic white/cream
+        "bg-white dark:bg-[var(--admin-surface)]",
+        // Width
         "w-[280px] sm:w-[300px]",
-        // Position and animations using our CSS classes
+        // Position and animations
         side === "left" && "left-0 top-0 animate-slide-in-left",
-        side === "right" && "right-0 top-0 border-l border-r-0 animate-slide-in-right",
+        side === "right" && "right-0 top-0 animate-slide-in-right",
         // Focus trap styling
         "focus:outline-none",
         className
       )}
+      style={{
+        boxShadow: side === "right"
+          ? "-8px 0 24px rgba(0, 0, 0, 0.08), -2px 0 8px rgba(0, 0, 0, 0.04)"
+          : "8px 0 24px rgba(0, 0, 0, 0.08), 2px 0 8px rgba(0, 0, 0, 0.04)"
+      }}
       {...props}
     >
-      {/* Minimal close button */}
+      {/* Soft close button */}
       {!hideCloseButton && (
         <SheetClose className={cn(
-          "absolute right-3 top-3 z-10",
-          "flex h-8 w-8 items-center justify-center rounded-lg",
-          "text-[var(--admin-text-muted)]",
-          "animate-hover-scale",
-          "hover:bg-[var(--admin-bg)] hover:text-[var(--admin-text-primary)]",
-          "focus:outline-none"
+          "absolute right-4 top-4 z-10",
+          "flex h-8 w-8 items-center justify-center rounded-full",
+          "bg-slate-100/80 dark:bg-white/10",
+          "text-slate-500 dark:text-slate-400",
+          "transition-all duration-200",
+          "hover:bg-slate-200/90 dark:hover:bg-white/20 hover:text-slate-700",
+          "active:scale-95",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30"
         )}>
-          <X className="h-4 w-4" />
+          <X className="h-4 w-4" strokeWidth={1.5} />
           <span className="sr-only">Закрити меню</span>
         </SheetClose>
       )}

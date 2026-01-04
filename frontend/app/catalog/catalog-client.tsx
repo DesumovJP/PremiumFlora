@@ -61,8 +61,8 @@ export function CatalogClient({ products }: CatalogClientProps) {
 
   return (
     <main className="min-h-screen pt-16 lg:pt-20">
-      {/* Hero Header - Clean Minimal Design */}
-      <section className="border-b border-slate-100 bg-slate-50/50 py-4 sm:py-5 lg:py-6">
+      {/* Hero Header - White Neumorphic */}
+      <section className="bg-white py-4 sm:py-5 lg:py-6 border-b border-slate-100">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-8">
             {/* Left: Title */}
@@ -85,12 +85,12 @@ export function CatalogClient({ products }: CatalogClientProps) {
                 <div
                   key={f.label}
                   className={cn(
-                    "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium",
-                    "bg-white border border-slate-200/60 shadow-sm",
+                    "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium",
+                    "bg-slate-50 border border-slate-100",
                     "flex-1 sm:flex-initial max-w-[120px] sm:max-w-none",
-                    f.color === 'emerald' && "text-emerald-700",
-                    f.color === 'cyan' && "text-cyan-700",
-                    f.color === 'amber' && "text-amber-700",
+                    f.color === 'emerald' && "text-emerald-600",
+                    f.color === 'cyan' && "text-cyan-600",
+                    f.color === 'amber' && "text-amber-600",
                   )}
                 >
                   <f.icon className="w-3.5 h-3.5 flex-shrink-0" />
@@ -102,8 +102,8 @@ export function CatalogClient({ products }: CatalogClientProps) {
         </div>
       </section>
 
-      {/* Search and Filters - Premium Sticky Bar */}
-      <section className="sticky top-0 z-40 border-b border-slate-200 bg-white py-3 sm:py-4">
+      {/* Search and Filters - White Sticky Bar */}
+      <section className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm py-3 sm:py-4 border-b border-slate-100">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Mobile: Single row with search, sort, view toggle */}
           <div className="flex items-center gap-2 sm:hidden">

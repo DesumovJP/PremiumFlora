@@ -95,9 +95,9 @@ export function BlogSection({ posts }: BlogSectionProps) {
                   className="flex-shrink-0 w-[280px] snap-start"
                 >
                   <Card
-                    className="group h-full flex flex-col overflow-hidden border-0 bg-[#f4f7fa] cursor-pointer rounded-xl active:scale-[0.98] transition-all duration-150"
+                    className="group h-full flex flex-col overflow-hidden border-0 bg-[#faf8f5] cursor-pointer rounded-xl active:scale-[0.98] transition-all duration-150"
                     style={{
-                      boxShadow: '3px 3px 8px rgba(174, 186, 199, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                      boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
                     }}
                     onClick={() => setSelectedPost(post)}
                   >
@@ -156,9 +156,9 @@ export function BlogSection({ posts }: BlogSectionProps) {
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 >
                   <Card
-                    className="group h-full flex flex-col overflow-hidden border-0 bg-[#f4f7fa] cursor-pointer rounded-2xl transition-all duration-200"
+                    className="group h-full flex flex-col overflow-hidden border-0 bg-[#faf8f5] cursor-pointer rounded-2xl transition-all duration-200"
                     style={{
-                      boxShadow: '3px 3px 8px rgba(174, 186, 199, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                      boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
                     }}
                     onClick={() => setSelectedPost(post)}
                   >

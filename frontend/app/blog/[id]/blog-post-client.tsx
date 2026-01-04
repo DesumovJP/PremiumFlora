@@ -24,8 +24,13 @@ export function BlogPostClient({ post }: BlogPostClientProps) {
 
   return (
     <main className="min-h-screen pt-16 lg:pt-20">
-      {/* Breadcrumb */}
-      <section className="border-b border-slate-100 bg-white/80 backdrop-blur-sm pt-4 pb-3 sm:pt-6 sm:pb-4">
+      {/* Breadcrumb - Neumorphic */}
+      <section
+        className="border-0 bg-[#faf8f5] pt-4 pb-3 sm:pt-6 sm:pb-4"
+        style={{
+          boxShadow: 'inset 0 -2px 6px rgba(200, 190, 175, 0.1)',
+        }}
+      >
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <nav className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm" aria-label="Breadcrumb">
             <Link
@@ -102,10 +107,20 @@ export function BlogPostClient({ post }: BlogPostClientProps) {
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
 
-          {/* Back to Blog CTA */}
+          {/* Back to Blog CTA - Neumorphic */}
           <div className="mt-12 pt-8 border-t border-slate-200">
-            <div className="bg-gradient-to-br from-emerald-50 to-amber-50 rounded-2xl p-6 sm:p-8 text-center">
-              <div className="inline-flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/80 text-emerald-700 text-xs sm:text-sm font-medium">
+            <div
+              className="bg-[#faf8f5] rounded-2xl p-6 sm:p-8 text-center"
+              style={{
+                boxShadow: '4px 4px 12px rgba(200, 190, 175, 0.3), -4px -4px 12px rgba(255, 255, 255, 0.6)',
+              }}
+            >
+              <div
+                className="inline-flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[#f8f6f3] text-emerald-700 text-xs sm:text-sm font-medium"
+                style={{
+                  boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.15), inset -1px -1px 2px rgba(255, 255, 255, 0.4)',
+                }}
+              >
                 <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span>Ще більше цікавого</span>
               </div>

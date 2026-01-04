@@ -1,21 +1,19 @@
-import { Leaf, Phone, Mail, MapPin } from "lucide-react";
+import { Leaf, Phone, MapPin } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer
-      className="border-0 bg-[#f4f7fa] dark:bg-[#151922]"
-      style={{
-        boxShadow: 'inset 0 2px 8px rgba(174, 186, 199, 0.15)',
-      }}
-    >
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:py-10 sm:px-6 lg:px-8 lg:py-12">
+    <footer className="relative bg-[#faf8f5] dark:bg-[#151922]">
+      {/* Subtle top shadow for depth */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent dark:via-slate-700" />
+
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-6 lg:px-8 lg:py-16">
         {/* Mobile Layout */}
         <div className="block sm:hidden w-full">
-          <div className="flex flex-row flex-nowrap gap-4 w-full">
-            {/* Контакти - зліва */}
-            <div className="flex-1 min-w-0 text-center">
-              <h3 className="footer-heading mb-1">Контакти</h3>
-              <div className="space-y-1.5 text-[0.5625rem] text-slate-600 dark:text-admin-text-secondary">
+          <div className="flex flex-row flex-nowrap gap-8 w-full justify-center">
+            {/* Контакти */}
+            <div className="text-center">
+              <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">Контакти</h3>
+              <div className="space-y-2 text-xs text-slate-600 dark:text-admin-text-secondary">
                 <a
                   href="tel:+380671234567"
                   className="block transition-colors hover:text-emerald-600"
@@ -28,91 +26,108 @@ export function Footer() {
                 >
                   +380 50 123 4567
                 </a>
-                <div>м. Київ, Україна</div>
+                <div className="text-slate-500">м. Київ, Україна</div>
               </div>
             </div>
-            
-            {/* Режим роботи - справа */}
-            <div className="flex-1 min-w-0 text-center">
-              <h3 className="footer-heading mb-1">Режим роботи</h3>
-              <div className="space-y-1 text-[0.5625rem] text-slate-600 dark:text-admin-text-secondary">
+
+            {/* Графік */}
+            <div className="text-center">
+              <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">Графік</h3>
+              <div className="space-y-2 text-xs text-slate-600 dark:text-admin-text-secondary">
                 <div>Пн - Пт: 9:00 - 18:00</div>
                 <div>Сб: 10:00 - 16:00</div>
-                <div>Нд: Вихідний</div>
+                <div className="text-slate-500">Нд: Вихідний</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Desktop Layout */}
-        <div className="hidden gap-8 sm:grid sm:grid-cols-2 lg:grid-cols-3">
-          {/* Brand */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-lg shadow-emerald-500/25">
-                <Leaf className="h-5 w-5" />
+        {/* Desktop Layout - 60% / 20% / 20% */}
+        <div className="hidden sm:flex gap-8 lg:gap-12">
+          {/* Brand - 60% */}
+          <div className="w-[60%] space-y-4">
+            <div className="flex items-center gap-3">
+              {/* Soft icon */}
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                <Leaf className="h-5 w-5" strokeWidth={1.5} />
               </div>
               <div>
-                <div className="text-lg font-bold text-slate-900 dark:text-admin-text-primary">Premium Flora</div>
-                <div className="text-[0.625rem] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Оптовий магазин квітів</div>
+                <div className="text-base font-semibold text-slate-800 dark:text-admin-text-primary" style={{ fontFamily: 'var(--font-display), serif' }}>
+                  Premium Flora
+                </div>
+                <div className="text-[0.6rem] uppercase tracking-widest text-emerald-600/70 dark:text-emerald-400">
+                  Оптові квіти
+                </div>
               </div>
             </div>
-            <p className="text-sm text-slate-600 dark:text-admin-text-secondary leading-relaxed">
-              Преміальні квіти для вашого бізнесу. Якість, надійність та індивідуальний підхід до кожного клієнта.
+            <p className="text-sm text-slate-500 dark:text-admin-text-secondary leading-relaxed">
+              Преміальні квіти для вашого бізнесу
             </p>
           </div>
 
-          {/* Contact Info */}
-          <div className="space-y-4 text-center">
-            <h3 className="footer-heading">Контакти</h3>
-            <div className="mx-auto max-w-[17.5rem] flex flex-col gap-2">
+          {/* Contact Info - 20% */}
+          <div className="w-[20%] space-y-4">
+            <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider">Контакти</h3>
+            <div className="space-y-2 text-sm text-slate-600 dark:text-admin-text-secondary">
               <a
                 href="tel:+380671234567"
-                className="flex items-center justify-center gap-3 text-sm text-slate-600 dark:text-admin-text-secondary transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
+                className="block transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
               >
-                <Phone className="h-4 w-4 flex-shrink-0" />
-                <span>+380 67 123 4567</span>
+                +380 67 123 4567
               </a>
               <a
                 href="tel:+380501234567"
-                className="flex items-center justify-center gap-3 text-sm text-slate-600 dark:text-admin-text-secondary transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
+                className="block transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
               >
-                <Phone className="h-4 w-4 flex-shrink-0" />
-                <span>+380 50 123 4567</span>
+                +380 50 123 4567
               </a>
-              <div className="flex items-center justify-center gap-3 text-sm text-slate-600 dark:text-admin-text-secondary">
-                <MapPin className="h-4 w-4 flex-shrink-0" />
-                <span>м. Київ, Україна</span>
-              </div>
+              <div className="text-slate-500">м. Київ, Україна</div>
             </div>
           </div>
 
-          {/* Business Hours */}
-          <div className="space-y-4 text-center">
-            <h3 className="footer-heading">Режим роботи</h3>
-            <div className="mx-auto max-w-[17.5rem] space-y-2 text-sm text-slate-600 dark:text-admin-text-secondary">
+          {/* Business Hours - 20% */}
+          <div className="w-[20%] space-y-4">
+            <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider">Графік</h3>
+            <div className="space-y-2 text-sm text-slate-600 dark:text-admin-text-secondary">
               <div>Пн - Пт: 9:00 - 18:00</div>
               <div>Сб: 10:00 - 16:00</div>
-              <div>Нд: Вихідний</div>
+              <div className="text-slate-400">Нд: Вихідний</div>
             </div>
           </div>
         </div>
 
-        <div className="mt-6 sm:mt-8 border-t border-slate-100 dark:border-admin-border pt-4 sm:pt-6 text-center space-y-1.5">
-          <p className="!text-[0.625rem] sm:!text-sm text-slate-500 dark:text-admin-text-muted">
-            © {new Date().getFullYear()} Premium Flora. Всі права захищені.
-          </p>
-          <p className="!text-[0.625rem] sm:!text-sm text-slate-500 dark:text-admin-text-muted">
-            Розробка сайту 🌸 {" "}
+        {/* Desktop Bottom bar */}
+        <div className="hidden sm:flex justify-between items-center mt-8 pt-5 border-t border-slate-200/50 dark:border-admin-border text-slate-400 dark:text-admin-text-muted" style={{ fontSize: '9px' }}>
+          <p>© {new Date().getFullYear()} Premium Flora</p>
+          <p>
+            Створено{" "}
             <a
               href="https://webbie.team"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors !text-[0.625rem] sm:!text-sm"
+              className="text-emerald-600/60 hover:text-emerald-600 transition-colors"
             >
               Webbie.team
             </a>
           </p>
+        </div>
+
+        {/* Mobile Bottom bar */}
+        <div className="sm:hidden mt-6 pt-4 border-t border-slate-200/50 dark:border-admin-border">
+          <div className="flex flex-col items-center gap-0.5 text-[8px] text-slate-400 dark:text-admin-text-muted">
+            <p>© {new Date().getFullYear()} Premium Flora</p>
+            <p>
+              Створено{" "}
+              <a
+                href="https://webbie.team"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-600/60 hover:text-emerald-600 transition-colors"
+              >
+                Webbie.team
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </footer>

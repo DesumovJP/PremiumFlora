@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Cormorant_Garamond, Inter, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Cormorant_Garamond, Lora, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { StickyCTA } from "@/components/client/sticky-cta";
 import { ScrollToTop } from "@/components/client/scroll-to-top";
@@ -28,10 +28,12 @@ const cormorant = Cormorant_Garamond({
   preload: true,
 });
 
-// Modern body font
-const inter = Inter({
+// Elegant body font - pairs beautifully with Cormorant
+const lora = Lora({
   variable: "--font-body",
   subsets: ["latin", "cyrillic"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
   display: "swap",
   preload: true,
 });
@@ -106,7 +108,7 @@ export default function RootLayout({
   return (
     <html lang="uk" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased min-h-screen text-slate-900 dark:text-[var(--admin-text-primary)]`}
+        className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} ${lora.variable} ${jetbrainsMono.variable} antialiased min-h-screen text-slate-900 dark:text-[var(--admin-text-primary)]`}
       >
         {/* Scroll to top on route change */}
         <ScrollToTop />

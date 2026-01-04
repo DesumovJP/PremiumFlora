@@ -95,14 +95,13 @@ function MobileNavLink({
   );
 }
 
-// Contact button for mobile drawer
+// Contact button for mobile drawer - soft neumorphic style
 function MobileContactButton({
   href,
   icon: Icon,
   iconComponent: IconComponent,
   label,
   sublabel,
-  variant,
   index,
   className,
 }: {
@@ -111,61 +110,42 @@ function MobileContactButton({
   iconComponent?: React.ComponentType<{ className?: string }>;
   label: string;
   sublabel?: string;
-  variant: "emerald" | "purple" | "sky";
   index: number;
   className?: string;
 }) {
-  const variantStyles = {
-    emerald: {
-      bg: "bg-emerald-50 dark:bg-emerald-500/10",
-      icon: "text-emerald-600 dark:text-emerald-400",
-      hover: "hover:bg-emerald-100 dark:hover:bg-emerald-500/20",
-    },
-    purple: {
-      bg: "bg-purple-50 dark:bg-purple-500/10",
-      icon: "text-purple-600 dark:text-purple-400",
-      hover: "hover:bg-purple-100 dark:hover:bg-purple-500/20",
-    },
-    sky: {
-      bg: "bg-sky-50 dark:bg-sky-500/10",
-      icon: "text-sky-600 dark:text-sky-400",
-      hover: "hover:bg-sky-100 dark:hover:bg-sky-500/20",
-    },
-  };
-
-  const styles = variantStyles[variant];
-
   return (
     <a
       href={href}
       target={href.startsWith("http") ? "_blank" : undefined}
       rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
       className={cn(
-        "flex items-center gap-3.5 rounded-2xl p-3",
-        "transition-all duration-200 ease-out",
-        styles.bg,
-        styles.hover,
-        "active:scale-[0.98]",
+        "flex items-center gap-3 rounded-xl p-3",
+        "bg-[#faf8f5] transition-all duration-200",
+        "hover:-translate-y-0.5 active:translate-y-0",
         // Staggered animation
         "opacity-0 translate-y-2 animate-[slideUpFade_0.3s_ease-out_forwards]",
         className,
       )}
-      style={{ animationDelay: `${180 + index * 40}ms` }}
+      style={{
+        animationDelay: `${180 + index * 40}ms`,
+        boxShadow: '2px 2px 6px rgba(200, 190, 175, 0.15), -2px -2px 6px rgba(255, 255, 255, 0.5)',
+      }}
     >
-      <div className={cn(
-        "flex h-11 w-11 items-center justify-center rounded-xl",
-        "bg-white dark:bg-white/10",
-        "shadow-sm"
-      )}>
-        {Icon && <Icon className={cn("h-5 w-5", styles.icon)} strokeWidth={1.5} />}
-        {IconComponent && <IconComponent className={cn("h-5 w-5", styles.icon)} />}
+      <div
+        className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f8f6f3]"
+        style={{
+          boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.1), inset -1px -1px 2px rgba(255, 255, 255, 0.3)',
+        }}
+      >
+        {Icon && <Icon className="h-4 w-4 text-emerald-600" strokeWidth={1.5} />}
+        {IconComponent && <IconComponent className="h-4 w-4 text-emerald-600" />}
       </div>
       <div className="flex flex-col">
-        <span className="text-[12px] font-medium text-slate-800 dark:text-white">
+        <span className="text-xs font-medium text-slate-700">
           {label}
         </span>
         {sublabel && (
-          <span className="text-[10px] text-slate-500 dark:text-slate-400">
+          <span className="text-[10px] text-slate-500">
             {sublabel}
           </span>
         )}
@@ -192,12 +172,7 @@ export function Navigation() {
   };
 
   return (
-    <header
-      className="fixed top-0 left-0 right-0 z-50 bg-[#f4f7fa] border-0"
-      style={{
-        boxShadow: '0 2px 8px rgba(174, 186, 199, 0.2)',
-      }}
-    >
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-100">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8 lg:py-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group">
@@ -329,14 +304,13 @@ export function Navigation() {
                 </div>
 
                 {/* Contact buttons */}
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {/* Phone */}
                   <MobileContactButton
                     href={contacts.phones[0].href}
                     icon={Phone}
                     label="Зателефонувати"
                     sublabel={contacts.phones[0].number}
-                    variant="emerald"
                     index={0}
                   />
 
@@ -346,7 +320,6 @@ export function Navigation() {
                     iconComponent={ViberIcon}
                     label="Viber"
                     sublabel="Написати в месенджер"
-                    variant="purple"
                     index={1}
                   />
 
@@ -356,7 +329,6 @@ export function Navigation() {
                     iconComponent={TelegramIcon}
                     label="Telegram"
                     sublabel={contacts.telegram.username}
-                    variant="sky"
                     index={2}
                   />
                 </div>

@@ -1,10 +1,48 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Swipe gesture hook for touch devices
+function useSwipe(
+  onSwipeLeft: () => void,
+  onSwipeRight: () => void,
+  threshold = 50
+) {
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    touchEndX.current = null;
+    touchStartX.current = e.targetTouches[0].clientX;
+  }, []);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  }, []);
+
+  const onTouchEnd = useCallback(() => {
+    if (!touchStartX.current || !touchEndX.current) return;
+
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > threshold;
+    const isRightSwipe = distance < -threshold;
+
+    if (isLeftSwipe) {
+      onSwipeLeft();
+    } else if (isRightSwipe) {
+      onSwipeRight();
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+  }, [onSwipeLeft, onSwipeRight, threshold]);
+
+  return { onTouchStart, onTouchMove, onTouchEnd };
+}
 
 // Shared blur placeholder for optimized image loading - neutral light grey
 const BLUR_DATA_URL = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2Y4ZmFmYyIvPjwvc3ZnPg==";
@@ -131,7 +169,7 @@ export function GallerySection({
     }, 250);
   };
 
-  const goToPrevious = () => {
+  const goToPrevious = useCallback(() => {
     if (selectedIndex !== null && !isImageTransitioning) {
       setIsImageTransitioning(true);
       setTimeout(() => {
@@ -139,9 +177,9 @@ export function GallerySection({
         setIsImageTransitioning(false);
       }, 150);
     }
-  };
+  }, [selectedIndex, isImageTransitioning, images.length]);
 
-  const goToNext = () => {
+  const goToNext = useCallback(() => {
     if (selectedIndex !== null && !isImageTransitioning) {
       setIsImageTransitioning(true);
       setTimeout(() => {
@@ -149,7 +187,10 @@ export function GallerySection({
         setIsImageTransitioning(false);
       }, 150);
     }
-  };
+  }, [selectedIndex, isImageTransitioning, images.length]);
+
+  // Swipe gestures for touch devices
+  const swipeHandlers = useSwipe(goToNext, goToPrevious, 50);
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -313,17 +354,30 @@ export function GallerySection({
             </div>
           )}
 
-          {/* Image with zoom + crossfade animation */}
+          {/* Image with zoom + crossfade animation + swipe support */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={images[selectedIndex]}
             alt={`Gallery image ${selectedIndex + 1}`}
             className={cn(
-              "max-w-[calc(100vw-2rem)] max-h-[calc(100vh-8rem)] sm:max-w-[calc(100vw-8rem)] sm:max-h-[calc(100vh-6rem)] w-auto h-auto object-contain rounded-xl",
+              "max-w-[calc(100vw-2rem)] max-h-[calc(100vh-8rem)] sm:max-w-[calc(100vw-8rem)] sm:max-h-[calc(100vh-6rem)] w-auto h-auto object-contain rounded-xl select-none touch-pan-y",
               isImageTransitioning ? "animate-crossfade-out" : "animate-crossfade-in animate-gallery-zoom-in"
             )}
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={swipeHandlers.onTouchStart}
+            onTouchMove={swipeHandlers.onTouchMove}
+            onTouchEnd={swipeHandlers.onTouchEnd}
+            draggable={false}
           />
+
+          {/* Swipe hint for mobile - shows briefly on first open */}
+          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 pointer-events-none sm:hidden">
+            <div className="flex items-center gap-2 text-white/60 text-xs">
+              <ChevronLeft className="w-4 h-4 animate-pulse" />
+              <span>Свайпніть для перегляду</span>
+              <ChevronRight className="w-4 h-4 animate-pulse" />
+            </div>
+          </div>
         </div>,
         document.body
       )}

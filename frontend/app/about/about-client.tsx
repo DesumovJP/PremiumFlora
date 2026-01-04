@@ -14,8 +14,8 @@ export function AboutClient({ galleryImages }: AboutClientProps) {
     <>
       <Navigation />
       <main className="min-h-screen pt-16 lg:pt-20">
-        {/* Hero - Clean Minimal Design */}
-        <section className="border-b border-slate-100 bg-slate-50/50 py-4 sm:py-5 lg:py-6">
+        {/* Hero - White */}
+        <section className="bg-white py-4 sm:py-5 lg:py-6 border-b border-slate-100">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">
               Про <span className="text-emerald-600">Premium Flora</span>
@@ -41,67 +41,110 @@ export function AboutClient({ galleryImages }: AboutClientProps) {
           </div>
         </section>
 
-        {/* Contacts Section - Minimal Horizontal */}
-        <section id="contact" className="border-t border-slate-100 bg-slate-50/50 py-10 sm:py-12">
+        {/* Contacts Section - Soft Neumorphic Cards */}
+        <section
+          id="contact"
+          className="bg-white py-10 sm:py-14 lg:py-16"
+        >
           <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-6 text-center">
+            <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-8 text-center">
               Контакти
             </h3>
 
-            {/* Contact items - horizontal on desktop, 2 columns on mobile */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-              {/* Phone */}
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 mb-3">
-                  <Phone className="w-5 h-5 text-emerald-600" />
+            {/* Contact cards - soft neumorphic design */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+              {/* Phone Card */}
+              <div
+                className="bg-[#faf8f5] rounded-2xl p-4 sm:p-5 text-center transition-all duration-300 hover:-translate-y-0.5"
+                style={{
+                  boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.2), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                }}
+              >
+                <div
+                  className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#f8f6f3] mb-3"
+                  style={{
+                    boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.12), inset -1px -1px 2px rgba(255, 255, 255, 0.35)',
+                  }}
+                >
+                  <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" strokeWidth={1.5} />
                 </div>
-                <p className="text-xs text-slate-500 mb-1">Телефон</p>
-                <a href="tel:+380671234567" className="block text-sm text-slate-700 hover:text-emerald-600 transition-colors">
+                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1.5">Телефон</p>
+                <a href="tel:+380671234567" className="block text-xs sm:text-sm text-slate-600 hover:text-emerald-600 transition-colors">
                   +380 67 123 4567
                 </a>
-                <a href="tel:+380501234567" className="block text-sm text-slate-700 hover:text-emerald-600 transition-colors">
+                <a href="tel:+380501234567" className="block text-xs sm:text-sm text-slate-600 hover:text-emerald-600 transition-colors mt-0.5">
                   +380 50 123 4567
                 </a>
               </div>
 
-              {/* Schedule */}
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 mb-3">
-                  <Clock className="w-5 h-5 text-emerald-600" />
+              {/* Schedule Card */}
+              <div
+                className="bg-[#faf8f5] rounded-2xl p-4 sm:p-5 text-center transition-all duration-300 hover:-translate-y-0.5"
+                style={{
+                  boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.2), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                }}
+              >
+                <div
+                  className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#f8f6f3] mb-3"
+                  style={{
+                    boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.12), inset -1px -1px 2px rgba(255, 255, 255, 0.35)',
+                  }}
+                >
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" strokeWidth={1.5} />
                 </div>
-                <p className="text-xs text-slate-500 mb-1">Графік</p>
-                <p className="text-sm text-slate-700">Пн-Пт: 9:00-18:00</p>
-                <p className="text-sm text-slate-700">Сб: 10:00-16:00</p>
+                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1.5">Графік</p>
+                <p className="text-xs sm:text-sm text-slate-600">Пн-Пт: 9:00-18:00</p>
+                <p className="text-xs sm:text-sm text-slate-600 mt-0.5">Сб: 10:00-16:00</p>
               </div>
 
-              {/* Email */}
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 mb-3">
-                  <Mail className="w-5 h-5 text-emerald-600" />
+              {/* Email Card */}
+              <div
+                className="bg-[#faf8f5] rounded-2xl p-4 sm:p-5 text-center transition-all duration-300 hover:-translate-y-0.5"
+                style={{
+                  boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.2), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                }}
+              >
+                <div
+                  className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#f8f6f3] mb-3"
+                  style={{
+                    boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.12), inset -1px -1px 2px rgba(255, 255, 255, 0.35)',
+                  }}
+                >
+                  <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" strokeWidth={1.5} />
                 </div>
-                <p className="text-xs text-slate-500 mb-1">Email</p>
-                <a href="mailto:info@premiumflora.ua" className="text-sm text-slate-700 hover:text-emerald-600 transition-colors break-all">
+                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1.5">Email</p>
+                <a href="mailto:info@premiumflora.ua" className="text-xs sm:text-sm text-slate-600 hover:text-emerald-600 transition-colors break-all">
                   info@premiumflora.ua
                 </a>
               </div>
 
-              {/* Address */}
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 mb-3">
-                  <MapPin className="w-5 h-5 text-emerald-600" />
+              {/* Address Card */}
+              <div
+                className="bg-[#faf8f5] rounded-2xl p-4 sm:p-5 text-center transition-all duration-300 hover:-translate-y-0.5"
+                style={{
+                  boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.2), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                }}
+              >
+                <div
+                  className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#f8f6f3] mb-3"
+                  style={{
+                    boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.12), inset -1px -1px 2px rgba(255, 255, 255, 0.35)',
+                  }}
+                >
+                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" strokeWidth={1.5} />
                 </div>
-                <p className="text-xs text-slate-500 mb-1">Адреса</p>
-                <p className="text-sm text-slate-700">вул. Тираспольська, 41а</p>
-                <p className="text-sm text-slate-700">м. Київ</p>
+                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1.5">Адреса</p>
+                <p className="text-xs sm:text-sm text-slate-600">вул. Тираспольська, 41а</p>
+                <p className="text-xs sm:text-sm text-slate-600 mt-0.5">м. Київ</p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Map Section - Clean with subtle styling */}
-        <section className="py-10 sm:py-12 lg:py-16">
+        {/* Map Section - Minimal */}
+        <section className="py-10 sm:py-12 lg:py-16 bg-slate-50">
           <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-            <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm h-[280px] sm:h-[350px] lg:h-[400px] group">
+            <div className="relative rounded-2xl overflow-hidden border border-slate-100 h-[280px] sm:h-[350px] lg:h-[400px]">
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2541.0876854953307!2d30.74461!3d50.4419!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40d4c5a1c4b5c5c5%3A0x0!2z0LLRg9C7LiDQotC40YDQsNGB0L_QvtC70YzRgdGM0LrQsCwgNDHQsA!5e0!3m2!1suk!2sua!4v1"
                 width="100%"
@@ -111,30 +154,19 @@ export function AboutClient({ galleryImages }: AboutClientProps) {
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 title="Premium Flora Location"
-                className="opacity-95 group-hover:opacity-100 transition-opacity duration-300"
               />
 
-              {/* Map Overlay Card */}
-              <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-auto">
-                <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-4 max-w-xs">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
-                      <MapPin className="w-4 h-4 text-emerald-600" />
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="font-semibold text-slate-900 text-sm">Premium Flora</h4>
-                      <p className="text-slate-600 text-xs mt-0.5">вул. Тираспольська, 41а, Київ</p>
-                    </div>
-                  </div>
-                  <a
-                    href="https://maps.google.com/?q=вул.+Тираспольська,+41а,+Київ"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-3 flex items-center justify-center gap-2 w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors"
-                  >
-                    Відкрити в Google Maps
-                  </a>
-                </div>
+              {/* Minimal overlay */}
+              <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4">
+                <a
+                  href="https://maps.google.com/?q=вул.+Тираспольська,+41а,+Київ"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-white/95 backdrop-blur-sm text-slate-700 text-xs sm:text-sm rounded-lg border border-slate-100 shadow-sm hover:bg-white transition-colors"
+                >
+                  <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>вул. Тираспольська, 41а</span>
+                </a>
               </div>
             </div>
           </div>
