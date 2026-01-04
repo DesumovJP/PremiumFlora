@@ -47,17 +47,16 @@ export function FeatureCard({
       <motion.div
         className={cn(
           'relative h-full p-4 sm:p-8 rounded-2xl sm:rounded-3xl cursor-default overflow-hidden',
-          'bg-[#f0f4f8] dark:bg-[#1a1f2e]',
+          'bg-[#f4f7fa] dark:bg-[#1a1f2e]',
           'transition-all duration-300',
         )}
         style={{
           boxShadow: isHovered
-            ? '8px 8px 20px rgba(163, 177, 198, 0.5), -8px -8px 20px rgba(255, 255, 255, 0.8), inset 0 0 0 rgba(255,255,255,0)'
-            : '6px 6px 16px rgba(163, 177, 198, 0.4), -6px -6px 16px rgba(255, 255, 255, 0.7)',
+            ? '4px 4px 12px rgba(174, 186, 199, 0.35), -4px -4px 12px rgba(255, 255, 255, 0.6)'
+            : '3px 3px 8px rgba(174, 186, 199, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
         }}
         whileHover={{
-          y: -4,
-          scale: 1.02,
+          y: -2,
         }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
       >
@@ -65,7 +64,7 @@ export function FeatureCard({
         <motion.div
           className="absolute inset-0 rounded-2xl sm:rounded-3xl opacity-0 transition-opacity duration-300"
           style={{
-            background: 'linear-gradient(145deg, rgba(255,255,255,0.4) 0%, transparent 50%)',
+            background: 'linear-gradient(145deg, rgba(255,255,255,0.2) 0%, transparent 40%)',
           }}
           animate={{ opacity: isHovered ? 1 : 0 }}
         />
@@ -76,11 +75,11 @@ export function FeatureCard({
           <motion.div
             className={cn(
               'w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4',
-              'transition-all duration-300 bg-[#f0f4f8] dark:bg-[#1a1f2e]',
+              'transition-all duration-300 bg-[#eef2f6] dark:bg-[#1a1f2e]',
               centered && "mx-auto"
             )}
             style={{
-              boxShadow: 'inset 3px 3px 6px rgba(163, 177, 198, 0.4), inset -3px -3px 6px rgba(255, 255, 255, 0.7)',
+              boxShadow: 'inset 2px 2px 4px rgba(174, 186, 199, 0.25), inset -2px -2px 4px rgba(255, 255, 255, 0.5)',
             }}
             animate={{
               scale: isHovered ? 1.05 : 1,
