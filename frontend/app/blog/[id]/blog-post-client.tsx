@@ -105,22 +105,22 @@ export function BlogPostClient({ post }: BlogPostClientProps) {
           {/* Back to Blog CTA */}
           <div className="mt-12 pt-8 border-t border-slate-200">
             <div className="bg-gradient-to-br from-emerald-50 to-amber-50 rounded-2xl p-6 sm:p-8 text-center">
-              <div className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-white/80 text-emerald-700 text-sm font-medium">
-                <Sparkles className="h-4 w-4" />
+              <div className="inline-flex items-center gap-1 sm:gap-2 mb-1.5 sm:mb-3 px-2 sm:px-3 py-0.5 sm:py-1.5 rounded-full bg-white/80 text-emerald-700 text-[10px] sm:text-sm font-medium">
+                <Sparkles className="h-2.5 w-2.5 sm:h-4 sm:w-4" />
                 <span>Ще більше цікавого</span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">
+              <h2 className="text-[15px] sm:text-2xl font-bold text-slate-900 mb-1 sm:mb-2">
                 Бажаєте дізнатися більше?
               </h2>
-              <p className="text-slate-600 mb-6 max-w-md mx-auto">
+              <p className="text-[12px] sm:text-base text-slate-600 mb-4 sm:mb-6 max-w-md mx-auto">
                 У нашому блозі ви знайдете ще багато корисних порад та натхнення для роботи з квітами
               </p>
               <Button
                 asChild
-                className="group h-12 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/25"
+                className="group h-10 sm:h-12 px-5 sm:px-6 text-[13px] sm:text-base bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/25"
               >
                 <Link href="/blog">
-                  <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
+                  <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 transition-transform group-hover:-translate-x-1" />
                   Переглянути всі статті
                 </Link>
               </Button>
