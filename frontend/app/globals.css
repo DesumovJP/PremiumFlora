@@ -1409,6 +1409,17 @@ select:focus-visible {
   text-transform: none;
 }
 
+/* Footer copyright text - small on mobile */
+@media (max-width: 639px) {
+  .footer-copyright,
+  .footer-copyright span,
+  .footer-copyright a,
+  .footer-copyright * {
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+  }
+}
+
 /* Benefit cards typography - smaller on mobile */
 .benefit-heading {
   font-size: 0.7rem; /* ~11px */

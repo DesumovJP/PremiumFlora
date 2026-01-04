@@ -140,8 +140,7 @@ export function ProductPageClient({ product }: { product: Product }) {
                     </div>
                   )}
                   <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
-                    Свіжі квіти височної якості. Ідеально підходять для оптових замовлень та
-                    великих проектів. Гарантуємо свіжість та довготривалість. Нова поставка свіжих квітів щоп'ятниці.
+                    Свіжі квіти найвищої якості. Ідеальна оптова пропозиція. Гарантуємо свіжість та довготривалість. Нова поставка свіжих квітів щоп'ятниці.
                   </p>
                 </div>
 
@@ -156,9 +155,10 @@ export function ProductPageClient({ product }: { product: Product }) {
                           key={variant.size}
                           onClick={() => setSelectedVariant(variant)}
                           className={cn(
-                            "group relative rounded-xl p-2.5 text-left transition-all sm:rounded-2xl sm:p-3 md:p-4 border-0",
-                            "bg-[#fafafa]",
-                            isSelected && "ring-2 ring-emerald-500"
+                            "group relative rounded-xl p-2.5 text-left transition-all duration-200 sm:rounded-2xl sm:p-3 md:p-4 border-0",
+                            isSelected
+                              ? "bg-emerald-50 ring-2 ring-emerald-500"
+                              : "bg-[#fafafa] hover:bg-emerald-50/50 active:bg-emerald-100/70"
                           )}
                           style={{
                             boxShadow: isSelected

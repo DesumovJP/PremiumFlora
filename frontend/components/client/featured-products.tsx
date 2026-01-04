@@ -43,7 +43,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
   return (
     <section
       ref={ref}
-      className="relative overflow-hidden pt-10 sm:pt-20 lg:pt-28 pb-10 lg:pb-14 bg-gradient-to-b from-white via-slate-50/30 to-white"
+      className="relative overflow-hidden pt-10 sm:pt-20 lg:pt-28 pb-10 lg:pb-14 bg-white"
     >
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -98,7 +98,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
             <Button
               asChild
               size="lg"
-              className="group relative overflow-hidden bg-white hover:bg-emerald-50 border-2 border-slate-200 hover:border-emerald-200 text-slate-700 hover:text-emerald-700 shadow-sm hover:shadow-md h-12 sm:h-14 px-8 text-base font-semibold transition-all duration-300"
+              className="group relative overflow-hidden bg-white hover:bg-emerald-50 border-2 border-slate-200 hover:border-emerald-200 text-slate-700 hover:text-emerald-700 shadow-sm hover:shadow-md h-10 sm:h-12 px-5 sm:px-8 text-sm sm:text-base font-semibold transition-all duration-300"
             >
               <Link href="/catalog" className="flex items-center gap-2">
                 <span className="relative z-10">Переглянути весь каталог</span>

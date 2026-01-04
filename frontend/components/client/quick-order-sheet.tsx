@@ -188,7 +188,7 @@ export function QuickOrderSheet({ isOpen, onClose }: QuickOrderSheetProps) {
           <Button
             type="submit"
             size="lg"
-            className="w-full mt-6"
+            className="w-full mt-6 h-10 sm:h-11 text-sm"
             disabled={isSubmitting}
           >
             {isSubmitting ? (

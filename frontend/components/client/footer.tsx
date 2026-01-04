@@ -114,7 +114,7 @@ export function Footer() {
 
         {/* Mobile Bottom bar */}
         <div className="sm:hidden mt-6 pt-4 border-t border-slate-200/50 dark:border-admin-border">
-          <div className="flex flex-col items-center gap-0.5 text-[8px] text-slate-400 dark:text-admin-text-muted">
+          <div className="flex flex-col items-center gap-0.5 text-[11px] text-slate-400 dark:text-admin-text-muted">
             <span>© {new Date().getFullYear()} Premium Flora</span>
             <span>
               Створено{" "}

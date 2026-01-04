@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef, TouchEvent } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,34 @@ export function ImageCarousel({ images, className }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
+  const handleTouchStart = (e: TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+
+    const diff = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50;
+
+    if (Math.abs(diff) > minSwipeDistance) {
+      if (diff > 0) {
+        goToNext();
+      } else {
+        goToPrevious();
+      }
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
 
   const goToPrevious = () => {
     if (isTransitioning) return;
@@ -54,7 +82,12 @@ export function ImageCarousel({ images, className }: ImageCarouselProps) {
   return (
     <div className={cn("relative w-full", className)}>
       {/* Main Image with crossfade + subtle scale */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-slate-100">
+      <div
+        className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-slate-100"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <Image
           src={images[currentIndex]}
           alt={`Gallery image ${currentIndex + 1}`}
@@ -71,7 +104,7 @@ export function ImageCarousel({ images, className }: ImageCarouselProps) {
           unoptimized={images[currentIndex].includes('digitaloceanspaces.com')}
         />
         
-        {/* Navigation Buttons with hover animation */}
+        {/* Navigation Buttons - hidden on mobile (use swipe instead) */}
         {images.length > 1 && (
           <>
             <Button
@@ -79,7 +112,7 @@ export function ImageCarousel({ images, className }: ImageCarouselProps) {
               size="icon"
               onClick={goToPrevious}
               disabled={isTransitioning}
-              className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white animate-hover-scale disabled:opacity-50"
+              className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white animate-hover-scale disabled:opacity-50 hidden sm:flex"
               aria-label="Попереднє зображення"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -89,7 +122,7 @@ export function ImageCarousel({ images, className }: ImageCarouselProps) {
               size="icon"
               onClick={goToNext}
               disabled={isTransitioning}
-              className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white animate-hover-scale disabled:opacity-50"
+              className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white animate-hover-scale disabled:opacity-50 hidden sm:flex"
               aria-label="Наступне зображення"
             >
               <ChevronRight className="h-5 w-5" />

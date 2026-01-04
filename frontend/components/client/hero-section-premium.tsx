@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, ChevronDown } from 'lucide-react';
+import { ArrowRight, ChevronDown, Users, Leaf, Truck } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
@@ -152,7 +152,7 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                 initial={{ opacity: 0 }}
                 animate={mounted ? { opacity: 1 } : {}}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                className="text-xs sm:text-sm font-medium text-emerald-600 mb-3 sm:mb-4 tracking-wide"
+                className="text-[11px] sm:text-sm font-semibold text-emerald-600 mb-3 sm:mb-4 tracking-widest uppercase"
               >
                 Оптові поставки квітів з Європи
               </motion.p>
@@ -162,7 +162,8 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                 initial={{ opacity: 0, y: 20 }}
                 animate={mounted ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.6, delay: 0.15 }}
-                className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 leading-[1.15] tracking-tight mb-4 sm:mb-6"
+                className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-800 leading-[1.1] tracking-tight mb-4 sm:mb-6"
+                style={{ fontFamily: 'var(--font-display), serif' }}
               >
                 Преміальні квіти для вашого бізнесу
               </motion.h1>
@@ -172,7 +173,7 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                 initial={{ opacity: 0, y: 20 }}
                 animate={mounted ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="text-sm sm:text-base lg:text-lg text-slate-600 mb-6 sm:mb-8 leading-relaxed"
+                className="text-[13px] sm:text-base lg:text-lg text-slate-500 mb-6 sm:mb-8 leading-relaxed max-w-md"
               >
                 Прямі поставки з європейських плантацій.
                 Гарантована свіжість 7+ днів, доставка по всій Україні.
@@ -188,7 +189,7 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                 <Button
                   size="lg"
                   onClick={onContactClick}
-                  className="w-auto bg-emerald-600 hover:bg-emerald-700 text-white h-11 sm:h-12 px-5 sm:px-6 text-sm sm:text-base font-medium rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/25"
+                  className="w-auto bg-emerald-600 hover:bg-emerald-700 text-white h-9 sm:h-12 px-4 sm:px-6 text-[13px] sm:text-base font-medium rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/25"
                 >
                   Отримати пропозицію
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -198,7 +199,7 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                   size="lg"
                   variant="ghost"
                   asChild
-                  className="w-auto text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 h-11 sm:h-12 px-5 sm:px-6 text-sm sm:text-base font-medium rounded-xl transition-all duration-200"
+                  className="w-auto text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 h-9 sm:h-12 px-4 sm:px-6 text-[13px] sm:text-base font-medium rounded-xl transition-all duration-200"
                 >
                   <Link href="/catalog">
                     Переглянути каталог
@@ -206,28 +207,33 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                 </Button>
               </motion.div>
 
-              {/* Trust indicators */}
+              {/* Trust indicators - flat badges like catalog */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={mounted ? { opacity: 1 } : {}}
                 transition={{ duration: 0.6, delay: 0.4 }}
                 className="mt-8 sm:mt-12 pt-4 sm:pt-6"
               >
-                <div
-                  className="inline-flex flex-wrap justify-center sm:justify-start gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4 px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-[#fafafa]"
-                  style={{
-                    boxShadow: '3px 3px 8px rgba(0, 0, 0, 0.06), -3px -3px 8px rgba(255, 255, 255, 0.8)',
-                  }}
-                >
+                <div className="flex flex-wrap justify-center sm:justify-start gap-2 sm:gap-3">
                   {[
-                    { value: '500+', label: 'клієнтів' },
-                    { value: '7+ днів', label: 'свіжість' },
-                    { value: '24h', label: 'доставка' },
-                  ].map((stat) => (
-                    <div key={stat.label} className="flex items-baseline gap-1 sm:gap-1.5">
-                      <span className="text-base sm:text-lg font-medium text-slate-700">{stat.value}</span>
-                      <span className="text-[10px] sm:text-xs text-slate-500">{stat.label}</span>
-                    </div>
+                    { icon: Users, label: '500+ клієнтів', color: 'emerald' },
+                    { icon: Leaf, label: '7+ днів', color: 'cyan' },
+                    { icon: Truck, label: '24h доставка', color: 'amber' },
+                  ].map((badge, index) => (
+                    <motion.div
+                      key={badge.label}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={mounted ? { opacity: 1, y: 0 } : {}}
+                      transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-50 border border-slate-100 ${
+                        badge.color === 'emerald' ? 'text-emerald-600' :
+                        badge.color === 'cyan' ? 'text-cyan-600' :
+                        'text-amber-600'
+                      }`}
+                    >
+                      <badge.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span>{badge.label}</span>
+                    </motion.div>
                   ))}
                 </div>
               </motion.div>

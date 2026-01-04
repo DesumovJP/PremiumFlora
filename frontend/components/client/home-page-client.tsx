@@ -37,9 +37,7 @@ export function HomePageClient({ products, posts }: HomePageClientProps) {
           willChange: 'transform',
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-slate-50/30 to-white dark:from-[#0d1117] dark:via-[#0d1117] dark:to-[#0d1117]" />
-        {/* Removed bg-fixed - causes issues in in-app browsers */}
-        <div className="absolute inset-0 bg-[url('/bg.webp')] bg-cover bg-center opacity-[0.02] dark:opacity-[0.01]" />
+        <div className="absolute inset-0 bg-white dark:bg-[#0d1117]" />
       </div>
 
       {/* Hero з value proposition */}

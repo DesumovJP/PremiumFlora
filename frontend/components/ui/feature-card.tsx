@@ -75,7 +75,7 @@ export function FeatureCard({
           <motion.div
             className={cn(
               'w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4',
-              'transition-all duration-300 bg-[#f5f5f5] dark:bg-[#1a1f2e]',
+              'transition-all duration-300 bg-white dark:bg-[#1a1f2e]',
               centered && "mx-auto"
             )}
             style={{
@@ -90,17 +90,17 @@ export function FeatureCard({
           </motion.div>
 
           {/* Title */}
-          <h3 className="text-sm sm:text-xl font-semibold text-slate-800 mb-1 sm:mb-2 group-hover:text-slate-900 transition-colors leading-tight">
+          <h3 className="text-[15px] sm:text-xl font-semibold text-slate-800 mb-1 sm:mb-2 group-hover:text-slate-900 transition-colors leading-tight">
             {title}
           </h3>
 
           {/* Description or Custom Content */}
           {children ? (
-            <div className="text-xs sm:text-base text-slate-500 leading-relaxed group-hover:text-slate-600 transition-colors">
+            <div className="text-[13px] sm:text-base text-slate-500 leading-[1.5] group-hover:text-slate-600 transition-colors">
               {children}
             </div>
           ) : description ? (
-            <p className="text-xs sm:text-base text-slate-500 leading-relaxed group-hover:text-slate-600 transition-colors line-clamp-3 sm:line-clamp-none">
+            <p className="text-[13px] sm:text-base text-slate-500 leading-[1.5] group-hover:text-slate-600 transition-colors line-clamp-3 sm:line-clamp-none">
               {description}
             </p>
           ) : null}

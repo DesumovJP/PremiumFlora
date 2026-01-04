@@ -132,7 +132,7 @@ export function BlogPostClient({ post }: BlogPostClientProps) {
               </p>
               <Button
                 asChild
-                className="group h-10 sm:h-11 md:h-12 px-5 sm:px-6 text-[13px] sm:text-sm md:text-base bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/25"
+                className="group h-9 sm:h-11 md:h-12 px-4 sm:px-6 text-xs sm:text-sm md:text-base bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/25"
               >
                 <Link href="/blog">
                   <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />

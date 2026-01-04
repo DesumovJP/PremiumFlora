@@ -111,7 +111,7 @@ export function ContactForm() {
               className="flex w-full rounded-xl border border-slate-200 bg-white/70 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-900 shadow-sm transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 placeholder:text-slate-400 resize-none"
             />
           </div>
-          <Button type="submit" size="lg" className="w-full h-10 sm:h-11 text-sm" disabled={isSubmitting}>
+          <Button type="submit" size="lg" className="w-full h-9 sm:h-11 text-xs sm:text-sm" disabled={isSubmitting}>
             {isSubmitting ? (
               "Відправка..."
             ) : (

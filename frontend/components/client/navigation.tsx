@@ -293,55 +293,102 @@ export function Navigation() {
               {/* Spacer */}
               <div className="flex-1" />
 
-              {/* Contact Section */}
-              <div className="border-t border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] px-6 py-6">
+              {/* Contact Section - Same style as modal */}
+              <div className="border-t border-slate-100 dark:border-white/10 bg-white dark:bg-white/[0.02] px-6 py-6">
                 {/* Section header */}
-                <div className="flex items-center gap-2 mb-3 opacity-0 animate-[slideUpFade_0.3s_ease-out_forwards]" style={{ animationDelay: "150ms" }}>
+                <div className="flex items-center gap-2 mb-4 opacity-0 animate-[slideUpFade_0.3s_ease-out_forwards]" style={{ animationDelay: "150ms" }}>
                   <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
                     Зв'яжіться з нами
                   </span>
                   <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent dark:from-white/10" />
                 </div>
 
-                {/* Contact buttons */}
-                <div className="space-y-2">
-                  {/* Phone */}
-                  <MobileContactButton
-                    href={contacts.phones[0].href}
-                    icon={Phone}
-                    label="Зателефонувати"
-                    sublabel={contacts.phones[0].number}
-                    index={0}
-                  />
+                {/* Phones */}
+                <div className="space-y-2 opacity-0 animate-[slideUpFade_0.3s_ease-out_forwards]" style={{ animationDelay: "180ms" }}>
+                  {contacts.phones.map((phone, index) => (
+                    <a
+                      key={index}
+                      href={phone.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="group flex items-center gap-3 p-3 rounded-xl bg-[#fafafa] transition-all duration-200 hover:bg-emerald-50 active:scale-[0.98]"
+                      style={{
+                        boxShadow: '3px 3px 6px rgba(0, 0, 0, 0.04), -3px -3px 6px rgba(255, 255, 255, 0.9)',
+                      }}
+                    >
+                      <div
+                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-white"
+                        style={{
+                          boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.8)',
+                        }}
+                      >
+                        <Phone className="h-4 w-4 text-emerald-600" strokeWidth={1.5} />
+                      </div>
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-emerald-700 transition-colors">
+                        {phone.number}
+                      </span>
+                    </a>
+                  ))}
+                </div>
 
+                {/* Divider */}
+                <div className="flex items-center gap-3 my-4 opacity-0 animate-[slideUpFade_0.3s_ease-out_forwards]" style={{ animationDelay: "220ms" }}>
+                  <div className="flex-1 h-px bg-slate-100" />
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400">або</span>
+                  <div className="flex-1 h-px bg-slate-100" />
+                </div>
+
+                {/* Messengers */}
+                <div className="grid grid-cols-2 gap-2.5 opacity-0 animate-[slideUpFade_0.3s_ease-out_forwards]" style={{ animationDelay: "260ms" }}>
                   {/* Viber */}
-                  <MobileContactButton
+                  <a
                     href={contacts.viber.href}
-                    iconComponent={ViberIcon}
-                    label="Viber"
-                    sublabel="Написати в месенджер"
-                    index={1}
-                  />
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="group flex flex-col items-center gap-2 p-3.5 rounded-xl bg-[#fafafa] transition-all duration-200 hover:bg-[#7360f2]/5 active:scale-[0.98]"
+                    style={{
+                      boxShadow: '3px 3px 6px rgba(0, 0, 0, 0.04), -3px -3px 6px rgba(255, 255, 255, 0.9)',
+                    }}
+                  >
+                    <div
+                      className="w-10 h-10 rounded-xl bg-white flex items-center justify-center transition-colors group-hover:bg-[#7360f2]/10"
+                      style={{
+                        boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.8)',
+                      }}
+                    >
+                      <ViberIcon className="h-5 w-5 text-[#7360f2]" />
+                    </div>
+                    <span className="text-sm font-medium text-slate-600 group-hover:text-[#7360f2] transition-colors">Viber</span>
+                  </a>
 
                   {/* Telegram */}
-                  <MobileContactButton
+                  <a
                     href={contacts.telegram.href}
-                    iconComponent={TelegramIcon}
-                    label="Telegram"
-                    sublabel={contacts.telegram.username}
-                    index={2}
-                  />
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="group flex flex-col items-center gap-2 p-3.5 rounded-xl bg-[#fafafa] transition-all duration-200 hover:bg-[#0088cc]/5 active:scale-[0.98]"
+                    style={{
+                      boxShadow: '3px 3px 6px rgba(0, 0, 0, 0.04), -3px -3px 6px rgba(255, 255, 255, 0.9)',
+                    }}
+                  >
+                    <div
+                      className="w-10 h-10 rounded-xl bg-white flex items-center justify-center transition-colors group-hover:bg-[#0088cc]/10"
+                      style={{
+                        boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.8)',
+                      }}
+                    >
+                      <TelegramIcon className="h-5 w-5 text-[#0088cc]" />
+                    </div>
+                    <span className="text-sm font-medium text-slate-600 group-hover:text-[#0088cc] transition-colors">Telegram</span>
+                  </a>
                 </div>
 
                 {/* Work hours */}
                 <div
-                  className="flex items-center justify-center gap-2 mt-5 pt-4 border-t border-slate-200/60 dark:border-white/5 opacity-0 animate-[slideUpFade_0.3s_ease-out_forwards]"
-                  style={{ animationDelay: "320ms" }}
+                  className="flex items-center justify-center gap-2 mt-4 pt-3 text-slate-400 opacity-0 animate-[slideUpFade_0.3s_ease-out_forwards]"
+                  style={{ animationDelay: "300ms" }}
                 >
-                  <Clock className="h-3 w-3 text-slate-400" />
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {contacts.workHours}
-                  </span>
+                  <Clock className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  <span className="text-[11px]">{contacts.workHours}</span>
                 </div>
               </div>
             </div>

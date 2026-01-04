@@ -1,7 +1,6 @@
 'use client';
 
-import { ArrowRight, Leaf, Phone } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ArrowRight, Sparkles, Phone } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import Image from 'next/image';
@@ -43,7 +42,7 @@ export function CtaSection({ onContactClick, variant = 'home' }: CtaSectionProps
       id="contact-form"
       className="relative overflow-hidden"
     >
-      {/* Background Image - Bottom layer */}
+      {/* Background Image */}
       <div className="absolute inset-0">
         <Image
           src="https://mymediastorage.fra1.digitaloceanspaces.com/premiumFlora/2149408754_93d28191c1.jpg"
@@ -57,7 +56,7 @@ export function CtaSection({ onContactClick, variant = 'home' }: CtaSectionProps
         />
       </div>
 
-      {/* Gradient Overlay - Top layer with warm tone */}
+      {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#fafafa] via-[#fafafa]/95 to-[#fafafa]/70 dark:from-slate-900 dark:via-slate-900/95 dark:to-slate-900/70" />
 
       {/* Content */}
@@ -68,53 +67,76 @@ export function CtaSection({ onContactClick, variant = 'home' }: CtaSectionProps
         className="relative z-10 py-8 sm:py-12 lg:py-16 xl:py-20 px-5 sm:px-6 lg:px-8"
       >
         <div className="max-w-4xl mx-auto text-center">
-          {/* Badge - hidden on mobile - Neumorphic */}
-          <div
-            className="hidden sm:inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full bg-[#f5f5f5] dark:bg-emerald-900/50"
+          {/* Badge - neumorphic inset */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={isInView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="inline-flex items-center gap-2 mb-4 sm:mb-5 px-4 py-2 rounded-full bg-[#fafafa]/80 dark:bg-emerald-900/50 backdrop-blur-sm"
             style={{
-              boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.7)',
+              boxShadow: 'inset 2px 2px 4px rgba(0, 0, 0, 0.05), inset -2px -2px 4px rgba(255, 255, 255, 0.7)',
             }}
           >
-            <Leaf className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500" />
+            <span className="text-xs sm:text-sm font-medium text-emerald-700 dark:text-emerald-300">
               {c.badge}
             </span>
-          </div>
+          </motion.div>
 
           {/* Heading */}
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-2 sm:mb-4 leading-tight">
+          <motion.h2
+            initial={{ opacity: 0, y: 10 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.15 }}
+            className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 dark:text-white mb-3 sm:mb-4 leading-tight"
+          >
             {c.title}{' '}
-            <span className="text-emerald-600 dark:text-emerald-400">{c.titleAccent}</span>
-          </h2>
+            <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+              {c.titleAccent}
+            </span>
+          </motion.h2>
 
           {/* Subtitle */}
-          <p className="text-xs sm:text-sm md:text-base lg:text-lg text-slate-600 dark:text-slate-400 mb-5 sm:mb-8 max-w-2xl mx-auto">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-400 mb-6 sm:mb-8 max-w-xl mx-auto leading-relaxed"
+          >
             {c.subtitle}
-          </p>
+          </motion.p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-            <Button
-              size="lg"
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.25 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-3"
+          >
+            {/* Primary button */}
+            <button
               onClick={onContactClick}
-              className="group w-auto h-10 sm:h-11 md:h-12 px-5 sm:px-6 md:px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[13px] sm:text-sm md:text-base rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/25"
+              className="group flex items-center gap-2 h-10 sm:h-12 px-5 sm:px-7 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm sm:text-base rounded-xl transition-all duration-300 active:scale-[0.98]"
+              style={{
+                boxShadow: '4px 4px 12px rgba(16, 185, 129, 0.3), -2px -2px 8px rgba(255, 255, 255, 0.1)',
+              }}
             >
               {c.buttonText}
-              <ArrowRight className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 ml-1.5 sm:ml-2 transition-transform group-hover:translate-x-1" />
-            </Button>
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" />
+            </button>
 
-            <Button
-              size="lg"
-              variant="outline"
-              asChild
-              className="hidden sm:flex w-auto h-12 sm:h-14 px-6 sm:px-8 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-semibold text-base rounded-full transition-all duration-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-white/50 dark:hover:bg-slate-800/50"
+            {/* Secondary button - neumorphic */}
+            <a
+              href="tel:+380441234567"
+              className="hidden sm:flex items-center gap-2 h-12 px-6 bg-white/80 backdrop-blur-sm text-slate-600 hover:text-emerald-600 font-medium text-base rounded-xl transition-all duration-300 active:scale-[0.98]"
+              style={{
+                boxShadow: '3px 3px 8px rgba(0, 0, 0, 0.06), -3px -3px 8px rgba(255, 255, 255, 0.9)',
+              }}
             >
-              <a href="tel:+380441234567">
-                <Phone className="w-5 h-5 mr-2" />
-                Зателефонувати
-              </a>
-            </Button>
-          </div>
+              <Phone className="w-4 h-4" />
+              Зателефонувати
+            </a>
+          </motion.div>
         </div>
       </motion.div>
     </section>

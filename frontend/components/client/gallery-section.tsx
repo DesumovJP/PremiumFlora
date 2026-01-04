@@ -314,7 +314,7 @@ export function GallerySection({
             <X className="h-6 w-6" />
           </button>
 
-          {/* Navigation Buttons with hover animation */}
+          {/* Navigation Buttons - hidden on mobile (use swipe instead) */}
           {images.length > 1 && (
             <>
               <button
@@ -323,10 +323,10 @@ export function GallerySection({
                   goToPrevious();
                 }}
                 disabled={isImageTransitioning}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-white/10 text-white backdrop-blur-sm animate-hover-scale focus:outline-none disabled:opacity-50 flex items-center justify-center"
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 h-14 w-14 rounded-full bg-white/10 text-white backdrop-blur-sm animate-hover-scale focus:outline-none disabled:opacity-50 hidden sm:flex items-center justify-center"
                 aria-label="Попереднє зображення"
               >
-                <ChevronLeft className="h-6 w-6 sm:h-8 sm:w-8" />
+                <ChevronLeft className="h-8 w-8" />
               </button>
               <button
                 onClick={(e) => {
@@ -334,10 +334,10 @@ export function GallerySection({
                   goToNext();
                 }}
                 disabled={isImageTransitioning}
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-white/10 text-white backdrop-blur-sm animate-hover-scale focus:outline-none disabled:opacity-50 flex items-center justify-center"
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 h-14 w-14 rounded-full bg-white/10 text-white backdrop-blur-sm animate-hover-scale focus:outline-none disabled:opacity-50 hidden sm:flex items-center justify-center"
                 aria-label="Наступне зображення"
               >
-                <ChevronRight className="h-6 w-6 sm:h-8 sm:w-8" />
+                <ChevronRight className="h-8 w-8" />
               </button>
             </>
           )}
@@ -354,15 +354,13 @@ export function GallerySection({
             </div>
           )}
 
-          {/* Image with zoom + crossfade animation + swipe support */}
+          {/* Image with simple opacity transition + swipe support */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={images[selectedIndex]}
             alt={`Gallery image ${selectedIndex + 1}`}
-            className={cn(
-              "max-w-[calc(100vw-2rem)] max-h-[calc(100vh-8rem)] sm:max-w-[calc(100vw-8rem)] sm:max-h-[calc(100vh-6rem)] w-auto h-auto object-contain rounded-xl select-none touch-pan-y",
-              isImageTransitioning ? "animate-crossfade-out" : "animate-crossfade-in animate-gallery-zoom-in"
-            )}
+            className="max-w-[calc(100vw-2rem)] max-h-[calc(100vh-8rem)] sm:max-w-[calc(100vw-8rem)] sm:max-h-[calc(100vh-6rem)] w-auto h-auto object-contain rounded-xl select-none touch-pan-y transition-opacity duration-200"
+            style={{ opacity: isImageTransitioning ? 0 : 1 }}
             onClick={(e) => e.stopPropagation()}
             onTouchStart={swipeHandlers.onTouchStart}
             onTouchMove={swipeHandlers.onTouchMove}
