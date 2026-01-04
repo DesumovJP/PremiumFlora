@@ -103,19 +103,19 @@ export function BlogPageClient({ posts }: BlogPageClientProps) {
                           </div>
 
                           <div className="flex flex-1 flex-col p-5 sm:p-6">
-                            <h3 className="mb-2 line-clamp-2 text-lg sm:text-xl font-semibold leading-tight text-slate-800 transition-colors group-hover:text-emerald-700" style={{ fontFamily: 'var(--font-display), serif' }}>
+                            <h3 className="mb-3 line-clamp-2 text-xl sm:text-2xl font-semibold leading-snug text-slate-800 transition-colors group-hover:text-emerald-700" style={{ fontFamily: 'var(--font-display), serif' }}>
                               {primary.title}
                             </h3>
-                            <p className="mb-4 flex-1 text-sm leading-relaxed text-slate-500 line-clamp-3">
+                            <p className="mb-4 flex-1 text-base leading-relaxed text-slate-600 line-clamp-3">
                               {primary.excerpt}
                             </p>
-                            <div className="mt-auto flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                            <div className="mt-auto flex flex-wrap items-center gap-4 text-sm text-slate-500">
                               <div className="flex items-center gap-1.5">
-                                <Calendar className="h-3 w-3" strokeWidth={1.5} />
+                                <Calendar className="h-3.5 w-3.5" strokeWidth={1.5} />
                                 <span>{formatDate(primary.date)}</span>
                               </div>
                               <div className="flex items-center gap-1.5">
-                                <User className="h-3 w-3" strokeWidth={1.5} />
+                                <User className="h-3.5 w-3.5" strokeWidth={1.5} />
                                 <span>{primary.author}</span>
                               </div>
                             </div>
@@ -162,16 +162,16 @@ export function BlogPageClient({ posts }: BlogPageClientProps) {
                             </div>
                           </div>
 
-                          <div className="flex flex-1 flex-col p-4 lg:p-4">
-                            <h3 className="mb-2 line-clamp-2 text-sm sm:text-base font-semibold leading-tight text-slate-800 transition-colors group-hover:text-emerald-700" style={{ fontFamily: 'var(--font-display), serif' }}>
+                          <div className="flex flex-1 flex-col p-4 lg:p-5">
+                            <h3 className="mb-2 line-clamp-2 text-base sm:text-lg font-semibold leading-snug text-slate-800 transition-colors group-hover:text-emerald-700" style={{ fontFamily: 'var(--font-display), serif' }}>
                               {post.title}
                             </h3>
-                            <p className="mb-3 flex-1 text-xs leading-relaxed text-slate-500 line-clamp-2 hidden sm:block">
+                            <p className="mb-3 flex-1 text-sm leading-relaxed text-slate-600 line-clamp-2 hidden sm:block">
                               {post.excerpt}
                             </p>
-                            <div className="mt-auto flex flex-wrap items-center gap-3 text-[10px] text-slate-400">
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-2.5 w-2.5" strokeWidth={1.5} />
+                            <div className="mt-auto flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                              <div className="flex items-center gap-1.5">
+                                <Calendar className="h-3 w-3" strokeWidth={1.5} />
                                 <span>{formatDate(post.date)}</span>
                               </div>
                             </div>
