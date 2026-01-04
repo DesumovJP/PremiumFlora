@@ -35,9 +35,9 @@ export function ProductPageClient({ product }: { product: Product }) {
       <main className="min-h-screen pt-16 lg:pt-20">
         {/* Breadcrumb - Neumorphic Style */}
         <section
-          className="border-0 bg-[#faf8f5] dark:bg-admin-surface pt-4 pb-3 sm:pt-6 sm:pb-4"
+          className="border-0 bg-[#fafafa] dark:bg-admin-surface pt-4 pb-3 sm:pt-6 sm:pb-4"
           style={{
-            boxShadow: 'inset 0 -2px 6px rgba(200, 190, 175, 0.1)',
+            boxShadow: 'inset 0 -2px 6px rgba(0, 0, 0, 0.03)',
           }}
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -70,9 +70,9 @@ export function ProductPageClient({ product }: { product: Product }) {
             <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:gap-8 lg:grid-cols-2">
               {/* Image - Neumorphic */}
               <div
-                className="relative aspect-square w-full overflow-hidden rounded-2xl bg-[#faf8f5]"
+                className="relative aspect-square w-full overflow-hidden rounded-2xl bg-[#fafafa]"
                 style={{
-                  boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                  boxShadow: '3px 3px 8px rgba(0, 0, 0, 0.06), -3px -3px 8px rgba(255, 255, 255, 0.8)',
                 }}
               >
                 {product.image ? (
@@ -157,13 +157,13 @@ export function ProductPageClient({ product }: { product: Product }) {
                           onClick={() => setSelectedVariant(variant)}
                           className={cn(
                             "group relative rounded-xl p-2.5 text-left transition-all sm:rounded-2xl sm:p-3 md:p-4 border-0",
-                            "bg-[#faf8f5]",
+                            "bg-[#fafafa]",
                             isSelected && "ring-2 ring-emerald-500"
                           )}
                           style={{
                             boxShadow: isSelected
-                              ? 'inset 2px 2px 4px rgba(200, 190, 175, 0.3), inset -2px -2px 4px rgba(255, 255, 255, 0.5)'
-                              : '3px 3px 8px rgba(200, 190, 175, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                              ? 'inset 2px 2px 4px rgba(0, 0, 0, 0.07), inset -2px -2px 4px rgba(255, 255, 255, 0.8)'
+                              : '3px 3px 8px rgba(0, 0, 0, 0.06), -3px -3px 8px rgba(255, 255, 255, 0.8)',
                           }}
                         >
                           {isSelected && (
@@ -182,9 +182,9 @@ export function ProductPageClient({ product }: { product: Product }) {
                 {/* Selected Variant Info */}
                 {selectedVariant && (
                   <Card
-                    className="border-0 bg-[#faf8f5]"
+                    className="border-0 bg-[#fafafa]"
                     style={{
-                      boxShadow: 'inset 2px 2px 4px rgba(200, 190, 175, 0.2), inset -2px -2px 4px rgba(255, 255, 255, 0.4)',
+                      boxShadow: 'inset 2px 2px 4px rgba(0, 0, 0, 0.05), inset -2px -2px 4px rgba(255, 255, 255, 0.7)',
                     }}
                   >
                     <CardContent className="p-3 sm:p-4">
@@ -273,9 +273,9 @@ export function ProductPageClient({ product }: { product: Product }) {
 
                 {/* Info */}
                 <Card
-                  className="border-0 bg-[#faf8f5]"
+                  className="border-0 bg-[#fafafa]"
                   style={{
-                    boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                    boxShadow: '3px 3px 8px rgba(0, 0, 0, 0.06), -3px -3px 8px rgba(255, 255, 255, 0.8)',
                   }}
                 >
                   <CardContent className="p-3 sm:p-4">

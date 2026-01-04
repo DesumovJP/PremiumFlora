@@ -64,15 +64,15 @@ export function ArticleModalContent({ post, formatDate, onBackToBlog }: ArticleM
       {onBackToBlog && (
         <div className="mt-12 pt-8 border-t border-slate-200">
           <div
-            className="bg-[#faf8f5] rounded-2xl p-5 sm:p-8 text-center"
+            className="bg-[#fafafa] rounded-2xl p-5 sm:p-8 text-center"
             style={{
-              boxShadow: '4px 4px 12px rgba(200, 190, 175, 0.3), -4px -4px 12px rgba(255, 255, 255, 0.6)',
+              boxShadow: '4px 4px 12px rgba(0, 0, 0, 0.07), -4px -4px 12px rgba(255, 255, 255, 0.9)',
             }}
           >
             <div
-              className="inline-flex items-center gap-1.5 mb-2 sm:mb-3 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-[#f8f6f3] text-emerald-700 text-xs sm:text-sm font-medium"
+              className="inline-flex items-center gap-1.5 mb-2 sm:mb-3 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-[#f5f5f5] text-emerald-700 text-xs sm:text-sm font-medium"
               style={{
-                boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.15), inset -1px -1px 2px rgba(255, 255, 255, 0.4)',
+                boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.7)',
               }}
             >
               <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />

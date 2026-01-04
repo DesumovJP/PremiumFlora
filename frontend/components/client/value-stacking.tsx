@@ -51,7 +51,7 @@ export function ValueStackingSection() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section ref={ref} className="relative pb-10 sm:py-20 lg:py-28 bg-[#f8f6f3] dark:bg-[#151922] overflow-hidden">
+    <section ref={ref} className="relative pb-10 sm:py-20 lg:py-28 bg-[#f5f5f5] dark:bg-[#151922] overflow-hidden">
       {/* Subtle gradient overlay for depth */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-b from-white/50 via-transparent to-white/30 dark:from-transparent dark:to-transparent" />

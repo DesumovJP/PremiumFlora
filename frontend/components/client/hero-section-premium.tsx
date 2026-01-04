@@ -214,9 +214,9 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                 className="mt-8 sm:mt-12 pt-4 sm:pt-6"
               >
                 <div
-                  className="inline-flex flex-wrap justify-center sm:justify-start gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4 px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-[#faf8f5]"
+                  className="inline-flex flex-wrap justify-center sm:justify-start gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4 px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-[#fafafa]"
                   style={{
-                    boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                    boxShadow: '3px 3px 8px rgba(0, 0, 0, 0.06), -3px -3px 8px rgba(255, 255, 255, 0.8)',
                   }}
                 >
                   {[

@@ -26,9 +26,9 @@ export function BlogPostClient({ post }: BlogPostClientProps) {
     <main className="min-h-screen pt-16 lg:pt-20">
       {/* Breadcrumb - Neumorphic */}
       <section
-        className="border-0 bg-[#faf8f5] pt-4 pb-3 sm:pt-6 sm:pb-4"
+        className="border-0 bg-[#fafafa] pt-4 pb-3 sm:pt-6 sm:pb-4"
         style={{
-          boxShadow: 'inset 0 -2px 6px rgba(200, 190, 175, 0.1)',
+          boxShadow: 'inset 0 -2px 6px rgba(0, 0, 0, 0.03)',
         }}
       >
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -110,15 +110,15 @@ export function BlogPostClient({ post }: BlogPostClientProps) {
           {/* Back to Blog CTA - Neumorphic */}
           <div className="mt-12 pt-8 border-t border-slate-200">
             <div
-              className="bg-[#faf8f5] rounded-2xl p-6 sm:p-8 text-center"
+              className="bg-[#fafafa] rounded-2xl p-6 sm:p-8 text-center"
               style={{
-                boxShadow: '4px 4px 12px rgba(200, 190, 175, 0.3), -4px -4px 12px rgba(255, 255, 255, 0.6)',
+                boxShadow: '4px 4px 12px rgba(0, 0, 0, 0.07), -4px -4px 12px rgba(255, 255, 255, 0.9)',
               }}
             >
               <div
-                className="inline-flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[#f8f6f3] text-emerald-700 text-xs sm:text-sm font-medium"
+                className="inline-flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[#f5f5f5] text-emerald-700 text-xs sm:text-sm font-medium"
                 style={{
-                  boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.15), inset -1px -1px 2px rgba(255, 255, 255, 0.4)',
+                  boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.7)',
                 }}
               >
                 <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />

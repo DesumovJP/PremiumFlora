@@ -47,13 +47,13 @@ export function FeatureCard({
       <motion.div
         className={cn(
           'relative h-full p-4 sm:p-8 rounded-2xl sm:rounded-3xl cursor-default overflow-hidden',
-          'bg-[#faf8f5] dark:bg-[#1a1f2e]',
+          'bg-[#fafafa] dark:bg-[#1a1f2e]',
           'transition-all duration-300',
         )}
         style={{
           boxShadow: isHovered
-            ? '4px 4px 12px rgba(200, 190, 175, 0.35), -4px -4px 12px rgba(255, 255, 255, 0.6)'
-            : '3px 3px 8px rgba(200, 190, 175, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+            ? '4px 4px 12px rgba(0, 0, 0, 0.08), -4px -4px 12px rgba(255, 255, 255, 0.9)'
+            : '3px 3px 8px rgba(0, 0, 0, 0.06), -3px -3px 8px rgba(255, 255, 255, 0.8)',
         }}
         whileHover={{
           y: -2,
@@ -75,11 +75,11 @@ export function FeatureCard({
           <motion.div
             className={cn(
               'w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4',
-              'transition-all duration-300 bg-[#f8f6f3] dark:bg-[#1a1f2e]',
+              'transition-all duration-300 bg-[#f5f5f5] dark:bg-[#1a1f2e]',
               centered && "mx-auto"
             )}
             style={{
-              boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.15), inset -1px -1px 2px rgba(255, 255, 255, 0.4)',
+              boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.7)',
             }}
             animate={{
               scale: isHovered ? 1.05 : 1,

@@ -78,9 +78,9 @@ export function BlogPageClient({ posts }: BlogPageClientProps) {
                       <article className="h-full">
                         <Link href={`/blog/${primary.id}`} className="block h-full">
                         <div
-                          className="group flex h-full flex-col overflow-hidden rounded-2xl bg-[#faf8f5] transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                          className="group flex h-full flex-col overflow-hidden rounded-2xl bg-[#fafafa] transition-all duration-300 hover:-translate-y-1 cursor-pointer"
                           style={{
-                            boxShadow: '4px 4px 12px rgba(200, 190, 175, 0.25), -4px -4px 12px rgba(255, 255, 255, 0.6)',
+                            boxShadow: '4px 4px 12px rgba(0, 0, 0, 0.06), -4px -4px 12px rgba(255, 255, 255, 0.9)',
                           }}
                         >
                           <div className="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 rounded-t-2xl">
@@ -138,9 +138,9 @@ export function BlogPageClient({ posts }: BlogPageClientProps) {
                       <article key={post.id} className="h-full">
                         <Link href={`/blog/${post.id}`} className="block h-full">
                         <div
-                          className="group flex h-full flex-col lg:flex-row overflow-hidden rounded-2xl bg-[#faf8f5] transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                          className="group flex h-full flex-col lg:flex-row overflow-hidden rounded-2xl bg-[#fafafa] transition-all duration-300 hover:-translate-y-1 cursor-pointer"
                           style={{
-                            boxShadow: '3px 3px 10px rgba(200, 190, 175, 0.2), -3px -3px 10px rgba(255, 255, 255, 0.5)',
+                            boxShadow: '3px 3px 10px rgba(0, 0, 0, 0.05), -3px -3px 10px rgba(255, 255, 255, 0.8)',
                           }}
                         >
                           <div className="relative w-full aspect-[16/10] overflow-hidden bg-slate-100 rounded-t-2xl lg:rounded-l-2xl lg:rounded-tr-none lg:w-36 lg:flex-shrink-0 lg:h-full lg:aspect-auto">

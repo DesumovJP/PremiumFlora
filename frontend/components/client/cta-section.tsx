@@ -58,7 +58,7 @@ export function CtaSection({ onContactClick, variant = 'home' }: CtaSectionProps
       </div>
 
       {/* Gradient Overlay - Top layer with warm tone */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#faf8f5] via-[#faf8f5]/95 to-[#faf8f5]/70 dark:from-slate-900 dark:via-slate-900/95 dark:to-slate-900/70" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#fafafa] via-[#fafafa]/95 to-[#fafafa]/70 dark:from-slate-900 dark:via-slate-900/95 dark:to-slate-900/70" />
 
       {/* Content */}
       <motion.div
@@ -70,9 +70,9 @@ export function CtaSection({ onContactClick, variant = 'home' }: CtaSectionProps
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge - hidden on mobile - Neumorphic */}
           <div
-            className="hidden sm:inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full bg-[#f8f6f3] dark:bg-emerald-900/50"
+            className="hidden sm:inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full bg-[#f5f5f5] dark:bg-emerald-900/50"
             style={{
-              boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.15), inset -1px -1px 2px rgba(255, 255, 255, 0.4)',
+              boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.7)',
             }}
           >
             <Leaf className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />

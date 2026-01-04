@@ -120,7 +120,7 @@ function MobileContactButton({
       rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
       className={cn(
         "flex items-center gap-3 rounded-xl p-3",
-        "bg-[#faf8f5] transition-all duration-200",
+        "bg-[#fafafa] transition-all duration-200",
         "hover:-translate-y-0.5 active:translate-y-0",
         // Staggered animation
         "opacity-0 translate-y-2 animate-[slideUpFade_0.3s_ease-out_forwards]",
@@ -128,13 +128,13 @@ function MobileContactButton({
       )}
       style={{
         animationDelay: `${180 + index * 40}ms`,
-        boxShadow: '2px 2px 6px rgba(200, 190, 175, 0.15), -2px -2px 6px rgba(255, 255, 255, 0.5)',
+        boxShadow: '2px 2px 6px rgba(0, 0, 0, 0.04), -2px -2px 6px rgba(255, 255, 255, 0.8)',
       }}
     >
       <div
-        className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f8f6f3]"
+        className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f5f5f5]"
         style={{
-          boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.1), inset -1px -1px 2px rgba(255, 255, 255, 0.3)',
+          boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.03), inset -1px -1px 2px rgba(255, 255, 255, 0.6)',
         }}
       >
         {Icon && <Icon className="h-4 w-4 text-emerald-600" strokeWidth={1.5} />}
