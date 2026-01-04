@@ -162,7 +162,7 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                 initial={{ opacity: 0, y: 20 }}
                 animate={mounted ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.6, delay: 0.15 }}
-                className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-slate-800 leading-[1.15] tracking-tight mb-4 sm:mb-6"
+                className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 leading-[1.15] tracking-tight mb-4 sm:mb-6"
               >
                 Преміальні квіти для вашого бізнесу
               </motion.h1>

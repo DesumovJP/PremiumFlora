@@ -52,7 +52,7 @@ export function Footer() {
                 <Leaf className="h-5 w-5" strokeWidth={1.5} />
               </div>
               <div>
-                <div className="text-lg font-semibold text-slate-800 dark:text-admin-text-primary" style={{ fontFamily: 'var(--font-display), serif' }}>
+                <div className="text-lg font-bold text-slate-800 dark:text-admin-text-primary" style={{ fontFamily: 'var(--font-display), serif' }}>
                   Premium Flora
                 </div>
                 <div className="text-[0.7rem] uppercase tracking-widest text-emerald-600/70 dark:text-emerald-400">
