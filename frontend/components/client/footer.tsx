@@ -52,15 +52,15 @@ export function Footer() {
                 <Leaf className="h-5 w-5" strokeWidth={1.5} />
               </div>
               <div>
-                <div className="text-base font-semibold text-slate-800 dark:text-admin-text-primary" style={{ fontFamily: 'var(--font-display), serif' }}>
+                <div className="text-lg font-semibold text-slate-800 dark:text-admin-text-primary" style={{ fontFamily: 'var(--font-display), serif' }}>
                   Premium Flora
                 </div>
-                <div className="text-[0.6rem] uppercase tracking-widest text-emerald-600/70 dark:text-emerald-400">
+                <div className="text-[0.7rem] uppercase tracking-widest text-emerald-600/70 dark:text-emerald-400">
                   Оптові квіти
                 </div>
               </div>
             </div>
-            <p className="text-sm text-slate-500 dark:text-admin-text-secondary leading-relaxed">
+            <p className="text-base text-slate-500 dark:text-admin-text-secondary leading-relaxed">
               Преміальні квіти для вашого бізнесу
             </p>
           </div>
