@@ -192,7 +192,12 @@ export function Navigation() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200/80">
+    <header
+      className="fixed top-0 left-0 right-0 z-50 bg-[#f4f7fa] border-0"
+      style={{
+        boxShadow: '0 2px 8px rgba(174, 186, 199, 0.2)',
+      }}
+    >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8 lg:py-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group">

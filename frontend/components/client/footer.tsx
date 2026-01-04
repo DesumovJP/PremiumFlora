@@ -2,7 +2,12 @@ import { Leaf, Phone, Mail, MapPin } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="border-t border-slate-200/60 dark:border-admin-border glass glass-soft">
+    <footer
+      className="border-0 bg-[#f4f7fa] dark:bg-[#151922]"
+      style={{
+        boxShadow: 'inset 0 2px 8px rgba(174, 186, 199, 0.15)',
+      }}
+    >
       <div className="mx-auto max-w-7xl px-4 py-6 sm:py-10 sm:px-6 lg:px-8 lg:py-12">
         {/* Mobile Layout */}
         <div className="block sm:hidden w-full">
