@@ -71,15 +71,15 @@ export function FeatureCard({
 
         {/* Content */}
         <div className={cn("relative z-10", centered && "text-center")}>
-          {/* Icon - neumorphic inset style */}
+          {/* Icon - subtle neumorphic style */}
           <motion.div
             className={cn(
               'w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4',
-              'transition-all duration-300 bg-[#eef2f6] dark:bg-[#1a1f2e]',
+              'transition-all duration-300 bg-[#f0f4f8] dark:bg-[#1a1f2e]',
               centered && "mx-auto"
             )}
             style={{
-              boxShadow: 'inset 2px 2px 4px rgba(174, 186, 199, 0.25), inset -2px -2px 4px rgba(255, 255, 255, 0.5)',
+              boxShadow: 'inset 1px 1px 2px rgba(174, 186, 199, 0.15), inset -1px -1px 2px rgba(255, 255, 255, 0.4)',
             }}
             animate={{
               scale: isHovered ? 1.05 : 1,
