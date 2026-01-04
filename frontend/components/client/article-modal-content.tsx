@@ -63,15 +63,15 @@ export function ArticleModalContent({ post, formatDate, onBackToBlog }: ArticleM
       {/* Back to Blog CTA */}
       {onBackToBlog && (
         <div className="mt-12 pt-8 border-t border-slate-200">
-          <div className="bg-gradient-to-br from-emerald-50 to-amber-50 rounded-2xl p-6 sm:p-8 text-center">
-            <div className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-white/80 text-emerald-700 text-sm font-medium">
-              <Sparkles className="h-4 w-4" />
+          <div className="bg-gradient-to-br from-emerald-50 to-amber-50 rounded-2xl p-5 sm:p-8 text-center">
+            <div className="inline-flex items-center gap-1.5 mb-2 sm:mb-3 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-white/80 text-emerald-700 text-xs sm:text-sm font-medium">
+              <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>Ще більше цікавого</span>
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">
+            <h3 className="text-lg sm:text-2xl font-bold text-slate-900 mb-1.5 sm:mb-2">
               Бажаєте дізнатися більше?
             </h3>
-            <p className="text-slate-600 mb-6 max-w-md mx-auto">
+            <p className="text-sm sm:text-base text-slate-600 mb-5 sm:mb-6 max-w-md mx-auto">
               У нашому блозі ви знайдете ще багато корисних порад та натхнення для роботи з квітами
             </p>
             <Button

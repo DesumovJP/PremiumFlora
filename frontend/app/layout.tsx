@@ -106,7 +106,7 @@ export default function RootLayout({
   return (
     <html lang="uk" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased min-h-screen bg-[#f9fbfa] dark:bg-[#0d1117] text-slate-900 dark:text-[var(--admin-text-primary)]`}
+        className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased min-h-screen text-slate-900 dark:text-[var(--admin-text-primary)]`}
       >
         {/* Scroll to top on route change */}
         <ScrollToTop />

@@ -76,7 +76,7 @@ function MobileNavLink({
       )} />
 
       <span className={cn(
-        "text-[17px] font-medium tracking-[-0.01em] pl-4",
+        "text-[15px] font-medium tracking-[-0.01em] pl-4",
         "transition-colors duration-200",
         isActive
           ? "text-emerald-600 dark:text-emerald-400"
@@ -161,11 +161,11 @@ function MobileContactButton({
         {IconComponent && <IconComponent className={cn("h-5 w-5", styles.icon)} />}
       </div>
       <div className="flex flex-col">
-        <span className="text-[15px] font-medium text-slate-800 dark:text-white">
+        <span className="text-[13px] font-medium text-slate-800 dark:text-white">
           {label}
         </span>
         {sublabel && (
-          <span className="text-[13px] text-slate-500 dark:text-slate-400">
+          <span className="text-[11px] text-slate-500 dark:text-slate-400">
             {sublabel}
           </span>
         )}
@@ -316,8 +316,8 @@ export function Navigation() {
               {/* Contact Section */}
               <div className="border-t border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] px-6 py-6">
                 {/* Section header */}
-                <div className="flex items-center gap-2 mb-4 opacity-0 animate-[slideUpFade_0.3s_ease-out_forwards]" style={{ animationDelay: "150ms" }}>
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-2 mb-3 opacity-0 animate-[slideUpFade_0.3s_ease-out_forwards]" style={{ animationDelay: "150ms" }}>
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
                     Зв'яжіться з нами
                   </span>
                   <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent dark:from-white/10" />
