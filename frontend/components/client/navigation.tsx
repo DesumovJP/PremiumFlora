@@ -76,7 +76,7 @@ function MobileNavLink({
       )} />
 
       <span className={cn(
-        "text-[15px] font-medium tracking-[-0.01em] pl-4",
+        "text-[14px] font-medium tracking-[-0.01em] pl-4",
         "transition-colors duration-200",
         isActive
           ? "text-emerald-600 dark:text-emerald-400"
@@ -161,11 +161,11 @@ function MobileContactButton({
         {IconComponent && <IconComponent className={cn("h-5 w-5", styles.icon)} />}
       </div>
       <div className="flex flex-col">
-        <span className="text-[13px] font-medium text-slate-800 dark:text-white">
+        <span className="text-[12px] font-medium text-slate-800 dark:text-white">
           {label}
         </span>
         {sublabel && (
-          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+          <span className="text-[10px] text-slate-500 dark:text-slate-400">
             {sublabel}
           </span>
         )}
@@ -284,10 +284,10 @@ export function Navigation() {
                   <Leaf className="h-5 w-5" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[15px] font-semibold tracking-tight text-slate-900 dark:text-white">
+                  <span className="text-[14px] font-semibold tracking-tight text-slate-900 dark:text-white">
                     Premium Flora
                   </span>
-                  <span className="text-[11px] font-medium uppercase tracking-[0.1em] text-emerald-600 dark:text-emerald-400">
+                  <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-emerald-600 dark:text-emerald-400">
                     Оптовий магазин
                   </span>
                 </div>
@@ -361,8 +361,8 @@ export function Navigation() {
                   className="flex items-center justify-center gap-2 mt-5 pt-4 border-t border-slate-200/60 dark:border-white/5 opacity-0 animate-[slideUpFade_0.3s_ease-out_forwards]"
                   style={{ animationDelay: "320ms" }}
                 >
-                  <Clock className="h-3.5 w-3.5 text-slate-400" />
-                  <span className="text-[13px] text-slate-500 dark:text-slate-400">
+                  <Clock className="h-3 w-3 text-slate-400" />
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
                     {contacts.workHours}
                   </span>
                 </div>
