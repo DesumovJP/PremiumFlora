@@ -51,13 +51,10 @@ export function ValueStackingSection() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section ref={ref} className="relative pb-10 sm:py-20 lg:py-28 bg-white overflow-hidden">
-      {/* Decorative gradient blobs - positioned behind cards */}
+    <section ref={ref} className="relative pb-10 sm:py-20 lg:py-28 bg-[#e8eef3] dark:bg-[#151922] overflow-hidden">
+      {/* Subtle gradient overlay for depth */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Center blob - lower, behind cards */}
-        <div className="absolute top-[55%] left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-gradient-to-br from-emerald-100/60 via-teal-50/40 to-cyan-100/60 rounded-full blur-3xl" />
-        {/* Secondary accent blob - right side */}
-        <div className="absolute top-[60%] right-[10%] w-[300px] h-[300px] bg-gradient-to-br from-amber-100/40 to-orange-50/30 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/50 via-transparent to-white/30 dark:from-transparent dark:to-transparent" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">

@@ -46,35 +46,42 @@ export function FeatureCard({
     >
       <motion.div
         className={cn(
-          'relative h-full p-4 sm:p-8 rounded-xl sm:rounded-2xl cursor-default overflow-hidden',
-          'bg-white border border-slate-100',
+          'relative h-full p-4 sm:p-8 rounded-2xl sm:rounded-3xl cursor-default overflow-hidden',
+          'bg-[#f0f4f8] dark:bg-[#1a1f2e]',
           'transition-all duration-300',
         )}
+        style={{
+          boxShadow: isHovered
+            ? '8px 8px 20px rgba(163, 177, 198, 0.5), -8px -8px 20px rgba(255, 255, 255, 0.8), inset 0 0 0 rgba(255,255,255,0)'
+            : '6px 6px 16px rgba(163, 177, 198, 0.4), -6px -6px 16px rgba(255, 255, 255, 0.7)',
+        }}
         whileHover={{
           y: -4,
-          boxShadow: '0 20px 40px -15px rgba(16, 185, 129, 0.15), 0 8px 20px -10px rgba(0, 0, 0, 0.08)',
+          scale: 1.02,
         }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
       >
-        {/* Gradient background on hover */}
+        {/* Subtle inner glow on hover */}
         <motion.div
-          className={cn(
-            'absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300',
-            gradient
-          )}
+          className="absolute inset-0 rounded-2xl sm:rounded-3xl opacity-0 transition-opacity duration-300"
+          style={{
+            background: 'linear-gradient(145deg, rgba(255,255,255,0.4) 0%, transparent 50%)',
+          }}
           animate={{ opacity: isHovered ? 1 : 0 }}
         />
 
         {/* Content */}
         <div className={cn("relative z-10", centered && "text-center")}>
-          {/* Icon */}
+          {/* Icon - neumorphic inset style */}
           <motion.div
             className={cn(
               'w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4',
-              'transition-all duration-300',
-              iconBg,
+              'transition-all duration-300 bg-[#f0f4f8] dark:bg-[#1a1f2e]',
               centered && "mx-auto"
             )}
+            style={{
+              boxShadow: 'inset 3px 3px 6px rgba(163, 177, 198, 0.4), inset -3px -3px 6px rgba(255, 255, 255, 0.7)',
+            }}
             animate={{
               scale: isHovered ? 1.05 : 1,
             }}
