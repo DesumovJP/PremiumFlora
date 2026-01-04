@@ -64,21 +64,21 @@ export function ArticleModalContent({ post, formatDate, onBackToBlog }: ArticleM
       {onBackToBlog && (
         <div className="mt-12 pt-8 border-t border-slate-200">
           <div className="bg-gradient-to-br from-emerald-50 to-amber-50 rounded-2xl p-5 sm:p-8 text-center">
-            <div className="inline-flex items-center gap-1 mb-1.5 sm:mb-3 px-2 py-0.5 sm:px-3 sm:py-1.5 rounded-full bg-white/80 text-emerald-700 text-[10px] sm:text-xs md:text-sm font-medium">
-              <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-4 md:w-4" />
+            <div className="inline-flex items-center gap-1.5 mb-2 sm:mb-3 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-white/80 text-emerald-700 text-xs sm:text-sm font-medium">
+              <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>Ще більше цікавого</span>
             </div>
-            <h3 className="text-[15px] sm:text-xl md:text-2xl font-bold text-slate-900 mb-1 sm:mb-2">
+            <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 mb-1.5 sm:mb-2">
               Бажаєте дізнатися більше?
             </h3>
-            <p className="text-[12px] sm:text-sm md:text-base text-slate-600 mb-4 sm:mb-6 max-w-md mx-auto">
+            <p className="text-xs sm:text-sm md:text-base text-slate-600 mb-5 sm:mb-6 max-w-md mx-auto">
               У нашому блозі ви знайдете ще багато корисних порад та натхнення для роботи з квітами
             </p>
             <Button
               onClick={onBackToBlog}
               className="group h-10 sm:h-11 md:h-12 px-5 sm:px-6 text-[13px] sm:text-sm md:text-base bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/25"
             >
-              <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 transition-transform group-hover:-translate-x-1" />
+              <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
               Переглянути всі статті
             </Button>
           </div>
