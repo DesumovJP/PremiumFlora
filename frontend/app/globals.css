@@ -498,6 +498,16 @@ section h3 {
   font-family: var(--font-display), Georgia, serif;
 }
 
+/* Admin panel headings - reset to sans-serif */
+.admin-panel h1,
+.admin-panel h2,
+.admin-panel h3,
+.admin-panel h4,
+.admin-panel h5,
+.admin-panel h6 {
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+}
+
 h1 {
   /* Фіксовані розміри без vw, щоб заголовки не стрибали при зміні ширини вікна */
   font-size: var(--text-3xl);
