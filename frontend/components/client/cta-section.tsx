@@ -77,13 +77,13 @@ export function CtaSection({ onContactClick, variant = 'home' }: CtaSectionProps
           </div>
 
           {/* Heading */}
-          <h2 className="text-lg sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-slate-900 dark:text-white mb-2 sm:mb-4 leading-tight">
+          <h2 className="text-[15px] sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-slate-900 dark:text-white mb-1.5 sm:mb-4 leading-tight">
             {c.title}{' '}
             <span className="text-emerald-600 dark:text-emerald-400">{c.titleAccent}</span>
           </h2>
 
           {/* Subtitle */}
-          <p className="text-sm sm:text-base lg:text-lg text-slate-600 dark:text-slate-400 mb-6 sm:mb-8 max-w-2xl mx-auto">
+          <p className="text-[12px] sm:text-base lg:text-lg text-slate-600 dark:text-slate-400 mb-5 sm:mb-8 max-w-2xl mx-auto">
             {c.subtitle}
           </p>
 
@@ -92,10 +92,10 @@ export function CtaSection({ onContactClick, variant = 'home' }: CtaSectionProps
             <Button
               size="lg"
               onClick={onContactClick}
-              className="group w-auto h-12 sm:h-14 px-6 sm:px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-base rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/25"
+              className="group w-auto h-10 sm:h-14 px-5 sm:px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[13px] sm:text-base rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/25"
             >
               {c.buttonText}
-              <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1.5 sm:ml-2 transition-transform group-hover:translate-x-1" />
             </Button>
 
             <Button
