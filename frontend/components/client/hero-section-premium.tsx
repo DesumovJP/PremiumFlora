@@ -123,17 +123,14 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                 className="flex justify-end mb-3 lg:hidden"
               >
                 <div
-                  className="bg-[#faf8f5] rounded-xl p-2.5 will-change-transform"
+                  className="bg-white rounded-xl p-2.5 will-change-transform border border-slate-100"
                   style={{
-                    boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.25), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04)',
                   }}
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className="w-8 h-8 rounded-lg bg-[#f8f6f3] flex items-center justify-center flex-shrink-0"
-                      style={{
-                        boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.15), inset -1px -1px 2px rgba(255, 255, 255, 0.4)',
-                      }}
+                      className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center flex-shrink-0"
                     >
                       <span className="text-base">🌷</span>
                     </div>
@@ -271,18 +268,15 @@ export function HeroSectionPremium({ onContactClick }: HeroSectionPremiumProps) 
                   x: { duration: 0.6, delay: 0.6 },
                   y: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }
                 }}
-                className="absolute -left-8 bottom-12 bg-[#faf8f5] rounded-2xl p-4 will-change-transform"
+                className="absolute -left-8 bottom-12 bg-white rounded-2xl p-4 will-change-transform border border-slate-100"
                 style={{
                   transform: 'translateZ(0)',
-                  boxShadow: '4px 4px 12px rgba(200, 190, 175, 0.35), -4px -4px 12px rgba(255, 255, 255, 0.6)',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.05)',
                 }}
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className="w-12 h-12 rounded-xl bg-[#f8f6f3] flex items-center justify-center"
-                    style={{
-                      boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.15), inset -1px -1px 2px rgba(255, 255, 255, 0.4)',
-                    }}
+                    className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center"
                   >
                     <span className="text-2xl">🌷</span>
                   </div>
