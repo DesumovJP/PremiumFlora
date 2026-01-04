@@ -226,6 +226,9 @@ body {
 .admin-panel {
   background: var(--admin-bg);
   color: var(--admin-text-primary);
+  /* Override Lora with system sans-serif for admin */
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  letter-spacing: normal;
 }
 
 .dark .admin-panel {
