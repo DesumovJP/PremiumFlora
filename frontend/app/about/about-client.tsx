@@ -51,91 +51,71 @@ export function AboutClient({ galleryImages }: AboutClientProps) {
               Контакти
             </h3>
 
-            {/* Contact cards - soft neumorphic design */}
+            {/* Contact cards - white clean design */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
               {/* Phone Card */}
               <div
-                className="bg-[#faf8f5] rounded-2xl p-4 sm:p-5 text-center transition-all duration-300 hover:-translate-y-0.5"
+                className="bg-white rounded-2xl p-4 sm:p-5 text-center transition-all duration-300 hover:-translate-y-0.5 border border-slate-100"
                 style={{
-                  boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.2), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03)',
                 }}
               >
-                <div
-                  className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#f8f6f3] mb-3"
-                  style={{
-                    boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.12), inset -1px -1px 2px rgba(255, 255, 255, 0.35)',
-                  }}
-                >
+                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-slate-50 mb-3">
                   <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" strokeWidth={1.5} />
                 </div>
-                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1.5">Телефон</p>
-                <a href="tel:+380671234567" className="block text-xs sm:text-sm text-slate-600 hover:text-emerald-600 transition-colors">
+                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1.5">Телефон</p>
+                <a href="tel:+380671234567" className="block text-sm sm:text-base text-slate-700 hover:text-emerald-600 transition-colors">
                   +380 67 123 4567
                 </a>
-                <a href="tel:+380501234567" className="block text-xs sm:text-sm text-slate-600 hover:text-emerald-600 transition-colors mt-0.5">
+                <a href="tel:+380501234567" className="block text-sm sm:text-base text-slate-700 hover:text-emerald-600 transition-colors mt-0.5">
                   +380 50 123 4567
                 </a>
               </div>
 
               {/* Schedule Card */}
               <div
-                className="bg-[#faf8f5] rounded-2xl p-4 sm:p-5 text-center transition-all duration-300 hover:-translate-y-0.5"
+                className="bg-white rounded-2xl p-4 sm:p-5 text-center transition-all duration-300 hover:-translate-y-0.5 border border-slate-100"
                 style={{
-                  boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.2), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03)',
                 }}
               >
-                <div
-                  className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#f8f6f3] mb-3"
-                  style={{
-                    boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.12), inset -1px -1px 2px rgba(255, 255, 255, 0.35)',
-                  }}
-                >
+                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-slate-50 mb-3">
                   <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" strokeWidth={1.5} />
                 </div>
-                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1.5">Графік</p>
-                <p className="text-xs sm:text-sm text-slate-600">Пн-Пт: 9:00-18:00</p>
-                <p className="text-xs sm:text-sm text-slate-600 mt-0.5">Сб: 10:00-16:00</p>
+                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1.5">Графік</p>
+                <p className="text-sm sm:text-base text-slate-700">Пн-Пт: 9:00-18:00</p>
+                <p className="text-sm sm:text-base text-slate-700 mt-0.5">Сб: 10:00-16:00</p>
               </div>
 
               {/* Email Card */}
               <div
-                className="bg-[#faf8f5] rounded-2xl p-4 sm:p-5 text-center transition-all duration-300 hover:-translate-y-0.5"
+                className="bg-white rounded-2xl p-4 sm:p-5 text-center transition-all duration-300 hover:-translate-y-0.5 border border-slate-100"
                 style={{
-                  boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.2), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03)',
                 }}
               >
-                <div
-                  className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#f8f6f3] mb-3"
-                  style={{
-                    boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.12), inset -1px -1px 2px rgba(255, 255, 255, 0.35)',
-                  }}
-                >
+                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-slate-50 mb-3">
                   <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" strokeWidth={1.5} />
                 </div>
-                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1.5">Email</p>
-                <a href="mailto:info@premiumflora.ua" className="text-xs sm:text-sm text-slate-600 hover:text-emerald-600 transition-colors break-all">
+                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1.5">Email</p>
+                <a href="mailto:info@premiumflora.ua" className="text-sm sm:text-base text-slate-700 hover:text-emerald-600 transition-colors break-all">
                   info@premiumflora.ua
                 </a>
               </div>
 
               {/* Address Card */}
               <div
-                className="bg-[#faf8f5] rounded-2xl p-4 sm:p-5 text-center transition-all duration-300 hover:-translate-y-0.5"
+                className="bg-white rounded-2xl p-4 sm:p-5 text-center transition-all duration-300 hover:-translate-y-0.5 border border-slate-100"
                 style={{
-                  boxShadow: '3px 3px 8px rgba(200, 190, 175, 0.2), -3px -3px 8px rgba(255, 255, 255, 0.5)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03)',
                 }}
               >
-                <div
-                  className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#f8f6f3] mb-3"
-                  style={{
-                    boxShadow: 'inset 1px 1px 2px rgba(200, 190, 175, 0.12), inset -1px -1px 2px rgba(255, 255, 255, 0.35)',
-                  }}
-                >
+                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-slate-50 mb-3">
                   <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" strokeWidth={1.5} />
                 </div>
-                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1.5">Адреса</p>
-                <p className="text-xs sm:text-sm text-slate-600">вул. Тираспольська, 41а</p>
-                <p className="text-xs sm:text-sm text-slate-600 mt-0.5">м. Київ</p>
+                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1.5">Адреса</p>
+                <p className="text-sm sm:text-base text-slate-700">вул. Тираспольська, 41а</p>
+                <p className="text-sm sm:text-base text-slate-700 mt-0.5">м. Київ</p>
               </div>
             </div>
           </div>
