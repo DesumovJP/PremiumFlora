@@ -488,14 +488,14 @@ h1 {
   line-height: var(--leading-tight);
 }
 
-h2 {
+h2:not([class*="text-["]):not([class*="sm:text-"]) {
   font-size: var(--text-2xl);
   font-weight: 600;
   letter-spacing: var(--tracking-tight);
   line-height: var(--leading-snug);
 }
 
-h3 {
+h3:not([class*="text-["]):not([class*="sm:text-"]) {
   font-size: var(--text-xl);
   font-weight: 600;
   letter-spacing: var(--tracking-tight);
