@@ -22,17 +22,24 @@ export function HomePageClient({ products, posts }: HomePageClientProps) {
 
   return (
     <div className="relative">
-      {/* Global background */}
+      {/* Global background - GPU composited for Telegram/in-app browsers */}
       <div
         className="fixed inset-0 -z-10 pointer-events-none"
         style={{
           overscrollBehavior: 'none',
           overscrollBehaviorY: 'none',
-          touchAction: 'none'
+          touchAction: 'none',
+          // GPU compositing - prevents jitter in Telegram
+          transform: 'translate3d(0, 0, 0)',
+          backfaceVisibility: 'hidden',
+          // Isolate from scroll container
+          contain: 'strict',
+          willChange: 'transform',
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-white via-slate-50/30 to-white dark:from-[#0d1117] dark:via-[#0d1117] dark:to-[#0d1117]" />
-        <div className="absolute inset-0 bg-[url('/bg.webp')] bg-cover bg-center bg-fixed opacity-[0.02] dark:opacity-[0.01]" />
+        {/* Removed bg-fixed - causes issues in in-app browsers */}
+        <div className="absolute inset-0 bg-[url('/bg.webp')] bg-cover bg-center opacity-[0.02] dark:opacity-[0.01]" />
       </div>
 
       {/* Hero з value proposition */}

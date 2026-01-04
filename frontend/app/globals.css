@@ -127,6 +127,11 @@
 }
 
 /* Dark Theme - GitHub Style */
+/* Apply dark background to html in dark mode (fixes viewport jitter) */
+html.dark {
+  background: #0d1117;
+}
+
 .dark {
   /* Base Colors - Dark Theme */
   --background: #0d1117;
@@ -197,17 +202,22 @@
 }
 
 body {
-  background: var(--background);
+  /* Background is on html to prevent jitter in mobile in-app browsers (Telegram, etc.) */
+  background: transparent;
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   letter-spacing: var(--tracking-tight);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-y: auto;
+  /* Prevent overscroll bounce */
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .dark body {
-  background: var(--background);
+  background: transparent;
   color: var(--foreground);
 }
 
@@ -1226,13 +1236,45 @@ html {
   overscroll-behavior: none;
   overscroll-behavior-y: none;
   overscroll-behavior-x: none;
+  /* Fix background jitter in mobile browsers (Telegram, etc.) */
+  background: var(--background);
 }
 
-body {
-  overscroll-behavior: none;
-  overscroll-behavior-y: none;
-  overscroll-behavior-x: none;
-  -webkit-overflow-scrolling: touch;
+/* Fix for mobile viewport height changes (Telegram, Instagram browsers) */
+@supports (height: 100dvh) {
+  html, body {
+    /* Use stable viewport height that won't jitter */
+    min-height: 100svh; /* Small viewport height - most stable */
+  }
+}
+
+/* Fallback for browsers without dvh support */
+@supports not (height: 100dvh) {
+  html, body {
+    min-height: 100%;
+  }
+}
+
+/* ============================================
+   TELEGRAM / IN-APP BROWSER FIXES
+   These browsers ignore overscroll-behavior
+   ============================================ */
+
+/* Detect in-app browsers and apply aggressive fixes */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari and in-app browsers */
+  html {
+    /* Prevent pull-to-refresh and bounce */
+    overflow: hidden;
+    height: 100%;
+  }
+
+  body {
+    overflow: auto;
+    height: 100%;
+    /* Create new stacking context */
+    position: relative;
+  }
 }
 
 main, section {
@@ -1249,6 +1291,11 @@ div[class*="fixed"][class*="inset-0"] {
   overscroll-behavior-x: none !important;
   touch-action: none !important;
   will-change: transform;
+  /* GPU compositing for Telegram/in-app browsers */
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  contain: strict;
 }
 
 /* Hide scrollbar globally - scroll still works */
