@@ -504,8 +504,11 @@ section h3 {
 .admin-panel h3,
 .admin-panel h4,
 .admin-panel h5,
-.admin-panel h6 {
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+.admin-panel h6,
+.admin-panel [class*="CardTitle"],
+.admin-panel [class*="DialogTitle"],
+.admin-panel [class*="SheetTitle"] {
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif !important;
 }
 
 h1 {
