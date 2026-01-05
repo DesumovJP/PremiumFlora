@@ -12,6 +12,11 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "shiftDate": {
+      "type": "date",
+      "required": true,
+      "unique": false
+    },
     "startedAt": {
       "type": "datetime",
       "required": true

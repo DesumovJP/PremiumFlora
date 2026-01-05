@@ -38,11 +38,12 @@ export interface ShiftSummary {
 export interface Shift {
   id: number;
   documentId: string;
+  shiftDate: string; // YYYY-MM-DD - дата зміни (одна зміна на день)
   startedAt: string;
-  closedAt: string;
+  closedAt: string | null;
   status: 'active' | 'closed';
   activities: ShiftActivity[];
-  summary: ShiftSummary;
+  summary: ShiftSummary | null;
   totalSales: number;
   totalSalesAmount: number;
   totalWriteOffs: number;

@@ -36,7 +36,6 @@ import {
   createWriteOff,
   getDashboardAnalytics,
   getFlowers,
-  closeShift as closeShiftApi,
   getPendingPaymentsTotal,
   invalidatePendingPaymentsCache,
 } from "@/lib/strapi";
@@ -72,13 +71,13 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   // Activity Log for shift history
   const {
     activities,
+    shiftDate,
     shiftStartedAt,
     summary: shiftSummary,
     logActivity,
     refreshActivities,
     isLoading: isLoadingShift,
   } = useActivityLog();
-  const [isClosingShift, setIsClosingShift] = useState(false);
 
   // Initialize theme from localStorage (default to light for new users)
   useLayoutEffect(() => {
@@ -277,6 +276,11 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
           adjustment: 'Інвентаризація',
           other: 'Інша причина',
         };
+
+        // Отримуємо залишок до і після списання
+        const stockBefore = variant?.stock || 0;
+        const stockAfter = stockBefore - data.qty;
+
         logActivity('writeOff', {
           flowerName: flower?.name || data.flowerSlug,
           length: data.length,
@@ -285,6 +289,8 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
           amount: amount,
           reason: reasonLabels[data.reason] || data.reason,
           notes: data.notes,
+          stockBefore,
+          stockAfter,
         });
 
         showSuccess(
@@ -501,35 +507,6 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
     setCart((current) => current.filter((line) => line.id !== id));
   };
 
-  // Handle close shift
-  const handleCloseShift = async () => {
-    if (!shiftStartedAt || activities.length === 0) return;
-
-    setIsClosingShift(true);
-    try {
-      const result = await closeShiftApi();
-
-      if (result.success) {
-        showSuccess(
-          result.alert?.title || "Зміну закрито",
-          result.alert?.message || "Зміна успішно збережена в архів"
-        );
-        // Refresh to get the new empty shift
-        await refreshActivities();
-      } else {
-        showError(
-          result.alert?.title || "Помилка",
-          result.alert?.message || result.error?.message || "Не вдалося закрити зміну"
-        );
-      }
-    } catch (error) {
-      console.error("Close shift error:", error);
-      showError("Помилка", "Сталася помилка при закритті зміни");
-    } finally {
-      setIsClosingShift(false);
-    }
-  };
-
   // Handle export shift
   const handleExportShift = () => {
     if (!shiftStartedAt || activities.length === 0) return;
@@ -625,12 +602,11 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
         <TabsContent value="history" className="space-y-5">
           <HistorySection
             activities={activities}
+            shiftDate={shiftDate}
             shiftStartedAt={shiftStartedAt}
             summary={shiftSummary}
-            onCloseShift={handleCloseShift}
             onExportShift={handleExportShift}
             onRefresh={refreshActivities}
-            isClosingShift={isClosingShift}
             isLoading={isLoadingShift}
           />
         </TabsContent>

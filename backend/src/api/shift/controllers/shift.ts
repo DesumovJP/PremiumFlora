@@ -1,7 +1,8 @@
 /**
  * Shift Controller
  *
- * Контролер для управління робочими змінами з підтримкою багатьох пристроїв
+ * Контролер для управління робочими змінами
+ * Зміна = календарна доба (автоматичне створення о 00:00)
  */
 
 import type { Core } from '@strapi/strapi';
@@ -22,7 +23,21 @@ interface CloseShiftBody {
   notes?: string;
 }
 
-// Helper для розрахунку summary
+/**
+ * Отримати дату у форматі YYYY-MM-DD для заданого timestamp
+ * Використовує локальний час (UTC+2/+3 для України)
+ */
+function getDateString(date: Date = new Date()): string {
+  // Форматуємо як локальну дату
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Helper для розрахунку summary
+ */
 function calculateSummary(activities: Activity[]) {
   return activities.reduce(
     (acc, activity) => {
@@ -49,52 +64,126 @@ function calculateSummary(activities: Activity[]) {
   );
 }
 
+/**
+ * Автоматично закрити всі активні зміни за попередні дні
+ */
+async function autoClosePreviousDayShifts(strapi: Core.Strapi, todayDate: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const docs = strapi.documents as any;
+
+  // Знаходимо всі активні зміни з датою НЕ сьогодні
+  const oldActiveShifts = await docs('api::shift.shift').findMany({
+    filters: {
+      status: 'active',
+      shiftDate: { $ne: todayDate },
+    },
+  });
+
+  // Закриваємо кожну стару зміну
+  for (const shift of oldActiveShifts) {
+    const activities = (shift.activities || []) as Activity[];
+    const summary = calculateSummary(activities);
+
+    // Час закриття = кінець того дня (23:59:59)
+    const closedAt = `${shift.shiftDate}T23:59:59.999Z`;
+
+    await docs('api::shift.shift').update({
+      documentId: shift.documentId,
+      data: {
+        closedAt,
+        status: 'closed',
+        summary,
+        totalSales: summary.totalSales,
+        totalSalesAmount: summary.totalSalesAmount,
+        totalWriteOffs: summary.totalWriteOffs,
+        totalWriteOffsQty: summary.totalWriteOffsQty,
+      },
+    });
+
+    strapi.log.info(`[Shift] Auto-closed shift for ${shift.shiftDate} with ${activities.length} activities`);
+  }
+}
+
+/**
+ * Знайти або створити зміну для вказаної дати
+ */
+async function findOrCreateShiftForDate(
+  strapi: Core.Strapi,
+  targetDate: string,
+  initialActivity?: Activity
+): Promise<{ shift: unknown; isNew: boolean }> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const docs = strapi.documents as any;
+
+  // Шукаємо зміну за цю дату (активну або закриту)
+  const existingShifts = await docs('api::shift.shift').findMany({
+    filters: { shiftDate: targetDate },
+    limit: 1,
+  });
+
+  if (existingShifts && existingShifts.length > 0) {
+    const shift = existingShifts[0];
+
+    // Якщо зміна закрита, але додається активність - перевідкриваємо
+    if (shift.status === 'closed' && initialActivity) {
+      const updatedShift = await docs('api::shift.shift').update({
+        documentId: shift.documentId,
+        data: {
+          status: 'active',
+          closedAt: null,
+          activities: [initialActivity, ...(shift.activities || [])],
+        },
+      });
+      strapi.log.info(`[Shift] Reopened shift for ${targetDate} to add activity`);
+      return { shift: updatedShift, isNew: false };
+    }
+
+    return { shift, isNew: false };
+  }
+
+  // Створюємо нову зміну для цієї дати
+  const now = new Date().toISOString();
+  const newShift = await docs('api::shift.shift').create({
+    data: {
+      shiftDate: targetDate,
+      startedAt: now,
+      closedAt: null,
+      status: 'active',
+      activities: initialActivity ? [initialActivity] : [],
+      summary: null,
+      totalSales: 0,
+      totalSalesAmount: 0,
+      totalWriteOffs: 0,
+      totalWriteOffsQty: 0,
+      notes: null,
+    },
+  });
+
+  strapi.log.info(`[Shift] Created new shift for ${targetDate}`);
+  return { shift: newShift, isNew: true };
+}
+
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   /**
    * GET /api/shifts/current
-   * Отримати або створити поточну активну зміну
+   * Отримати або створити зміну на сьогодні
+   * Автоматично закриває зміни за попередні дні
    */
   async getCurrent(ctx: Context) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const docs = strapi.documents as any;
+      const todayDate = getDateString();
 
-      // Шукаємо активну зміну
-      const activeShifts = await docs('api::shift.shift').findMany({
-        filters: { status: 'active' },
-        limit: 1,
-      });
+      // Автоматично закриваємо старі зміни
+      await autoClosePreviousDayShifts(strapi, todayDate);
 
-      if (activeShifts && activeShifts.length > 0) {
-        ctx.body = {
-          success: true,
-          data: activeShifts[0],
-        };
-        return;
-      }
+      // Знаходимо або створюємо зміну на сьогодні
+      const { shift, isNew } = await findOrCreateShiftForDate(strapi, todayDate);
 
-      // Якщо немає активної зміни - створюємо нову
-      const now = new Date().toISOString();
-      const newShift = await docs('api::shift.shift').create({
-        data: {
-          startedAt: now,
-          closedAt: null,
-          status: 'active',
-          activities: [],
-          summary: null,
-          totalSales: 0,
-          totalSalesAmount: 0,
-          totalWriteOffs: 0,
-          totalWriteOffsQty: 0,
-          notes: null,
-        },
-      });
-
-      ctx.status = 201;
+      ctx.status = isNew ? 201 : 200;
       ctx.body = {
         success: true,
-        data: newShift,
-        isNew: true,
+        data: shift,
+        isNew,
       };
     } catch (error) {
       strapi.log.error('Shift getCurrent error:', error);
@@ -112,7 +201,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   /**
    * POST /api/shifts/current/activity
-   * Додати активність до поточної зміни
+   * Додати активність до зміни
+   * Визначає дату зміни з timestamp активності
    */
   async addActivity(ctx: Context) {
     try {
@@ -130,35 +220,33 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         return;
       }
 
+      // Визначаємо дату зміни з timestamp активності
+      const activityDate = new Date(body.activity.timestamp);
+      const targetDate = getDateString(activityDate);
+      const todayDate = getDateString();
+
+      // Автоматично закриваємо старі зміни (якщо активність на сьогодні)
+      if (targetDate === todayDate) {
+        await autoClosePreviousDayShifts(strapi, todayDate);
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const docs = strapi.documents as any;
 
-      // Знаходимо активну зміну
-      const activeShifts = await docs('api::shift.shift').findMany({
-        filters: { status: 'active' },
+      // Знаходимо зміну для дати активності
+      const existingShifts = await docs('api::shift.shift').findMany({
+        filters: { shiftDate: targetDate },
         limit: 1,
       });
 
       let shift;
-      if (!activeShifts || activeShifts.length === 0) {
-        // Створюємо нову зміну якщо немає активної
-        const now = new Date().toISOString();
-        shift = await docs('api::shift.shift').create({
-          data: {
-            startedAt: now,
-            closedAt: null,
-            status: 'active',
-            activities: [body.activity],
-            summary: null,
-            totalSales: 0,
-            totalSalesAmount: 0,
-            totalWriteOffs: 0,
-            totalWriteOffsQty: 0,
-            notes: null,
-          },
-        });
+
+      if (!existingShifts || existingShifts.length === 0) {
+        // Створюємо нову зміну з цією активністю
+        const result = await findOrCreateShiftForDate(strapi, targetDate, body.activity);
+        shift = result.shift;
       } else {
-        shift = activeShifts[0];
+        shift = existingShifts[0];
         const currentActivities = (shift.activities || []) as Activity[];
 
         // Перевіряємо чи активність вже не існує (idempotency)
@@ -175,11 +263,20 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         // Додаємо нову активність
         const updatedActivities = [body.activity, ...currentActivities];
 
+        // Якщо зміна була закрита - перевідкриваємо для сьогоднішньої дати
+        const updateData: Record<string, unknown> = {
+          activities: updatedActivities,
+        };
+
+        if (shift.status === 'closed' && targetDate === todayDate) {
+          updateData.status = 'active';
+          updateData.closedAt = null;
+          strapi.log.info(`[Shift] Reopened shift for ${targetDate} to add activity`);
+        }
+
         shift = await docs('api::shift.shift').update({
           documentId: shift.documentId,
-          data: {
-            activities: updatedActivities,
-          },
+          data: updateData,
         });
       }
 
@@ -203,34 +300,67 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   /**
    * POST /api/shifts/close
-   * Закрити поточну активну зміну
+   * Закрити поточну зміну (опційно - для додавання нотаток)
+   * При автоматичних денних змінах це не обов'язково
    */
   async closeShift(ctx: Context) {
     try {
       const body = ctx.request.body as CloseShiftBody;
+      const todayDate = getDateString();
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const docs = strapi.documents as any;
 
-      // Знаходимо активну зміну
-      const activeShifts = await docs('api::shift.shift').findMany({
-        filters: { status: 'active' },
+      // Знаходимо зміну на сьогодні
+      const todayShifts = await docs('api::shift.shift').findMany({
+        filters: { shiftDate: todayDate },
         limit: 1,
       });
 
-      if (!activeShifts || activeShifts.length === 0) {
+      if (!todayShifts || todayShifts.length === 0) {
         ctx.status = 404;
         ctx.body = {
           success: false,
           error: {
-            code: 'NO_ACTIVE_SHIFT',
-            message: 'No active shift found to close',
+            code: 'NO_SHIFT_TODAY',
+            message: 'No shift found for today',
           },
         };
         return;
       }
 
-      const shift = activeShifts[0];
+      const shift = todayShifts[0];
+
+      // Якщо вже закрита - просто оновлюємо нотатки
+      if (shift.status === 'closed') {
+        if (body.notes) {
+          const updatedShift = await docs('api::shift.shift').update({
+            documentId: shift.documentId,
+            data: { notes: body.notes },
+          });
+          ctx.body = {
+            success: true,
+            data: updatedShift,
+            alert: {
+              type: 'success',
+              title: 'Нотатки збережено',
+              message: 'Нотатки до зміни успішно оновлено.',
+            },
+          };
+        } else {
+          ctx.body = {
+            success: true,
+            data: shift,
+            alert: {
+              type: 'info',
+              title: 'Зміна вже закрита',
+              message: 'Сьогоднішня зміна вже була закрита раніше.',
+            },
+          };
+        }
+        return;
+      }
+
       const activities = (shift.activities || []) as Activity[];
       const summary = calculateSummary(activities);
       const now = new Date().toISOString();
@@ -280,7 +410,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   /**
    * GET /api/shifts
-   * Отримати список закритих змін
+   * Отримати список всіх змін (для архіву)
    */
   async find(ctx: Context) {
     try {
@@ -289,16 +419,14 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const docs = strapi.documents as any;
 
+      // Отримуємо всі зміни, сортовані по даті
       const shifts = await docs('api::shift.shift').findMany({
-        filters: { status: 'closed' },
-        sort: { closedAt: 'desc' },
+        sort: { shiftDate: 'desc' },
         limit: Number(pageSize),
         offset: (Number(page) - 1) * Number(pageSize),
       });
 
-      const total = await docs('api::shift.shift').count({
-        filters: { status: 'closed' },
-      });
+      const total = await docs('api::shift.shift').count({});
 
       ctx.body = {
         success: true,

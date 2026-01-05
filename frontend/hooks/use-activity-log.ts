@@ -50,6 +50,8 @@ export interface ActivityDetails {
   qty?: number;
   price?: number;   // Ціна за одиницю
   amount?: number;  // Загальна сума (price * qty)
+  stockBefore?: number; // Залишок до списання
+  stockAfter?: number;  // Залишок після списання
   reason?: string;
   notes?: string;
 
@@ -131,6 +133,7 @@ export interface ShiftSummary {
 
 interface UseActivityLogReturn {
   activities: Activity[];
+  shiftDate: string | null; // YYYY-MM-DD - дата зміни
   shiftStartedAt: string | null;
   shiftDocumentId: string | null;
   summary: ShiftSummary;
@@ -152,6 +155,7 @@ const POLL_INTERVAL = 30000;
 
 export function useActivityLog(): UseActivityLogReturn {
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [shiftDate, setShiftDate] = useState<string | null>(null);
   const [shiftStartedAt, setShiftStartedAt] = useState<string | null>(null);
   const [shiftDocumentId, setShiftDocumentId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -164,6 +168,7 @@ export function useActivityLog(): UseActivityLogReturn {
       if (result.success && result.data) {
         const shift = result.data;
         setActivities((shift.activities || []) as Activity[]);
+        setShiftDate(shift.shiftDate || null);
         setShiftStartedAt(shift.startedAt);
         setShiftDocumentId(shift.documentId);
       }
@@ -351,6 +356,7 @@ export function useActivityLog(): UseActivityLogReturn {
 
   return {
     activities,
+    shiftDate,
     shiftStartedAt,
     shiftDocumentId,
     summary,

@@ -38,12 +38,10 @@ import {
   Truck,
   Download,
   Clock,
-  CheckCircle2,
   History,
   RefreshCw,
   XCircle,
   Calendar,
-  Eye,
   CalendarDays,
 } from 'lucide-react';
 
@@ -53,12 +51,11 @@ import {
 
 interface HistorySectionProps {
   activities: Activity[];
+  shiftDate: string | null; // YYYY-MM-DD
   shiftStartedAt: string | null;
   summary: ShiftSummary;
-  onCloseShift: () => Promise<void>;
   onExportShift: () => void;
   onRefresh?: () => Promise<void>;
-  isClosingShift?: boolean;
   isLoading?: boolean;
 }
 
@@ -256,6 +253,14 @@ function ActivityItem({ activity }: { activity: Activity }) {
               <span className="text-slate-500 dark:text-admin-text-tertiary">Розмір:</span>
               <span className="dark:text-admin-text-primary">{details.length} см</span>
             </div>
+            {(details.stockBefore !== undefined || details.stockAfter !== undefined) && (
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Залишок:</span>
+                <span className="dark:text-admin-text-primary">
+                  {details.stockBefore ?? '?'} → {details.stockAfter ?? '?'} шт
+                </span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-slate-500 dark:text-admin-text-tertiary">Причина:</span>
               <span className="dark:text-admin-text-primary">{details.reason}</span>
@@ -1324,21 +1329,34 @@ function ArchiveTab({ onExportShift }: ArchiveTabProps) {
 
 export function HistorySection({
   activities,
+  shiftDate,
   shiftStartedAt,
   summary,
-  onCloseShift,
   onExportShift,
   onRefresh,
-  isClosingShift = false,
   isLoading = false,
 }: HistorySectionProps) {
   const [activeTab, setActiveTab] = useState<TabType>('current');
-  const [closeModalOpen, setCloseModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleCloseShift = async () => {
-    await onCloseShift();
-    setCloseModalOpen(false);
+  // Форматування дати зміни
+  const formatShiftDateDisplay = (dateStr: string | null): string => {
+    if (!dateStr) return 'Сьогодні';
+    const date = new Date(dateStr + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const shiftDay = new Date(date);
+    shiftDay.setHours(0, 0, 0, 0);
+
+    if (shiftDay.getTime() === today.getTime()) {
+      return 'Сьогодні';
+    }
+
+    return date.toLocaleDateString('uk-UA', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
   };
 
   const handleRefresh = async () => {
@@ -1442,19 +1460,23 @@ export function HistorySection({
             <div className="space-y-1 flex-1">
               <CardTitle className="text-2xl">Історія зміни</CardTitle>
               <CardDescription>
-                {activeTab === 'current' && shiftStartedAt ? (
+                {activeTab === 'current' ? (
                   <span className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-                    <span className="whitespace-nowrap">Зміна розпочата:</span>
-                    <span className="whitespace-nowrap">{formatDateTime(shiftStartedAt)}</span>
-                    <span className="text-emerald-600 font-medium whitespace-nowrap">
-                      ({formatDuration(shiftStartedAt)})
+                    <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                    <span className="whitespace-nowrap font-medium text-slate-700 dark:text-admin-text-primary">
+                      {formatShiftDateDisplay(shiftDate)}
                     </span>
+                    {shiftStartedAt && (
+                      <>
+                        <span className="text-slate-300 dark:text-admin-text-muted">·</span>
+                        <span className="text-slate-500 dark:text-admin-text-tertiary">
+                          з {formatTime(shiftStartedAt)}
+                        </span>
+                      </>
+                    )}
                   </span>
-                ) : activeTab === 'current' ? (
-                  'Історія дій поточної робочої зміни'
                 ) : (
-                  'Архів закритих змін з можливістю експорту'
+                  'Архів змін з можливістю експорту'
                 )}
               </CardDescription>
             </div>
@@ -1467,7 +1489,7 @@ export function HistorySection({
                     disabled={isRefreshing || isLoading}
                     size="icon"
                     title="Оновити (синхронізація з іншими пристроями)"
-                    className="shrink-0 hidden sm:flex"
+                    className="shrink-0"
                   >
                     <RefreshCw
                       className={cn(
@@ -1486,14 +1508,6 @@ export function HistorySection({
                   title="Експортувати"
                 >
                   <Download className="h-4 w-4" />
-                </Button>
-                <Button
-                  onClick={() => setCloseModalOpen(true)}
-                  disabled={activities.length === 0}
-                  className="hidden sm:flex"
-                >
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Закрити зміну
                 </Button>
               </div>
             ) : null}
@@ -1527,17 +1541,6 @@ export function HistorySection({
             </button>
           </div>
 
-          {/* Close Shift Button - on mobile below tab switcher */}
-          {activeTab === 'current' && (
-            <Button
-              onClick={() => setCloseModalOpen(true)}
-              disabled={activities.length === 0}
-              className="w-full sm:hidden"
-            >
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Закрити зміну
-            </Button>
-          )}
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -1597,94 +1600,6 @@ export function HistorySection({
           )}
         </CardContent>
       </Card>
-
-      {/* Close Shift Modal */}
-      <Modal
-        open={closeModalOpen}
-        onOpenChange={setCloseModalOpen}
-        title="Закрити зміну?"
-        description="Після закриття зміни всі дії будуть збережені в архів. Розпочнеться нова зміна."
-        footer={
-          <>
-            <Button
-              variant="outline"
-              onClick={() => setCloseModalOpen(false)}
-              disabled={isClosingShift}
-            >
-              Скасувати
-            </Button>
-            <Button
-              onClick={handleCloseShift}
-              disabled={isClosingShift}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              {isClosingShift ? 'Закриття...' : 'Підтвердити'}
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <div className="rounded-xl border border-slate-100 dark:border-admin-border bg-slate-50/50 dark:bg-admin-surface-elevated p-4">
-            <h4 className="font-semibold text-slate-900 dark:text-admin-text-primary mb-3">
-              Підсумок зміни
-            </h4>
-            <div className="grid grid-cols-3 gap-3 text-sm">
-              {/* Продажі */}
-              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 p-2">
-                <p className="text-xs text-emerald-600 dark:text-emerald-400">Продажі</p>
-                <p className="font-bold text-emerald-700 dark:text-emerald-300">
-                  {Math.round(summary.totalSalesAmount || 0).toLocaleString()} ₴
-                </p>
-                <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">
-                  {summary.totalSalesQty || 0} шт · {summary.totalSales || 0} оп.
-                </p>
-              </div>
-              {/* Списання */}
-              <div className="rounded-lg bg-amber-50 dark:bg-amber-900/30 p-2">
-                <p className="text-xs text-amber-600 dark:text-amber-400">Списання</p>
-                <p className="font-bold text-amber-700 dark:text-amber-300">
-                  {Math.round(summary.totalWriteOffsAmount || 0).toLocaleString()} ₴
-                </p>
-                <p className="text-xs text-amber-600/70 dark:text-amber-400/70">
-                  {summary.totalWriteOffsQty || 0} шт · {summary.totalWriteOffs || 0} оп.
-                </p>
-              </div>
-              {/* Поставки */}
-              <div className="rounded-lg bg-blue-50 dark:bg-blue-900/30 p-2">
-                <p className="text-xs text-blue-600 dark:text-blue-400">Поставки</p>
-                <p className="font-bold text-blue-700 dark:text-blue-300">
-                  {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} ₴
-                </p>
-                <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
-                  {summary.totalSuppliesQty || 0} шт · {summary.totalSupplies || 0} пост.
-                </p>
-              </div>
-            </div>
-            {/* Додаткова статистика */}
-            <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-admin-border text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-admin-text-tertiary">Редагувань:</span>
-                <span className="font-medium dark:text-admin-text-primary">{summary.productEdits}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-admin-text-tertiary">Нових клієнтів:</span>
-                <span className="font-medium dark:text-admin-text-primary">{summary.customersCreated}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2 text-sm text-slate-500 dark:text-admin-text-tertiary">
-            <Clock className="h-4 w-4 mt-0.5 shrink-0" />
-            <span>
-              {shiftStartedAt && (
-                <>
-                  Тривалість зміни: <strong>{formatDuration(shiftStartedAt)}</strong>
-                </>
-              )}
-            </span>
-          </div>
-        </div>
-      </Modal>
     </>
   );
 }
