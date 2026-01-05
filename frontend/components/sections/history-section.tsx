@@ -1607,7 +1607,7 @@ export function HistorySection({
             <Button
               onClick={handleCloseShift}
               disabled={isClosingShift}
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
               {isClosingShift ? 'Закриття...' : 'Підтвердити'}
             </Button>
