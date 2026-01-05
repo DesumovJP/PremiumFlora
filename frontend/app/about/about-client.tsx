@@ -55,13 +55,13 @@ export function AboutClient({ galleryImages }: AboutClientProps) {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
               {/* Phone Card */}
               <div
-                className="bg-[#fafafa] rounded-2xl p-4 sm:p-5 transition-all duration-300 hover:-translate-y-0.5"
+                className="bg-[#fafafa] rounded-2xl p-4 sm:p-5 transition-all duration-300 hover:-translate-y-0.5 text-center"
                 style={{
                   boxShadow: '3px 3px 8px rgba(0, 0, 0, 0.06), -3px -3px 8px rgba(255, 255, 255, 0.8)',
                 }}
               >
                 <div
-                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center mb-3 bg-white"
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center mb-3 bg-white mx-auto"
                   style={{
                     boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.7)',
                   }}
@@ -81,13 +81,13 @@ export function AboutClient({ galleryImages }: AboutClientProps) {
 
               {/* Schedule Card */}
               <div
-                className="bg-[#fafafa] rounded-2xl p-4 sm:p-5 transition-all duration-300 hover:-translate-y-0.5"
+                className="bg-[#fafafa] rounded-2xl p-4 sm:p-5 transition-all duration-300 hover:-translate-y-0.5 text-center"
                 style={{
                   boxShadow: '3px 3px 8px rgba(0, 0, 0, 0.06), -3px -3px 8px rgba(255, 255, 255, 0.8)',
                 }}
               >
                 <div
-                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center mb-3 bg-white"
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center mb-3 bg-white mx-auto"
                   style={{
                     boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.7)',
                   }}
@@ -103,13 +103,13 @@ export function AboutClient({ galleryImages }: AboutClientProps) {
 
               {/* Email Card */}
               <div
-                className="bg-[#fafafa] rounded-2xl p-4 sm:p-5 transition-all duration-300 hover:-translate-y-0.5"
+                className="bg-[#fafafa] rounded-2xl p-4 sm:p-5 transition-all duration-300 hover:-translate-y-0.5 text-center"
                 style={{
                   boxShadow: '3px 3px 8px rgba(0, 0, 0, 0.06), -3px -3px 8px rgba(255, 255, 255, 0.8)',
                 }}
               >
                 <div
-                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center mb-3 bg-white"
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center mb-3 bg-white mx-auto"
                   style={{
                     boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.7)',
                   }}
@@ -126,13 +126,13 @@ export function AboutClient({ galleryImages }: AboutClientProps) {
 
               {/* Address Card */}
               <div
-                className="bg-[#fafafa] rounded-2xl p-4 sm:p-5 transition-all duration-300 hover:-translate-y-0.5"
+                className="bg-[#fafafa] rounded-2xl p-4 sm:p-5 transition-all duration-300 hover:-translate-y-0.5 text-center"
                 style={{
                   boxShadow: '3px 3px 8px rgba(0, 0, 0, 0.06), -3px -3px 8px rgba(255, 255, 255, 0.8)',
                 }}
               >
                 <div
-                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center mb-3 bg-white"
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center mb-3 bg-white mx-auto"
                   style={{
                     boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.7)',
                   }}
