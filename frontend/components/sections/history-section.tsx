@@ -234,6 +234,20 @@ function ActivityItem({ activity }: { activity: Activity }) {
       case 'writeOff':
         return (
           <div className="space-y-2 text-sm">
+            {/* Підсумок списання */}
+            {(details.qty > 0 || details.amount > 0) && (
+              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20">
+                <div className="flex justify-between items-center">
+                  <span className="text-amber-700 dark:text-amber-300 font-medium">
+                    −{details.qty || 0} шт
+                  </span>
+                  <span className="text-amber-700 dark:text-amber-300 font-semibold">
+                    −{Math.round(details.amount || 0).toLocaleString()} ₴
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-between">
               <span className="text-slate-500 dark:text-admin-text-tertiary">Товар:</span>
               <span className="font-medium dark:text-admin-text-primary">{details.flowerName}</span>
@@ -241,10 +255,6 @@ function ActivityItem({ activity }: { activity: Activity }) {
             <div className="flex justify-between">
               <span className="text-slate-500 dark:text-admin-text-tertiary">Розмір:</span>
               <span className="dark:text-admin-text-primary">{details.length} см</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500 dark:text-admin-text-tertiary">Кількість:</span>
-              <span className="font-medium text-amber-600">{details.qty} шт</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500 dark:text-admin-text-tertiary">Причина:</span>
@@ -369,19 +379,37 @@ function ActivityItem({ activity }: { activity: Activity }) {
           </div>
         );
 
-      case 'productDelete':
+      case 'productDelete': {
+        // Розрахувати підсумки для видаленого товару
+        const deleteTotals = details.variants?.reduce(
+          (acc, v) => ({
+            totalQty: acc.totalQty + (v.stock || 0),
+            totalValue: acc.totalValue + (v.stock || 0) * (v.price || 0),
+          }),
+          { totalQty: 0, totalValue: 0 }
+        ) || { totalQty: details.totalStock || 0, totalValue: 0 };
+
         return (
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-slate-500 dark:text-admin-text-tertiary">Товар:</span>
               <span className="font-medium dark:text-admin-text-primary">{details.productName}</span>
             </div>
-            {details.totalStock !== undefined && details.totalStock > 0 && (
-              <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-admin-text-tertiary">Списано:</span>
-                <span className="font-medium text-rose-600 dark:text-rose-400">{details.totalStock} шт</span>
+
+            {/* Підсумок списання при видаленні */}
+            {deleteTotals.totalQty > 0 && (
+              <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20">
+                <div className="flex justify-between items-center">
+                  <span className="text-rose-700 dark:text-rose-300 font-medium">
+                    −{deleteTotals.totalQty.toLocaleString()} шт
+                  </span>
+                  <span className="text-rose-700 dark:text-rose-300 font-semibold">
+                    −{Math.round(deleteTotals.totalValue).toLocaleString()} ₴
+                  </span>
+                </div>
               </div>
             )}
+
             {details.variants && details.variants.length > 0 && (
               <div className="space-y-1.5 pt-1">
                 <span className="text-slate-500 dark:text-admin-text-tertiary">Варіанти ({details.variantsCount || details.variants.length}):</span>
@@ -409,6 +437,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
             )}
           </div>
         );
+      }
 
       case 'variantDelete':
         return (
