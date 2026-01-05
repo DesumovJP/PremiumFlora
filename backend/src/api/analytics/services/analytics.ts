@@ -376,6 +376,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     // Групувати дані по днях
     const dailyMap = new Map<string, { orders: number; revenue: number; writeOffs: number; supplyAmount: number }>();
 
+    // Трекаємо оброблені activity.id для дедуплікації
+    const processedActivityIds = new Set<string>();
+
     // Типи для activities
     interface ActivityDetails {
       totalAmount?: number;
@@ -385,6 +388,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     }
 
     interface ShiftActivity {
+      id?: string;
       type: string;
       timestamp: string;
       details: ActivityDetails;
@@ -394,6 +398,13 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       const activities = shift.activities || [];
 
       activities.forEach((activity) => {
+        // Дедуплікація по activity.id
+        if (activity.id) {
+          if (processedActivityIds.has(activity.id)) {
+            return; // Пропускаємо вже оброблену активність
+          }
+          processedActivityIds.add(activity.id);
+        }
         const date = new Date(activity.timestamp);
         const key = `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}`;
         const existing = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0, supplyAmount: 0 };
@@ -438,6 +449,19 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
               ...existing,
               supplyAmount: existing.supplyAmount + totalAmount,
             });
+            break;
+          }
+          case 'productCreate': {
+            // Створення товару з варіантами зі складом - теж рахуємо як поставку
+            const variants = activity.details.variants || [];
+            const createdStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+            if (createdStock > 0) {
+              const totalAmount = variants.reduce((sum, v) => sum + (v.stock || 0) * (v.price || 0), 0);
+              dailyMap.set(key, {
+                ...existing,
+                supplyAmount: existing.supplyAmount + totalAmount,
+              });
+            }
             break;
           }
         }
