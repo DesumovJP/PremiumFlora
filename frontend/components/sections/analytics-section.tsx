@@ -6,9 +6,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { KpiCard } from "@/components/ui/kpi-card";
-import { TrendingUp, Loader2, RefreshCw, Download, ChevronLeft, ChevronRight, AlertCircle, DollarSign, ShoppingCart, Receipt, PieChart as PieChartIcon, Package, Trash2, Calendar } from "lucide-react";
+import { TrendingUp, Loader2, Download, ChevronLeft, ChevronRight, AlertCircle, DollarSign, ShoppingCart, Receipt, Package, Trash2, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 
 // Функція для отримання назви місяця українською
 const getMonthName = (date: Date): string => {
@@ -80,7 +80,6 @@ export function AnalyticsSection({
   const {
     kpis = [],
     weeklyRevenue = [],
-    categorySplit = [],
     ordersPerWeek = [],
     topProducts = [],
     dailySales = [],
@@ -146,11 +145,6 @@ export function AnalyticsSection({
       середній: Math.round(v / Math.max(ordersPerWeek[idx] || 1, 1)),
     }));
   }, [weeklyRevenue, ordersPerWeek]);
-
-  const categoryBars = useMemo(
-    () => categorySplit.map((c) => ({ name: c.name, відсоток: c.value })),
-    [categorySplit]
-  );
 
   const totalRevenue = useMemo(
     () => weeklyRevenue.reduce((acc, val) => acc + val, 0),
@@ -317,7 +311,7 @@ export function AnalyticsSection({
 
         {/* Виручка по тижнях (50%) + Кількість замовлень (50%) */}
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="border-slate-200 dark:border-slate-700">
+          <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -354,7 +348,7 @@ export function AnalyticsSection({
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200 dark:border-slate-700">
+          <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -392,9 +386,9 @@ export function AnalyticsSection({
           </Card>
         </div>
 
-        {/* Середній чек по тижнях (ліворуч) + Категорії продажів (праворуч) */}
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="border-slate-200 dark:border-slate-700">
+        {/* Середній чек + Топ-5 товарів + Топ-5 списань */}
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -429,45 +423,7 @@ export function AnalyticsSection({
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200 dark:border-slate-700">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-900/30">
-                    <PieChartIcon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-                  </div>
-                  <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Категорії продажів</CardTitle>
-                </div>
-                <span className="text-xs text-slate-400 dark:text-slate-500">
-                  {categorySplit.length} категорій
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={categoryBars} layout="vertical" margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="4 4" stroke="#e2e8f0" strokeWidth={0.5} opacity={0.6} horizontal={false} className="dark:stroke-slate-700" />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} width={100} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "0.5rem",
-                      fontSize: "12px",
-                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
-                    }}
-                  />
-                  <Bar dataKey="відсоток" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={16} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Топ-5 товарів за продажами (ліворуч) + Топ-5 квітів по списаннях (праворуч) */}
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="border-slate-200 dark:border-slate-700">
+          <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -505,7 +461,7 @@ export function AnalyticsSection({
           </Card>
 
           {topWriteOffFlowers && topWriteOffFlowers.length > 0 && (
-            <Card className="border-slate-200 dark:border-slate-700">
+            <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -549,7 +505,7 @@ export function AnalyticsSection({
           )}
         </div>
 
-        <Card className="border-slate-200 dark:border-slate-700">
+        <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
