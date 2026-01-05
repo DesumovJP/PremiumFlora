@@ -1240,13 +1240,22 @@ function ArchiveTab({ onExportShift }: ArchiveTabProps) {
       // Рахуємо списання та поставки з activities
       (shift.activities || []).forEach((a: Activity) => {
         if (a.type === 'writeOff') {
-          const amount = (a.details as { totalAmount?: number; amount?: number })?.totalAmount ||
-                        (a.details as { totalAmount?: number; amount?: number })?.amount || 0;
-          dailyData[day].writeOffs += amount;
+          dailyData[day].writeOffs += (a.details as { amount?: number })?.amount || 0;
+        } else if (a.type === 'productDelete') {
+          // Видалення товару зі складом - рахуємо як списання
+          const variants = (a.details as { variants?: Array<{ stock?: number; price?: number }> })?.variants || [];
+          dailyData[day].writeOffs += variants.reduce((sum, v) => sum + (v.stock || 0) * (v.price || 0), 0);
         } else if (a.type === 'supply') {
-          const amount = (a.details as { totalAmount?: number; amount?: number })?.totalAmount ||
-                        (a.details as { totalAmount?: number; amount?: number })?.amount || 0;
-          dailyData[day].supplies += amount;
+          // Поставка - рахуємо з supplyItems
+          const items = (a.details as { supplyItems?: Array<{ stockBefore?: number; stockAfter?: number; priceAfter?: number }> })?.supplyItems || [];
+          dailyData[day].supplies += items.reduce((sum, item) => {
+            const qty = (item.stockAfter || 0) - (item.stockBefore || 0);
+            return sum + qty * (item.priceAfter || 0);
+          }, 0);
+        } else if (a.type === 'productCreate') {
+          // Створення товару з залишком - рахуємо як поставку
+          const variants = (a.details as { variants?: Array<{ stock?: number; price?: number }> })?.variants || [];
+          dailyData[day].supplies += variants.reduce((sum, v) => sum + (v.stock || 0) * (v.price || 0), 0);
         }
       });
     });
