@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { KpiCard } from "@/components/ui/kpi-card";
-import { TrendingUp, Loader2, Download, ChevronLeft, ChevronRight, AlertCircle, DollarSign, ShoppingCart, Receipt, Package, Trash2, Calendar } from "lucide-react";
+import { TrendingUp, Loader2, Download, ChevronLeft, ChevronRight, AlertCircle, DollarSign, ShoppingCart, Receipt, Package, Trash2, Calendar, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo, useState } from "react";
 
@@ -84,6 +84,7 @@ export function AnalyticsSection({
     topProducts = [],
     dailySales = [],
     topWriteOffFlowers = [],
+    topCustomers = [],
     totalPendingAmount = 0,
     pendingOrdersCount = 0,
     pendingByCustomer = [],
@@ -386,8 +387,8 @@ export function AnalyticsSection({
           </Card>
         </div>
 
-        {/* Середній чек + Топ-5 товарів + Топ-5 списань */}
-        <div className="grid gap-4 lg:grid-cols-3">
+        {/* Середній чек + Топ-5 товарів + Топ-5 клієнтів + Топ-5 списань */}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
@@ -459,6 +460,48 @@ export function AnalyticsSection({
               </div>
             </CardContent>
           </Card>
+
+          {/* Топ-5 клієнтів */}
+          {topCustomers && topCustomers.length > 0 && (
+            <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-50 dark:bg-sky-900/30">
+                      <Users className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                    </div>
+                    <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Топ-5 клієнтів</CardTitle>
+                  </div>
+                  <span className="text-xs text-slate-400 dark:text-slate-500">за виручкою</span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2.5">
+                  {topCustomers.slice(0, 5).map((customer, idx) => (
+                    <div key={customer.documentId} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-slate-400 dark:text-slate-500 w-4">
+                            {idx + 1}.
+                          </span>
+                          <span className="text-slate-700 dark:text-slate-300 truncate max-w-[120px]">{customer.name}</span>
+                          {customer.type === 'wholesale' && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">опт</span>
+                          )}
+                        </div>
+                        <span className="text-sm font-medium text-slate-900 dark:text-white shrink-0">
+                          {customer.totalSpent.toLocaleString("uk-UA")} ₴
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 ml-6">
+                        <span>{customer.orderCount} замовлень</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {topWriteOffFlowers && topWriteOffFlowers.length > 0 && (
             <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">

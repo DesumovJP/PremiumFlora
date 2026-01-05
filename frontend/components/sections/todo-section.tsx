@@ -272,7 +272,7 @@ export function TodoSection() {
     const categoryInfo = categoryConfig[task.category as TaskCategory] || categoryConfig.other;
 
     return (
-      <div className="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--admin-bg)] transition-colors">
+      <div className="group flex items-center gap-3 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50 border border-slate-100 dark:border-slate-700 transition-colors">
         <button
           onClick={() => handleUncomplete(task)}
           className="shrink-0"
@@ -324,15 +324,15 @@ export function TodoSection() {
     return (
       <div
         className={cn(
-          "relative group rounded-lg border-2 p-4 transition-all duration-200",
+          "relative group rounded-lg border p-4 transition-all duration-200 shadow-sm",
           "hover:shadow-lg hover:-translate-y-1",
           // Pin effect - slight rotation
           `hover:rotate-0`,
           isCompleted
-            ? "bg-[var(--admin-bg)] border-[var(--admin-border-subtle)] opacity-60"
+            ? "bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 opacity-60"
             : overdue
-            ? "bg-rose-50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800/50"
-            : "bg-[var(--admin-surface)] border-[var(--admin-border)]"
+            ? "bg-white dark:bg-slate-800 border-rose-200 dark:border-rose-800/50"
+            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
         )}
         style={{ transform: `rotate(${rotation}deg)` }}
       >
@@ -440,10 +440,10 @@ export function TodoSection() {
   };
 
   return (
-    <Card className="border border-slate-100 dark:border-[var(--admin-border)] bg-white/90 dark:bg-admin-surface shadow-md">
+    <Card className="admin-card border border-slate-100 dark:border-[var(--admin-border)] bg-white/90 dark:bg-admin-surface shadow-md">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl">Завдання</CardTitle>
+          <CardTitle className="text-xl font-semibold text-slate-900 dark:text-white">Завдання</CardTitle>
           <Button onClick={openAddModal} size="sm">
             <Plus className="h-4 w-4 mr-1" />
             Додати
@@ -477,7 +477,7 @@ export function TodoSection() {
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="bg-slate-50/50 dark:bg-slate-900/30 rounded-b-lg -mx-6 -mb-6 px-6 pb-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
@@ -502,7 +502,7 @@ export function TodoSection() {
           </div>
         ) : (
           /* Виконані завдання - компактний список */
-          <div className="space-y-1">
+          <div className="space-y-2 py-2">
             {displayTasks.map((task) => (
               <CompletedTaskRow key={task.documentId} task={task} />
             ))}
