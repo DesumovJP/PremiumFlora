@@ -466,7 +466,7 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
                     className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-stone-600 dark:text-slate-300 bg-stone-100 dark:bg-slate-700 hover:bg-rose-100 dark:hover:bg-rose-900/30 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                   >
                     <Eraser className="h-3.5 w-3.5" />
-                    Очистити кількості
+                    Очистити кількість
                   </button>
                 )}
                 <div className="flex items-center gap-2 text-[10px]">
