@@ -259,8 +259,67 @@ function ActivityItem({ activity }: { activity: Activity }) {
           </div>
         );
 
+      case 'productCreate': {
+        // Розрахувати підсумки для нового товару
+        const createTotals = details.variants?.reduce(
+          (acc, v) => ({
+            totalQty: acc.totalQty + (v.stock || 0),
+            totalValue: acc.totalValue + (v.stock || 0) * (v.price || 0),
+          }),
+          { totalQty: 0, totalValue: 0 }
+        ) || { totalQty: 0, totalValue: 0 };
+
+        return (
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-500 dark:text-admin-text-tertiary">Товар:</span>
+              <span className="font-medium dark:text-admin-text-primary">{details.productName}</span>
+            </div>
+
+            {/* Підсумок якщо є кількість */}
+            {createTotals.totalQty > 0 && (
+              <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                <div className="flex justify-between items-center">
+                  <span className="text-blue-700 dark:text-blue-300 font-medium">
+                    +{createTotals.totalQty.toLocaleString()} шт
+                  </span>
+                  <span className="text-blue-700 dark:text-blue-300 font-semibold">
+                    +{Math.round(createTotals.totalValue).toLocaleString()} ₴
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {details.variants && details.variants.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Варіанти:</span>
+                <div className="space-y-1">
+                  {details.variants.map((v, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-slate-50 dark:bg-admin-surface text-xs"
+                    >
+                      <span className="font-medium text-slate-700 dark:text-admin-text-primary">
+                        {v.length} см
+                      </span>
+                      <span className="text-slate-400">·</span>
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        {v.price.toLocaleString('uk-UA')} грн
+                      </span>
+                      <span className="text-slate-400">·</span>
+                      <span className="text-slate-600 dark:text-admin-text-secondary">
+                        {v.stock} шт
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
       case 'productEdit':
-      case 'productCreate':
         return (
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
