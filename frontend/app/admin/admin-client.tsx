@@ -80,17 +80,17 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   } = useActivityLog();
   const [isClosingShift, setIsClosingShift] = useState(false);
 
-  // Initialize theme from localStorage or system preference
+  // Initialize theme from localStorage (default to light for new users)
   useLayoutEffect(() => {
     const stored = window.localStorage.getItem("pf-theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    
-    if (stored === "dark" || (!stored && prefersDark)) {
+
+    if (stored === "dark") {
       document.documentElement.classList.add("dark");
-      window.localStorage.setItem("pf-theme", "dark");
     } else {
       document.documentElement.classList.remove("dark");
-      window.localStorage.setItem("pf-theme", "light");
+      if (!stored) {
+        window.localStorage.setItem("pf-theme", "light");
+      }
     }
     setMounted(true);
   }, []);
