@@ -203,17 +203,37 @@ function formatActivityDetails(activity: Activity): string {
     case 'sale':
       return `${details.customerName} - ${details.totalAmount} грн (${details.items?.length || 0} позицій)`;
     case 'writeOff':
-      return `${details.flowerName} (${details.length} см) - ${details.qty} шт, причина: ${details.reason}`;
+      return `${details.flowerName} (${details.length} см) - ${details.qty} шт × ${details.price || 0} грн = ${details.amount || 0} грн`;
     case 'productEdit':
-    case 'productCreate':
-    case 'productDelete':
       return details.productName || '';
+    case 'productCreate': {
+      const variants = details.variants as Array<{ stock?: number; price?: number }> | undefined;
+      const totalStock = variants?.reduce((sum, v) => sum + (v.stock || 0), 0) || 0;
+      const totalValue = variants?.reduce((sum, v) => sum + (v.stock || 0) * (v.price || 0), 0) || 0;
+      return totalStock > 0
+        ? `${details.productName} (+${totalStock} шт, ${Math.round(totalValue)} грн)`
+        : details.productName || '';
+    }
+    case 'productDelete': {
+      const variants = details.variants as Array<{ stock?: number; price?: number }> | undefined;
+      const totalStock = variants?.reduce((sum, v) => sum + (v.stock || 0), 0) || 0;
+      const totalValue = variants?.reduce((sum, v) => sum + (v.stock || 0) * (v.price || 0), 0) || 0;
+      return totalStock > 0
+        ? `${details.productName} (−${totalStock} шт, −${Math.round(totalValue)} грн)`
+        : details.productName || '';
+    }
     case 'paymentConfirm':
       return `${details.customerName} - ${details.amount} грн`;
     case 'customerCreate':
       return `${details.customerName}${details.phone ? `, ${details.phone}` : ''}`;
+    case 'supply': {
+      const items = details.supplyItems as Array<{ flowerName?: string; stockBefore?: number; stockAfter?: number; priceAfter?: number }> | undefined;
+      const totalQty = items?.reduce((sum, i) => sum + ((i.stockAfter || 0) - (i.stockBefore || 0)), 0) || 0;
+      const totalValue = items?.reduce((sum, i) => sum + ((i.stockAfter || 0) - (i.stockBefore || 0)) * (i.priceAfter || 0), 0) || 0;
+      return `+${totalQty} шт, ${Math.round(totalValue)} грн (${items?.length || 0} позицій)`;
+    }
     default:
-      return JSON.stringify(details);
+      return '';
   }
 }
 
@@ -223,6 +243,42 @@ export function exportShift(
   shiftStartedAt: string,
   shiftClosedAt?: string | null
 ): void {
+  // Calculate detailed stats from activities
+  let totalSuppliesAmount = 0;
+  let totalSuppliesQty = 0;
+  let totalWriteOffsAmount = 0;
+  let totalWriteOffsQty = 0;
+  let totalProductCreateQty = 0;
+  let totalProductCreateAmount = 0;
+  let totalProductDeleteQty = 0;
+  let totalProductDeleteAmount = 0;
+
+  activities.forEach(a => {
+    if (a.type === 'supply' && a.details.supplyItems) {
+      const items = a.details.supplyItems as Array<{ stockBefore?: number; stockAfter?: number; priceAfter?: number }>;
+      items.forEach(item => {
+        const qty = (item.stockAfter || 0) - (item.stockBefore || 0);
+        totalSuppliesQty += qty;
+        totalSuppliesAmount += qty * (item.priceAfter || 0);
+      });
+    } else if (a.type === 'writeOff') {
+      totalWriteOffsQty += a.details.qty || 0;
+      totalWriteOffsAmount += a.details.amount || 0;
+    } else if (a.type === 'productCreate' && a.details.variants) {
+      const variants = a.details.variants as Array<{ stock?: number; price?: number }>;
+      variants.forEach(v => {
+        totalProductCreateQty += v.stock || 0;
+        totalProductCreateAmount += (v.stock || 0) * (v.price || 0);
+      });
+    } else if (a.type === 'productDelete' && a.details.variants) {
+      const variants = a.details.variants as Array<{ stock?: number; price?: number }>;
+      variants.forEach(v => {
+        totalProductDeleteQty += v.stock || 0;
+        totalProductDeleteAmount += (v.stock || 0) * (v.price || 0);
+      });
+    }
+  });
+
   // Sheet 1: Summary
   const summaryHeaders = ['Показник', 'Значення'];
   const closedAtDate = shiftClosedAt ? new Date(shiftClosedAt) : new Date();
@@ -230,24 +286,52 @@ export function exportShift(
     ['Початок зміни', new Date(shiftStartedAt).toLocaleString('uk-UA')],
     ['Закриття зміни', closedAtDate.toLocaleString('uk-UA')],
     ['', ''],
+    ['═══ ПРОДАЖІ ═══', ''],
     ['Кількість продажів', summary.totalSales],
-    ['Сума продажів (грн)', summary.totalSalesAmount],
+    ['Сума продажів (грн)', Math.round(summary.totalSalesAmount)],
+    ['  - Оплачено (грн)', Math.round(summary.totalSalesPaid || 0)],
+    ['  - Очікує оплати (грн)', Math.round(summary.totalSalesExpected || 0)],
     ['', ''],
+    ['═══ ПОСТАВКИ ═══', ''],
+    ['Кількість поставок', summary.totalSupplies || 0],
+    ['Поставлено (шт)', totalSuppliesQty],
+    ['Сума поставок (грн)', Math.round(totalSuppliesAmount)],
+    ['', ''],
+    ['═══ СПИСАННЯ ═══', ''],
     ['Кількість списань', summary.totalWriteOffs],
-    ['Списано штук', summary.totalWriteOffsQty],
-    ['Поставок', summary.totalSupplies || 0],
-    ['Редагувань товарів', summary.productEdits],
-    ['Нових клієнтів', summary.customersCreated],
-    ['Всього дій', summary.activitiesCount],
+    ['Списано (шт)', totalWriteOffsQty],
+    ['Сума списань (грн)', Math.round(totalWriteOffsAmount)],
     ['', ''],
-    ['ОЧІКУЮТЬСЯ ОПЛАТИ (грн)', summary.totalSalesExpected || 0],
   ];
+
+  // Add product create/delete if any
+  if (totalProductCreateQty > 0 || totalProductDeleteQty > 0) {
+    summaryRows.push(['═══ ТОВАРИ ═══', '']);
+    if (totalProductCreateQty > 0) {
+      summaryRows.push(['Створено товарів з залишком (шт)', totalProductCreateQty]);
+      summaryRows.push(['Вартість створених (грн)', Math.round(totalProductCreateAmount)]);
+    }
+    if (totalProductDeleteQty > 0) {
+      summaryRows.push(['Видалено товарів з залишком (шт)', totalProductDeleteQty]);
+      summaryRows.push(['Вартість видалених (грн)', Math.round(totalProductDeleteAmount)]);
+    }
+    summaryRows.push(['', '']);
+  }
+
+  // Balance change
+  const balanceQtyChange = totalSuppliesQty + totalProductCreateQty - totalWriteOffsQty - totalProductDeleteQty;
+  const balanceAmountChange = totalSuppliesAmount + totalProductCreateAmount - totalWriteOffsAmount - totalProductDeleteAmount;
+  summaryRows.push(['═══ БАЛАНС СКЛАДУ ═══', '']);
+  summaryRows.push(['Зміна залишків (шт)', balanceQtyChange >= 0 ? `+${balanceQtyChange}` : balanceQtyChange]);
+  summaryRows.push(['Зміна вартості (грн)', balanceAmountChange >= 0 ? `+${Math.round(balanceAmountChange)}` : Math.round(balanceAmountChange)]);
+  summaryRows.push(['', '']);
+  summaryRows.push(['Всього дій за зміну', summary.activitiesCount]);
 
   const summaryData = [summaryHeaders, ...summaryRows];
   const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
   // Force range to exactly 2 columns
   summaryWs['!ref'] = `A1:B${summaryData.length}`;
-  summaryWs['!cols'] = [{ wch: 22 }, { wch: 25 }];
+  summaryWs['!cols'] = [{ wch: 30 }, { wch: 25 }];
 
   // Sheet 2: Sales Detail (with items breakdown)
   const salesActivities = activities.filter(a => a.type === 'sale');
@@ -322,7 +406,110 @@ export function exportShift(
   applyCenterAlignment(paymentsWs);
   setColumnWidths(paymentsWs, paymentsData);
 
-  // Sheet 4: All Activities
+  // Sheet 4: Supplies Detail
+  const supplyActivities = activities.filter(a => a.type === 'supply');
+  const suppliesHeaders = ['Час', 'Товар', 'Розмір', 'Було (шт)', 'Стало (шт)', 'Додано (шт)', 'Ціна (грн)', 'Сума (грн)'];
+  const suppliesRows: (string | number)[][] = [];
+
+  supplyActivities.forEach(activity => {
+    const { details, timestamp } = activity;
+    const time = new Date(timestamp).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+    const items = (details.supplyItems || []) as Array<{
+      flowerName?: string;
+      length?: number;
+      stockBefore?: number;
+      stockAfter?: number;
+      priceAfter?: number;
+    }>;
+
+    items.forEach((item, index) => {
+      const qty = (item.stockAfter || 0) - (item.stockBefore || 0);
+      suppliesRows.push([
+        index === 0 ? time : '',
+        item.flowerName || '-',
+        item.length ? `${item.length} см` : '-',
+        item.stockBefore || 0,
+        item.stockAfter || 0,
+        qty,
+        item.priceAfter || 0,
+        Math.round(qty * (item.priceAfter || 0)),
+      ]);
+    });
+  });
+
+  // Add totals
+  if (suppliesRows.length > 0) {
+    suppliesRows.push(['', '', '', '', '', '', '', '']);
+    suppliesRows.push(['', '', '', '', 'РАЗОМ:', totalSuppliesQty, '', Math.round(totalSuppliesAmount)]);
+  }
+
+  const suppliesData = [suppliesHeaders, ...suppliesRows];
+  const suppliesWs = XLSX.utils.aoa_to_sheet(suppliesData);
+  applyCenterAlignment(suppliesWs);
+  setColumnWidths(suppliesWs, suppliesData);
+
+  // Sheet 5: Write-offs Detail
+  const writeOffActivities = activities.filter(a => a.type === 'writeOff' || a.type === 'productDelete');
+  const writeOffsHeaders = ['Час', 'Тип', 'Товар', 'Розмір', 'К-сть (шт)', 'Ціна (грн)', 'Сума (грн)', 'Причина'];
+  const writeOffsRows: (string | number)[][] = [];
+
+  const reasonLabels: Record<string, string> = {
+    damaged: 'Пошкоджено',
+    expired: 'Зів\'яло',
+    lost: 'Втрачено',
+    sample: 'Зразок',
+    gift: 'Подарунок',
+    other: 'Інше',
+  };
+
+  writeOffActivities.forEach(activity => {
+    const { type, details, timestamp } = activity;
+    const time = new Date(timestamp).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+
+    if (type === 'writeOff') {
+      writeOffsRows.push([
+        time,
+        'Списання',
+        details.flowerName || '-',
+        details.length ? `${details.length} см` : '-',
+        details.qty || 0,
+        details.price || 0,
+        Math.round(details.amount || 0),
+        (details.reason && reasonLabels[details.reason]) || details.reason || '-',
+      ]);
+    } else if (type === 'productDelete') {
+      const variants = (details.variants || []) as Array<{ size?: string; stock?: number; price?: number }>;
+      variants.forEach((v, index) => {
+        if ((v.stock || 0) > 0) {
+          writeOffsRows.push([
+            index === 0 ? time : '',
+            index === 0 ? 'Видалення товару' : '',
+            index === 0 ? (details.productName || '-') : '',
+            v.size || '-',
+            v.stock || 0,
+            v.price || 0,
+            Math.round((v.stock || 0) * (v.price || 0)),
+            'Видалено з каталогу',
+          ]);
+        }
+      });
+    }
+  });
+
+  // Add totals
+  const totalWriteOffQtyForSheet = totalWriteOffsQty + totalProductDeleteQty;
+  const totalWriteOffAmountForSheet = totalWriteOffsAmount + totalProductDeleteAmount;
+  if (writeOffsRows.length > 0) {
+    writeOffsRows.push(['', '', '', '', '', '', '', '']);
+    writeOffsRows.push(['', '', '', 'РАЗОМ:', totalWriteOffQtyForSheet, '', Math.round(totalWriteOffAmountForSheet), '']);
+  }
+
+  const writeOffsData = [writeOffsHeaders, ...writeOffsRows];
+  const writeOffsWs = XLSX.utils.aoa_to_sheet(writeOffsData);
+  applyCenterAlignment(writeOffsWs);
+  setColumnWidths(writeOffsWs, writeOffsData);
+
+  // Sheet 6: All Activities
   const activitiesHeaders = ['Час', 'Тип дії', 'Деталі'];
   const activitiesRows: (string | number)[][] = [...activities].reverse().map(activity => [
     new Date(activity.timestamp).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
@@ -340,7 +527,13 @@ export function exportShift(
   XLSX.utils.book_append_sheet(wb, summaryWs, 'Підсумок');
   XLSX.utils.book_append_sheet(wb, salesWs, 'Продажі');
   if (paymentConfirmActivities.length > 0) {
-    XLSX.utils.book_append_sheet(wb, paymentsWs, 'Підтвердження оплат');
+    XLSX.utils.book_append_sheet(wb, paymentsWs, 'Оплати');
+  }
+  if (supplyActivities.length > 0) {
+    XLSX.utils.book_append_sheet(wb, suppliesWs, 'Поставки');
+  }
+  if (writeOffActivities.length > 0) {
+    XLSX.utils.book_append_sheet(wb, writeOffsWs, 'Списання');
   }
   XLSX.utils.book_append_sheet(wb, activitiesWs, 'Всі дії');
 

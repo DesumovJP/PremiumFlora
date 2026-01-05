@@ -235,7 +235,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
         return (
           <div className="space-y-2 text-sm">
             {/* Підсумок списання */}
-            {(details.qty > 0 || details.amount > 0) && (
+            {((details.qty || 0) > 0 || (details.amount || 0) > 0) && (
               <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20">
                 <div className="flex justify-between items-center">
                   <span className="text-amber-700 dark:text-amber-300 font-medium">
