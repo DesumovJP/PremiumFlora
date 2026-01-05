@@ -147,7 +147,7 @@ export function PosSection({
             className={cn(
               "grid gap-2 sm:gap-3 animate-stagger",
               gridMode === "full"
-                ? "grid-cols-2 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] xl:grid-cols-[repeat(auto-fit,minmax(220px,1fr))] 2xl:grid-cols-6"
+                ? "grid-cols-2 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] xl:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]"
                 : "grid-cols-1"
             )}
           >
