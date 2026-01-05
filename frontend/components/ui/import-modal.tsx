@@ -245,75 +245,77 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
           </div>
         </div>
 
-        {/* Price calculation */}
-        <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
-          <label className="flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
-              checked={options.applyPriceCalculation || false}
-              onChange={(e) =>
-                setOptions((prev) => ({
-                  ...prev,
-                  applyPriceCalculation: e.target.checked,
-                }))
-              }
-              className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0"
-            />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Розрахувати ціни (USD → UAH + маржа)
-            </span>
-          </label>
+        {/* Price calculation - only show when prices will be updated */}
+        {options.priceMode !== "skip" && (
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                checked={options.applyPriceCalculation || false}
+                onChange={(e) =>
+                  setOptions((prev) => ({
+                    ...prev,
+                    applyPriceCalculation: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0"
+              />
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                Розрахувати ціни (USD → UAH + маржа)
+              </span>
+            </label>
 
-          {options.applyPriceCalculation && (
-            <div className="grid grid-cols-2 gap-3 mt-3">
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
-                  Курс долара
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="1"
-                  placeholder="41.5"
-                  className="w-full h-10 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-slate-300 dark:focus:border-slate-600"
-                  value={options.exchangeRate || ""}
-                  onChange={(e) =>
-                    setOptions((prev) => ({
-                      ...prev,
-                      exchangeRate: parseFloat(e.target.value) || undefined,
-                    }))
-                  }
-                />
+            {options.applyPriceCalculation && (
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
+                    Курс долара
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="1"
+                    placeholder="41.5"
+                    className="w-full h-10 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-slate-300 dark:focus:border-slate-600"
+                    value={options.exchangeRate || ""}
+                    onChange={(e) =>
+                      setOptions((prev) => ({
+                        ...prev,
+                        exchangeRate: parseFloat(e.target.value) || undefined,
+                      }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
+                    Маржа (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    max="200"
+                    placeholder="30"
+                    className="w-full h-10 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-slate-300 dark:focus:border-slate-600"
+                    value={
+                      options.marginMultiplier
+                        ? ((options.marginMultiplier - 1) * 100).toFixed(0)
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const percentage = parseFloat(e.target.value) || 0;
+                      const multiplier = 1 + percentage / 100;
+                      setOptions((prev) => ({
+                        ...prev,
+                        marginMultiplier: multiplier,
+                      }));
+                    }}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
-                  Маржа (%)
-                </label>
-                <input
-                  type="number"
-                  step="1"
-                  min="0"
-                  max="200"
-                  placeholder="30"
-                  className="w-full h-10 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-slate-300 dark:focus:border-slate-600"
-                  value={
-                    options.marginMultiplier
-                      ? ((options.marginMultiplier - 1) * 100).toFixed(0)
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const percentage = parseFloat(e.target.value) || 0;
-                    const multiplier = 1 + percentage / 100;
-                    setOptions((prev) => ({
-                      ...prev,
-                      marginMultiplier: multiplier,
-                    }));
-                  }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* Result */}
         {result && (
