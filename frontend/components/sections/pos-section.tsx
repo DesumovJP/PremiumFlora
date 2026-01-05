@@ -749,8 +749,8 @@ function ProductCard({
                     onClick={() => variant && handleAdd(variant)}
                   >
                     {isAdded && (
-                      <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-emerald-500/90 backdrop-blur-sm animate-fade-in">
-                        <div className="flex items-center justify-center rounded-full bg-white dark:bg-admin-surface p-0.5 shadow-lg animate-scale-in">
+                      <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-emerald-500 animate-fade-in">
+                        <div className="flex items-center justify-center rounded-full bg-white dark:bg-admin-surface p-0.5 animate-scale-in">
                           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                         </div>
                       </div>
@@ -815,7 +815,7 @@ function ProductCard({
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-black dark:via-black/70 dark:to-transparent px-2.5 pb-2 pt-8 sm:px-3 sm:pb-2.5 sm:pt-10">
           <div className="flex items-end justify-between gap-2">
             <h3
-              className="font-bold leading-snug line-clamp-2 text-slate-900 dark:text-white text-sm sm:text-base drop-shadow-sm"
+              className="font-bold leading-snug line-clamp-2 text-slate-900 dark:text-white text-sm sm:text-base"
             >
               {product.name}
             </h3>
@@ -855,8 +855,8 @@ function ProductCard({
                 onClick={() => variant && handleAdd(variant)}
               >
                 {isAdded && (
-                  <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-emerald-500/90 backdrop-blur-sm animate-fade-in">
-                    <div className="flex items-center justify-center rounded-full bg-white dark:bg-admin-surface p-1 shadow-lg animate-scale-in">
+                  <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-emerald-500 animate-fade-in">
+                    <div className="flex items-center justify-center rounded-full bg-white dark:bg-admin-surface p-1 animate-scale-in">
                       <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     </div>
                   </div>

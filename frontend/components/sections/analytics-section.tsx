@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/card";
 import { Loader2, Download, ChevronLeft, ChevronRight, AlertCircle, DollarSign, ShoppingCart, Receipt, Package, Trash2, Calendar, Users, Warehouse, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 // Функція для отримання назви місяця українською
 const getMonthName = (date: Date): string => {
@@ -96,6 +96,28 @@ export function AnalyticsSection({
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 
+  // Визначення теми для стилів графіків
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    const checkTheme = () => setIsDark(document.documentElement.classList.contains('dark'));
+    checkTheme();
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  // Стилі для Recharts tooltip
+  const tooltipStyle = {
+    backgroundColor: isDark ? '#1e293b' : '#fff',
+    border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+    borderRadius: '0.5rem',
+    fontSize: '12px',
+    boxShadow: isDark ? '0 4px 6px -1px rgb(0 0 0 / 0.3)' : '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+    color: isDark ? '#e2e8f0' : '#334155',
+  };
+
+  // Курсор для ховеру (підсвітка стовпчика)
+  const cursorStyle = { fill: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' };
 
   const handlePrevMonth = () => {
     let newMonth = selectedMonth - 1;
@@ -333,15 +355,7 @@ export function AnalyticsSection({
                     <CartesianGrid strokeDasharray="4 4" stroke="#e2e8f0" strokeWidth={0.5} opacity={0.6} className="dark:stroke-slate-700" />
                     <XAxis dataKey="week" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#fff",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "0.5rem",
-                        fontSize: "12px",
-                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
-                      }}
-                    />
+                    <Tooltip contentStyle={tooltipStyle} cursor={cursorStyle} />
                     <Line type="monotone" dataKey="виручка" stroke="#10b981" strokeWidth={2} dot={{ fill: "#10b981", r: 3 }} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -370,15 +384,7 @@ export function AnalyticsSection({
                     <CartesianGrid strokeDasharray="4 4" stroke="#e2e8f0" strokeWidth={0.5} opacity={0.6} className="dark:stroke-slate-700" />
                     <XAxis dataKey="week" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#fff",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "0.5rem",
-                        fontSize: "12px",
-                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
-                      }}
-                    />
+                    <Tooltip contentStyle={tooltipStyle} cursor={cursorStyle} />
                     <Bar dataKey="замовлення" fill="#0ea5e9" fillOpacity={0.4} stroke="#0ea5e9" strokeWidth={1} radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -409,15 +415,7 @@ export function AnalyticsSection({
                   <CartesianGrid strokeDasharray="4 4" stroke="#e2e8f0" strokeWidth={0.5} opacity={0.6} className="dark:stroke-slate-700" />
                   <XAxis dataKey="week" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "0.5rem",
-                      fontSize: "12px",
-                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
-                    }}
-                  />
+                  <Tooltip contentStyle={tooltipStyle} cursor={cursorStyle} />
                   <Area type="monotone" dataKey="середній" stroke="#6366f1" fill="#e0e7ff" fillOpacity={0.5} strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
