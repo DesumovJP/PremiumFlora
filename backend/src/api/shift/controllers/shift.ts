@@ -496,4 +496,65 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       };
     }
   },
+
+  /**
+   * DELETE /api/shifts/cleanup
+   * Видалити всі зміни (одноразова очистка)
+   * УВАГА: Цей endpoint буде видалено після використання
+   */
+  async cleanup(ctx: Context) {
+    try {
+      // Простий захист - перевіряємо секретний ключ
+      const { secret } = ctx.query;
+      if (secret !== 'cleanup-2026-pf') {
+        ctx.status = 403;
+        ctx.body = {
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: 'Invalid secret key',
+          },
+        };
+        return;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const docs = strapi.documents as any;
+
+      // Отримуємо всі зміни
+      const allShifts = await docs('api::shift.shift').findMany({
+        limit: 1000, // Достатньо для очистки
+      });
+
+      strapi.log.info(`[Shift Cleanup] Found ${allShifts.length} shifts to delete`);
+
+      // Видаляємо кожну зміну
+      let deleted = 0;
+      for (const shift of allShifts) {
+        await docs('api::shift.shift').delete({
+          documentId: shift.documentId,
+        });
+        deleted++;
+      }
+
+      strapi.log.info(`[Shift Cleanup] Successfully deleted ${deleted} shifts`);
+
+      ctx.body = {
+        success: true,
+        message: `Successfully deleted ${deleted} shifts`,
+        deleted,
+      };
+    } catch (error) {
+      strapi.log.error('Shift cleanup error:', error);
+
+      ctx.status = 500;
+      ctx.body = {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'An error occurred during cleanup',
+        },
+      };
+    }
+  },
 });
