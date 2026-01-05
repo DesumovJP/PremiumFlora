@@ -36,7 +36,7 @@ import {
   createWriteOff,
   getDashboardAnalytics,
   getFlowers,
-  getPendingPaymentsTotal,
+  getPendingPaymentsSummary,
   invalidatePendingPaymentsCache,
 } from "@/lib/strapi";
 import type { Customer, DashboardData, WriteOffInput } from "@/lib/api-types";
@@ -64,6 +64,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true);
   const [clientsPendingTotal, setClientsPendingTotal] = useState(0);
+  const [clientsPendingCount, setClientsPendingCount] = useState(0);
 
   // Alerts
   const { alerts, showSuccess, showError, showWarning, dismiss } = useAlerts();
@@ -117,8 +118,9 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   useEffect(() => {
     const fetchPendingPayments = async () => {
       try {
-        const total = await getPendingPaymentsTotal();
-        setClientsPendingTotal(total);
+        const summary = await getPendingPaymentsSummary();
+        setClientsPendingTotal(summary.total);
+        setClientsPendingCount(summary.count);
       } catch (error) {
         console.error("Failed to fetch pending payments:", error);
       }
@@ -198,12 +200,20 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
         logActivity('sale', {
           customerName,
           customerId: selectedClient,
-          items: cart.map((line) => ({
-            name: line.name,
-            size: line.size,
-            qty: line.qty,
-            price: line.price,
-          })),
+          items: cart.map((line) => {
+            // Знаходимо варіант щоб отримати поточний stock
+            const product = products.find(p => p.slug === line.flowerSlug || p.id === line.flowerSlug);
+            const variant = product?.variants.find(v => v.length === line.length);
+            const stockBefore = variant?.stock || 0;
+            return {
+              name: line.name,
+              size: line.size,
+              qty: line.qty,
+              price: line.price,
+              stockBefore,
+              stockAfter: stockBefore - line.qty,
+            };
+          }),
           totalAmount,
           discount,
           paymentStatus,
@@ -219,8 +229,9 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
         if (paymentStatus === 'expected') {
           invalidatePendingPaymentsCache();
           // Оновлюємо значення в сайдбарі
-          const newTotal = await getPendingPaymentsTotal(true);
-          setClientsPendingTotal(newTotal);
+          const newSummary = await getPendingPaymentsSummary(true);
+          setClientsPendingTotal(newSummary.total);
+          setClientsPendingCount(newSummary.count);
         }
 
         setCart([]);
@@ -403,13 +414,22 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
     return { totalItems, stock };
   }, [products]);
 
+  // Вартість запасів = сума (кількість × ціна) для всіх варіантів
+  const inventoryValue = useMemo(() => {
+    return products.reduce(
+      (acc, p) => acc + p.variants.reduce((s, v) => s + v.stock * v.price, 0),
+      0
+    );
+  }, [products]);
+
   const cartTotal = useMemo(
     () => cart.reduce((acc, item) => acc + item.price * item.qty, 0),
     [cart]
   );
 
-  // Use pending payments total from ClientsSection
+  // Use pending payments total and count from API
   const pendingPaymentsAmount = clientsPendingTotal;
+  const pendingPaymentsCount = clientsPendingCount;
 
   // Calculate items to reorder (low stock items - stock <= 100, same as modal/API)
   const itemsToReorder = useMemo(() => {
@@ -596,6 +616,8 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
               }
             }}
             onMonthChange={handleAnalyticsMonthChange}
+            globalPendingAmount={pendingPaymentsAmount}
+            globalPendingCount={pendingPaymentsCount}
           />
         </TabsContent>
 
@@ -605,6 +627,8 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             shiftDate={shiftDate}
             shiftStartedAt={shiftStartedAt}
             summary={shiftSummary}
+            inventoryValue={inventoryValue}
+            totalStockItems={summary.stock}
             onExportShift={handleExportShift}
             onRefresh={refreshActivities}
             isLoading={isLoadingShift}

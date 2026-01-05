@@ -273,9 +273,9 @@ function CartPanel({
 
   return (
     <>
-    <Card className="admin-card flex h-full max-h-full flex-col border border-slate-100 dark:border-[var(--admin-border)] bg-white dark:bg-admin-surface-elevated shadow-xl shadow-slate-200/50 dark:shadow-black/20 rounded-none overflow-hidden">
+    <Card className="admin-card flex h-full max-h-full flex-col border-0 border-l border-slate-200 dark:border-[var(--admin-border)] bg-[var(--admin-surface)] dark:bg-admin-surface-elevated shadow-none overflow-hidden" style={{ borderRadius: 0 }}>
       {/* Header - Compact and clean */}
-      <CardHeader className="pb-3 p-4 sm:p-5 sm:pb-4 border-b border-slate-100 dark:border-[var(--admin-border)]">
+      <CardHeader className="pb-3 p-4 sm:p-5 sm:pb-4 border-b border-slate-200/80 dark:border-[var(--admin-border)] bg-[var(--admin-surface)] dark:bg-admin-surface">
         <div className="flex items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
             <CardTitle className="text-lg sm:text-xl font-semibold tracking-tight">Кошик</CardTitle>
@@ -323,13 +323,13 @@ function CartPanel({
       </CardHeader>
 
       {/* Cart Items */}
-      <CardContent className="flex-1 min-h-0 pt-0 p-0">
-        <ScrollArea className="h-full max-h-none">
-          {cart.length === 0 ? (
-            <div className="flex h-full items-center justify-center py-12">
-              <EmptyCart />
-            </div>
-          ) : (
+      <CardContent className="flex-1 min-h-0 pt-0 p-0 flex flex-col">
+        {cart.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center bg-[var(--admin-bg)]">
+            <EmptyCart />
+          </div>
+        ) : (
+          <ScrollArea className="h-full max-h-none bg-[var(--admin-bg)]">
             <div className="p-4 sm:p-5 space-y-3">
               {groupedCart.map((group) => (
                 <CartGroupItem
@@ -340,25 +340,25 @@ function CartPanel({
                 />
               ))}
             </div>
-          )}
-        </ScrollArea>
+          </ScrollArea>
+        )}
       </CardContent>
 
       {/* Footer - Order Summary */}
-      <CardFooter className="flex flex-col gap-0 p-0 shrink-0 border-t border-[var(--admin-border)] bg-[var(--admin-bg)]">
+      <CardFooter className="flex flex-col gap-0 p-0 shrink-0 border-t border-slate-200/80 dark:border-[var(--admin-border)] bg-[var(--admin-surface)] dark:bg-admin-surface">
         {/* All content in one wrapper */}
         <div className="w-full p-4 sm:p-5 space-y-4">
           {/* Payment Status Toggle */}
           {onPaymentStatusChange && (
-            <div className="flex rounded-xl bg-[var(--admin-surface)] p-1 gap-1 border border-[var(--admin-border)]">
+            <div className="flex rounded-lg bg-[var(--admin-bg)] dark:bg-[var(--admin-bg)] p-1 gap-1 border border-slate-200/60 dark:border-[var(--admin-border)]">
               <button
                 type="button"
                 onClick={() => onPaymentStatusChange('paid')}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all",
+                  "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-semibold transition-all",
                   paymentStatus === 'paid'
                     ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
-                    : "text-[var(--admin-text-tertiary)] hover:bg-[var(--admin-bg)]"
+                    : "text-[var(--admin-text-tertiary)] hover:bg-[var(--admin-surface)] dark:hover:bg-[var(--admin-surface)]"
                 )}
               >
                 <CheckCircle2 className="h-4 w-4" />
@@ -368,10 +368,10 @@ function CartPanel({
                 type="button"
                 onClick={() => onPaymentStatusChange('expected')}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all",
+                  "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-semibold transition-all",
                   paymentStatus === 'expected'
                     ? "bg-amber-500 text-white shadow-md shadow-amber-500/30"
-                    : "text-[var(--admin-text-tertiary)] hover:bg-[var(--admin-bg)]"
+                    : "text-[var(--admin-text-tertiary)] hover:bg-[var(--admin-surface)] dark:hover:bg-[var(--admin-surface)]"
                 )}
               >
                 <Clock className="h-4 w-4" />
@@ -384,13 +384,13 @@ function CartPanel({
           <div className="space-y-2">
             {/* Subtotal */}
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[var(--admin-text-tertiary)]">Сума товарів</span>
-              <span className="text-sm font-medium text-[var(--admin-text-secondary)]">{Math.round(cartTotal)} ₴</span>
+              <span className="text-sm text-[var(--admin-text-secondary)]">Сума товарів</span>
+              <span className="text-sm font-semibold text-[var(--admin-text-primary)]">{Math.round(cartTotal)} ₴</span>
             </div>
 
             {/* Discount */}
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[var(--admin-text-tertiary)]">Знижка</span>
+              <span className="text-sm text-[var(--admin-text-secondary)]">Знижка</span>
               {!showDiscount ? (
                 <button
                   type="button"
@@ -399,7 +399,7 @@ function CartPanel({
                     "flex items-center gap-1.5 text-sm font-medium transition-all rounded-md px-2 py-1 -mr-2",
                     discount > 0
                       ? "text-rose-600 dark:text-rose-400"
-                      : "text-[var(--admin-text-muted)] hover:text-emerald-600 dark:hover:text-emerald-400"
+                      : "text-[var(--admin-text-tertiary)] hover:text-emerald-600 dark:hover:text-emerald-400"
                   )}
                 >
                   {discount > 0 ? (
@@ -443,8 +443,8 @@ function CartPanel({
                   className={cn(
                     "flex items-center gap-2 text-sm transition-all rounded-lg px-3 py-2 w-full border border-dashed",
                     comment
-                      ? "text-[var(--admin-text-secondary)] border-[var(--admin-border)] bg-[var(--admin-surface)]"
-                      : "text-[var(--admin-text-muted)] border-[var(--admin-border-subtle)] hover:border-[var(--admin-border)] hover:text-[var(--admin-text-tertiary)]"
+                      ? "text-[var(--admin-text-primary)] border-[var(--admin-border)] bg-[var(--admin-bg)]"
+                      : "text-[var(--admin-text-tertiary)] border-[var(--admin-border-subtle)] hover:border-[var(--admin-border)] hover:text-[var(--admin-text-secondary)]"
                   )}
                 >
                   <MessageSquare className="h-4 w-4 shrink-0" />
@@ -460,7 +460,7 @@ function CartPanel({
                     value={comment}
                     onChange={(e) => onCommentChange(e.target.value)}
                     placeholder="Коментар до замовлення..."
-                    className="w-full rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] pl-3 pr-8 py-2.5 text-sm text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-muted)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 focus:outline-none resize-none transition-all"
+                    className="w-full rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] pl-3 pr-8 py-2.5 text-sm text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-muted)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 focus:outline-none resize-none transition-all"
                     rows={2}
                     autoFocus
                   />
@@ -482,9 +482,9 @@ function CartPanel({
           {/* Total & Checkout */}
           <div className="pt-3 border-t border-[var(--admin-border-subtle)] space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-[var(--admin-text-tertiary)]">До сплати</span>
+              <span className="text-sm font-semibold text-[var(--admin-text-secondary)]">До сплати</span>
               <span className="text-2xl sm:text-3xl font-bold text-[var(--admin-text-primary)] tracking-tight">
-                {Math.round(payable)} <span className="text-lg font-semibold text-[var(--admin-text-muted)]">₴</span>
+                {Math.round(payable)} <span className="text-lg font-semibold text-[var(--admin-text-tertiary)]">₴</span>
               </span>
             </div>
 

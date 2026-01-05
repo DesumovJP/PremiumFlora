@@ -57,6 +57,7 @@ export {
 export {
   getTransactions,
   getPendingPaymentsTotal,
+  getPendingPaymentsSummary,
   invalidatePendingPaymentsCache,
 } from './transactions';
 

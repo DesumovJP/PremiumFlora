@@ -5,8 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { KpiCard } from "@/components/ui/kpi-card";
-import { TrendingUp, Loader2, Download, ChevronLeft, ChevronRight, AlertCircle, DollarSign, ShoppingCart, Receipt, Package, Trash2, Calendar, Users } from "lucide-react";
+import { Loader2, Download, ChevronLeft, ChevronRight, AlertCircle, DollarSign, ShoppingCart, Receipt, Package, Trash2, Calendar, Users, Warehouse, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo, useState } from "react";
 
@@ -44,6 +43,8 @@ type AnalyticsSectionProps = {
   onRefresh?: () => void;
   onOpenExport: () => void;
   onMonthChange?: (year: number, month: number) => void;
+  globalPendingAmount?: number;
+  globalPendingCount?: number;
 };
 
 // Default empty data
@@ -76,17 +77,17 @@ export function AnalyticsSection({
   onRefresh,
   onOpenExport,
   onMonthChange,
+  globalPendingAmount = 0,
+  globalPendingCount = 0,
 }: AnalyticsSectionProps) {
   const {
-    kpis = [],
     weeklyRevenue = [],
     ordersPerWeek = [],
     topProducts = [],
     dailySales = [],
+    stockLevels = [],
     topWriteOffFlowers = [],
     topCustomers = [],
-    totalPendingAmount = 0,
-    pendingOrdersCount = 0,
     pendingByCustomer = [],
   } = data ?? emptyData;
 
@@ -95,8 +96,6 @@ export function AnalyticsSection({
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 
-  // Відсоток доходу - просто константа 50%
-  const incomePercentage = 50;
 
   const handlePrevMonth = () => {
     let newMonth = selectedMonth - 1;
@@ -151,7 +150,19 @@ export function AnalyticsSection({
     () => weeklyRevenue.reduce((acc, val) => acc + val, 0),
     [weeklyRevenue]
   );
-  const income = Math.round(totalRevenue * 0.3);
+
+  // Орієнтовний дохід (≈50% від виручки)
+  const estimatedIncome = Math.round(totalRevenue * 0.5);
+
+  // Вартість запасів = сума (кількість × ціна) для всіх варіантів
+  const inventoryValue = useMemo(
+    () => stockLevels.reduce((acc, item) => acc + (item.value || item.stock * item.price), 0),
+    [stockLevels]
+  );
+  const totalStockItems = useMemo(
+    () => stockLevels.reduce((acc, item) => acc + item.stock, 0),
+    [stockLevels]
+  );
 
   const pieData = useMemo(() => {
     const colors = ["#10b981", "#34d399", "#6ee7b7", "#a7f3d0", "#fef3c7"];
@@ -164,18 +175,18 @@ export function AnalyticsSection({
 
 
   return (
-    <Card className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-[var(--admin-surface)]">
+    <Card className="admin-card border border-slate-100 dark:border-[var(--admin-border)] bg-[var(--admin-bg)] dark:bg-[var(--admin-bg)] shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between gap-3 pb-4">
         <div>
           <CardTitle className="text-lg font-semibold text-slate-900 dark:text-white">Аналітика продажів</CardTitle>
           <p className="text-xs text-slate-500 dark:text-slate-400">Звіти, статистика та рекомендації</p>
         </div>
-        <Button variant="outline" onClick={onOpenExport} size="icon" title="Експортувати">
+        <Button variant="outline" onClick={onOpenExport} size="icon" title="Експортувати" className="bg-white dark:bg-admin-surface">
           <Download className="h-4 w-4" />
           <span className="sr-only">Експортувати</span>
         </Button>
       </CardHeader>
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
@@ -213,106 +224,95 @@ export function AnalyticsSection({
           </div>
         </div>
 
-        {/* Попередження про непогашені платежі */}
-        {totalPendingAmount > 0 && (
-          <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 p-3">
+        {/* Дохід + Вартість запасів + Очікуються оплати */}
+        <div className="grid gap-3 sm:grid-cols-3">
+          {/* Орієнтовний дохід */}
+          <div className="rounded-lg border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 p-3">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-800/40">
+                  <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
                 <div className="min-w-0">
-                  <span className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                    Очікуються оплати
-                  </span>
-                  <span className="text-xs text-amber-600 dark:text-amber-400 ml-2">
-                    {pendingOrdersCount} замовлень
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
+                      Дохід
+                    </span>
+                    <span className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">
+                      за місяць
+                    </span>
+                  </div>
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400">
+                    50% від {totalRevenue.toLocaleString('uk-UA')}₴
                   </span>
                 </div>
               </div>
-              <span className="text-sm font-semibold text-amber-700 dark:text-amber-300 shrink-0">
-                {Math.round(totalPendingAmount).toLocaleString('uk-UA')} ₴
+              <span className="text-lg font-semibold text-emerald-700 dark:text-emerald-300 shrink-0">
+                {estimatedIncome.toLocaleString('uk-UA')} ₴
               </span>
             </div>
-            {pendingByCustomer.length > 0 && (
-              <div className="mt-2 pt-2 border-t border-amber-200/50 dark:border-amber-700/30">
-                <div className="flex flex-wrap gap-1.5">
-                  {pendingByCustomer.slice(0, 5).map((c) => (
-                    <span
-                      key={c.customerId}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-800/30 text-xs text-amber-700 dark:text-amber-400"
-                    >
-                      {c.customerName}: {Math.round(c.amount).toLocaleString('uk-UA')} ₴
+          </div>
+
+          {/* Вартість запасів */}
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700">
+                  <Warehouse className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      На складі
                     </span>
-                  ))}
-                  {pendingByCustomer.length > 5 && (
-                    <span className="text-xs text-amber-500 dark:text-amber-500 self-center">
-                      +{pendingByCustomer.length - 5}
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                      зараз
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {totalStockItems.toLocaleString('uk-UA')} шт
+                  </span>
+                </div>
+              </div>
+              <span className="text-lg font-semibold text-slate-900 dark:text-white shrink-0">
+                {Math.round(inventoryValue).toLocaleString('uk-UA')} ₴
+              </span>
+            </div>
+          </div>
+
+          {/* Очікуються оплати */}
+          <div className={`rounded-lg border p-3 ${globalPendingAmount > 0 ? 'border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50'}`}>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${globalPendingAmount > 0 ? 'bg-amber-100 dark:bg-amber-800/40' : 'bg-slate-100 dark:bg-slate-700'}`}>
+                  <AlertCircle className={`h-4 w-4 ${globalPendingAmount > 0 ? 'text-amber-500' : 'text-slate-400'}`} />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className={`text-sm font-medium ${globalPendingAmount > 0 ? 'text-amber-800 dark:text-amber-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                      Очікує оплати
+                    </span>
+                    <span className={`text-[10px] ${globalPendingAmount > 0 ? 'text-amber-600/70 dark:text-amber-400/70' : 'text-slate-400 dark:text-slate-500'}`}>
+                      зараз
+                    </span>
+                  </div>
+                  {globalPendingCount > 0 && (
+                    <span className="text-xs text-amber-600 dark:text-amber-400">
+                      {globalPendingCount} зам.
                     </span>
                   )}
                 </div>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Дохід (50%) + KPIs (50% - 2x2 grid) */}
-        <div className="grid gap-4 lg:grid-cols-2">
-          {/* Дохід - 50% */}
-          <Card className="border-emerald-200/50 dark:border-emerald-800/30 bg-gradient-to-br from-emerald-50/80 to-white dark:from-emerald-900/20 dark:to-slate-900 flex flex-col justify-center overflow-hidden relative">
-            {/* Декоративний елемент */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-100/50 dark:bg-emerald-800/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
-
-            <CardHeader className="pb-2 sm:pb-3 relative">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-800/40 ring-1 ring-emerald-200/50 dark:ring-emerald-700/50">
-                    <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-sm sm:text-base font-semibold text-slate-800 dark:text-white">Дохід</CardTitle>
-                    <p className="text-[10px] sm:text-xs text-emerald-600/80 dark:text-emerald-400/80 font-medium">≈{incomePercentage}% від виручки</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">{income.toLocaleString("uk-UA")}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">грн</p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                <div className="rounded-xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm px-3 py-2.5 sm:px-4 sm:py-3 border border-slate-200/50 dark:border-slate-700/50">
-                  <p className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 mb-0.5">Макс</p>
-                  <p className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-100">
-                    {(weeklyRevenue.length ? Math.max(...weeklyRevenue) : 0).toLocaleString("uk-UA")}
-                  </p>
-                </div>
-                <div className="rounded-xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm px-3 py-2.5 sm:px-4 sm:py-3 border border-slate-200/50 dark:border-slate-700/50">
-                  <p className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 mb-0.5">Мін</p>
-                  <p className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-100">
-                    {(weeklyRevenue.length ? Math.min(...weeklyRevenue) : 0).toLocaleString("uk-UA")}
-                  </p>
-                </div>
-                <div className="rounded-xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm px-3 py-2.5 sm:px-4 sm:py-3 border border-slate-200/50 dark:border-slate-700/50">
-                  <p className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 mb-0.5">Середнє</p>
-                  <p className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-100">
-                    {Math.round(totalRevenue / Math.max(weeklyRevenue.length, 1)).toLocaleString("uk-UA")}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* KPIs - 50% (2x2 grid) */}
-          <div className="grid grid-cols-2 gap-3">
-            {kpis.slice(0, 4).map((item) => (
-              <KpiCard key={item.label} item={item} />
-            ))}
+              <span className={`text-lg font-semibold shrink-0 ${globalPendingAmount > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-900 dark:text-white'}`}>
+                {Math.round(globalPendingAmount).toLocaleString('uk-UA')} ₴
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Виручка по тижнях (50%) + Кількість замовлень (50%) */}
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">
+          <Card className="border-slate-200 dark:border-[var(--admin-border)] bg-white dark:bg-admin-surface shadow-sm">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -349,7 +349,7 @@ export function AnalyticsSection({
             </CardContent>
           </Card>
 
-          <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">
+          <Card className="border-slate-200 dark:border-[var(--admin-border)] bg-white dark:bg-admin-surface shadow-sm">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -379,7 +379,7 @@ export function AnalyticsSection({
                         boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
                       }}
                     />
-                    <Bar dataKey="замовлення" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="замовлення" fill="#0ea5e9" fillOpacity={0.4} stroke="#0ea5e9" strokeWidth={1} radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -387,9 +387,9 @@ export function AnalyticsSection({
           </Card>
         </div>
 
-        {/* Середній чек + Топ-5 товарів + Топ-5 клієнтів + Топ-5 списань */}
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">
+        {/* Середній чек + Топ-5 товарів + Топ-5 клієнтів */}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <Card className="border-slate-200 dark:border-[var(--admin-border)] bg-white dark:bg-admin-surface shadow-sm">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -424,7 +424,7 @@ export function AnalyticsSection({
             </CardContent>
           </Card>
 
-          <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">
+          <Card className="border-slate-200 dark:border-[var(--admin-border)] bg-white dark:bg-admin-surface shadow-sm">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -463,7 +463,7 @@ export function AnalyticsSection({
 
           {/* Топ-5 клієнтів */}
           {topCustomers && topCustomers.length > 0 && (
-            <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">
+            <Card className="border-slate-200 dark:border-[var(--admin-border)] bg-white dark:bg-admin-surface shadow-sm">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -502,53 +502,53 @@ export function AnalyticsSection({
               </CardContent>
             </Card>
           )}
+        </div>
 
-          {topWriteOffFlowers && topWriteOffFlowers.length > 0 && (
-            <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-900/30">
-                      <Trash2 className="h-4 w-4 text-rose-600 dark:text-rose-400" />
-                    </div>
-                    <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Топ-5 списань</CardTitle>
+        {/* Топ-5 списань - окремий рядок */}
+        {topWriteOffFlowers && topWriteOffFlowers.length > 0 && (
+          <Card className="border-slate-200 dark:border-[var(--admin-border)] bg-white dark:bg-admin-surface shadow-sm">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-900/30">
+                    <Trash2 className="h-4 w-4 text-rose-600 dark:text-rose-400" />
                   </div>
-                  <span className="text-xs font-medium text-rose-500 dark:text-rose-400">
-                    {topWriteOffFlowers.reduce((sum, f) => sum + f.totalQty, 0)} шт
-                  </span>
+                  <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Топ-5 списань</CardTitle>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2.5">
-                  {topWriteOffFlowers.map((flower, idx) => (
-                    <div key={flower.name} className="space-y-1">
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-slate-400 dark:text-slate-500 w-4">
-                            {idx + 1}.
-                          </span>
-                          <span className="text-slate-700 dark:text-slate-300">{flower.name}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-rose-500 dark:text-rose-400 text-sm">{flower.totalQty} шт</span>
-                          <span className="text-xs text-slate-400 dark:text-slate-500 w-10 text-right">{flower.percentage}%</span>
-                        </div>
+                <span className="text-xs font-medium text-rose-500 dark:text-rose-400">
+                  {topWriteOffFlowers.reduce((sum, f) => sum + f.totalQty, 0)} шт
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+                {topWriteOffFlowers.map((flower, idx) => (
+                  <div key={flower.name} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-slate-400 dark:text-slate-500 w-4">
+                          {idx + 1}.
+                        </span>
+                        <span className="text-slate-700 dark:text-slate-300 truncate">{flower.name}</span>
                       </div>
-                      <div className="h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 ml-6">
+                    </div>
+                    <div className="flex items-center gap-2 ml-6">
+                      <div className="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800">
                         <div
                           className="h-full rounded-full bg-rose-400 dark:bg-rose-500"
                           style={{ width: `${flower.percentage}%` }}
                         />
                       </div>
+                      <span className="text-rose-500 dark:text-rose-400 text-xs font-medium shrink-0">{flower.totalQty}</span>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card className="border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50">
+        <Card className="border-slate-200 dark:border-[var(--admin-border)] bg-white dark:bg-admin-surface shadow-sm">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
@@ -588,14 +588,14 @@ export function AnalyticsSection({
                     </div>
                     <div className="rounded-md bg-slate-50 dark:bg-slate-700/50 px-2 py-1.5">
                       <p className="text-slate-400 dark:text-slate-500">Виручка</p>
-                      <p className="font-medium text-slate-700 dark:text-slate-200">
-                        {item.revenue.toLocaleString("uk-UA")}
+                      <p className="font-medium text-emerald-600 dark:text-emerald-400">
+                        {item.revenue.toLocaleString("uk-UA")} ₴
                       </p>
                     </div>
                     <div className="rounded-md bg-slate-50 dark:bg-slate-700/50 px-2 py-1.5">
                       <p className="text-slate-400 dark:text-slate-500">Сер. чек</p>
-                      <p className="font-medium text-slate-700 dark:text-slate-200">
-                        {item.avg.toLocaleString("uk-UA")}
+                      <p className="font-medium text-slate-600 dark:text-slate-300">
+                        {item.avg.toLocaleString("uk-UA")} ₴
                       </p>
                     </div>
                     <div className="rounded-md bg-slate-50 dark:bg-slate-700/50 px-2 py-1.5">
@@ -606,7 +606,7 @@ export function AnalyticsSection({
                           ? "text-sky-500 dark:text-sky-400"
                           : "text-slate-400 dark:text-slate-500"
                       )}>
-                        {item.supplyAmount && item.supplyAmount > 0 ? `${item.supplyAmount.toLocaleString("uk-UA")}` : "—"}
+                        {item.supplyAmount && item.supplyAmount > 0 ? `${item.supplyAmount.toLocaleString("uk-UA")} ₴` : "—"}
                       </p>
                     </div>
                     <div className="rounded-md bg-slate-50 dark:bg-slate-700/50 px-2 py-1.5">
@@ -650,7 +650,7 @@ export function AnalyticsSection({
                         <td className="py-2.5 px-3 font-medium text-slate-900 dark:text-white">{item.date}</td>
                         <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400">{item.day}</td>
                         <td className="py-2.5 px-3 text-right text-slate-600 dark:text-slate-300">{item.orders}</td>
-                        <td className="py-2.5 px-3 text-right font-medium text-slate-900 dark:text-white">
+                        <td className="py-2.5 px-3 text-right font-medium text-emerald-600 dark:text-emerald-400">
                           {item.revenue.toLocaleString("uk-UA")} ₴
                         </td>
                         <td className="py-2.5 px-3 text-right text-slate-600 dark:text-slate-300">
@@ -694,7 +694,7 @@ export function AnalyticsSection({
                       <td className="py-2.5 px-3 text-right text-slate-900 dark:text-white">
                         {dailySales.reduce((sum, d) => sum + d.orders, 0)}
                       </td>
-                      <td className="py-2.5 px-3 text-right text-slate-900 dark:text-white">
+                      <td className="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400">
                         {dailySales.reduce((sum, d) => sum + d.revenue, 0).toLocaleString("uk-UA")} ₴
                       </td>
                       <td className="py-2.5 px-3 text-right text-slate-600 dark:text-slate-300">

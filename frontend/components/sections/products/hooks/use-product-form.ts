@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { Product } from "@/lib/types";
-import type { ProductDraft, EditData, WriteOffData, WriteOffReason, NotifyFunctions } from "../types";
+import type { ProductDraft, EditData, WriteOffData, WriteOffReason, NotifyFunctions, ExistingVariantSupply } from "../types";
 import { getFlowers, searchFlowers, getFlowerForEdit, updateFlower, updateVariant } from "@/lib/strapi";
 import { getAuthHeaders } from "@/lib/auth";
 import type { StrapiBlock } from "@/lib/strapi-types";
@@ -11,6 +11,8 @@ const initialDraft: ProductDraft = {
   image: null,
   imagePreview: null,
   variants: [],
+  existingVariants: [],
+  isSupplyMode: false,
 };
 
 const initialEditData: EditData = {
@@ -98,6 +100,37 @@ export function useProductForm({ onRefresh, onLogActivity, notify }: UseProductF
     setAvailableFlowers([]);
   };
 
+  // Select existing flower and load its variants for supply
+  const selectExistingFlower = (flower: Product) => {
+    const existingVariants: ExistingVariantSupply[] = flower.variants.map(v => ({
+      documentId: v.documentId || '',
+      length: v.length,
+      price: v.price,
+      currentStock: v.stock,
+      addQuantity: 0,
+    }));
+
+    setDraft(prev => ({
+      ...prev,
+      flowerId: flower.documentId || String(flower.id),
+      flowerName: flower.name,
+      existingVariants,
+      isSupplyMode: true,
+      variants: [], // Clear new variants when selecting existing
+    }));
+    setFlowerSearchQuery(flower.name);
+  };
+
+  // Update supply quantity for existing variant
+  const updateExistingVariantQuantity = (documentId: string, addQuantity: number) => {
+    setDraft(prev => ({
+      ...prev,
+      existingVariants: prev.existingVariants.map(v =>
+        v.documentId === documentId ? { ...v, addQuantity } : v
+      ),
+    }));
+  };
+
   const addVariant = () => {
     setDraft((prev) => ({
       ...prev,
@@ -142,20 +175,32 @@ export function useProductForm({ onRefresh, onLogActivity, notify }: UseProductF
 
   const handleSave = async () => {
     if (!draft.flowerName.trim()) {
-      notify.warning("Uvaha", "Bud laska, vkazhit nazvu kvitky");
+      notify.warning("Увага", "Будь ласка, вкажіть назву квітки");
       return;
     }
 
-    if (draft.variants.length === 0) {
-      notify.warning("Uvaha", "Bud laska, dodajte khocha b odyn variant");
-      return;
-    }
+    // Supply mode validation - need at least one quantity to add OR new variants
+    if (draft.isSupplyMode) {
+      const hasSupplyQuantity = draft.existingVariants.some(v => v.addQuantity > 0);
+      const hasNewVariants = draft.variants.length > 0 && draft.variants.some(v => v.length && v.price && v.stock);
 
-    // Validate variants
-    for (const variant of draft.variants) {
-      if (!variant.length || !variant.price || !variant.stock) {
-        notify.warning("Uvaha", "Bud laska, zapovnit vsi polia dlia variantiv");
+      if (!hasSupplyQuantity && !hasNewVariants) {
+        notify.warning("Увага", "Вкажіть кількість для поставки або додайте новий розмір");
         return;
+      }
+    } else {
+      // New product mode - need at least one variant
+      if (draft.variants.length === 0) {
+        notify.warning("Увага", "Будь ласка, додайте хоча б один варіант");
+        return;
+      }
+
+      // Validate new variants
+      for (const variant of draft.variants) {
+        if (!variant.length || !variant.price || !variant.stock) {
+          notify.warning("Увага", "Будь ласка, заповніть всі поля для варіантів");
+          return;
+        }
       }
     }
 
@@ -169,10 +214,10 @@ export function useProductForm({ onRefresh, onLogActivity, notify }: UseProductF
       let flowerDocumentId: string;
       let flowerSlug: string | undefined;
 
-      // Upload image if exists
+      // Upload image if exists (skip in supply mode - product already has image)
       let imageId: number | null = null;
       let imageUploadError: string | null = null;
-      if (draft.image) {
+      if (draft.image && !draft.isSupplyMode) {
         const imageFormData = new FormData();
         imageFormData.append("files", draft.image);
 
@@ -302,7 +347,56 @@ export function useProductForm({ onRefresh, onLogActivity, notify }: UseProductF
         });
       }
 
-      // Create variants
+      // Handle supply mode - update existing variants by ADDING quantity
+      if (draft.isSupplyMode) {
+        const supplyDetails: Array<{ length: number; addedQty: number; newStock: number }> = [];
+
+        for (const existingVariant of draft.existingVariants) {
+          if (existingVariant.addQuantity > 0) {
+            const newStock = existingVariant.currentStock + existingVariant.addQuantity;
+
+            const updateResponse = await fetch(`${API_URL}/variants/${existingVariant.documentId}`, {
+              method: "PUT",
+              headers: {
+                ...authHeaders,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                data: {
+                  stock: newStock,
+                },
+              }),
+            });
+
+            if (!updateResponse.ok) {
+              const errorText = await updateResponse.text();
+              console.error("Помилка оновлення варіанту:", errorText);
+            } else {
+              supplyDetails.push({
+                length: existingVariant.length,
+                addedQty: existingVariant.addQuantity,
+                newStock,
+              });
+            }
+          }
+        }
+
+        // Log supply activity
+        if (onLogActivity && supplyDetails.length > 0) {
+          onLogActivity('productEdit', {
+            productName: draft.flowerName,
+            productId: flowerDocumentId,
+            changes: Object.fromEntries(
+              supplyDetails.map(d => [
+                `${d.length} см - поставка`,
+                { from: d.newStock - d.addedQty, to: `+${d.addedQty} → ${d.newStock}` }
+              ])
+            ),
+          });
+        }
+      }
+
+      // Create/update new variants (both modes)
       for (const variant of draft.variants) {
         const length = parseInt(variant.length);
         const price = parseFloat(variant.price);
@@ -341,7 +435,7 @@ export function useProductForm({ onRefresh, onLogActivity, notify }: UseProductF
           });
           if (!updateResponse.ok) {
             const errorText = await updateResponse.text();
-            console.error("Pomylka onovlennia variantu:", errorText);
+            console.error("Помилка оновлення варіанту:", errorText);
           }
         } else {
           // Create new variant
@@ -364,15 +458,15 @@ export function useProductForm({ onRefresh, onLogActivity, notify }: UseProductF
           });
           if (!createResponse.ok) {
             const errorText = await createResponse.text();
-            console.error("Pomylka stvorennia variantu:", errorText);
+            console.error("Помилка створення варіанту:", errorText);
           } else {
             console.log(`Variant created: ${length}cm for flower ${flowerDocumentId}`);
           }
         }
       }
 
-      // Log product creation
-      if (onLogActivity) {
+      // Log product creation (only for new products)
+      if (!draft.isSupplyMode && onLogActivity) {
         onLogActivity('productCreate', {
           productName: draft.flowerName,
           productId: flowerDocumentId,
@@ -385,7 +479,10 @@ export function useProductForm({ onRefresh, onLogActivity, notify }: UseProductF
         });
       }
 
-      notify.success("Uspikh", `Tovar "${draft.flowerName}" uspishno stvoreno`);
+      const successMessage = draft.isSupplyMode
+        ? `Поставку для "${draft.flowerName}" успішно збережено`
+        : `Товар "${draft.flowerName}" успішно створено`;
+      notify.success("Успіх", successMessage);
 
       if (onRefresh) {
         onRefresh();
@@ -830,6 +927,8 @@ export function useProductForm({ onRefresh, onLogActivity, notify }: UseProductF
     updateDraftVariant,
     handleImageChange,
     handleSave,
+    selectExistingFlower,
+    updateExistingVariantQuantity,
 
     // Import modal
     importModalOpen,

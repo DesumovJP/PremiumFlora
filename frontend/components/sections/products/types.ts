@@ -16,7 +16,7 @@ export type ProductsSectionProps = {
   onOpenExport: () => void;
   onWriteOff?: (data: Omit<WriteOffInput, "operationId">) => Promise<boolean>;
   onRefresh?: () => void;
-  onLogActivity?: (type: 'variantDelete' | 'productEdit' | 'productCreate' | 'productDelete', details: {
+  onLogActivity?: (type: 'variantDelete' | 'productEdit' | 'productCreate' | 'productDelete' | 'supply', details: {
     productName?: string;
     productId?: string;
     variantLength?: number;
@@ -26,6 +26,15 @@ export type ProductsSectionProps = {
     totalStock?: number;
     variants?: Array<{ length: number; price: number; stock: number }>;
     changes?: Record<string, { from: unknown; to: unknown }>;
+    supplyItems?: Array<{
+      flowerName: string;
+      length: number | null;
+      stockBefore?: number;
+      stockAfter: number;
+      priceBefore?: number;
+      priceAfter: number;
+      isNew: boolean;
+    }>;
   }) => void;
   showSuccess?: (title: string, message: string) => void;
   showError?: (title: string, message: string) => void;
@@ -46,12 +55,21 @@ export const reasonLabels: Record<WriteOffReason, string> = {
 export type SortKey = 'name' | 'price' | 'stock' | 'updatedAt';
 export type SortDirection = 'asc' | 'desc';
 
-// Draft variant for add form
+// Draft variant for add form (new variant)
 export type DraftVariant = {
   id: string;
   length: string;
   price: string;
   stock: string;
+};
+
+// Existing variant for supply (shows current stock + amount to add)
+export type ExistingVariantSupply = {
+  documentId: string;
+  length: number;
+  price: number;
+  currentStock: number;
+  addQuantity: number; // How much to add in this supply
 };
 
 // Draft state for add product form
@@ -60,7 +78,9 @@ export type ProductDraft = {
   flowerName: string;
   image: File | null;
   imagePreview: string | null;
-  variants: DraftVariant[];
+  variants: DraftVariant[]; // New variants
+  existingVariants: ExistingVariantSupply[]; // Existing variants for supply
+  isSupplyMode: boolean; // true when adding to existing product
 };
 
 // Edit variant type

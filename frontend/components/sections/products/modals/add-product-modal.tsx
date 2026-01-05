@@ -5,7 +5,7 @@
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
-import { Plus, X, Trash, Upload, FileSpreadsheet } from "lucide-react";
+import { Plus, X, Trash, Upload, FileSpreadsheet, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 import type { ProductDraft } from "../types";
@@ -29,6 +29,8 @@ type AddProductModalProps = {
   updateDraftVariant: (id: string, field: "length" | "price" | "stock", value: string) => void;
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onLoadFlowers: () => void;
+  selectExistingFlower: (flower: Product) => void;
+  updateExistingVariantQuantity: (documentId: string, addQuantity: number) => void;
 };
 
 export function AddProductModal({
@@ -50,7 +52,15 @@ export function AddProductModal({
   updateDraftVariant,
   handleImageChange,
   onLoadFlowers,
+  selectExistingFlower,
+  updateExistingVariantQuantity,
 }: AddProductModalProps) {
+  // Determine if save should be disabled
+  const hasSupplyQuantity = draft.existingVariants.some(v => v.addQuantity > 0);
+  const hasNewVariants = draft.variants.length > 0 && draft.variants.some(v => v.length && v.price && v.stock);
+  const canSaveSupply = hasSupplyQuantity || hasNewVariants;
+  const canSaveNew = draft.variants.length > 0;
+  const isSaveDisabled = isSaving || !draft.flowerName || (draft.isSupplyMode ? !canSaveSupply : !canSaveNew);
   return (
     <Modal
       open={open}
@@ -58,15 +68,18 @@ export function AddProductModal({
         onOpenChange(v);
         if (!v) onReset();
       }}
-      title="Додати товар"
-      description="Створіть нову позицію: назва, висота/розмір, ціна та кількість."
+      title={draft.isSupplyMode ? "Поставка товару" : "Додати товар"}
+      description={draft.isSupplyMode
+        ? "Додайте кількість до існуючих варіантів або створіть новий розмір."
+        : "Створіть нову позицію: назва, висота/розмір, ціна та кількість."
+      }
       footer={
         <>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
             Скасувати
           </Button>
-          <Button onClick={onSave} disabled={isSaving || !draft.flowerName || draft.variants.length === 0}>
-            {isSaving ? "Збереження..." : "Зберегти"}
+          <Button onClick={onSave} disabled={isSaveDisabled}>
+            {isSaving ? "Збереження..." : (draft.isSupplyMode ? "Оформити поставку" : "Зберегти")}
           </Button>
         </>
       }
@@ -126,17 +139,15 @@ export function AddProductModal({
                       <button
                         key={flower.id}
                         type="button"
-                        onClick={() => {
-                          setDraft((prev) => ({
-                            ...prev,
-                            flowerId: flower.documentId || String(flower.id),
-                            flowerName: flower.name,
-                          }));
-                          setFlowerSearchQuery(flower.name);
-                        }}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-admin-surface"
+                        onClick={() => selectExistingFlower(flower)}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-admin-surface flex items-center justify-between"
                       >
-                        {flower.name}
+                        <span>{flower.name}</span>
+                        {flower.variants && flower.variants.length > 0 && (
+                          <span className="text-xs text-slate-400 dark:text-admin-text-muted">
+                            {flower.variants.length} розм.
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -168,52 +179,101 @@ export function AddProductModal({
               </div>
             </div>
 
-            {/* Завантаження зображення */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Зображення</label>
-              <div className="flex items-center gap-3">
-                {draft.imagePreview ? (
-                  <div className="relative">
-                    <img
-                      src={draft.imagePreview}
-                      alt="Preview"
-                      className="h-20 w-20 rounded-lg object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDraft((prev) => ({
-                          ...prev,
-                          image: null,
-                          imagePreview: null,
-                        }));
-                      }}
-                      className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="group flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-200 dark:border-admin-border bg-slate-50 dark:bg-admin-surface px-4 py-3 text-sm text-slate-600 dark:text-admin-text-secondary transition hover:border-emerald-300 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm ring-1 ring-emerald-100 dark:ring-emerald-800/50">
-                      <Upload className="h-5 w-5" />
+            {/* Завантаження зображення - only for new products */}
+            {!draft.isSupplyMode && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Зображення</label>
+                <div className="flex items-center gap-3">
+                  {draft.imagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={draft.imagePreview}
+                        alt="Preview"
+                        className="h-20 w-20 rounded-lg object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDraft((prev) => ({
+                            ...prev,
+                            image: null,
+                            imagePreview: null,
+                          }));
+                        }}
+                        className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
                     </div>
-                    <span className="font-semibold text-slate-900 dark:text-admin-text-primary">Завантажити зображення</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                      onChange={handleImageChange}
-                    />
-                  </label>
-                )}
+                  ) : (
+                    <label className="group flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-200 dark:border-admin-border bg-slate-50 dark:bg-admin-surface px-4 py-3 text-sm text-slate-600 dark:text-admin-text-secondary transition hover:border-emerald-300 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm ring-1 ring-emerald-100 dark:ring-emerald-800/50">
+                        <Upload className="h-5 w-5" />
+                      </div>
+                      <span className="font-semibold text-slate-900 dark:text-admin-text-primary">Завантажити зображення</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        onChange={handleImageChange}
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Existing variants for supply mode */}
+            {draft.isSupplyMode && draft.existingVariants.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Наявні розміри</label>
+                </div>
+                <div className="space-y-2">
+                  {draft.existingVariants.map((variant) => (
+                    <div
+                      key={variant.documentId}
+                      className="flex items-center gap-3 rounded-lg border border-slate-200 dark:border-admin-border bg-slate-50 dark:bg-admin-surface p-3"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-medium text-slate-900 dark:text-admin-text-primary">{variant.length} см</span>
+                          <span className="text-sm text-slate-500 dark:text-admin-text-muted">• {variant.price} грн</span>
+                        </div>
+                        <div className="text-xs text-slate-400 dark:text-admin-text-muted mt-0.5">
+                          Зараз на складі: <span className="font-medium">{variant.currentStock} шт</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-slate-500 dark:text-admin-text-muted">+</span>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={variant.addQuantity || ""}
+                          onChange={(e) => updateExistingVariantQuantity(variant.documentId, parseInt(e.target.value) || 0)}
+                          className="w-20 text-center"
+                        />
+                        <span className="text-sm text-slate-500 dark:text-admin-text-muted">шт</span>
+                      </div>
+                      {variant.addQuantity > 0 && (
+                        <div className="text-sm font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                          → {variant.currentStock + variant.addQuantity}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Варіанти */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-slate-700">Розміри</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">
+                  {draft.isSupplyMode ? "Додати новий розмір" : "Розміри"}
+                </label>
                 <Button
                   type="button"
                   variant="outline"
@@ -222,12 +282,17 @@ export function AddProductModal({
                   className="gap-2"
                 >
                   <Plus className="h-4 w-4" />
-                  Додати розмір
+                  {draft.isSupplyMode ? "Новий розмір" : "Додати розмір"}
                 </Button>
               </div>
 
               {draft.variants.length === 0 ? (
-                <p className="text-sm text-slate-500">Додайте хоча б один розмір</p>
+                <p className="text-sm text-slate-500 dark:text-admin-text-muted">
+                  {draft.isSupplyMode
+                    ? "Можете додати новий розмір до цього товару"
+                    : "Додайте хоча б один розмір"
+                  }
+                </p>
               ) : (
                 <div className="space-y-3">
                   {draft.variants.map((variant) => (

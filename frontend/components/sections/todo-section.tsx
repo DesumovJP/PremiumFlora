@@ -440,7 +440,7 @@ export function TodoSection() {
   };
 
   return (
-    <Card className="admin-card border border-slate-100 dark:border-[var(--admin-border)] bg-white/90 dark:bg-admin-surface shadow-md">
+    <Card className="admin-card border border-slate-100 dark:border-[var(--admin-border)] bg-[var(--admin-bg)] dark:bg-[var(--admin-bg)] shadow-sm overflow-hidden">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-semibold text-slate-900 dark:text-white">Завдання</CardTitle>
@@ -477,7 +477,7 @@ export function TodoSection() {
         </div>
       </CardHeader>
 
-      <CardContent className="bg-slate-50/50 dark:bg-slate-900/30 rounded-b-lg -mx-6 -mb-6 px-6 pb-6">
+      <CardContent className="bg-white dark:bg-admin-surface rounded-b-lg pt-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin text-slate-400" />

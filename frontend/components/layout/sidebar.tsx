@@ -231,7 +231,7 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
                 className="bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[11px] px-1.5 py-0 font-medium"
                 title={`${itemsToReorder} позицій потребують поставки`}
               >
-                ↓{itemsToReorder}
+                {itemsToReorder}
               </Badge>
             )}
           </button>

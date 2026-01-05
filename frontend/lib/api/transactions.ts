@@ -15,7 +15,7 @@ import type {
 } from '../api-types';
 
 // Кеш для суми очікуваних оплат (5 хв)
-let pendingPaymentsCache: { value: number; timestamp: number } | null = null;
+let pendingPaymentsCache: { value: number; count: number; timestamp: number } | null = null;
 const CACHE_TTL = 5 * 60 * 1000; // 5 хвилин
 
 /**
@@ -68,11 +68,19 @@ export async function getTransactions(
  * Отримати загальну суму очікуваних оплат (з кешуванням)
  */
 export async function getPendingPaymentsTotal(forceRefresh = false): Promise<number> {
+  const summary = await getPendingPaymentsSummary(forceRefresh);
+  return summary.total;
+}
+
+/**
+ * Отримати суму та кількість очікуваних оплат (з кешуванням)
+ */
+export async function getPendingPaymentsSummary(forceRefresh = false): Promise<{ total: number; count: number }> {
   // Перевіряємо кеш
   if (!forceRefresh && pendingPaymentsCache) {
     const now = Date.now();
     if (now - pendingPaymentsCache.timestamp < CACHE_TTL) {
-      return pendingPaymentsCache.value;
+      return { total: pendingPaymentsCache.value, count: pendingPaymentsCache.count || 0 };
     }
   }
 
@@ -85,20 +93,22 @@ export async function getPendingPaymentsTotal(forceRefresh = false): Promise<num
 
     if (result.success && result.data) {
       const total = result.data.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+      const count = result.data.length;
 
       // Зберігаємо в кеш
       pendingPaymentsCache = {
         value: total,
+        count,
         timestamp: Date.now(),
       };
 
-      return total;
+      return { total, count };
     }
 
-    return 0;
+    return { total: 0, count: 0 };
   } catch (error) {
-    console.error('Error fetching pending payments total:', error);
-    return pendingPaymentsCache?.value || 0;
+    console.error('Error fetching pending payments summary:', error);
+    return { total: pendingPaymentsCache?.value || 0, count: pendingPaymentsCache?.count || 0 };
   }
 }
 

@@ -49,7 +49,7 @@ type ProductsSectionProps = {
   onOpenExport: () => void;
   onWriteOff?: (data: Omit<WriteOffInput, "operationId">) => Promise<boolean>;
   onRefresh?: () => void;
-  onLogActivity?: (type: 'variantDelete' | 'productEdit' | 'productCreate' | 'productDelete', details: {
+  onLogActivity?: (type: 'variantDelete' | 'productEdit' | 'productCreate' | 'productDelete' | 'supply', details: {
     productName?: string;
     productId?: string;
     variantLength?: number;
@@ -59,6 +59,15 @@ type ProductsSectionProps = {
     totalStock?: number;
     variants?: Array<{ length: number; price: number; stock: number }>;
     changes?: Record<string, { from: unknown; to: unknown }>;
+    supplyItems?: Array<{
+      flowerName: string;
+      length: number | null;
+      stockBefore?: number;
+      stockAfter: number;
+      priceBefore?: number;
+      priceAfter: number;
+      isNew: boolean;
+    }>;
   }) => void;
   showSuccess?: (title: string, message: string) => void;
   showError?: (title: string, message: string) => void;
@@ -114,12 +123,22 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       price: string;
       stock: string;
     }>;
+    existingVariants: Array<{
+      documentId: string;
+      length: number;
+      price: number;
+      currentStock: number;
+      addQuantity: number;
+    }>;
+    isSupplyMode: boolean;
   }>({
     flowerId: null,
     flowerName: "",
     image: null,
     imagePreview: null,
     variants: [],
+    existingVariants: [],
+    isSupplyMode: false,
   });
   const [addMode, setAddMode] = useState<"manual" | "invoice">("manual");
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -237,9 +256,42 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       image: null,
       imagePreview: null,
       variants: [],
+      existingVariants: [],
+      isSupplyMode: false,
     });
     setFlowerSearchQuery("");
     setAvailableFlowers([]);
+  };
+
+  // Select existing flower for supply mode
+  const selectExistingFlower = (flower: Product) => {
+    const existingVariants = flower.variants.map((v, idx) => ({
+      documentId: v.documentId || `temp-${idx}`,
+      length: v.length,
+      price: v.price,
+      currentStock: v.stock,
+      addQuantity: 0,
+    }));
+
+    setDraft(prev => ({
+      ...prev,
+      flowerId: flower.documentId || String(flower.id),
+      flowerName: flower.name,
+      existingVariants,
+      isSupplyMode: true,
+      variants: [],
+    }));
+    setFlowerSearchQuery(flower.name);
+  };
+
+  // Update supply quantity for existing variant by index (more reliable than documentId)
+  const updateExistingVariantQuantity = (index: number, addQuantity: number) => {
+    setDraft(prev => ({
+      ...prev,
+      existingVariants: prev.existingVariants.map((v, idx) =>
+        idx === index ? { ...v, addQuantity } : v
+      ),
+    }));
   };
 
   const addVariant = () => {
@@ -794,12 +846,24 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       return;
     }
 
-    if (draft.variants.length === 0) {
-      notify.warning("Увага", "Будь ласка, додайте хоча б один варіант");
-      return;
+    // Supply mode validation - need at least one quantity to add OR new variants
+    if (draft.isSupplyMode) {
+      const hasSupplyQuantity = draft.existingVariants.some(v => v.addQuantity > 0);
+      const hasNewVariants = draft.variants.length > 0 && draft.variants.some(v => v.length && v.price && v.stock);
+
+      if (!hasSupplyQuantity && !hasNewVariants) {
+        notify.warning("Увага", "Вкажіть кількість для поставки або додайте новий розмір");
+        return;
+      }
+    } else {
+      // New product mode - need at least one variant
+      if (draft.variants.length === 0) {
+        notify.warning("Увага", "Будь ласка, додайте хоча б один варіант");
+        return;
+      }
     }
 
-    // Валідація варіантів
+    // Валідація нових варіантів (якщо є)
     for (const variant of draft.variants) {
       if (!variant.length || !variant.price || !variant.stock) {
         notify.warning("Увага", "Будь ласка, заповніть всі поля для варіантів");
@@ -818,10 +882,10 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       let flowerDocumentId: string;
       let flowerSlug: string | undefined;
 
-      // Спочатку завантажити зображення, якщо є
+      // Спочатку завантажити зображення, якщо є (skip in supply mode - product already has image)
       let imageId: number | null = null;
       let imageUploadError: string | null = null;
-      if (draft.image) {
+      if (draft.image && !draft.isSupplyMode) {
         const imageFormData = new FormData();
         imageFormData.append("files", draft.image);
 
@@ -954,6 +1018,61 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         });
       }
 
+      // Handle supply mode - update existing variants by ADDING quantity
+      if (draft.isSupplyMode) {
+        const supplyDetails: Array<{ length: number; addedQty: number; newStock: number }> = [];
+
+        for (const existingVariant of draft.existingVariants) {
+          if (existingVariant.addQuantity > 0) {
+            const newStock = existingVariant.currentStock + existingVariant.addQuantity;
+
+            const updateResponse = await fetch(`${API_URL}/variants/${existingVariant.documentId}`, {
+              method: "PUT",
+              headers: {
+                ...authHeaders,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                data: {
+                  stock: newStock,
+                },
+              }),
+            });
+
+            if (!updateResponse.ok) {
+              const errorText = await updateResponse.text();
+              console.error("Помилка оновлення варіанту:", errorText);
+            } else {
+              supplyDetails.push({
+                length: existingVariant.length,
+                addedQty: existingVariant.addQuantity,
+                newStock,
+              });
+              console.log(`📦 Supply: ${existingVariant.length}cm +${existingVariant.addQuantity} → ${newStock}`);
+            }
+          }
+        }
+
+        // Log supply activity
+        if (onLogActivity && supplyDetails.length > 0) {
+          onLogActivity('supply', {
+            productName: draft.flowerName,
+            supplyItems: supplyDetails.map(d => {
+              const variant = draft.existingVariants.find(v => v.length === d.length);
+              return {
+                flowerName: draft.flowerName,
+                length: d.length,
+                stockBefore: d.newStock - d.addedQty,
+                stockAfter: d.newStock,
+                priceBefore: variant?.price || 0,
+                priceAfter: variant?.price || 0,
+                isNew: false,
+              };
+            }),
+          });
+        }
+      }
+
       // 2. Створити варіанти
       for (const variant of draft.variants) {
         const length = parseInt(variant.length);
@@ -1025,8 +1144,8 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         }
       }
 
-      // Логуємо створення товару
-      if (onLogActivity) {
+      // Логуємо створення товару (only for new products, supply is logged above)
+      if (!draft.isSupplyMode && onLogActivity) {
         onLogActivity('productCreate', {
           productName: draft.flowerName,
           productId: flowerDocumentId,
@@ -1040,7 +1159,10 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       }
 
       // Сповіщення про успіх
-      notify.success("Успіх", `Товар "${draft.flowerName}" успішно створено`);
+      const successMessage = draft.isSupplyMode
+        ? `Поставку для "${draft.flowerName}" успішно оформлено`
+        : `Товар "${draft.flowerName}" успішно створено`;
+      notify.success("Успіх", successMessage);
 
       // Оновити список продуктів
       if (onRefresh) {
@@ -1134,7 +1256,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
             // Використовуємо стабільний ключ: documentId, slug або комбінацію з індексом
             const key = product.documentId || product.slug || `product-fallback-${index}-${product.name}`;
             return (
-              <Card key={key} className="admin-card border border-slate-100 dark:border-admin-border bg-white/90 dark:bg-admin-surface animate-fade-in">
+              <Card key={key} className="border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface-elevated shadow-sm rounded-xl animate-fade-in">
                 <CardContent className="flex gap-3 p-3">
                   <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-admin-surface">
                     {product.image ? (
@@ -1386,15 +1508,25 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         setOpen(v);
         if (!v) resetForm();
       }}
-      title="Додати товар"
-      description="Створіть нову позицію: назва, висота/розмір, ціна та кількість."
+      title={draft.isSupplyMode ? "Поставка товару" : "Додати товар"}
+      description={draft.isSupplyMode
+        ? "Додайте кількість до існуючих варіантів або створіть новий розмір."
+        : "Створіть нову позицію: назва, висота/розмір, ціна та кількість."
+      }
       footer={
         <>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={isSaving}>
             Скасувати
           </Button>
-          <Button onClick={handleSave} disabled={isSaving || !draft.flowerName || draft.variants.length === 0}>
-            {isSaving ? "Збереження..." : "Зберегти"}
+          <Button
+            onClick={handleSave}
+            disabled={isSaving || !draft.flowerName || (
+              draft.isSupplyMode
+                ? (!draft.existingVariants.some(v => v.addQuantity > 0) && draft.variants.length === 0)
+                : draft.variants.length === 0
+            )}
+          >
+            {isSaving ? "Збереження..." : (draft.isSupplyMode ? "Оформити поставку" : "Зберегти")}
           </Button>
         </>
       }
@@ -1454,18 +1586,15 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                       <button
                         key={flower.id}
                         type="button"
-                        onClick={() => {
-                          // Використовуємо documentId для Strapi v5
-                          setDraft((prev) => ({
-                            ...prev,
-                            flowerId: flower.documentId || flower.id,
-                            flowerName: flower.name,
-                          }));
-                          setFlowerSearchQuery(flower.name);
-                        }}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-admin-surface"
+                        onClick={() => selectExistingFlower(flower)}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-admin-surface flex items-center justify-between"
                       >
-                        {flower.name}
+                        <span>{flower.name}</span>
+                        {flower.variants && flower.variants.length > 0 && (
+                          <span className="text-xs text-slate-400 dark:text-admin-text-muted">
+                            {flower.variants.length} розм.
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -1497,52 +1626,104 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
               </div>
             </div>
 
-            {/* Завантаження зображення */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Зображення</label>
-              <div className="flex items-center gap-3">
-                {draft.imagePreview ? (
-                  <div className="relative">
-                    <img
-                      src={draft.imagePreview}
-                      alt="Preview"
-                      className="h-20 w-20 rounded-lg object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDraft((prev) => ({
-                          ...prev,
-                          image: null,
-                          imagePreview: null,
-                        }));
-                      }}
-                      className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="group flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-200 dark:border-admin-border bg-slate-50 dark:bg-admin-surface px-4 py-3 text-sm text-slate-600 dark:text-admin-text-secondary transition hover:border-emerald-300 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm ring-1 ring-emerald-100 dark:ring-emerald-800/50">
-                      <Upload className="h-5 w-5" />
+            {/* Show image and variants only when flower is selected or being created */}
+            {(draft.flowerId || draft.flowerName) && (
+              <>
+              {/* Завантаження зображення - only for new products */}
+              {!draft.isSupplyMode && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Зображення</label>
+                <div className="flex items-center gap-3">
+                  {draft.imagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={draft.imagePreview}
+                        alt="Preview"
+                        className="h-20 w-20 rounded-lg object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDraft((prev) => ({
+                            ...prev,
+                            image: null,
+                            imagePreview: null,
+                          }));
+                        }}
+                        className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
                     </div>
-                    <span className="font-semibold text-slate-900 dark:text-admin-text-primary">Завантажити зображення</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                      onChange={handleImageChange}
-                    />
-                  </label>
-                )}
+                  ) : (
+                    <label className="group flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-200 dark:border-admin-border bg-slate-50 dark:bg-admin-surface px-4 py-3 text-sm text-slate-600 dark:text-admin-text-secondary transition hover:border-emerald-300 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm ring-1 ring-emerald-100 dark:ring-emerald-800/50">
+                        <Upload className="h-5 w-5" />
+                      </div>
+                      <span className="font-semibold text-slate-900 dark:text-admin-text-primary">Завантажити зображення</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        onChange={handleImageChange}
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Existing variants for supply mode */}
+            {draft.isSupplyMode && draft.existingVariants.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Наявні розміри</label>
+                </div>
+                <div className="space-y-2">
+                  {draft.existingVariants.map((variant, idx) => (
+                    <div
+                      key={variant.documentId || `variant-${idx}`}
+                      className="flex items-center gap-3 rounded-lg border border-slate-200 dark:border-admin-border bg-slate-50 dark:bg-admin-surface p-3"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-medium text-slate-900 dark:text-admin-text-primary">{variant.length} см</span>
+                          <span className="text-sm text-slate-500 dark:text-admin-text-muted">• {variant.price} грн</span>
+                        </div>
+                        <div className="text-xs text-slate-400 dark:text-admin-text-muted mt-0.5">
+                          Зараз на складі: <span className="font-medium">{variant.currentStock} шт</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-slate-500 dark:text-admin-text-muted">+</span>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={variant.addQuantity || ""}
+                          onChange={(e) => updateExistingVariantQuantity(idx, parseInt(e.target.value) || 0)}
+                          className="w-20 text-center"
+                        />
+                        <span className="text-sm text-slate-500 dark:text-admin-text-muted">шт</span>
+                      </div>
+                      {variant.addQuantity > 0 && (
+                        <div className="text-sm font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                          → {variant.currentStock + variant.addQuantity}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Варіанти */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-slate-700">Розміри</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">
+                  {draft.isSupplyMode ? "Додати новий розмір" : "Розміри"}
+                </label>
                 <Button
                   type="button"
                   variant="outline"
@@ -1551,12 +1732,17 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                   className="gap-2"
                 >
                   <Plus className="h-4 w-4" />
-                  Додати розмір
+                  {draft.isSupplyMode ? "Новий розмір" : "Додати розмір"}
                 </Button>
               </div>
 
               {draft.variants.length === 0 ? (
-                <p className="text-sm text-slate-500">Додайте хоча б один розмір</p>
+                <p className="text-sm text-slate-500 dark:text-admin-text-muted">
+                  {draft.isSupplyMode
+                    ? "Можете додати новий розмір до цього товару"
+                    : "Додайте хоча б один розмір"
+                  }
+                </p>
               ) : (
                 <div className="space-y-3">
                   {draft.variants.map((variant) => (
@@ -1605,6 +1791,8 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                 </div>
               )}
             </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="space-y-3 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/60 dark:bg-emerald-900/20 p-4">
@@ -1891,9 +2079,9 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
               {editData.variants.filter(v => !v.isDeleted).length === 0 ? (
                 <p className="text-sm text-slate-500 py-2">Немає варіантів. Додайте хоча б один.</p>
               ) : (
-                editData.variants.filter(v => !v.isDeleted).map((variant) => (
+                editData.variants.filter(v => !v.isDeleted).map((variant, idx) => (
                   <div
-                    key={variant.documentId}
+                    key={variant.documentId || `edit-variant-${idx}`}
                     className={cn(
                       "flex gap-2 rounded-lg border p-3",
                       variant.isNew
@@ -1942,19 +2130,25 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                     </div>
                     <div className="flex-1">
                       <label className="text-xs text-slate-600">Кількість, шт</label>
-                      <Input
-                        type="number"
-                        min="0"
-                        placeholder="100"
-                        value={variant.stock || ""}
-                        onChange={(e) => {
-                          const value = e.target.value === "" ? 0 : parseInt(e.target.value);
-                          if (!isNaN(value)) {
-                            handleEditVariantChange(variant.documentId, "stock", value);
-                          }
-                        }}
-                        className="mt-1"
-                      />
+                      {variant.isNew ? (
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="100"
+                          value={variant.stock || ""}
+                          onChange={(e) => {
+                            const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                            if (!isNaN(value)) {
+                              handleEditVariantChange(variant.documentId, "stock", value);
+                            }
+                          }}
+                          className="mt-1"
+                        />
+                      ) : (
+                        <p className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary mt-2">
+                          {variant.stock} шт
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center self-center">
                       <Button
@@ -1975,9 +2169,9 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
               {editData.variants.filter(v => v.isDeleted).length > 0 && (
                 <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-admin-border">
                   <p className="text-xs text-slate-500">Буде видалено після збереження:</p>
-                  {editData.variants.filter(v => v.isDeleted).map((variant) => (
+                  {editData.variants.filter(v => v.isDeleted).map((variant, idx) => (
                     <div
-                      key={variant.documentId}
+                      key={variant.documentId || `deleted-variant-${idx}`}
                       className="flex items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50/50 dark:border-rose-800 dark:bg-rose-900/20 p-2"
                     >
                       <span className="text-sm text-rose-600 line-through">

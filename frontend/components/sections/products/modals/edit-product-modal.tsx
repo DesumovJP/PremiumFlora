@@ -182,20 +182,26 @@ export function EditProductModal({
                       />
                     </div>
                     <div className="flex-1">
-                      <label className="text-xs text-slate-600">Кількість, шт</label>
-                      <Input
-                        type="number"
-                        min="0"
-                        placeholder="100"
-                        value={variant.stock || ""}
-                        onChange={(e) => {
-                          const value = e.target.value === "" ? 0 : parseInt(e.target.value);
-                          if (!isNaN(value)) {
-                            handleVariantChange(variant.documentId, "stock", value);
-                          }
-                        }}
-                        className="mt-1"
-                      />
+                      <label className="text-xs text-slate-600">Залишок, шт</label>
+                      {variant.isNew ? (
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={variant.stock || ""}
+                          onChange={(e) => {
+                            const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                            if (!isNaN(value)) {
+                              handleVariantChange(variant.documentId, "stock", value);
+                            }
+                          }}
+                          className="mt-1"
+                        />
+                      ) : (
+                        <p className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary mt-2" title="Змінюйте через списання або поставку">
+                          {variant.stock} шт
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center self-center">
                       <Button

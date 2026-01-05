@@ -11,8 +11,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         className={cn(
           // Base styles
           "flex h-9 w-full rounded-md px-3",
-          // Border & Background - CSS змінні
-          "border border-[var(--admin-border)] bg-[var(--admin-surface)]",
+          // Border & Background - білий фон в світлій темі
+          "border border-[var(--admin-border)] bg-white dark:bg-[var(--admin-surface)]",
           // Typography
           "text-base sm:text-sm",
           // Colors - CSS змінні

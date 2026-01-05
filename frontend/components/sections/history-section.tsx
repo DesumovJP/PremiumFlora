@@ -43,6 +43,7 @@ import {
   XCircle,
   Calendar,
   CalendarDays,
+  Warehouse,
 } from 'lucide-react';
 
 // ============================================
@@ -54,6 +55,8 @@ interface HistorySectionProps {
   shiftDate: string | null; // YYYY-MM-DD
   shiftStartedAt: string | null;
   summary: ShiftSummary;
+  inventoryValue?: number; // Поточна вартість запасів
+  totalStockItems?: number; // Загальна кількість на складі
   onExportShift: () => void;
   onRefresh?: () => Promise<void>;
   isLoading?: boolean;
@@ -188,13 +191,20 @@ function ActivityItem({ activity }: { activity: Activity }) {
             {details.items && details.items.length > 0 && (
               <div className="space-y-1">
                 <span className="text-slate-500 dark:text-admin-text-tertiary">Товари:</span>
-                <div className="ml-2 space-y-1">
+                <div className="ml-2 space-y-1.5">
                   {details.items.map((item, idx) => (
-                    <div key={idx} className="flex justify-between text-xs">
-                      <span className="dark:text-admin-text-secondary">
-                        {item.name} ({item.size}) x{item.qty}
-                      </span>
-                      <span className="font-medium dark:text-admin-text-primary">{Math.round(item.price * item.qty)} грн</span>
+                    <div key={idx} className="flex justify-between items-center text-xs gap-2">
+                      <div className="flex-1 min-w-0">
+                        <span className="dark:text-admin-text-secondary">
+                          {item.name} ({item.size}) x{item.qty}
+                        </span>
+                        {item.stockBefore !== undefined && item.stockAfter !== undefined && (
+                          <span className="ml-2 text-slate-400 dark:text-admin-text-muted">
+                            {item.stockBefore}→{item.stockAfter} шт
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-medium dark:text-admin-text-primary shrink-0">{Math.round(item.price * item.qty)} грн</span>
                     </div>
                   ))}
                 </div>
@@ -574,14 +584,17 @@ function ActivityItem({ activity }: { activity: Activity }) {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="text-slate-600 dark:text-admin-text-tertiary">
-                Квіти: <span className="font-medium text-emerald-600 dark:text-emerald-400">+{details.flowersCreated || 0}</span>, <span className="font-medium dark:text-admin-text-primary">{details.flowersUpdated || 0} онов.</span>
+            {/* Показуємо статистику квітів/варіантів тільки для імпорту з файлу */}
+            {details.filename && (
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="text-slate-600 dark:text-admin-text-tertiary">
+                  Квіти: <span className="font-medium text-emerald-600 dark:text-emerald-400">+{details.flowersCreated || 0}</span>, <span className="font-medium dark:text-admin-text-primary">{details.flowersUpdated || 0} онов.</span>
+                </div>
+                <div className="text-slate-600 dark:text-admin-text-tertiary">
+                  Варіанти: <span className="font-medium text-emerald-600 dark:text-emerald-400">+{details.variantsCreated || 0}</span>, <span className="font-medium dark:text-admin-text-primary">{details.variantsUpdated || 0} онов.</span>
+                </div>
               </div>
-              <div className="text-slate-600 dark:text-admin-text-tertiary">
-                Варіанти: <span className="font-medium text-emerald-600 dark:text-emerald-400">+{details.variantsCreated || 0}</span>, <span className="font-medium dark:text-admin-text-primary">{details.variantsUpdated || 0} онов.</span>
-              </div>
-            </div>
+            )}
 
             {/* Детальний список товарів */}
             {details.supplyItems && details.supplyItems.length > 0 && (
@@ -675,7 +688,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
       case 'customerDelete':
         return details.customerName || '';
       case 'supply':
-        return details.filename || 'Імпорт';
+        return details.productName || details.filename || 'Імпорт';
       default:
         return '';
     }
@@ -775,9 +788,13 @@ function ShiftCalendar({ shifts, onSelectShift, currentMonth, onMonthChange }: C
   if (startDayOfWeek < 0) startDayOfWeek = 6;
 
   // Create map of shifts by date
+  // Use shiftDate (YYYY-MM-DD) if available, fallback to startedAt
   const shiftsByDate = new Map<string, Shift[]>();
   shifts.forEach(shift => {
-    const dateKey = new Date(shift.closedAt || shift.startedAt).toDateString();
+    // For the new auto-shift system, use shiftDate field
+    const dateKey = shift.shiftDate
+      ? new Date(shift.shiftDate + 'T00:00:00').toDateString()
+      : new Date(shift.startedAt).toDateString();
     const existing = shiftsByDate.get(dateKey) || [];
     existing.push(shift);
     shiftsByDate.set(dateKey, existing);
@@ -1155,12 +1172,12 @@ function ArchiveTab({ onExportShift }: ArchiveTabProps) {
   const loadShifts = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Load more shifts for calendar view
+      // Load all shifts for calendar view (including active ones)
       const result = await getShifts(1, 100);
       if (result.success && result.data) {
-        // Filter only closed shifts
-        const closedShifts = result.data.filter(s => s.status === 'closed');
-        setShifts(closedShifts);
+        // Show all shifts - both active and closed
+        // The new system creates shifts automatically by date
+        setShifts(result.data);
       }
     } catch (error) {
       console.error('Error loading shifts:', error);
@@ -1197,10 +1214,10 @@ function ArchiveTab({ onExportShift }: ArchiveTabProps) {
           <CalendarDays className="h-8 w-8 text-slate-400 dark:text-admin-text-muted" />
         </div>
         <h3 className="text-lg font-semibold text-slate-900 dark:text-admin-text-primary mb-1">
-          Немає закритих змін
+          Історія змін порожня
         </h3>
         <p className="text-sm text-slate-500 dark:text-admin-text-tertiary max-w-xs">
-          Після закриття зміни вона з'явиться тут у календарі
+          Тут відображатиметься календар з усіма змінами
         </p>
       </div>
     );
@@ -1214,9 +1231,12 @@ function ArchiveTab({ onExportShift }: ArchiveTabProps) {
 
   // Фільтруємо зміни за поточний місяць календаря
   const shiftsInMonth = shifts.filter(shift => {
-    const shiftDate = new Date(shift.closedAt || shift.startedAt);
-    return shiftDate.getMonth() === currentMonth.getMonth() &&
-           shiftDate.getFullYear() === currentMonth.getFullYear();
+    // Use shiftDate field if available for accurate filtering
+    const date = shift.shiftDate
+      ? new Date(shift.shiftDate + 'T00:00:00')
+      : new Date(shift.startedAt);
+    return date.getMonth() === currentMonth.getMonth() &&
+           date.getFullYear() === currentMonth.getFullYear();
   });
 
   // Функція експорту місячного звіту
@@ -1236,8 +1256,11 @@ function ArchiveTab({ onExportShift }: ArchiveTabProps) {
     }
 
     shiftsInMonth.forEach(shift => {
-      const shiftDate = new Date(shift.closedAt || shift.startedAt);
-      const day = shiftDate.getDate();
+      // Use shiftDate field for accurate day aggregation
+      const date = shift.shiftDate
+        ? new Date(shift.shiftDate + 'T00:00:00')
+        : new Date(shift.startedAt);
+      const day = date.getDate();
 
       // Додаємо продажі
       dailyData[day].sales += shift.totalSalesAmount || 0;
@@ -1332,6 +1355,8 @@ export function HistorySection({
   shiftDate,
   shiftStartedAt,
   summary,
+  inventoryValue = 0,
+  totalStockItems = 0,
   onExportShift,
   onRefresh,
   isLoading = false,
@@ -1547,7 +1572,7 @@ export function HistorySection({
           {activeTab === 'current' ? (
             <>
               {/* Summary Stats */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {/* Продажі */}
                 <div className="rounded-xl border border-emerald-100 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 p-3">
                   <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1">Продажі</p>
@@ -1578,6 +1603,17 @@ export function HistorySection({
                   </p>
                   <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
                     {summary.totalSuppliesQty || 0} шт · {summary.totalSupplies || 0} поставок
+                  </p>
+                </div>
+
+                {/* Вартість запасів */}
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/50 p-3">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Вартість запасів</p>
+                  <p className="text-lg font-bold text-slate-700 dark:text-slate-300">
+                    {Math.round(inventoryValue).toLocaleString()} ₴
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400/70">
+                    {totalStockItems.toLocaleString()} шт на складі
                   </p>
                 </div>
               </div>

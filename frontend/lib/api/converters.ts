@@ -101,6 +101,7 @@ export function convertFlowerToProduct(flower: GraphQLFlower): Product {
   const variants: Variant[] = (flower.variants || [])
     .filter((v) => v != null)
     .map((v) => ({
+      documentId: v.documentId,
       size: `${v.length} см`,
       price: v.price ?? 0,
       stock: v.stock ?? 0,

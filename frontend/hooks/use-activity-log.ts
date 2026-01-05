@@ -39,6 +39,8 @@ export interface ActivityDetails {
     size: string;
     qty: number;
     price: number;
+    stockBefore?: number;
+    stockAfter?: number;
   }>;
   totalAmount?: number;
   discount?: number;
