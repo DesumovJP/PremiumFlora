@@ -239,7 +239,6 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
               }
             >
               <option value="replace">Замінити</option>
-              <option value="lower">Мінімальна</option>
               <option value="skip">Залишити стару</option>
             </select>
           </div>
