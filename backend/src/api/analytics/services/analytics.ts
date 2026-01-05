@@ -373,8 +373,15 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       },
     });
 
-    // DEBUG: Логуємо кількість змін
+    // DEBUG: Детальне логування
+    strapi.log.info(`[Analytics DEBUG] ============== getDailySales START ==============`);
+    strapi.log.info(`[Analytics DEBUG] Query: startOfMonth=${startOfMonth.toISOString()}, endOfMonth=${endOfMonth.toISOString()}`);
     strapi.log.info(`[Analytics DEBUG] Found ${shifts.length} shifts for ${targetYear}-${targetMonth + 1}`);
+
+    // Логуємо кожну зміну
+    shifts.forEach((shift: { documentId: string; startedAt: string; status: string; activities: unknown[] }, idx: number) => {
+      strapi.log.info(`[Analytics DEBUG] Shift ${idx + 1}: documentId=${shift.documentId}, startedAt=${shift.startedAt}, status=${shift.status}, activities=${(shift.activities || []).length}`);
+    });
 
     // Групувати дані по днях
     const dailyMap = new Map<string, { orders: number; revenue: number; writeOffs: number; supplyAmount: number }>();
@@ -427,6 +434,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           case 'writeOff': {
             const items = activity.details.items || [];
             const totalQty = items.reduce((sum, item) => sum + (item.qty || 0), 0);
+            // DEBUG: Логуємо списання з датою
+            strapi.log.info(`[Analytics DEBUG] WriteOff activity ${activity.id}: timestamp=${activity.timestamp}, key=${key}, totalQty=${totalQty}`);
             dailyMap.set(key, {
               ...existing,
               writeOffs: existing.writeOffs + totalQty,
@@ -437,6 +446,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
             // Видалення товару зі складом теж рахуємо як списання
             const variants = activity.details.variants || [];
             const totalQty = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+            // DEBUG: Логуємо видалення з датою
+            if (totalQty > 0) {
+              strapi.log.info(`[Analytics DEBUG] ProductDelete activity ${activity.id}: timestamp=${activity.timestamp}, key=${key}, totalQty=${totalQty}`);
+            }
             dailyMap.set(key, {
               ...existing,
               writeOffs: existing.writeOffs + totalQty,
@@ -450,12 +463,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
               const qty = (item.stockAfter || 0) - (item.stockBefore || 0);
               return sum + qty * (item.priceAfter || 0);
             }, 0);
-            // DEBUG: Логуємо деталі поставки
-            strapi.log.info(`[Analytics DEBUG] Supply activity ${activity.id}: ${supplyItems.length} items, totalAmount=${totalAmount}`);
-            if (supplyItems.length > 0) {
-              const sample = supplyItems[0];
-              strapi.log.info(`[Analytics DEBUG] Sample item: stockBefore=${sample.stockBefore}, stockAfter=${sample.stockAfter}, priceAfter=${sample.priceAfter}`);
-            }
+            // DEBUG: Логуємо деталі поставки з датою
+            strapi.log.info(`[Analytics DEBUG] Supply activity ${activity.id}: timestamp=${activity.timestamp}, key=${key}, ${supplyItems.length} items, totalAmount=${totalAmount}`);
             dailyMap.set(key, {
               ...existing,
               supplyAmount: existing.supplyAmount + totalAmount,
@@ -480,7 +489,21 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     });
 
     // DEBUG: Підсумок
+    strapi.log.info(`[Analytics DEBUG] ============== SUMMARY ==============`);
     strapi.log.info(`[Analytics DEBUG] Processed ${processedActivityIds.size} unique activities, skipped ${duplicatesSkipped} duplicates`);
+
+    // Підрахувати загальні суми
+    let totalWriteOffs = 0;
+    let totalSupply = 0;
+    dailyMap.forEach((data, key) => {
+      totalWriteOffs += data.writeOffs;
+      totalSupply += data.supplyAmount;
+      if (data.writeOffs > 0 || data.supplyAmount > 0) {
+        strapi.log.info(`[Analytics DEBUG] Day ${key}: writeOffs=${data.writeOffs}, supplyAmount=${data.supplyAmount.toFixed(2)}`);
+      }
+    });
+    strapi.log.info(`[Analytics DEBUG] TOTALS: writeOffs=${totalWriteOffs}, supplyAmount=${totalSupply.toFixed(2)}`);
+    strapi.log.info(`[Analytics DEBUG] ============== getDailySales END ==============`);
 
     const daysOfWeek = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
     const result: DailySale[] = [];
