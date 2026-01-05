@@ -64,6 +64,7 @@ export class NormalizerService {
     'Zebra Rose': ['Zebra'],
 
     // Spray Rose
+    'Baby Flow Spray Rose': ['Baby Flow Spray'],
     'Blue Moon Spray Rose': ['Blue Moon Spray'],
     'BS Xapricorn Spray Rose': ['BS Xapricorn Spray'],
     'Creta Spray Rose': ['Creta Spray'],
