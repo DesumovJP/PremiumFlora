@@ -41,7 +41,7 @@ export default {
       },
     },
     {
-      method: 'DELETE',
+      method: 'POST',
       path: '/shifts/cleanup',
       handler: 'shift.cleanup',
       config: {
