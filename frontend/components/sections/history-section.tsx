@@ -777,20 +777,28 @@ function ShiftCalendar({ shifts, onSelectShift, currentMonth, onMonthChange }: C
                 {hasShifts && (
                   <div className="mt-0.5 space-y-[1px]">
                     {dayShifts.slice(0, 1).map((shift) => {
-                      // Підраховуємо суму поставок з activities
+                      // Підраховуємо суму поставок з activities (з supplyItems)
                       const supplyAmount = (shift.activities || [])
                         .filter((a: any) => a.type === 'supply')
                         .reduce((sum: number, a: any) => {
-                          const amount = (a.details as any)?.totalAmount || (a.details as any)?.amount || 0;
-                          return sum + (typeof amount === 'number' ? amount : 0);
+                          const items = (a.details as any)?.supplyItems || [];
+                          return sum + items.reduce((itemSum: number, item: any) => {
+                            const qty = (item.stockAfter || 0) - (item.stockBefore || 0);
+                            return itemSum + qty * (item.priceAfter || 0);
+                          }, 0);
                         }, 0);
-                      
+
                       // Підраховуємо суму списань з activities
                       const writeOffAmount = (shift.activities || [])
-                        .filter((a: any) => a.type === 'writeOff')
+                        .filter((a: any) => a.type === 'writeOff' || a.type === 'productDelete')
                         .reduce((sum: number, a: any) => {
-                          const amount = (a.details as any)?.totalAmount || (a.details as any)?.amount || 0;
-                          return sum + (typeof amount === 'number' ? amount : 0);
+                          if (a.type === 'writeOff') {
+                            return sum + ((a.details as any)?.amount || 0);
+                          }
+                          // productDelete - рахуємо вартість видалених варіантів
+                          const variants = (a.details as any)?.variants || [];
+                          return sum + variants.reduce((vSum: number, v: any) =>
+                            vSum + (v.stock || 0) * (v.price || 0), 0);
                         }, 0);
                       
                       return (
