@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { KpiCard } from "@/components/ui/kpi-card";
-import { TrendingUp, Loader2, RefreshCw, Download, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { TrendingUp, Loader2, RefreshCw, Download, ChevronLeft, ChevronRight, AlertCircle, DollarSign, ShoppingCart, Receipt, PieChart as PieChartIcon, Package, Trash2, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo, useState, useEffect } from "react";
 
@@ -319,7 +319,17 @@ export function AnalyticsSection({
         <div className="grid gap-4 lg:grid-cols-2">
           <Card className="border-slate-200 dark:border-slate-700">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Виручка по тижнях</CardTitle>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/30">
+                    <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Виручка по тижнях</CardTitle>
+                </div>
+                <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  {totalRevenue.toLocaleString("uk-UA")} ₴
+                </span>
+              </div>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="h-48">
@@ -341,16 +351,22 @@ export function AnalyticsSection({
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-                <span>Середнє зростання +12.5% на тиждень</span>
-              </div>
             </CardContent>
           </Card>
 
           <Card className="border-slate-200 dark:border-slate-700">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Кількість замовлень</CardTitle>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-50 dark:bg-sky-900/30">
+                    <ShoppingCart className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                  </div>
+                  <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Кількість замовлень</CardTitle>
+                </div>
+                <span className="text-xs font-medium text-sky-600 dark:text-sky-400">
+                  {ordersPerWeek.reduce((sum, v) => sum + v, 0)} замовлень
+                </span>
+              </div>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="h-48">
@@ -372,13 +388,6 @@ export function AnalyticsSection({
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                  <TrendingUp className="h-3.5 w-3.5 text-sky-500" />
-                  <span>Стабільне зростання на 5–7%</span>
-                </div>
-                <span className="text-slate-400 dark:text-slate-500">Макс: {maxOrders}</span>
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -387,7 +396,17 @@ export function AnalyticsSection({
         <div className="grid gap-4 lg:grid-cols-2">
           <Card className="border-slate-200 dark:border-slate-700">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Середній чек по тижнях</CardTitle>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/30">
+                    <Receipt className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Середній чек</CardTitle>
+                </div>
+                <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                  {Math.round(totalRevenue / Math.max(ordersPerWeek.reduce((sum, v) => sum + v, 0), 1)).toLocaleString("uk-UA")} ₴
+                </span>
+              </div>
             </CardHeader>
             <CardContent className="h-48">
               <ResponsiveContainer width="100%" height="100%">
@@ -412,7 +431,17 @@ export function AnalyticsSection({
 
           <Card className="border-slate-200 dark:border-slate-700">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Категорії продажів</CardTitle>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-900/30">
+                    <PieChartIcon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Категорії продажів</CardTitle>
+                </div>
+                <span className="text-xs text-slate-400 dark:text-slate-500">
+                  {categorySplit.length} категорій
+                </span>
+              </div>
             </CardHeader>
             <CardContent className="h-48">
               <ResponsiveContainer width="100%" height="100%">
@@ -429,7 +458,7 @@ export function AnalyticsSection({
                       boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
                     }}
                   />
-                  <Bar dataKey="відсоток" fill="#10b981" radius={[0, 4, 4, 0]} barSize={16} />
+                  <Bar dataKey="відсоток" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={16} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -440,7 +469,15 @@ export function AnalyticsSection({
         <div className="grid gap-4 lg:grid-cols-2">
           <Card className="border-slate-200 dark:border-slate-700">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Топ-5 товарів за продажами</CardTitle>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/30">
+                    <Package className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Топ-5 товарів</CardTitle>
+                </div>
+                <span className="text-xs text-slate-400 dark:text-slate-500">за продажами</span>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-2.5">
@@ -471,9 +508,14 @@ export function AnalyticsSection({
             <Card className="border-slate-200 dark:border-slate-700">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Топ-5 квітів по списаннях</CardTitle>
-                  <span className="text-xs text-slate-400 dark:text-slate-500">
-                    Всього: {topWriteOffFlowers.reduce((sum, f) => sum + f.totalQty, 0)} шт
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-900/30">
+                      <Trash2 className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                    </div>
+                    <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Топ-5 списань</CardTitle>
+                  </div>
+                  <span className="text-xs font-medium text-rose-500 dark:text-rose-400">
+                    {topWriteOffFlowers.reduce((sum, f) => sum + f.totalQty, 0)} шт
                   </span>
                 </div>
               </CardHeader>
@@ -507,226 +549,179 @@ export function AnalyticsSection({
           )}
         </div>
 
-        <Card className="border-slate-200/60 dark:border-slate-700/60 overflow-hidden">
-          <CardHeader className="pb-3 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-900 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/40 ring-1 ring-violet-200/50 dark:ring-violet-700/50">
-                  <svg className="h-5 w-5 text-violet-600 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <CardTitle className="text-base font-semibold text-slate-800 dark:text-white">Календар продажів</CardTitle>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{selectedMonthName} {selectedYear}</p>
-                </div>
+        <Card className="border-slate-200 dark:border-slate-700">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
+                <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
               </div>
-              {/* Легенда статусів */}
-              <div className="hidden sm:flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
-                  <span className="text-slate-500 dark:text-slate-400">7+ замовлень</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-amber-500/20" />
-                  <span className="text-slate-500 dark:text-slate-400">4-6</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-slate-300 dark:bg-slate-600 ring-2 ring-slate-300/20 dark:ring-slate-600/20" />
-                  <span className="text-slate-500 dark:text-slate-400">0-3</span>
-                </div>
-              </div>
+              <CardTitle className="text-sm font-medium text-slate-900 dark:text-white">Календар продажів · {selectedMonthName} {selectedYear}</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="space-y-3">
             {/* Мобільний варіант */}
-            <div className="sm:hidden divide-y divide-slate-100 dark:divide-slate-800">
-              {dailySales.map((item, idx) => (
+            <div className="grid gap-2 sm:hidden">
+              {dailySales.map((item) => (
                 <div
                   key={item.date}
-                  className={cn(
-                    "p-3 transition-colors",
-                    item.orders > 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50/50 dark:bg-slate-900/50"
-                  )}
+                  className="rounded-lg border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5"
                 >
-                  <div className="flex items-center justify-between mb-2.5">
-                    <div className="flex items-center gap-2.5">
-                      <div className={cn(
-                        "flex h-9 w-9 items-center justify-center rounded-lg font-semibold text-sm",
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-slate-900 dark:text-white">{item.date}</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">{item.day}</span>
+                    </div>
+                    <span
+                      className={cn(
+                        "h-2 w-2 rounded-full",
                         item.status === "high"
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400"
+                          ? "bg-emerald-500"
                           : item.status === "mid"
-                          ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
-                          : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                      )}>
-                        {item.date.split('.')[0]}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-900 dark:text-white">{item.day}</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">{item.date}</p>
-                      </div>
-                    </div>
-                    {item.orders > 0 && (
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.revenue.toLocaleString("uk-UA")} ₴</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">{item.orders} зам.</p>
-                      </div>
-                    )}
+                          ? "bg-amber-500"
+                          : "bg-slate-300 dark:bg-slate-600"
+                      )}
+                    />
                   </div>
-                  {(item.orders > 0 || item.supplyAmount > 0 || item.writeOffs > 0) && (
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                      <div className="rounded-lg bg-slate-50 dark:bg-slate-800/80 px-2.5 py-2 text-center">
-                        <p className="text-slate-400 dark:text-slate-500 mb-0.5">Сер. чек</p>
-                        <p className="font-semibold text-slate-700 dark:text-slate-200">
-                          {item.avg > 0 ? item.avg.toLocaleString("uk-UA") : "—"}
-                        </p>
-                      </div>
-                      <div className="rounded-lg bg-sky-50 dark:bg-sky-900/20 px-2.5 py-2 text-center">
-                        <p className="text-sky-500 dark:text-sky-400 mb-0.5">Поставка</p>
-                        <p className="font-semibold text-sky-600 dark:text-sky-300">
-                          {item.supplyAmount && item.supplyAmount > 0 ? item.supplyAmount.toLocaleString("uk-UA") : "—"}
-                        </p>
-                      </div>
-                      <div className="rounded-lg bg-rose-50 dark:bg-rose-900/20 px-2.5 py-2 text-center">
-                        <p className="text-rose-500 dark:text-rose-400 mb-0.5">Списано</p>
-                        <p className="font-semibold text-rose-600 dark:text-rose-300">
-                          {item.writeOffs > 0 ? `${item.writeOffs} шт` : "—"}
-                        </p>
-                      </div>
+                  <div className="grid grid-cols-3 gap-1.5 text-xs">
+                    <div className="rounded-md bg-slate-50 dark:bg-slate-700/50 px-2 py-1.5">
+                      <p className="text-slate-400 dark:text-slate-500">Замовлень</p>
+                      <p className="font-medium text-slate-700 dark:text-slate-200">{item.orders}</p>
                     </div>
-                  )}
+                    <div className="rounded-md bg-slate-50 dark:bg-slate-700/50 px-2 py-1.5">
+                      <p className="text-slate-400 dark:text-slate-500">Виручка</p>
+                      <p className="font-medium text-slate-700 dark:text-slate-200">
+                        {item.revenue.toLocaleString("uk-UA")}
+                      </p>
+                    </div>
+                    <div className="rounded-md bg-slate-50 dark:bg-slate-700/50 px-2 py-1.5">
+                      <p className="text-slate-400 dark:text-slate-500">Сер. чек</p>
+                      <p className="font-medium text-slate-700 dark:text-slate-200">
+                        {item.avg.toLocaleString("uk-UA")}
+                      </p>
+                    </div>
+                    <div className="rounded-md bg-slate-50 dark:bg-slate-700/50 px-2 py-1.5">
+                      <p className="text-slate-400 dark:text-slate-500">Поставка</p>
+                      <p className={cn(
+                        "font-medium",
+                        item.supplyAmount && item.supplyAmount > 0
+                          ? "text-sky-500 dark:text-sky-400"
+                          : "text-slate-400 dark:text-slate-500"
+                      )}>
+                        {item.supplyAmount && item.supplyAmount > 0 ? `${item.supplyAmount.toLocaleString("uk-UA")}` : "—"}
+                      </p>
+                    </div>
+                    <div className="rounded-md bg-slate-50 dark:bg-slate-700/50 px-2 py-1.5">
+                      <p className="text-slate-400 dark:text-slate-500">Списано</p>
+                      <p className={cn(
+                        "font-medium",
+                        item.writeOffs > 0
+                          ? "text-rose-500 dark:text-rose-400"
+                          : "text-slate-400 dark:text-slate-500"
+                      )}>
+                        {item.writeOffs > 0 ? `${item.writeOffs} шт` : "—"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
 
             {/* Десктопна таблиця */}
             <div className="hidden sm:block">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-slate-50/80 dark:bg-slate-800/50">
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Дата</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">День</th>
-                    <th className="py-3 px-4 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Замовлень</th>
-                    <th className="py-3 px-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Виручка</th>
-                    <th className="py-3 px-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Сер. чек</th>
-                    <th className="py-3 px-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Поставка</th>
-                    <th className="py-3 px-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Списано</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {dailySales.map((item) => (
-                    <tr
-                      key={item.date}
-                      className={cn(
-                        "transition-colors",
-                        item.orders > 0
-                          ? "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                          : "bg-slate-50/30 dark:bg-slate-900/30 text-slate-400"
-                      )}
-                    >
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2.5">
-                          <div className={cn(
-                            "flex h-8 w-8 items-center justify-center rounded-lg font-semibold text-xs",
-                            item.status === "high"
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400"
-                              : item.status === "mid"
-                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
-                              : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
-                          )}>
-                            {item.date.split('.')[0]}
-                          </div>
-                          <span className="font-medium text-slate-700 dark:text-slate-200">{item.date}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-slate-500 dark:text-slate-400">{item.day}</td>
-                      <td className="py-3 px-4 text-center">
-                        {item.orders > 0 ? (
-                          <span className={cn(
-                            "inline-flex items-center justify-center h-6 min-w-[24px] px-2 rounded-full text-xs font-semibold",
-                            item.status === "high"
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400"
-                              : item.status === "mid"
-                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
-                              : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                          )}>
-                            {item.orders}
-                          </span>
-                        ) : (
-                          <span className="text-slate-300 dark:text-slate-600">—</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        {item.revenue > 0 ? (
-                          <span className="font-semibold text-slate-900 dark:text-white">{item.revenue.toLocaleString("uk-UA")} ₴</span>
-                        ) : (
-                          <span className="text-slate-300 dark:text-slate-600">—</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-right text-slate-500 dark:text-slate-400">
-                        {item.avg > 0 ? `${item.avg.toLocaleString("uk-UA")} ₴` : "—"}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        {item.supplyAmount && item.supplyAmount > 0 ? (
-                          <span className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400 font-medium">
-                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
-                            </svg>
-                            {item.supplyAmount.toLocaleString("uk-UA")} ₴
-                          </span>
-                        ) : (
-                          <span className="text-slate-300 dark:text-slate-600">—</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        {item.writeOffs > 0 ? (
-                          <span className="inline-flex items-center gap-1 text-rose-500 dark:text-rose-400 font-medium">
-                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" />
-                            </svg>
-                            {item.writeOffs} шт
-                          </span>
-                        ) : (
-                          <span className="text-slate-300 dark:text-slate-600">—</span>
-                        )}
-                      </td>
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                      <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">Дата</th>
+                      <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">День</th>
+                      <th className="py-2.5 px-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Замовлень</th>
+                      <th className="py-2.5 px-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Виручка</th>
+                      <th className="py-2.5 px-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Сер. чек</th>
+                      <th className="py-2.5 px-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Поставка</th>
+                      <th className="py-2.5 px-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400">Списано</th>
+                      <th className="py-2.5 px-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400">Статус</th>
                     </tr>
-                  ))}
-                </tbody>
-                {/* Підсумковий рядок */}
-                <tfoot>
-                  <tr className="bg-slate-100/80 dark:bg-slate-800/80 border-t-2 border-slate-200 dark:border-slate-700">
-                    <td colSpan={2} className="py-3 px-4 font-semibold text-slate-700 dark:text-slate-200">Всього за місяць</td>
-                    <td className="py-3 px-4 text-center">
-                      <span className="inline-flex items-center justify-center h-6 min-w-[24px] px-2 rounded-full text-xs font-bold bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400">
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                    {dailySales.map((item) => (
+                      <tr
+                        key={item.date}
+                        className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                      >
+                        <td className="py-2.5 px-3 font-medium text-slate-900 dark:text-white">{item.date}</td>
+                        <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400">{item.day}</td>
+                        <td className="py-2.5 px-3 text-right text-slate-600 dark:text-slate-300">{item.orders}</td>
+                        <td className="py-2.5 px-3 text-right font-medium text-slate-900 dark:text-white">
+                          {item.revenue.toLocaleString("uk-UA")} ₴
+                        </td>
+                        <td className="py-2.5 px-3 text-right text-slate-600 dark:text-slate-300">
+                          {item.avg.toLocaleString("uk-UA")} ₴
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          {item.supplyAmount && item.supplyAmount > 0 ? (
+                            <span className="text-sky-500 dark:text-sky-400">{item.supplyAmount.toLocaleString("uk-UA")} ₴</span>
+                          ) : (
+                            <span className="text-slate-400 dark:text-slate-500">—</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          {item.writeOffs > 0 ? (
+                            <span className="text-rose-500 dark:text-rose-400">{item.writeOffs} шт</span>
+                          ) : (
+                            <span className="text-slate-400 dark:text-slate-500">—</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <div className="flex justify-center">
+                            <span
+                              className={cn(
+                                "h-2 w-2 rounded-full",
+                                item.status === "high"
+                                  ? "bg-emerald-500"
+                                  : item.status === "mid"
+                                  ? "bg-amber-500"
+                                  : "bg-slate-300 dark:bg-slate-600"
+                              )}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  {/* Підсумковий рядок */}
+                  <tfoot>
+                    <tr className="bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 font-medium">
+                      <td colSpan={2} className="py-2.5 px-3 text-slate-700 dark:text-slate-200">Всього</td>
+                      <td className="py-2.5 px-3 text-right text-slate-900 dark:text-white">
                         {dailySales.reduce((sum, d) => sum + d.orders, 0)}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right font-bold text-slate-900 dark:text-white">
-                      {dailySales.reduce((sum, d) => sum + d.revenue, 0).toLocaleString("uk-UA")} ₴
-                    </td>
-                    <td className="py-3 px-4 text-right text-slate-500 dark:text-slate-400">
-                      {(() => {
-                        const totalOrders = dailySales.reduce((sum, d) => sum + d.orders, 0);
-                        const totalRevenue = dailySales.reduce((sum, d) => sum + d.revenue, 0);
-                        return totalOrders > 0 ? `${Math.round(totalRevenue / totalOrders).toLocaleString("uk-UA")} ₴` : "—";
-                      })()}
-                    </td>
-                    <td className="py-3 px-4 text-right font-semibold text-sky-600 dark:text-sky-400">
-                      {(() => {
-                        const total = dailySales.reduce((sum, d) => sum + (d.supplyAmount || 0), 0);
-                        return total > 0 ? `${total.toLocaleString("uk-UA")} ₴` : "—";
-                      })()}
-                    </td>
-                    <td className="py-3 px-4 text-right font-semibold text-rose-500 dark:text-rose-400">
-                      {(() => {
-                        const total = dailySales.reduce((sum, d) => sum + d.writeOffs, 0);
-                        return total > 0 ? `${total} шт` : "—";
-                      })()}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
+                      </td>
+                      <td className="py-2.5 px-3 text-right text-slate-900 dark:text-white">
+                        {dailySales.reduce((sum, d) => sum + d.revenue, 0).toLocaleString("uk-UA")} ₴
+                      </td>
+                      <td className="py-2.5 px-3 text-right text-slate-600 dark:text-slate-300">
+                        {(() => {
+                          const totalOrders = dailySales.reduce((sum, d) => sum + d.orders, 0);
+                          const totalRevenue = dailySales.reduce((sum, d) => sum + d.revenue, 0);
+                          return totalOrders > 0 ? `${Math.round(totalRevenue / totalOrders).toLocaleString("uk-UA")} ₴` : "—";
+                        })()}
+                      </td>
+                      <td className="py-2.5 px-3 text-right text-sky-500 dark:text-sky-400">
+                        {(() => {
+                          const total = dailySales.reduce((sum, d) => sum + (d.supplyAmount || 0), 0);
+                          return total > 0 ? `${total.toLocaleString("uk-UA")} ₴` : "—";
+                        })()}
+                      </td>
+                      <td className="py-2.5 px-3 text-right text-rose-500 dark:text-rose-400">
+                        {(() => {
+                          const total = dailySales.reduce((sum, d) => sum + d.writeOffs, 0);
+                          return total > 0 ? `${total} шт` : "—";
+                        })()}
+                      </td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
           </CardContent>
         </Card>
