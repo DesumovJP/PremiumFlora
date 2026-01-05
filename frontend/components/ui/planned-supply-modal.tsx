@@ -56,10 +56,10 @@ const clearSavedQuantities = () => {
   }
 };
 
-// Функція визначення статусу залишку
-const getStockStatus = (stock: number): 'critical' | 'low' | 'good' => {
-  if (stock < 150) return 'critical';
-  if (stock < 300) return 'low';
+// Функція визначення статусу залишку (відносно порогу)
+const getStockStatus = (stock: number, threshold: number): 'critical' | 'low' | 'good' => {
+  if (stock < threshold * 0.5) return 'critical';  // < 50% від порогу
+  if (stock <= threshold) return 'low';            // <= поріг
   return 'good';
 };
 
@@ -151,8 +151,8 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
         });
 
         const sorted = lowStockItems.sort((a, b) => {
-          const statusA = getStockStatus(a.currentStock);
-          const statusB = getStockStatus(b.currentStock);
+          const statusA = getStockStatus(a.currentStock, threshold);
+          const statusB = getStockStatus(b.currentStock, threshold);
 
           if (statusA === 'critical' && statusB !== 'critical') return -1;
           if (statusA !== 'critical' && statusB === 'critical') return 1;
@@ -450,37 +450,43 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
         {items.length > 0 && (
           <div className="space-y-2">
             {/* Статус-бар */}
-            <div className="flex items-center justify-between p-2 rounded-lg bg-[var(--admin-bg)]">
-              <div className="flex items-center gap-3 text-xs">
-                <span className="text-[var(--admin-text-tertiary)]">
-                  <span className="font-medium text-[var(--admin-text-primary)]">{items.length}</span> варіантів
-                </span>
-                <span className="text-[var(--admin-text-tertiary)]">
-                  <span className="font-medium text-[var(--admin-text-primary)]">{groupSupplyItems(items).length}</span> квіток
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                {itemsWithPlannedQty.length > 0 && (
-                  <button
-                    onClick={clearAllQuantities}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-stone-600 dark:text-slate-300 bg-stone-100 dark:bg-slate-700 hover:bg-rose-100 dark:hover:bg-rose-900/30 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
-                  >
-                    <Eraser className="h-3.5 w-3.5" />
-                    Очистити кількість
-                  </button>
-                )}
-                <div className="flex items-center gap-2 text-[10px]">
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-                    критично
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                    низько
-                  </span>
+            {(() => {
+              const criticalThreshold = Math.round(threshold * 0.5);
+              const criticalCount = items.filter(i => getStockStatus(i.currentStock, threshold) === 'critical').length;
+              const lowCount = items.filter(i => getStockStatus(i.currentStock, threshold) === 'low').length;
+              return (
+                <div className="flex flex-col gap-2 p-3 rounded-lg bg-[var(--admin-bg)]">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-[var(--admin-text-secondary)]">
+                      <span className="font-medium">Потребують поставки:</span>{' '}
+                      <span className="text-[var(--admin-text-primary)]">{groupSupplyItems(items).length} квіток</span>
+                      <span className="text-[var(--admin-text-tertiary)]"> ({items.length} позицій)</span>
+                    </div>
+                    {itemsWithPlannedQty.length > 0 && (
+                      <button
+                        onClick={clearAllQuantities}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-stone-600 dark:text-slate-300 bg-stone-100 dark:bg-slate-700 hover:bg-rose-100 dark:hover:bg-rose-900/30 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                      >
+                        <Eraser className="h-3.5 w-3.5" />
+                        Очистити
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 text-[11px]">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                      <span className="text-rose-600 dark:text-rose-400 font-medium">{criticalCount}</span>
+                      <span className="text-[var(--admin-text-tertiary)]">критично (&lt;{criticalThreshold})</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                      <span className="text-amber-600 dark:text-amber-400 font-medium">{lowCount}</span>
+                      <span className="text-[var(--admin-text-tertiary)]">низько ({criticalThreshold}-{threshold})</span>
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
+            })()}
 
             <div className="max-h-[500px] overflow-y-auto space-y-2">
               {groupSupplyItems(items).map((group) => (
@@ -564,15 +570,15 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
                             </span>
                             <span className={cn(
                               "text-xs",
-                              getStockStatus(item.currentStock) === 'critical'
+                              getStockStatus(item.currentStock, threshold) === 'critical'
                                 ? "text-rose-600 dark:text-rose-400"
-                                : getStockStatus(item.currentStock) === 'low'
+                                : getStockStatus(item.currentStock, threshold) === 'low'
                                 ? "text-amber-600 dark:text-amber-400"
                                 : "text-stone-500 dark:text-slate-400"
                             )}>
                               {item.currentStock} шт
                             </span>
-                            {getStockStatus(item.currentStock) === 'critical' && (
+                            {getStockStatus(item.currentStock, threshold) === 'critical' && (
                               <AlertTriangle className="h-3 w-3 text-rose-500" />
                             )}
                           </div>

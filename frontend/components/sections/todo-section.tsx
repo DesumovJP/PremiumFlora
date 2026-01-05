@@ -147,6 +147,7 @@ export function TodoSection() {
         if (result.success) {
           toast.success("Завдання оновлено");
           await loadTasks();
+          window.dispatchEvent(new CustomEvent("tasks-updated"));
         } else {
           toast.error(result.error?.message || "Помилка оновлення");
         }
@@ -164,6 +165,7 @@ export function TodoSection() {
         if (result.success) {
           toast.success("Завдання створено");
           await loadTasks();
+          window.dispatchEvent(new CustomEvent("tasks-updated"));
         } else {
           toast.error(result.error?.message || "Помилка створення");
         }
@@ -184,6 +186,8 @@ export function TodoSection() {
       const result = await completeTask(task.documentId);
       if (result.success) {
         await loadTasks();
+        // Notify sidebar to refresh upcoming tasks
+        window.dispatchEvent(new CustomEvent("tasks-updated"));
       } else {
         toast.error(result.error?.message || "Помилка оновлення");
       }
@@ -197,6 +201,7 @@ export function TodoSection() {
       const result = await updateTask(task.documentId, { status: "in_progress" });
       if (result.success) {
         await loadTasks();
+        window.dispatchEvent(new CustomEvent("tasks-updated"));
       } else {
         toast.error(result.error?.message || "Помилка оновлення");
       }
@@ -211,6 +216,7 @@ export function TodoSection() {
       const result = await deleteTask(task.documentId);
       if (result.success) {
         await loadTasks();
+        window.dispatchEvent(new CustomEvent("tasks-updated"));
       } else {
         toast.error(result.error?.message || "Помилка видалення");
       }
@@ -224,6 +230,8 @@ export function TodoSection() {
       const result = await updateTask(task.documentId, { status: "pending" });
       if (result.success) {
         await loadTasks();
+        // Notify sidebar to refresh upcoming tasks
+        window.dispatchEvent(new CustomEvent("tasks-updated"));
       } else {
         toast.error(result.error?.message || "Помилка оновлення");
       }

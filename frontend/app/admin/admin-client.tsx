@@ -405,11 +405,11 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   // Use pending payments total from ClientsSection
   const pendingPaymentsAmount = clientsPendingTotal;
 
-  // Calculate items to reorder (low stock items - stock < 50)
+  // Calculate items to reorder (low stock items - stock <= 100, same as modal/API)
   const itemsToReorder = useMemo(() => {
-    const LOW_STOCK_THRESHOLD = 50;
+    const LOW_STOCK_THRESHOLD = 100;
     return products.reduce((count, product) => {
-      return count + product.variants.filter(v => v.stock < LOW_STOCK_THRESHOLD).length;
+      return count + product.variants.filter(v => v.stock <= LOW_STOCK_THRESHOLD).length;
     }, 0);
   }, [products]);
 

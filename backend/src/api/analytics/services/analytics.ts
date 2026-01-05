@@ -373,11 +373,15 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       },
     });
 
+    // DEBUG: Логуємо кількість змін
+    strapi.log.info(`[Analytics DEBUG] Found ${shifts.length} shifts for ${targetYear}-${targetMonth + 1}`);
+
     // Групувати дані по днях
     const dailyMap = new Map<string, { orders: number; revenue: number; writeOffs: number; supplyAmount: number }>();
 
     // Трекаємо оброблені activity.id для дедуплікації
     const processedActivityIds = new Set<string>();
+    let duplicatesSkipped = 0;
 
     // Типи для activities
     interface ActivityDetails {
@@ -401,6 +405,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         // Дедуплікація по activity.id
         if (activity.id) {
           if (processedActivityIds.has(activity.id)) {
+            duplicatesSkipped++;
             return; // Пропускаємо вже оброблену активність
           }
           processedActivityIds.add(activity.id);
@@ -445,6 +450,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
               const qty = (item.stockAfter || 0) - (item.stockBefore || 0);
               return sum + qty * (item.priceAfter || 0);
             }, 0);
+            // DEBUG: Логуємо деталі поставки
+            strapi.log.info(`[Analytics DEBUG] Supply activity ${activity.id}: ${supplyItems.length} items, totalAmount=${totalAmount}`);
+            if (supplyItems.length > 0) {
+              const sample = supplyItems[0];
+              strapi.log.info(`[Analytics DEBUG] Sample item: stockBefore=${sample.stockBefore}, stockAfter=${sample.stockAfter}, priceAfter=${sample.priceAfter}`);
+            }
             dailyMap.set(key, {
               ...existing,
               supplyAmount: existing.supplyAmount + totalAmount,
@@ -467,6 +478,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         }
       });
     });
+
+    // DEBUG: Підсумок
+    strapi.log.info(`[Analytics DEBUG] Processed ${processedActivityIds.size} unique activities, skipped ${duplicatesSkipped} duplicates`);
 
     const daysOfWeek = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
     const result: DailySale[] = [];

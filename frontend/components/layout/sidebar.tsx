@@ -74,7 +74,17 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
     fetchUpcomingTasks();
     // Refresh every 30 seconds
     const interval = setInterval(fetchUpcomingTasks, 30000);
-    return () => clearInterval(interval);
+
+    // Listen for task updates from todo-section
+    const handleTasksUpdated = () => {
+      fetchUpcomingTasks();
+    };
+    window.addEventListener("tasks-updated", handleTasksUpdated);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("tasks-updated", handleTasksUpdated);
+    };
   }, [fetchUpcomingTasks]);
 
   const applyTheme = (value: "light" | "dark") => {
@@ -220,8 +230,11 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
               Поставка
             </span>
             {itemsToReorder > 0 && (
-              <Badge className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-[11px] px-1.5 py-0 font-medium">
-                {itemsToReorder}
+              <Badge
+                className="bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[11px] px-1.5 py-0 font-medium"
+                title={`${itemsToReorder} позицій потребують поставки`}
+              >
+                ↓{itemsToReorder}
               </Badge>
             )}
           </button>
