@@ -848,9 +848,10 @@ function ShiftCalendar({ shifts, onSelectShift, currentMonth, onMonthChange }: C
             return (
               <div
                 key={day}
+                onClick={hasShifts ? () => onSelectShift(dayShifts[0]) : undefined}
                 className={cn(
-                  'h-20 p-1 border-t border-r border-slate-100 dark:border-admin-border last:border-r-0 relative',
-                  hasShifts && 'bg-emerald-50/50 dark:bg-emerald-900/10'
+                  'h-20 p-1 border-t border-r border-slate-100 dark:border-admin-border last:border-r-0 relative transition-colors',
+                  hasShifts && 'bg-emerald-50/50 dark:bg-emerald-900/10 cursor-pointer hover:bg-emerald-100/80 dark:hover:bg-emerald-900/30'
                 )}
               >
                 <span
@@ -890,13 +891,12 @@ function ShiftCalendar({ shifts, onSelectShift, currentMonth, onMonthChange }: C
                         }, 0);
                       
                       return (
-                        <button
+                        <div
                           key={shift.documentId}
-                          onClick={() => onSelectShift(shift)}
                           className="w-full flex flex-col items-center space-y-[1px]"
                         >
                           {/* Виручка - просто число без "грн" */}
-                          <div className="text-[9px] leading-tight px-1 py-[1px] rounded bg-emerald-100 dark:bg-emerald-800/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-700/50 transition-colors inline-block text-center">
+                          <div className="text-[9px] leading-tight px-1 py-[1px] rounded bg-emerald-100 dark:bg-emerald-800/50 text-emerald-700 dark:text-emerald-300 inline-block text-center">
                             {Math.round(shift.totalSalesAmount).toLocaleString()}
                           </div>
                           {/* Поставка - синій квадратик */}
@@ -911,7 +911,7 @@ function ShiftCalendar({ shifts, onSelectShift, currentMonth, onMonthChange }: C
                               {Math.round(writeOffAmount).toLocaleString()}
                             </div>
                           )}
-                        </button>
+                        </div>
                       );
                     })}
                     {dayShifts.length > 1 && (
