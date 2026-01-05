@@ -21,6 +21,7 @@ import {
   type ImportResult,
   type SupplyRowData,
   type SupplyStatus,
+  type UpsertResult,
 } from '../../../services/excel';
 import { invalidateAnalyticsCache } from '../../analytics/services/analytics';
 
@@ -80,12 +81,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const rowOutcomes = new Map<string, SupplyRowData['outcome']>();
 
     // 6. Upsert (якщо не dry-run і є валідні рядки)
-    let upsertResult = {
+    let upsertResult: UpsertResult = {
       flowersCreated: 0,
       flowersUpdated: 0,
       variantsCreated: 0,
       variantsUpdated: 0,
-      operations: [] as Array<{ type: string; entity: string; id: number; name: string; details?: string }>,
+      operations: [],
     };
 
     strapi.log.info(`🔍 Checking upsert conditions: dryRun=${options.dryRun}, validRows=${valid.length}, willUpsert=${!options.dryRun && valid.length > 0}`);
