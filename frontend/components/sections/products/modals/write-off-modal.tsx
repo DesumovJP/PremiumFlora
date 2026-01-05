@@ -61,7 +61,7 @@ export function WriteOffModal({
               data.qty === '' ||
               (typeof data.qty === 'number' && (data.qty < 1 || data.qty > maxQty))
             }
-            className="bg-amber-600 hover:bg-amber-700"
+            className="bg-amber-600 hover:bg-amber-700 text-white"
           >
             {isWritingOff ? 'Списання...' : 'Списати'}
           </Button>

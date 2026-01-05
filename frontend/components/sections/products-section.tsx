@@ -1649,7 +1649,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
               writeOffData.qty === '' ||
               (typeof writeOffData.qty === 'number' && (writeOffData.qty < 1 || writeOffData.qty > (writeOffTarget.variants.find(v => v.size === writeOffData.selectedVariant)?.stock || 0)))
             }
-            className="bg-amber-600 hover:bg-amber-700"
+            className="bg-amber-600 hover:bg-amber-700 text-white"
           >
             {isWritingOff ? 'Списання...' : 'Списати'}
           </Button>
