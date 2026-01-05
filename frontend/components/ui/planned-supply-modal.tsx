@@ -5,7 +5,7 @@ import { Modal } from "./modal";
 import { Button } from "./button";
 import { Input } from "./input";
 import { cn } from "@/lib/utils";
-import { Plus, X, Search, Download, AlertTriangle, Package } from "lucide-react";
+import { Plus, X, Search, Download, AlertTriangle, Package, Eraser } from "lucide-react";
 import {
   getLowStockVariants,
   searchFlowersForSupply,
@@ -15,6 +15,46 @@ import type {
   PlannedSupplyItem,
   FlowerSearchResult,
 } from "@/lib/planned-supply-types";
+
+// LocalStorage ключ для збереження введених кількостей
+const STORAGE_KEY = 'pf-planned-supply-quantities';
+
+// Функції для роботи з localStorage
+const loadSavedQuantities = (): Record<string, number> => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : {};
+  } catch {
+    return {};
+  }
+};
+
+const saveQuantities = (quantities: Record<string, number>) => {
+  if (typeof window === 'undefined') return;
+  try {
+    // Видаляємо нульові значення
+    const filtered = Object.fromEntries(
+      Object.entries(quantities).filter(([, v]) => v > 0)
+    );
+    if (Object.keys(filtered).length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  } catch {
+    // Ignore errors
+  }
+};
+
+const clearSavedQuantities = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Ignore errors
+  }
+};
 
 // Функція визначення статусу залишку
 const getStockStatus = (stock: number): 'critical' | 'low' | 'good' => {
@@ -87,22 +127,28 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
     try {
       const result = await getLowStockVariants(threshold);
       if (result.success && result.data) {
-        const lowStockItems: PlannedSupplyItem[] = result.data.map((variant: LowStockVariant) => ({
-          id: `${variant.flowerId}-${variant.variantId}`,
-          flowerId: variant.flowerId,
-          flowerDocumentId: variant.flowerDocumentId,
-          variantId: variant.variantId,
-          variantDocumentId: variant.variantDocumentId,
-          flowerName: variant.flowerName,
-          flowerSlug: variant.flowerSlug,
-          imageUrl: variant.imageUrl,
-          length: variant.length,
-          currentStock: variant.currentStock,
-          plannedQuantity: 0,
-          price: variant.price,
-          isNew: false,
-          isManual: false,
-        }));
+        // Завантажити збережені кількості
+        const savedQuantities = loadSavedQuantities();
+
+        const lowStockItems: PlannedSupplyItem[] = result.data.map((variant: LowStockVariant) => {
+          const id = `${variant.flowerId}-${variant.variantId}`;
+          return {
+            id,
+            flowerId: variant.flowerId,
+            flowerDocumentId: variant.flowerDocumentId,
+            variantId: variant.variantId,
+            variantDocumentId: variant.variantDocumentId,
+            flowerName: variant.flowerName,
+            flowerSlug: variant.flowerSlug,
+            imageUrl: variant.imageUrl,
+            length: variant.length,
+            currentStock: variant.currentStock,
+            plannedQuantity: savedQuantities[id] || 0,
+            price: variant.price,
+            isNew: false,
+            isManual: false,
+          };
+        });
 
         const sorted = lowStockItems.sort((a, b) => {
           const statusA = getStockStatus(a.currentStock);
@@ -192,11 +238,21 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
   };
 
   const updatePlannedQuantity = (id: string, quantity: number) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, plannedQuantity: Math.max(0, quantity) } : item
-      )
-    );
+    const newQuantity = Math.max(0, quantity);
+    setItems((prev) => {
+      const updated = prev.map((item) =>
+        item.id === id ? { ...item, plannedQuantity: newQuantity } : item
+      );
+      // Зберегти в localStorage
+      const quantities = updated.reduce((acc, item) => {
+        if (item.plannedQuantity > 0) {
+          acc[item.id] = item.plannedQuantity;
+        }
+        return acc;
+      }, {} as Record<string, number>);
+      saveQuantities(quantities);
+      return updated;
+    });
   };
 
   const updateNewItem = (id: string, field: keyof PlannedSupplyItem, value: any) => {
@@ -209,6 +265,13 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
 
   const removeItem = (id: string) => {
     setItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const clearAllQuantities = () => {
+    setItems((prev) =>
+      prev.map((item) => ({ ...item, plannedQuantity: 0 }))
+    );
+    clearSavedQuantities();
   };
 
   const handleExport = () => {
@@ -395,6 +458,16 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
                 <span className="text-[var(--admin-text-tertiary)]">
                   <span className="font-medium text-[var(--admin-text-primary)]">{groupSupplyItems(items).length}</span> квіток
                 </span>
+                {itemsWithPlannedQty.length > 0 && (
+                  <button
+                    onClick={clearAllQuantities}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-stone-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                    title="Очистити всі введені кількості"
+                  >
+                    <Eraser className="h-3 w-3" />
+                    Очистити кількості
+                  </button>
+                )}
               </div>
               <div className="flex items-center gap-2 text-[10px]">
                 <span className="flex items-center gap-1">
