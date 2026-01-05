@@ -203,7 +203,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
                 </div>
               </div>
             )}
-            {details.discount && details.discount > 0 && (
+            {(details.discount || 0) > 0 && (
               <div className="flex justify-between">
                 <span className="text-slate-500 dark:text-admin-text-tertiary">Знижка:</span>
                 <span className="text-rose-600">-{details.discount} грн</span>

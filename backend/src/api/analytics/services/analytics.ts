@@ -156,6 +156,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   /**
    * Отримати метрики продажів за період
+   * Використовує дані з shifts як єдине джерело правди
    */
   async getSalesMetrics(period: 'day' | 'week' | 'month' = 'week'): Promise<SaleMetrics> {
     const now = new Date();
@@ -173,20 +174,44 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         break;
     }
 
-    const transactions = await strapi.db.query('api::transaction.transaction').findMany({
+    const shifts = await strapi.db.query('api::shift.shift').findMany({
       where: {
-        type: 'sale',
-        date: { $gte: startDate.toISOString() },
-        paymentStatus: { $in: ['paid', 'expected'] },
+        startedAt: { $gte: startDate.toISOString() },
       },
     });
 
-    const totalSales = transactions.length;
-    const totalAmount = transactions.reduce((sum: number, t: { amount: number }) => sum + (t.amount || 0), 0);
-    const itemsSold = transactions.reduce((sum: number, t: { items: Array<{ qty: number }> }) => {
-      const items = t.items || [];
-      return sum + items.reduce((s, item) => s + (item.qty || 0), 0);
-    }, 0);
+    interface SaleItem {
+      qty?: number;
+    }
+
+    interface SaleActivity {
+      type: string;
+      timestamp: string;
+      details: {
+        totalAmount?: number;
+        items?: SaleItem[];
+      };
+    }
+
+    let totalSales = 0;
+    let totalAmount = 0;
+    let itemsSold = 0;
+
+    shifts.forEach((shift: { activities: SaleActivity[] }) => {
+      const activities = shift.activities || [];
+      activities.forEach((activity) => {
+        if (activity.type === 'sale') {
+          // Перевіряємо чи активність в потрібному періоді
+          const activityDate = new Date(activity.timestamp);
+          if (activityDate >= startDate) {
+            totalSales += 1;
+            totalAmount += activity.details.totalAmount || 0;
+            const items = activity.details.items || [];
+            itemsSold += items.reduce((s, item) => s + (item.qty || 0), 0);
+          }
+        }
+      });
+    });
 
     return {
       period,
@@ -199,12 +224,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   /**
    * Отримати підсумок списань
+   * Використовує дані з shifts як єдине джерело правди
    */
   async getWriteOffSummary(): Promise<WriteOffSummary> {
-    const writeOffs = await strapi.db.query('api::transaction.transaction').findMany({
-      where: { type: 'writeOff' },
-      orderBy: { date: 'desc' },
-      limit: 50,
+    // Отримуємо всі зміни (без обмеження дат для повного звіту)
+    const shifts = await strapi.db.query('api::shift.shift').findMany({
+      orderBy: { startedAt: 'desc' },
     });
 
     const byReason: Record<string, number> = {
@@ -215,33 +240,79 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     };
 
     let totalItems = 0;
+    let totalWriteOffs = 0;
 
-    writeOffs.forEach((wo: { writeOffReason: string; items: Array<{ qty: number }> }) => {
-      const reason = wo.writeOffReason || 'other';
-      const items = wo.items || [];
-      const qty = items.reduce((s, item) => s + (item.qty || 0), 0);
+    // Типи для writeOff activities
+    interface WriteOffItem {
+      name?: string;
+      flowerName?: string;
+      length?: number;
+      qty?: number;
+    }
 
-      byReason[reason] = (byReason[reason] || 0) + qty;
-      totalItems += qty;
+    interface WriteOffDetails {
+      reason?: string;
+      items?: WriteOffItem[];
+    }
+
+    interface ProductDeleteDetails {
+      productName?: string;
+      variants?: Array<{ stock?: number; length?: number; price?: number }>;
+    }
+
+    interface WriteOffActivity {
+      type: string;
+      timestamp: string;
+      details: WriteOffDetails | ProductDeleteDetails;
+    }
+
+    // Збираємо всі списання з activities
+    const allWriteOffs: Array<{ timestamp: string; details: WriteOffDetails }> = [];
+
+    shifts.forEach((shift: { activities: WriteOffActivity[] }) => {
+      const activities = shift.activities || [];
+      activities.forEach((activity) => {
+        if (activity.type === 'writeOff') {
+          totalWriteOffs += 1;
+          const details = activity.details as WriteOffDetails;
+          const reason = details.reason || 'other';
+          const items = details.items || [];
+          const qty = items.reduce((s, item) => s + (item.qty || 0), 0);
+
+          byReason[reason] = (byReason[reason] || 0) + qty;
+          totalItems += qty;
+
+          allWriteOffs.push({ timestamp: activity.timestamp, details });
+        } else if (activity.type === 'productDelete') {
+          // Видалення товару зі складом теж рахуємо
+          const details = activity.details as ProductDeleteDetails;
+          const variants = details.variants || [];
+          const qty = variants.reduce((s, v) => s + (v.stock || 0), 0);
+          if (qty > 0) {
+            totalWriteOffs += 1;
+            byReason['other'] = (byReason['other'] || 0) + qty;
+            totalItems += qty;
+          }
+        }
+      });
     });
 
-    const recentWriteOffs = writeOffs.slice(0, 10).map((wo: {
-      date: string;
-      writeOffReason: string;
-      items: Array<{ name: string; length: number; qty: number }>;
-    }) => {
-      const item = (wo.items || [])[0] || { name: '', length: 0, qty: 0 };
+    // Сортуємо по даті і беремо останні 10
+    allWriteOffs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    const recentWriteOffs = allWriteOffs.slice(0, 10).map((wo) => {
+      const item = (wo.details.items || [])[0] || { name: '', flowerName: '', length: 0, qty: 0 };
       return {
-        date: wo.date,
-        flowerName: item.name || 'Unknown',
+        date: wo.timestamp,
+        flowerName: item.name || item.flowerName || 'Unknown',
         length: item.length || 0,
         qty: item.qty || 0,
-        reason: wo.writeOffReason || 'other',
+        reason: wo.details.reason || 'other',
       };
     });
 
     return {
-      totalWriteOffs: writeOffs.length,
+      totalWriteOffs,
       totalItems,
       byReason,
       recentWriteOffs,
@@ -285,6 +356,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   /**
    * Отримати щоденні продажі та списання за вказаний місяць
+   * Використовує дані з shifts як єдине джерело правди
    */
   async getDailySales(year?: number, month?: number): Promise<DailySale[]> {
     const now = new Date();
@@ -294,70 +366,81 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
     const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
 
-    // Отримуємо продажі
-    const sales = await strapi.db.query('api::transaction.transaction').findMany({
+    // Отримуємо всі зміни за місяць
+    const shifts = await strapi.db.query('api::shift.shift').findMany({
       where: {
-        type: 'sale',
-        date: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
-        paymentStatus: { $in: ['paid', 'expected'] },
+        startedAt: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
       },
     });
 
-    // Отримуємо списання за цей місяць
-    const writeOffs = await strapi.db.query('api::transaction.transaction').findMany({
-      where: {
-        type: 'writeOff',
-        date: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
-      },
-    });
-
-    // Отримуємо поставки за цей місяць
-    const supplies = await strapi.db.query('api::transaction.transaction').findMany({
-      where: {
-        type: 'supply',
-        date: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
-      },
-    });
-
-    // Групувати продажі по днях
+    // Групувати дані по днях
     const dailyMap = new Map<string, { orders: number; revenue: number; writeOffs: number; supplyAmount: number }>();
 
-    sales.forEach((t: { date: string; amount: number }) => {
-      const date = new Date(t.date);
-      const key = `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}`;
+    // Типи для activities
+    interface ActivityDetails {
+      totalAmount?: number;
+      items?: Array<{ qty?: number; price?: number }>;
+      supplyItems?: Array<{ stockBefore?: number; stockAfter?: number; priceAfter?: number }>;
+      variants?: Array<{ stock?: number; price?: number }>;
+    }
 
-      const existing = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0, supplyAmount: 0 };
-      dailyMap.set(key, {
-        ...existing,
-        orders: existing.orders + 1,
-        revenue: existing.revenue + (t.amount || 0),
-      });
-    });
+    interface ShiftActivity {
+      type: string;
+      timestamp: string;
+      details: ActivityDetails;
+    }
 
-    // Додаємо списання по днях
-    writeOffs.forEach((wo: { date: string; items: Array<{ qty: number }> }) => {
-      const date = new Date(wo.date);
-      const key = `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}`;
+    shifts.forEach((shift: { startedAt: string; activities: ShiftActivity[] }) => {
+      const activities = shift.activities || [];
 
-      const items = wo.items || [];
-      const totalQty = items.reduce((sum, item) => sum + (item.qty || 0), 0);
+      activities.forEach((activity) => {
+        const date = new Date(activity.timestamp);
+        const key = `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const existing = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0, supplyAmount: 0 };
 
-      const existing = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0, supplyAmount: 0 };
-      dailyMap.set(key, {
-        ...existing,
-        writeOffs: existing.writeOffs + totalQty,
-      });
-    });
-
-    // Додаємо поставки по днях
-    supplies.forEach((s: { date: string; amount: number }) => {
-      const date = new Date(s.date);
-      const key = `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}`;
-
-      const existing = dailyMap.get(key) || { orders: 0, revenue: 0, writeOffs: 0, supplyAmount: 0 };
-      dailyMap.set(key, {
-        ...existing,
-        supplyAmount: existing.supplyAmount + (s.amount || 0),
+        switch (activity.type) {
+          case 'sale': {
+            const amount = activity.details.totalAmount || 0;
+            dailyMap.set(key, {
+              ...existing,
+              orders: existing.orders + 1,
+              revenue: existing.revenue + amount,
+            });
+            break;
+          }
+          case 'writeOff': {
+            const items = activity.details.items || [];
+            const totalQty = items.reduce((sum, item) => sum + (item.qty || 0), 0);
+            dailyMap.set(key, {
+              ...existing,
+              writeOffs: existing.writeOffs + totalQty,
+            });
+            break;
+          }
+          case 'productDelete': {
+            // Видалення товару зі складом теж рахуємо як списання
+            const variants = activity.details.variants || [];
+            const totalQty = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+            dailyMap.set(key, {
+              ...existing,
+              writeOffs: existing.writeOffs + totalQty,
+            });
+            break;
+          }
+          case 'supply': {
+            // Поставка - рахуємо з supplyItems
+            const supplyItems = activity.details.supplyItems || [];
+            const totalAmount = supplyItems.reduce((sum, item) => {
+              const qty = (item.stockAfter || 0) - (item.stockBefore || 0);
+              return sum + qty * (item.priceAfter || 0);
+            }, 0);
+            dailyMap.set(key, {
+              ...existing,
+              supplyAmount: existing.supplyAmount + totalAmount,
+            });
+            break;
+          }
+        }
       });
     });
 
@@ -390,27 +473,61 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   /**
    * Отримати топ-5 квітів з найбільшим списанням
+   * Використовує дані з shifts як єдине джерело правди
    */
   async getTopWriteOffFlowers(): Promise<TopWriteOffFlower[]> {
-    const writeOffs = await strapi.db.query('api::transaction.transaction').findMany({
-      where: { type: 'writeOff' },
-    });
+    // Отримуємо всі зміни
+    const shifts = await strapi.db.query('api::shift.shift').findMany({});
 
     // Агрегувати по квіткам
     const flowerMap = new Map<string, { qty: number; amount: number }>();
     let totalQty = 0;
 
-    writeOffs.forEach((wo: { items: Array<{ name: string; qty: number; price: number }> }) => {
-      (wo.items || []).forEach((item) => {
-        const qty = item.qty || 0;
-        const amount = qty * (item.price || 0);
+    interface WriteOffItem {
+      name?: string;
+      flowerName?: string;
+      qty?: number;
+      price?: number;
+    }
 
-        const existing = flowerMap.get(item.name) || { qty: 0, amount: 0 };
-        flowerMap.set(item.name, {
-          qty: existing.qty + qty,
-          amount: existing.amount + amount,
-        });
-        totalQty += qty;
+    interface ProductDeleteVariant {
+      stock?: number;
+      price?: number;
+    }
+
+    shifts.forEach((shift: { activities: Array<{ type: string; details: { items?: WriteOffItem[]; productName?: string; variants?: ProductDeleteVariant[] } }> }) => {
+      const activities = shift.activities || [];
+      activities.forEach((activity) => {
+        if (activity.type === 'writeOff') {
+          const items = activity.details.items || [];
+          items.forEach((item) => {
+            const name = item.name || item.flowerName || 'Unknown';
+            const qty = item.qty || 0;
+            const amount = qty * (item.price || 0);
+
+            const existing = flowerMap.get(name) || { qty: 0, amount: 0 };
+            flowerMap.set(name, {
+              qty: existing.qty + qty,
+              amount: existing.amount + amount,
+            });
+            totalQty += qty;
+          });
+        } else if (activity.type === 'productDelete') {
+          // Видалення товару зі складом теж рахуємо
+          const productName = activity.details.productName || 'Unknown';
+          const variants = activity.details.variants || [];
+          const qty = variants.reduce((s: number, v: ProductDeleteVariant) => s + (v.stock || 0), 0);
+          const amount = variants.reduce((s: number, v: ProductDeleteVariant) => s + (v.stock || 0) * (v.price || 0), 0);
+
+          if (qty > 0) {
+            const existing = flowerMap.get(productName) || { qty: 0, amount: 0 };
+            flowerMap.set(productName, {
+              qty: existing.qty + qty,
+              amount: existing.amount + amount,
+            });
+            totalQty += qty;
+          }
+        }
       });
     });
 
@@ -429,35 +546,36 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   /**
    * Отримати тижневу виручку (4 тижні вибраного місяця)
+   * Використовує дані з shifts як єдине джерело правди
    */
   async getWeeklyRevenue(year?: number, month?: number): Promise<number[]> {
     const now = new Date();
     const targetYear = year ?? now.getFullYear();
     const targetMonth = month ?? now.getMonth();
 
-    // Отримуємо всі транзакції за місяць
+    // Отримуємо всі зміни за місяць
     const startOfMonth = new Date(targetYear, targetMonth, 1);
     const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
 
-    const transactions = await strapi.db.query('api::transaction.transaction').findMany({
+    const shifts = await strapi.db.query('api::shift.shift').findMany({
       where: {
-        type: 'sale',
-        date: {
-          $gte: startOfMonth.toISOString(),
-          $lte: endOfMonth.toISOString(),
-        },
-        paymentStatus: { $in: ['paid', 'expected'] },
+        startedAt: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
       },
     });
 
     // Групуємо по тижнях місяця
     const weeklyRevenue: number[] = [0, 0, 0, 0, 0];
 
-    transactions.forEach((t: { date: string; amount: number }) => {
-      const transDate = new Date(t.date);
-      const dayOfMonth = transDate.getDate();
-      const weekIndex = Math.min(Math.floor((dayOfMonth - 1) / 7), 4);
-      weeklyRevenue[weekIndex] += t.amount || 0;
+    shifts.forEach((shift: { activities: Array<{ type: string; timestamp: string; details: { totalAmount?: number } }> }) => {
+      const activities = shift.activities || [];
+      activities.forEach((activity) => {
+        if (activity.type === 'sale') {
+          const actDate = new Date(activity.timestamp);
+          const dayOfMonth = actDate.getDate();
+          const weekIndex = Math.min(Math.floor((dayOfMonth - 1) / 7), 4);
+          weeklyRevenue[weekIndex] += activity.details.totalAmount || 0;
+        }
+      });
     });
 
     // Повертаємо тільки заповнені тижні (до 4)
@@ -468,35 +586,36 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   /**
    * Отримати кількість замовлень по тижнях вибраного місяця
+   * Використовує дані з shifts як єдине джерело правди
    */
   async getOrdersPerWeek(year?: number, month?: number): Promise<number[]> {
     const now = new Date();
     const targetYear = year ?? now.getFullYear();
     const targetMonth = month ?? now.getMonth();
 
-    // Отримуємо всі транзакції за місяць
+    // Отримуємо всі зміни за місяць
     const startOfMonth = new Date(targetYear, targetMonth, 1);
     const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
 
-    const transactions = await strapi.db.query('api::transaction.transaction').findMany({
+    const shifts = await strapi.db.query('api::shift.shift').findMany({
       where: {
-        type: 'sale',
-        date: {
-          $gte: startOfMonth.toISOString(),
-          $lte: endOfMonth.toISOString(),
-        },
-        paymentStatus: { $in: ['paid', 'expected'] },
+        startedAt: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
       },
     });
 
     // Групуємо по тижнях місяця
     const weeklyOrders: number[] = [0, 0, 0, 0, 0];
 
-    transactions.forEach((t: { date: string }) => {
-      const transDate = new Date(t.date);
-      const dayOfMonth = transDate.getDate();
-      const weekIndex = Math.min(Math.floor((dayOfMonth - 1) / 7), 4);
-      weeklyOrders[weekIndex] += 1;
+    shifts.forEach((shift: { activities: Array<{ type: string; timestamp: string }> }) => {
+      const activities = shift.activities || [];
+      activities.forEach((activity) => {
+        if (activity.type === 'sale') {
+          const actDate = new Date(activity.timestamp);
+          const dayOfMonth = actDate.getDate();
+          const weekIndex = Math.min(Math.floor((dayOfMonth - 1) / 7), 4);
+          weeklyOrders[weekIndex] += 1;
+        }
+      });
     });
 
     // Повертаємо тільки заповнені тижні (до 4)
@@ -507,6 +626,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   /**
    * Отримати KPI метрики за вказаний місяць
+   * Використовує дані з shifts як єдине джерело правди
    */
   async getKpis(year?: number, month?: number): Promise<KpiData[]> {
     const now = new Date();
@@ -518,33 +638,53 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const startOfLastMonth = new Date(targetYear, targetMonth - 1, 1);
     const endOfLastMonth = new Date(targetYear, targetMonth, 0, 23, 59, 59, 999);
 
-    // Продажі вибраного місяця
-    const currentSales = await strapi.db.query('api::transaction.transaction').findMany({
+    // Отримуємо зміни за поточний та попередній місяць
+    const currentShifts = await strapi.db.query('api::shift.shift').findMany({
       where: {
-        type: 'sale',
-        date: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
-        paymentStatus: { $in: ['paid', 'expected'] },
+        startedAt: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
       },
     });
 
-    // Продажі попереднього місяця
-    const lastSales = await strapi.db.query('api::transaction.transaction').findMany({
+    const lastMonthShifts = await strapi.db.query('api::shift.shift').findMany({
       where: {
-        type: 'sale',
-        date: {
-          $gte: startOfLastMonth.toISOString(),
-          $lte: endOfLastMonth.toISOString(),
-        },
-        paymentStatus: { $in: ['paid', 'expected'] },
+        startedAt: { $gte: startOfLastMonth.toISOString(), $lte: endOfLastMonth.toISOString() },
       },
     });
 
-    const currentRevenue = currentSales.reduce((sum: number, t: { amount: number }) => sum + (t.amount || 0), 0);
-    const lastRevenue = lastSales.reduce((sum: number, t: { amount: number }) => sum + (t.amount || 0), 0);
+    // Рахуємо продажі з shifts
+    interface SaleActivity {
+      type: string;
+      timestamp: string;
+      details: { totalAmount?: number };
+    }
+
+    let currentRevenue = 0;
+    let currentOrders = 0;
+
+    currentShifts.forEach((shift: { activities: SaleActivity[] }) => {
+      const activities = shift.activities || [];
+      activities.forEach((activity) => {
+        if (activity.type === 'sale') {
+          currentOrders += 1;
+          currentRevenue += activity.details.totalAmount || 0;
+        }
+      });
+    });
+
+    let lastRevenue = 0;
+    let lastOrders = 0;
+
+    lastMonthShifts.forEach((shift: { activities: SaleActivity[] }) => {
+      const activities = shift.activities || [];
+      activities.forEach((activity) => {
+        if (activity.type === 'sale') {
+          lastOrders += 1;
+          lastRevenue += activity.details.totalAmount || 0;
+        }
+      });
+    });
+
     const revenueChange = lastRevenue > 0 ? Math.round((currentRevenue - lastRevenue) / lastRevenue * 100) : 0;
-
-    const currentOrders = currentSales.length;
-    const lastOrders = lastSales.length;
     const ordersChange = lastOrders > 0 ? Math.round((currentOrders - lastOrders) / lastOrders * 100) : 0;
 
     const avgOrderCurrent = currentOrders > 0 ? Math.round(currentRevenue / currentOrders) : 0;
@@ -610,24 +750,33 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   /**
    * Отримати розподіл по категоріях (топ квіти за продажами)
+   * Використовує дані з shifts як єдине джерело правди
    */
   async getCategorySplit(): Promise<CategorySplit[]> {
-    const transactions = await strapi.db.query('api::transaction.transaction').findMany({
-      where: {
-        type: 'sale',
-        paymentStatus: { $in: ['paid', 'expected'] },
-      },
-    });
+    const shifts = await strapi.db.query('api::shift.shift').findMany({});
 
     // Агрегувати по квіткам
     const flowerSales = new Map<string, number>();
     let totalSales = 0;
 
-    transactions.forEach((t: { items: Array<{ name: string; qty: number; price: number }> }) => {
-      (t.items || []).forEach((item) => {
-        const amount = (item.qty || 0) * (item.price || 0);
-        flowerSales.set(item.name, (flowerSales.get(item.name) || 0) + amount);
-        totalSales += amount;
+    interface SaleItem {
+      name?: string;
+      qty?: number;
+      price?: number;
+    }
+
+    shifts.forEach((shift: { activities: Array<{ type: string; details: { items?: SaleItem[] } }> }) => {
+      const activities = shift.activities || [];
+      activities.forEach((activity) => {
+        if (activity.type === 'sale') {
+          const items = activity.details.items || [];
+          items.forEach((item) => {
+            const name = item.name || 'Unknown';
+            const amount = (item.qty || 0) * (item.price || 0);
+            flowerSales.set(name, (flowerSales.get(name) || 0) + amount);
+            totalSales += amount;
+          });
+        }
       });
     });
 
@@ -658,6 +807,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   /**
    * Отримати суми оплачених та очікуваних платежів за вказаний місяць
+   * Використовує дані з shifts як єдине джерело правди
    */
   async getPaymentSummary(year?: number, month?: number): Promise<{ paidAmount: number; expectedAmount: number }> {
     const now = new Date();
@@ -667,24 +817,34 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const startOfMonth = new Date(targetYear, targetMonth, 1);
     const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
 
-    const transactions = await strapi.db.query('api::transaction.transaction').findMany({
+    const shifts = await strapi.db.query('api::shift.shift').findMany({
       where: {
-        type: 'sale',
-        date: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
+        startedAt: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
       },
     });
 
     let paidAmount = 0;
     let expectedAmount = 0;
 
-    transactions.forEach((t: { amount: number; paymentStatus?: string }) => {
-      const amount = t.amount || 0;
-      // Без статусу (старі) або 'paid' = оплачено
-      if (!t.paymentStatus || t.paymentStatus === 'paid') {
-        paidAmount += amount;
-      } else if (t.paymentStatus === 'expected' || t.paymentStatus === 'pending') {
-        expectedAmount += amount;
-      }
+    interface SaleDetails {
+      totalAmount?: number;
+      paymentStatus?: string;
+    }
+
+    shifts.forEach((shift: { activities: Array<{ type: string; timestamp: string; details: SaleDetails }> }) => {
+      const activities = shift.activities || [];
+      activities.forEach((activity) => {
+        if (activity.type === 'sale') {
+          const amount = activity.details.totalAmount || 0;
+          const paymentStatus = activity.details.paymentStatus;
+          // Без статусу (старі) або 'paid' = оплачено
+          if (!paymentStatus || paymentStatus === 'paid') {
+            paidAmount += amount;
+          } else if (paymentStatus === 'expected' || paymentStatus === 'pending') {
+            expectedAmount += amount;
+          }
+        }
+      });
     });
 
     return { paidAmount, expectedAmount };
@@ -692,32 +852,47 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   /**
    * Отримати загальну суму непогашених платежів (всі часи)
+   * Використовує дані з shifts як єдине джерело правди
    */
   async getTotalPendingPayments(): Promise<{
     totalPendingAmount: number;
     pendingOrdersCount: number;
     pendingByCustomer: Array<{ customerId: string; customerName: string; amount: number }>;
   }> {
-    const transactions = await strapi.db.query('api::transaction.transaction').findMany({
-      where: {
-        type: 'sale',
-        paymentStatus: { $in: ['expected', 'pending'] },
-      },
-      populate: ['customer'],
-    });
+    const shifts = await strapi.db.query('api::shift.shift').findMany({});
 
     let totalPendingAmount = 0;
+    let pendingOrdersCount = 0;
     const pendingByCustomerMap = new Map<string, { name: string; amount: number }>();
 
-    transactions.forEach((t: { amount: number; customer?: { documentId: string; name: string } }) => {
-      const amount = t.amount || 0;
-      totalPendingAmount += amount;
+    interface SaleDetails {
+      totalAmount?: number;
+      paymentStatus?: string;
+      customerId?: string;
+      customerName?: string;
+    }
 
-      if (t.customer) {
-        const existing = pendingByCustomerMap.get(t.customer.documentId) || { name: t.customer.name, amount: 0 };
-        existing.amount += amount;
-        pendingByCustomerMap.set(t.customer.documentId, existing);
-      }
+    shifts.forEach((shift: { activities: Array<{ type: string; details: SaleDetails }> }) => {
+      const activities = shift.activities || [];
+      activities.forEach((activity) => {
+        if (activity.type === 'sale') {
+          const paymentStatus = activity.details.paymentStatus;
+          if (paymentStatus === 'expected' || paymentStatus === 'pending') {
+            const amount = activity.details.totalAmount || 0;
+            totalPendingAmount += amount;
+            pendingOrdersCount += 1;
+
+            const customerId = activity.details.customerId;
+            const customerName = activity.details.customerName || 'Unknown';
+
+            if (customerId) {
+              const existing = pendingByCustomerMap.get(customerId) || { name: customerName, amount: 0 };
+              existing.amount += amount;
+              pendingByCustomerMap.set(customerId, existing);
+            }
+          }
+        }
+      });
     });
 
     const pendingByCustomer = Array.from(pendingByCustomerMap.entries())
@@ -730,7 +905,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
     return {
       totalPendingAmount,
-      pendingOrdersCount: transactions.length,
+      pendingOrdersCount,
       pendingByCustomer,
     };
   },
