@@ -97,6 +97,9 @@ export class NormalizerService {
     'Pink Xpression Garden Rose': ['Pink Xpression Garden'],
     'Vicky Gardens Rose': ['Vicky Gardens'],
     'White O Hara Garden Rose': ['White O Hara Garden'],
+
+    // Carnation
+    'Red Don Pedro Carnation': ['Red Don Luis Carnation', 'Red Don Luis'],
   };
 
   /**
