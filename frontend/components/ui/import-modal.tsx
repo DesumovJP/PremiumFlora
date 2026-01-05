@@ -204,44 +204,23 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
         </label>
 
         {/* Options */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
-              Режим залишків
-            </label>
-            <select
-              className="w-full h-10 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-slate-300 dark:focus:border-slate-600"
-              value={options.stockMode}
-              onChange={(e) =>
-                setOptions((prev) => ({
-                  ...prev,
-                  stockMode: e.target.value as StockMode,
-                }))
-              }
-            >
-              <option value="replace">Замінити</option>
-              <option value="add">Додати</option>
-              <option value="skip">Пропустити</option>
-            </select>
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
-              Режим цін
-            </label>
-            <select
-              className="w-full h-10 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-slate-300 dark:focus:border-slate-600"
-              value={options.priceMode}
-              onChange={(e) =>
-                setOptions((prev) => ({
-                  ...prev,
-                  priceMode: e.target.value as PriceMode,
-                }))
-              }
-            >
-              <option value="replace">Замінити</option>
-              <option value="skip">Залишити стару</option>
-            </select>
-          </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
+            Режим цін
+          </label>
+          <select
+            className="w-full h-10 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-slate-300 dark:focus:border-slate-600"
+            value={options.priceMode}
+            onChange={(e) =>
+              setOptions((prev) => ({
+                ...prev,
+                priceMode: e.target.value as PriceMode,
+              }))
+            }
+          >
+            <option value="replace">Замінити</option>
+            <option value="skip">Залишити стару</option>
+          </select>
         </div>
 
         {/* Price calculation - only show when prices will be updated */}
