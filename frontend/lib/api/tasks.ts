@@ -54,15 +54,12 @@ export async function getTasks(status?: string): Promise<ApiResponse<GraphQLTask
 }
 
 /**
- * Отримати майбутні завдання (від сьогодні)
+ * Отримати активні завдання (pending/in_progress)
+ * Включає прострочені завдання
  */
 export async function getUpcomingTasks(): Promise<ApiResponse<GraphQLTask[]>> {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     const data = await graphqlRequest<TasksResponse>(GET_UPCOMING_TASKS, {
-      dateFrom: today.toISOString(),
       pageSize: 50,
     });
 

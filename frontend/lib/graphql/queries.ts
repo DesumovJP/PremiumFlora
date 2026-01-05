@@ -375,16 +375,16 @@ export const GET_TASK_BY_ID = gql`
 `;
 
 /**
- * Отримати завдання на сьогодні та майбутні
+ * Отримати активні завдання (pending/in_progress)
+ * Включає прострочені завдання, щоб вони відображались у списку
  */
 export const GET_UPCOMING_TASKS = gql`
-  query GetUpcomingTasks($dateFrom: DateTime!, $pageSize: Int = 50) {
+  query GetUpcomingTasks($pageSize: Int = 50) {
     tasks(
       pagination: { pageSize: $pageSize }
       sort: ["dueDate:asc"]
       filters: {
-        dueDate: { gte: $dateFrom }
-        status: { ne: "cancelled" }
+        status: { in: ["pending", "in_progress"] }
       }
     ) {
       documentId

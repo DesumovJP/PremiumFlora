@@ -43,16 +43,13 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
     router.refresh();
   };
 
-  // Fetch upcoming tasks
+  // Fetch upcoming tasks (active: pending/in_progress, including overdue)
   const fetchUpcomingTasks = useCallback(async () => {
     try {
       const result = await getUpcomingTasks();
       if (result.success && result.data) {
-        // Filter only pending and in_progress tasks, limit to 4
-        const activeTasks = result.data
-          .filter((t) => t.status === "pending" || t.status === "in_progress")
-          .slice(0, 4);
-        setUpcomingTasks(activeTasks);
+        // Limit to 4 tasks (query already filters by status)
+        setUpcomingTasks(result.data.slice(0, 4));
       }
     } catch (error) {
       console.error("Error fetching upcoming tasks:", error);
