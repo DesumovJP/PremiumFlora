@@ -681,7 +681,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                     <MetricBox label="Витрачено" value={`${selected.spent.toLocaleString("uk-UA")} грн`} />
                     <MetricBox label="Останнє" value={selected.lastOrder} />
                   </div>
-                  {selected.pendingPayment && selected.pendingPayment > 0 && (
+                  {selected.pendingPayment > 0 && (
                     <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-900/20 p-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-amber-800 dark:text-amber-300">Очікується оплата</span>
