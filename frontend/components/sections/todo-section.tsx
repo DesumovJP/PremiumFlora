@@ -31,6 +31,7 @@ import {
   Loader2,
   PlayCircle,
   ChevronDown,
+  RotateCcw,
 } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 
@@ -218,6 +219,19 @@ export function TodoSection() {
     }
   };
 
+  const handleUncomplete = async (task: GraphQLTask) => {
+    try {
+      const result = await updateTask(task.documentId, { status: "pending" });
+      if (result.success) {
+        await loadTasks();
+      } else {
+        toast.error(result.error?.message || "Помилка оновлення");
+      }
+    } catch (error) {
+      console.error("Error uncompleting task:", error);
+    }
+  };
+
   const handleEdit = (task: GraphQLTask) => {
     setEditingTask(task);
     setFormData({
@@ -251,7 +265,13 @@ export function TodoSection() {
 
     return (
       <div className="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--admin-bg)] transition-colors">
-        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+        <button
+          onClick={() => handleUncomplete(task)}
+          className="shrink-0"
+          title="Повернути до активних"
+        >
+          <CheckCircle2 className="h-4 w-4 text-emerald-500 hover:text-amber-500 transition-colors" />
+        </button>
         <span className="flex-1 text-sm text-[var(--admin-text-muted)] line-through truncate">
           {task.title}
         </span>
@@ -261,6 +281,13 @@ export function TodoSection() {
         <span className="text-xs text-[var(--admin-text-muted)] shrink-0">
           {new Date(task.updatedAt || task.dueDate).toLocaleDateString('uk-UA')}
         </span>
+        <button
+          onClick={() => handleUncomplete(task)}
+          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded transition-all"
+          title="Повернути до активних"
+        >
+          <RotateCcw className="h-3.5 w-3.5 text-amber-500" />
+        </button>
         <button
           onClick={() => handleDelete(task)}
           className="p-1 opacity-0 group-hover:opacity-100 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded transition-all"
@@ -314,15 +341,21 @@ export function TodoSection() {
               e.stopPropagation();
               if (!isCompleted) handleComplete(task);
             }}
-            className="shrink-0 mt-0.5"
+            className="shrink-0 mt-0.5 group/check"
             disabled={isCompleted}
+            title={isCompleted ? "Виконано" : isInProgress ? "В роботі" : "Натисніть, щоб виконати"}
           >
             {isCompleted ? (
               <CheckCircle2 className="h-5 w-5 text-emerald-500" />
             ) : isInProgress ? (
               <PlayCircle className="h-5 w-5 text-blue-500" />
             ) : (
-              <Circle className="h-5 w-5 text-[var(--admin-text-muted)] hover:text-emerald-500 transition-colors" />
+              <div className="relative">
+                <Circle className="h-5 w-5 text-[var(--admin-text-muted)] group-hover/check:text-emerald-500 transition-colors" />
+                <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded opacity-0 group-hover/check:opacity-100 transition-opacity pointer-events-none">
+                  Виконати
+                </span>
+              </div>
             )}
           </button>
           <Badge className={cn("text-[10px] shrink-0", categoryInfo.bgColor, categoryInfo.color)}>
@@ -369,11 +402,11 @@ export function TodoSection() {
         </div>
 
         {/* Actions on hover */}
-        <div className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute bottom-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-lg px-1 py-0.5 shadow-sm">
           {task.status === "pending" && (
             <button
               onClick={() => handleStartProgress(task)}
-              className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+              className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
               title="Почати"
             >
               <PlayCircle className="h-3.5 w-3.5 text-blue-500" />
@@ -381,14 +414,14 @@ export function TodoSection() {
           )}
           <button
             onClick={() => handleEdit(task)}
-            className="p-1 hover:bg-[var(--admin-bg)] rounded"
+            className="p-1.5 hover:bg-[var(--admin-bg)] rounded"
             title="Редагувати"
           >
             <Edit2 className="h-3.5 w-3.5 text-[var(--admin-text-muted)]" />
           </button>
           <button
             onClick={() => handleDelete(task)}
-            className="p-1 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded"
+            className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded"
             title="Видалити"
           >
             <Trash2 className="h-3.5 w-3.5 text-rose-400" />
@@ -403,7 +436,7 @@ export function TodoSection() {
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">Завдання</CardTitle>
-          <Button onClick={openAddModal} size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={openAddModal} size="sm">
             <Plus className="h-4 w-4 mr-1" />
             Додати
           </Button>
@@ -446,7 +479,7 @@ export function TodoSection() {
             <Calendar className="h-10 w-10 mx-auto mb-2 opacity-50" />
             <p className="mb-4">{activeTab === "pending" ? "Немає активних завдань" : "Немає виконаних завдань"}</p>
             {activeTab === "pending" && (
-              <Button onClick={openAddModal} className="bg-emerald-600 hover:bg-emerald-700">
+              <Button onClick={openAddModal}>
                 <Plus className="h-4 w-4 mr-1" />
                 Створити завдання
               </Button>
@@ -581,7 +614,8 @@ export function TodoSection() {
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+              variant="filled"
+              className="flex-1"
               disabled={isSubmitting || !formData.title.trim() || !formData.dueDate}
             >
               {isSubmitting ? (
