@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import type { WriteOffInput } from "@/lib/api-types";
 import { getFlowers, searchFlowers, getFlowerForEdit, updateFlower, updateVariant } from "@/lib/strapi";
 import { getAuthHeaders } from "@/lib/auth";
+import { createWriteOff } from "@/lib/api";
 import type { StrapiBlock } from "@/lib/strapi-types";
 
 const stockTone = (stock: number) => {
@@ -700,6 +701,27 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
     try {
       const STRAPI_URL = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337").replace(/\/$/, '');
       const authHeaders = getAuthHeaders();
+
+      // Спочатку створюємо writeOff транзакції для варіантів зі складом
+      // Це важливо для коректного обліку в аналітиці
+      const variantsWithStock = deleteTarget.variants.filter(v => (v.stock || 0) > 0);
+
+      for (const variant of variantsWithStock) {
+        const operationId = `wo_del_${deleteTarget.documentId}_${variant.length}_${Date.now()}`;
+        const result = await createWriteOff({
+          operationId,
+          flowerSlug: deleteTarget.slug || deleteTarget.documentId,
+          length: variant.length,
+          qty: variant.stock,
+          reason: 'other',
+          notes: `Видалено з каталогу: ${deleteTarget.name}`,
+        });
+
+        if (!result.success) {
+          console.warn(`Failed to create write-off for variant ${variant.length}cm:`, result.error);
+          // Продовжуємо видалення навіть якщо writeOff не вдався
+        }
+      }
 
       const response = await fetch(`${STRAPI_URL}/api/flowers/${deleteTarget.documentId}`, {
         method: "DELETE",
