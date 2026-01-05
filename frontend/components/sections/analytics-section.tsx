@@ -262,33 +262,44 @@ export function AnalyticsSection({
         {/* Дохід (50%) + KPIs (50% - 2x2 grid) */}
         <div className="grid gap-4 lg:grid-cols-2">
           {/* Дохід - 50% */}
-          <Card className="border-slate-200 dark:border-slate-700 flex flex-col justify-center">
-            <CardHeader className="pb-1 sm:pb-2">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <CardTitle className="text-xs sm:text-sm font-medium text-slate-900 dark:text-white">Дохід</CardTitle>
-                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">≈{incomePercentage}% від виручки</p>
+          <Card className="border-emerald-200/50 dark:border-emerald-800/30 bg-gradient-to-br from-emerald-50/80 to-white dark:from-emerald-900/20 dark:to-slate-900 flex flex-col justify-center overflow-hidden relative">
+            {/* Декоративний елемент */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-100/50 dark:bg-emerald-800/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+
+            <CardHeader className="pb-2 sm:pb-3 relative">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-800/40 ring-1 ring-emerald-200/50 dark:ring-emerald-700/50">
+                    <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm sm:text-base font-semibold text-slate-800 dark:text-white">Дохід</CardTitle>
+                    <p className="text-[10px] sm:text-xs text-emerald-600/80 dark:text-emerald-400/80 font-medium">≈{incomePercentage}% від виручки</p>
+                  </div>
                 </div>
-                <p className="text-base sm:text-2xl font-semibold text-slate-900 dark:text-white">{income.toLocaleString("uk-UA")} ₴</p>
+                <div className="text-right">
+                  <p className="text-xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">{income.toLocaleString("uk-UA")}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">грн</p>
+                </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-                <div className="rounded-md sm:rounded-lg bg-slate-50 dark:bg-slate-800 px-2 sm:px-2.5 py-1.5 sm:py-2">
-                  <p className="text-[9px] sm:text-[10px] uppercase text-slate-400 dark:text-slate-500">Макс</p>
-                  <p className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200">
+            <CardContent className="relative">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="rounded-xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm px-3 py-2.5 sm:px-4 sm:py-3 border border-slate-200/50 dark:border-slate-700/50">
+                  <p className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 mb-0.5">Макс</p>
+                  <p className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-100">
                     {(weeklyRevenue.length ? Math.max(...weeklyRevenue) : 0).toLocaleString("uk-UA")}
                   </p>
                 </div>
-                <div className="rounded-md sm:rounded-lg bg-slate-50 dark:bg-slate-800 px-2 sm:px-2.5 py-1.5 sm:py-2">
-                  <p className="text-[9px] sm:text-[10px] uppercase text-slate-400 dark:text-slate-500">Мін</p>
-                  <p className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200">
+                <div className="rounded-xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm px-3 py-2.5 sm:px-4 sm:py-3 border border-slate-200/50 dark:border-slate-700/50">
+                  <p className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 mb-0.5">Мін</p>
+                  <p className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-100">
                     {(weeklyRevenue.length ? Math.min(...weeklyRevenue) : 0).toLocaleString("uk-UA")}
                   </p>
                 </div>
-                <div className="rounded-md sm:rounded-lg bg-slate-50 dark:bg-slate-800 px-2 sm:px-2.5 py-1.5 sm:py-2">
-                  <p className="text-[9px] sm:text-[10px] uppercase text-slate-400 dark:text-slate-500">Середнє</p>
-                  <p className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200">
+                <div className="rounded-xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm px-3 py-2.5 sm:px-4 sm:py-3 border border-slate-200/50 dark:border-slate-700/50">
+                  <p className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 mb-0.5">Середнє</p>
+                  <p className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-100">
                     {Math.round(totalRevenue / Math.max(weeklyRevenue.length, 1)).toLocaleString("uk-UA")}
                   </p>
                 </div>
