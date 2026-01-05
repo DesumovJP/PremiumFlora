@@ -41,15 +41,6 @@ export default {
       },
     },
     {
-      method: 'POST',
-      path: '/shifts/cleanup',
-      handler: 'shift.cleanup',
-      config: {
-        policies: [],
-        middlewares: [],
-      },
-    },
-    {
       method: 'GET',
       path: '/shifts/:documentId',
       handler: 'shift.findOne',
