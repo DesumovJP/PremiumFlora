@@ -340,18 +340,12 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                 </div>
 
                 {result.data.status !== "dry-run" && (
-                  <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="space-y-1 text-sm">
                     <div className="text-slate-600 dark:text-slate-400">
-                      Нових квітів: <span className="font-medium text-slate-900 dark:text-white">{result.data.stats.flowersCreated}</span>
+                      Квіти: <span className="font-medium text-emerald-600 dark:text-emerald-400">+{result.data.stats.flowersCreated} нових</span>, <span className="font-medium text-slate-900 dark:text-white">{result.data.stats.flowersUpdated} оновлено</span>
                     </div>
                     <div className="text-slate-600 dark:text-slate-400">
-                      Оновлено: <span className="font-medium text-slate-900 dark:text-white">{result.data.stats.flowersUpdated}</span>
-                    </div>
-                    <div className="text-slate-600 dark:text-slate-400">
-                      Нових варіантів: <span className="font-medium text-slate-900 dark:text-white">{result.data.stats.variantsCreated}</span>
-                    </div>
-                    <div className="text-slate-600 dark:text-slate-400">
-                      Оновлено: <span className="font-medium text-slate-900 dark:text-white">{result.data.stats.variantsUpdated}</span>
+                      Варіанти: <span className="font-medium text-emerald-600 dark:text-emerald-400">+{result.data.stats.variantsCreated} нових</span>, <span className="font-medium text-slate-900 dark:text-white">{result.data.stats.variantsUpdated} оновлено</span>
                     </div>
                   </div>
                 )}
