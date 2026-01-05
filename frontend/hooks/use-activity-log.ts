@@ -312,11 +312,12 @@ export function useActivityLog(): UseActivityLogReturn {
           break;
         case 'supply': {
           acc.totalSupplies += 1;
-          // Рахуємо кількість та суму поставлених квіток
+          // Рахуємо кількість та суму поставлених квіток (різниця між після і до)
           if (activity.details.supplyItems) {
             for (const item of activity.details.supplyItems) {
-              acc.totalSuppliesQty += item.stockAfter || 0;
-              acc.totalSuppliesAmount += (item.stockAfter || 0) * (item.priceAfter || 0);
+              const suppliedQty = (item.stockAfter || 0) - (item.stockBefore || 0);
+              acc.totalSuppliesQty += suppliedQty;
+              acc.totalSuppliesAmount += suppliedQty * (item.priceAfter || 0);
             }
           }
           break;

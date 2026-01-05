@@ -875,8 +875,9 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
       }
     } else if (a.type === 'supply' && a.details.supplyItems) {
       for (const item of a.details.supplyItems) {
-        totalSuppliesQty += item.stockAfter || 0;
-        totalSuppliesAmount += (item.stockAfter || 0) * (item.priceAfter || 0);
+        const suppliedQty = (item.stockAfter || 0) - (item.stockBefore || 0);
+        totalSuppliesQty += suppliedQty;
+        totalSuppliesAmount += suppliedQty * (item.priceAfter || 0);
       }
     } else if (a.type === 'productCreate' && a.details.variants) {
       // Створення товару з варіантами зі складом - рахуємо як поставку
@@ -1249,8 +1250,9 @@ export function HistorySection({
         totalSupplies += 1;
         if (a.details.supplyItems) {
           for (const item of a.details.supplyItems) {
-            totalSuppliesQty += item.stockAfter || 0;
-            totalSuppliesAmount += (item.stockAfter || 0) * (item.priceAfter || 0);
+            const suppliedQty = (item.stockAfter || 0) - (item.stockBefore || 0);
+            totalSuppliesQty += suppliedQty;
+            totalSuppliesAmount += suppliedQty * (item.priceAfter || 0);
           }
         }
       } else if (a.type === 'paymentConfirm') {
