@@ -438,7 +438,23 @@ function ActivityItem({ activity }: { activity: Activity }) {
           </div>
         );
 
-      case 'supply':
+      case 'supply': {
+        // Розрахувати підсумки поставки
+        const supplyTotals = details.supplyItems?.reduce(
+          (acc, item) => {
+            const qty = (item.stockAfter || 0) - (item.stockBefore || 0);
+            const valueBefore = (item.stockBefore || 0) * (item.priceBefore || item.priceAfter || 0);
+            const valueAfter = (item.stockAfter || 0) * (item.priceAfter || 0);
+            return {
+              totalQty: acc.totalQty + qty,
+              totalValue: acc.totalValue + qty * (item.priceAfter || 0),
+              balanceBefore: acc.balanceBefore + valueBefore,
+              balanceAfter: acc.balanceAfter + valueAfter,
+            };
+          },
+          { totalQty: 0, totalValue: 0, balanceBefore: 0, balanceAfter: 0 }
+        ) || { totalQty: 0, totalValue: 0, balanceBefore: 0, balanceAfter: 0 };
+
         return (
           <div className="space-y-3 text-sm">
             {details.filename && (
@@ -447,22 +463,30 @@ function ActivityItem({ activity }: { activity: Activity }) {
                 <span className="font-medium dark:text-admin-text-primary">{details.filename}</span>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <span className="text-slate-500 dark:text-admin-text-tertiary">Нових квітів:</span>
-                <span className="ml-2 font-medium dark:text-admin-text-primary">{details.flowersCreated || 0}</span>
+
+            {/* Підсумок поставки */}
+            {details.supplyItems && details.supplyItems.length > 0 && (
+              <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-blue-700 dark:text-blue-300 font-medium">
+                    +{supplyTotals.totalQty.toLocaleString()} шт
+                  </span>
+                  <span className="text-blue-700 dark:text-blue-300 font-semibold">
+                    +{Math.round(supplyTotals.totalValue).toLocaleString()} ₴
+                  </span>
+                </div>
+                <div className="text-xs text-blue-600/70 dark:text-blue-400/70">
+                  Баланс: {Math.round(supplyTotals.balanceBefore).toLocaleString()} → {Math.round(supplyTotals.balanceAfter).toLocaleString()} ₴
+                </div>
               </div>
-              <div>
-                <span className="text-slate-500 dark:text-admin-text-tertiary">Оновлено:</span>
-                <span className="ml-2 font-medium dark:text-admin-text-primary">{details.flowersUpdated || 0}</span>
+            )}
+
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="text-slate-600 dark:text-admin-text-tertiary">
+                Квіти: <span className="font-medium text-emerald-600 dark:text-emerald-400">+{details.flowersCreated || 0}</span>, <span className="font-medium dark:text-admin-text-primary">{details.flowersUpdated || 0} онов.</span>
               </div>
-              <div>
-                <span className="text-slate-500 dark:text-admin-text-tertiary">Нових варіантів:</span>
-                <span className="ml-2 font-medium dark:text-admin-text-primary">{details.variantsCreated || 0}</span>
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-admin-text-tertiary">Оновлено:</span>
-                <span className="ml-2 font-medium dark:text-admin-text-primary">{details.variantsUpdated || 0}</span>
+              <div className="text-slate-600 dark:text-admin-text-tertiary">
+                Варіанти: <span className="font-medium text-emerald-600 dark:text-emerald-400">+{details.variantsCreated || 0}</span>, <span className="font-medium dark:text-admin-text-primary">{details.variantsUpdated || 0} онов.</span>
               </div>
             </div>
 
@@ -524,6 +548,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
             )}
           </div>
         );
+      }
 
       default:
         return (
