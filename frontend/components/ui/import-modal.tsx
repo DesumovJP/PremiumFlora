@@ -518,103 +518,200 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                       </div>
                     )}
 
-                    {/* Preview table for dry-run */}
+                    {/* Preview table for dry-run - ПОВНА ТАБЛИЦЯ */}
                     {result.data.status === "dry-run" && result.data.rows && result.data.rows.length > 0 && (
-                      <div className="mt-3 max-h-[200px] overflow-auto border border-blue-200 dark:border-blue-800 rounded-lg">
-                        <table className="w-full text-xs">
-                          <thead className="bg-blue-100 dark:bg-blue-900/40 sticky top-0">
-                            <tr>
-                              <th className="text-left px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300">
-                                <span title="Оригінал → Нормалізоване">Назва</span>
-                              </th>
-                              <th className="text-center px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-12">См</th>
-                              <th className="text-center px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-16">
-                                <span title="Оригінальна кількість з Excel">К-сть (Excel)</span>
-                              </th>
-                              <th className="text-center px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-16">
-                                <span title="Кількість після нормалізації та агрегації">К-сть (імп)</span>
-                              </th>
-                              <th className="text-right px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-16">Собів.</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-blue-100 dark:divide-blue-800">
-                            {result.data.rows.slice(0, 20).map((row, i) => {
-                              const originalQty = (row.original?.units as number) || row.stock;
-                              const qtyMismatch = originalQty !== row.stock;
-                              const originalName = (row.original?.variety as string) || '';
-                              const nameChanged = originalName && originalName !== row.flowerName;
-                              // Перевірка на агрегацію
-                              const isAggregated = Array.isArray((row.original as Record<string, unknown>)?._aggregatedFromHashes);
-                              const aggregatedCount = isAggregated
-                                ? ((row.original as Record<string, unknown>)?._aggregatedFromHashes as unknown[]).length
-                                : 0;
-                              // Редаговане значення
-                              const editedName = rowEdits[row.hash]?.flowerName;
-                              const displayName = editedName ?? row.flowerName;
-                              const isEdited = editedName !== undefined && editedName !== row.flowerName;
+                      <div className="mt-3 space-y-2">
+                        {/* Підсумок */}
+                        <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 px-1">
+                          <span>Всього рядків: <strong>{result.data.rows.length}</strong></span>
+                          <span>
+                            Загальна кількість: <strong>{result.data.rows.reduce((sum, r) => sum + r.stock, 0)}</strong> шт
+                          </span>
+                          <span>
+                            Загальна вартість: <strong>{result.data.rows.reduce((sum, r) => sum + r.stock * r.price, 0).toFixed(2)}</strong> ₴
+                          </span>
+                        </div>
 
-                              return (
-                                <tr key={i} className={cn(
-                                  "hover:bg-blue-50 dark:hover:bg-blue-900/20",
-                                  isAggregated && "bg-amber-50/50 dark:bg-amber-900/10",
-                                  isEdited && "bg-emerald-50/50 dark:bg-emerald-900/10"
-                                )}>
-                                  <td className="px-2 py-1">
-                                    <div className="flex flex-col gap-0.5">
-                                      <input
-                                        type="text"
-                                        value={displayName}
-                                        onChange={(e) => handleRowEdit(row.hash, 'flowerName', e.target.value)}
-                                        className={cn(
-                                          "w-full px-1.5 py-0.5 text-xs rounded border",
-                                          isEdited
-                                            ? "border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
-                                            : "border-transparent bg-transparent text-slate-700 dark:text-slate-300 hover:border-slate-200 dark:hover:border-slate-600 focus:border-blue-300 dark:focus:border-blue-600 focus:bg-white dark:focus:bg-slate-800"
+                        {/* Таблиця з усіма деталями */}
+                        <div className="max-h-[400px] overflow-auto border border-blue-200 dark:border-blue-800 rounded-lg">
+                          <table className="w-full text-xs">
+                            <thead className="bg-blue-100 dark:bg-blue-900/40 sticky top-0 z-10">
+                              <tr>
+                                <th className="text-center px-1.5 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-8">#</th>
+                                <th className="text-left px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 min-w-[180px]">
+                                  Оригінал (Excel)
+                                </th>
+                                <th className="text-left px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 min-w-[180px]">
+                                  Нормалізовано
+                                </th>
+                                <th className="text-center px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-14">См</th>
+                                <th className="text-center px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-20">
+                                  К-сть
+                                </th>
+                                <th className="text-right px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-16">Ціна</th>
+                                <th className="text-right px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-20">Сума</th>
+                                <th className="text-left px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-24">Постачальник</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-blue-100 dark:divide-blue-800">
+                              {result.data.rows.map((row, i) => {
+                                const originalQty = (row.original?.units as number) || row.stock;
+                                const originalPrice = (row.original?.price as number) || row.price;
+                                const qtyMismatch = originalQty !== row.stock;
+                                const originalName = (row.original?.variety as string) || '';
+                                const originalType = (row.original?.type as string) || '';
+                                const originalGrade = (row.original?.grade as string) || '';
+                                const originalSupplier = (row.original?.supplier as string) || row.supplier || '';
+                                const nameChanged = originalName && originalName !== row.flowerName;
+
+                                // Перевірка на агрегацію
+                                const isAggregated = Array.isArray((row.original as Record<string, unknown>)?._aggregatedFromHashes);
+                                const aggregatedCount = isAggregated
+                                  ? ((row.original as Record<string, unknown>)?._aggregatedFromHashes as unknown[]).length
+                                  : 0;
+                                const aggregatedStocks = isAggregated
+                                  ? ((row.original as Record<string, unknown>)?._aggregatedStocks as number[])
+                                  : null;
+
+                                // Редаговане значення
+                                const editedName = rowEdits[row.hash]?.flowerName;
+                                const displayName = editedName ?? row.flowerName;
+                                const isEdited = editedName !== undefined && editedName !== row.flowerName;
+
+                                const rowTotal = row.stock * row.price;
+
+                                return (
+                                  <tr key={i} className={cn(
+                                    "hover:bg-blue-50 dark:hover:bg-blue-900/20",
+                                    isAggregated && "bg-amber-50/50 dark:bg-amber-900/10",
+                                    isEdited && "bg-emerald-50/50 dark:bg-emerald-900/10"
+                                  )}>
+                                    {/* Номер рядка */}
+                                    <td className="px-1.5 py-1.5 text-center text-slate-400 dark:text-slate-500 text-[10px]">
+                                      {row.rowIndex || i + 1}
+                                    </td>
+
+                                    {/* Оригінал з Excel */}
+                                    <td className="px-2 py-1.5">
+                                      <div className="flex flex-col gap-0.5">
+                                        <span className="text-slate-600 dark:text-slate-400 font-medium">
+                                          {originalName || '-'}
+                                        </span>
+                                        {originalType && (
+                                          <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                            Тип: {originalType}
+                                          </span>
                                         )}
-                                        title="Клікніть щоб редагувати назву"
-                                      />
-                                      {(nameChanged || isEdited) && (
-                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 px-1.5" title={`Оригінал: ${originalName}`}>
-                                          ← {originalName.length > 20 ? originalName.slice(0, 20) + '...' : originalName}
-                                          {isEdited && <span className="ml-1 text-emerald-500">(змінено)</span>}
+                                        {originalGrade && (
+                                          <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                            Grade: {originalGrade}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </td>
+
+                                    {/* Нормалізовано (редаговане) */}
+                                    <td className="px-2 py-1.5">
+                                      <div className="flex flex-col gap-0.5">
+                                        <input
+                                          type="text"
+                                          value={displayName}
+                                          onChange={(e) => handleRowEdit(row.hash, 'flowerName', e.target.value)}
+                                          className={cn(
+                                            "w-full px-1.5 py-0.5 text-xs rounded border font-medium",
+                                            isEdited
+                                              ? "border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                                              : nameChanged
+                                                ? "border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                                                : "border-transparent bg-transparent text-slate-700 dark:text-slate-300 hover:border-slate-200 dark:hover:border-slate-600 focus:border-blue-300 dark:focus:border-blue-600 focus:bg-white dark:focus:bg-slate-800"
+                                          )}
+                                          title="Клікніть щоб редагувати назву"
+                                        />
+                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 px-1">
+                                          slug: {row.slug}
                                         </span>
-                                      )}
-                                    </div>
-                                  </td>
-                                  <td className="px-2 py-1 text-center text-slate-500 dark:text-slate-400">{row.length || '-'}</td>
-                                  <td className={cn(
-                                    "px-2 py-1 text-center",
-                                    qtyMismatch ? "text-amber-600 dark:text-amber-400 font-medium" : "text-slate-500 dark:text-slate-400"
-                                  )}>
-                                    <span title={qtyMismatch ? `Оригінал: ${originalQty}, різниця через округлення або агрегацію` : undefined}>
-                                      {originalQty}
-                                      {isAggregated && (
-                                        <span className="ml-0.5 text-[10px] text-amber-500" title={`Агреговано з ${aggregatedCount} рядків`}>
-                                          ({aggregatedCount})
-                                        </span>
-                                      )}
-                                    </span>
-                                  </td>
-                                  <td className={cn(
-                                    "px-2 py-1 text-center",
-                                    qtyMismatch ? "text-amber-600 dark:text-amber-400 font-medium" : "text-slate-500 dark:text-slate-400"
-                                  )}>
-                                    <span title={qtyMismatch ? `Імпортовано: ${row.stock}` : undefined}>
-                                      {row.stock}
-                                      {qtyMismatch && <span className="ml-0.5">!</span>}
-                                    </span>
-                                  </td>
-                                  <td className="px-2 py-1 text-right text-slate-500 dark:text-slate-400">{row.price.toFixed(2)}</td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                        {result.data.rows.length > 20 && (
-                          <div className="text-center py-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30">
-                            ...та ще {result.data.rows.length - 20} рядків
-                          </div>
-                        )}
+                                        {isEdited && (
+                                          <span className="text-[10px] text-emerald-500 px-1">✓ змінено</span>
+                                        )}
+                                      </div>
+                                    </td>
+
+                                    {/* Довжина */}
+                                    <td className="px-2 py-1.5 text-center">
+                                      <span className="text-slate-700 dark:text-slate-300 font-medium">
+                                        {row.length || row.grade || '-'}
+                                      </span>
+                                    </td>
+
+                                    {/* Кількість */}
+                                    <td className="px-2 py-1.5 text-center">
+                                      <div className="flex flex-col items-center gap-0.5">
+                                        {qtyMismatch ? (
+                                          <>
+                                            <span className="text-slate-400 dark:text-slate-500 line-through text-[10px]">
+                                              {originalQty}
+                                            </span>
+                                            <span className="text-amber-600 dark:text-amber-400 font-bold">
+                                              {row.stock}
+                                            </span>
+                                          </>
+                                        ) : (
+                                          <span className="text-slate-700 dark:text-slate-300 font-medium">
+                                            {row.stock}
+                                          </span>
+                                        )}
+                                        {isAggregated && aggregatedStocks && (
+                                          <span className="text-[10px] text-amber-500" title={`Агреговано: ${aggregatedStocks.join(' + ')} = ${row.stock}`}>
+                                            ({aggregatedStocks.join('+')})
+                                          </span>
+                                        )}
+                                      </div>
+                                    </td>
+
+                                    {/* Ціна */}
+                                    <td className="px-2 py-1.5 text-right">
+                                      <span className="text-slate-700 dark:text-slate-300">
+                                        {row.price.toFixed(2)}
+                                      </span>
+                                    </td>
+
+                                    {/* Сума */}
+                                    <td className="px-2 py-1.5 text-right">
+                                      <span className="text-slate-700 dark:text-slate-300 font-medium">
+                                        {rowTotal.toFixed(2)}
+                                      </span>
+                                    </td>
+
+                                    {/* Постачальник */}
+                                    <td className="px-2 py-1.5">
+                                      <span className="text-slate-500 dark:text-slate-400 text-[10px]">
+                                        {originalSupplier || '-'}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                            {/* Підсумковий рядок */}
+                            <tfoot className="bg-blue-50 dark:bg-blue-900/30 sticky bottom-0">
+                              <tr className="font-medium">
+                                <td colSpan={4} className="px-2 py-2 text-right text-blue-700 dark:text-blue-300">
+                                  ВСЬОГО:
+                                </td>
+                                <td className="px-2 py-2 text-center text-blue-700 dark:text-blue-300">
+                                  {result.data.rows.reduce((sum, r) => sum + r.stock, 0)}
+                                </td>
+                                <td className="px-2 py-2 text-right text-slate-500 dark:text-slate-400">
+                                  -
+                                </td>
+                                <td className="px-2 py-2 text-right text-blue-700 dark:text-blue-300">
+                                  {result.data.rows.reduce((sum, r) => sum + r.stock * r.price, 0).toFixed(2)} ₴
+                                </td>
+                                <td></td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
                       </div>
                     )}
 
