@@ -24,6 +24,9 @@
     "price": {
       "type": "decimal"
     },
+    "costPrice": {
+      "type": "decimal"
+    },
     "flower": {
       "type": "relation",
       "relation": "manyToOne",

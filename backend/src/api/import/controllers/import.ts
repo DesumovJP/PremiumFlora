@@ -325,6 +325,66 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   /**
+   * POST /api/imports/update-prices
+   * Batch update цін продажу для варіантів
+   */
+  async updatePrices(ctx: Context) {
+    try {
+      const body = ctx.request.body as { prices?: Array<{ documentId: string; price: number }> };
+      const prices = body.prices;
+
+      if (!prices || !Array.isArray(prices) || prices.length === 0) {
+        ctx.status = 400;
+        ctx.body = {
+          success: false,
+          error: {
+            code: 'INVALID_INPUT',
+            message: 'Prices array is required',
+          },
+        };
+        return;
+      }
+
+      let updated = 0;
+
+      for (const item of prices) {
+        if (!item.documentId || typeof item.price !== 'number' || item.price < 0) {
+          continue;
+        }
+
+        try {
+          await strapi.db.query('api::variant.variant').update({
+            where: { documentId: item.documentId },
+            data: { price: item.price },
+          });
+          updated++;
+        } catch (err) {
+          strapi.log.warn(`Failed to update price for variant ${item.documentId}:`, err);
+        }
+      }
+
+      strapi.log.info(`Updated ${updated} variant prices`);
+
+      ctx.status = 200;
+      ctx.body = {
+        success: true,
+        updated,
+      };
+    } catch (error) {
+      strapi.log.error('Update prices error:', error);
+
+      ctx.status = 500;
+      ctx.body = {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'An error occurred while updating prices',
+        },
+      };
+    }
+  },
+
+  /**
    * GET /api/imports/:id
    * Отримати деталі імпорту
    */

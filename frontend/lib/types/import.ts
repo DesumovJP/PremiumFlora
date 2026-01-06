@@ -9,19 +9,15 @@
 // ============================================
 
 export type StockMode = 'replace' | 'add' | 'skip';
-export type PriceMode = 'replace' | 'lower' | 'skip';
+export type PriceMode = 'replace' | 'lower' | 'skip';  // Legacy, kept for compatibility
 export type SupplyStatus = 'success' | 'failed' | 'dry-run';
 
 export interface ImportOptions {
   dryRun?: boolean;
   stockMode?: StockMode;
-  priceMode?: PriceMode;
   awb?: string;
   supplier?: string;
   forceImport?: boolean;
-  exchangeRate?: number;
-  marginMultiplier?: number;
-  applyPriceCalculation?: boolean;
 }
 
 // ============================================
@@ -65,15 +61,18 @@ export interface UpsertOperation {
     slug?: string;
     length?: number;
     stock?: number;
+    costPrice?: number;
     price?: number;
     flowerId?: number;
   };
   before?: {
     stock?: number;
+    costPrice?: number;
     price?: number;
   };
   after?: {
     stock?: number;
+    costPrice?: number;
     price?: number;
   };
 }
@@ -84,7 +83,7 @@ export interface NormalizedRow {
   length: number | null;
   grade: string | null;
   stock: number;
-  price: number;
+  price: number;  // Це собівартість з Excel (costPrice)
   supplier: string | null;
   awb: string | null;
   rowIndex: number;

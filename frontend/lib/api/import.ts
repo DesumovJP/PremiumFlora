@@ -23,9 +23,6 @@ export async function importExcel(
   if (options.stockMode) {
     formData.append('stockMode', options.stockMode);
   }
-  if (options.priceMode) {
-    formData.append('priceMode', options.priceMode);
-  }
   if (options.awb) {
     formData.append('awb', options.awb);
   }
@@ -34,15 +31,6 @@ export async function importExcel(
   }
   if (options.forceImport !== undefined) {
     formData.append('forceImport', String(options.forceImport));
-  }
-  if (options.applyPriceCalculation !== undefined) {
-    formData.append('applyPriceCalculation', String(options.applyPriceCalculation));
-  }
-  if (options.exchangeRate !== undefined) {
-    formData.append('exchangeRate', String(options.exchangeRate));
-  }
-  if (options.marginMultiplier !== undefined) {
-    formData.append('marginMultiplier', String(options.marginMultiplier));
   }
 
   const authHeaders = getAuthHeaders();
@@ -60,6 +48,37 @@ export async function importExcel(
     headers,
     body: formData,
   });
+
+  return response.json();
+}
+
+/**
+ * Оновити ціни продажу для варіантів (batch update)
+ */
+export async function updateVariantPrices(
+  prices: Array<{ documentId: string; price: number }>
+): Promise<{ success: boolean; updated: number }> {
+  const authHeaders = getAuthHeaders();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (
+    typeof authHeaders === 'object' &&
+    authHeaders !== null &&
+    'Authorization' in authHeaders
+  ) {
+    headers.Authorization = (authHeaders as Record<string, string>).Authorization;
+  }
+
+  const response = await fetch(`${API_URL}/imports/update-prices`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ prices }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update prices');
+  }
 
   return response.json();
 }

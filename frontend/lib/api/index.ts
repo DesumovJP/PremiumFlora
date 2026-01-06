@@ -114,7 +114,7 @@ export {
 export type { GraphQLTask, CreateTaskInput, UpdateTaskInput } from './tasks';
 
 // Import API
-export { importExcel } from './import';
+export { importExcel, updateVariantPrices } from './import';
 
 // Supply API
 export {

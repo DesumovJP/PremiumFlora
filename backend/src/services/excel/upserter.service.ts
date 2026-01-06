@@ -11,7 +11,6 @@ import type {
   UpsertResult,
   UpsertOperation,
   StockMode,
-  PriceMode,
   SupplyRowData,
 } from './types';
 
@@ -28,6 +27,7 @@ interface VariantRecord {
   length: number | null;
   stock: number;
   price: number;
+  costPrice: number | null;
   flower: { id: number } | null;
 }
 
@@ -159,25 +159,10 @@ export class UpserterService {
     return { flower: created as FlowerRecord, created: true };
   }
 
-  /**
-   * Розрахувати фінальну ціну з урахуванням курсу та маржі
-   */
-  private calculatePrice(basePrice: number, options: ImportOptions): number {
-    if (!options.applyPriceCalculation) {
-      return basePrice;
-    }
-
-    const exchangeRate = options.exchangeRate ?? 1;
-    const marginMultiplier = options.marginMultiplier ?? 1;
-    const calculatedPrice = basePrice * exchangeRate * marginMultiplier;
-
-    this.strapi.log.info(`💰 Price calculation: ${basePrice} USD × ${exchangeRate} UAH × ${marginMultiplier} margin = ${calculatedPrice.toFixed(2)} UAH`);
-
-    return Math.round(calculatedPrice * 100) / 100; // Округлити до копійок
-  }
 
   /**
    * Upsert Variant
+   * Зберігає costPrice (собівартість) з Excel, price (ціна продажу) не змінюється
    */
   private async upsertVariant(
     flower: FlowerRecord,
@@ -185,47 +170,36 @@ export class UpserterService {
     options: ImportOptions
   ): Promise<{ created: boolean; operation: UpsertOperation | null }> {
     // Визначити критерій пошуку: length або grade
-    // Для Strapi v5 Variant має тільки length (integer), тому grade зберігаємо як особливий length
     const variantLength = row.length ?? this.gradeToLength(row.grade);
 
-    // Розрахувати фінальну ціну
-    this.strapi.log.info(`💵 Before price calculation: row.price=${row.price}, options.applyPriceCalculation=${options.applyPriceCalculation}, options.exchangeRate=${options.exchangeRate}, options.marginMultiplier=${options.marginMultiplier}`);
-    const finalPrice = this.calculatePrice(row.price, options);
-    this.strapi.log.info(`💵 After price calculation: finalPrice=${finalPrice}`);
+    // Собівартість з Excel (оригінальна ціна)
+    const costPrice = row.price;
+    this.strapi.log.info(`💵 Cost price from Excel: ${costPrice}`);
 
-    // Шукати існуючий варіант (використовуємо documentId для flower relation)
+    // Шукати існуючий варіант
     const existing = await this.strapi.db.query('api::variant.variant').findOne({
       where: {
         flower: { documentId: flower.documentId },
         length: variantLength,
       },
-      select: ['id', 'documentId', 'length', 'stock', 'price'],
+      select: ['id', 'documentId', 'length', 'stock', 'price', 'costPrice'],
     }) as VariantRecord | null;
 
     if (existing) {
       // Оновити існуючий варіант
       const newStock = this.applyStockMode(existing.stock, row.stock, options.stockMode);
-      this.strapi.log.info(`💵 Price mode: ${options.priceMode}, existing.price=${existing.price}, finalPrice=${finalPrice}`);
-      const newPrice = this.applyPriceMode(existing.price, finalPrice, options.priceMode);
-      this.strapi.log.info(`💵 Applied price mode result: newPrice=${newPrice}`);
 
-      this.strapi.log.info(`🔄 Updating variant: ${flower.name} ${variantLength}cm - stock ${existing.stock}→${newStock}, price ${existing.price}→${newPrice}`);
+      // Собівартість завжди оновлюється з нового імпорту
+      this.strapi.log.info(`🔄 Updating variant: ${flower.name} ${variantLength}cm - stock ${existing.stock}→${newStock}, costPrice ${existing.costPrice}→${costPrice}`);
 
-      // Використовуємо documentId для оновлення в Strapi v5
-      const updated = await this.strapi.db.query('api::variant.variant').update({
+      await this.strapi.db.query('api::variant.variant').update({
         where: { documentId: existing.documentId },
         data: {
           stock: newStock,
-          price: newPrice,
+          costPrice: costPrice,
+          // price (ціна продажу) НЕ оновлюється - адміністратор встановлює вручну
         },
       });
-
-      // Перевірити, чи оновлення спрацювало
-      const verify = await this.strapi.db.query('api::variant.variant').findOne({
-        where: { documentId: existing.documentId },
-        select: ['id', 'documentId', 'price', 'stock'],
-      });
-      this.strapi.log.info(`✅ Verification after update: variant documentId=${existing.documentId}, price=${verify?.price}, stock=${verify?.stock}, expected price=${newPrice}, match=${verify?.price === newPrice}`);
 
       return {
         created: false,
@@ -233,22 +207,23 @@ export class UpserterService {
           type: 'update',
           entity: 'variant',
           documentId: existing.documentId,
-          data: { length: variantLength, stock: newStock, price: newPrice },
-          before: { stock: existing.stock, price: existing.price },
-          after: { stock: newStock, price: newPrice },
+          data: { length: variantLength, stock: newStock, costPrice: costPrice },
+          before: { stock: existing.stock, costPrice: existing.costPrice, price: existing.price },
+          after: { stock: newStock, costPrice: costPrice, price: existing.price },
         },
       };
     }
 
     // Створити новий варіант
-    this.strapi.log.info(`🌱 Creating variant: ${flower.name} ${variantLength}cm - stock ${row.stock}, price ${finalPrice} UAH`);
+    this.strapi.log.info(`🌱 Creating variant: ${flower.name} ${variantLength}cm - stock ${row.stock}, costPrice ${costPrice}`);
 
     const created = await this.strapi.db.query('api::variant.variant').create({
       data: {
         length: variantLength,
         stock: row.stock,
-        price: finalPrice,
-        flower: flower.id, // Тепер flower.id - це правильний внутрішній ID з db.query
+        costPrice: costPrice,
+        price: 0, // Ціна продажу буде встановлена адміністратором
+        flower: flower.id,
         locale: 'en',
       },
     });
@@ -257,6 +232,7 @@ export class UpserterService {
       variantId: created.id,
       flowerId: flower.id,
       length: variantLength,
+      costPrice: costPrice,
     });
 
     return {
@@ -265,7 +241,7 @@ export class UpserterService {
         type: 'create',
         entity: 'variant',
         documentId: (created as VariantRecord).documentId,
-        data: { length: variantLength, stock: row.stock, price: finalPrice, flowerId: flower.id },
+        data: { length: variantLength, stock: row.stock, costPrice: costPrice, price: 0, flowerId: flower.id },
       },
     };
   }
@@ -307,19 +283,4 @@ export class UpserterService {
     }
   }
 
-  /**
-   * Застосувати режим price
-   */
-  private applyPriceMode(current: number, incoming: number, mode: PriceMode): number {
-    switch (mode) {
-      case 'replace':
-        return incoming;
-      case 'lower':
-        return Math.min(current, incoming);
-      case 'skip':
-        return current;
-      default:
-        return incoming;
-    }
-  }
 }

@@ -135,7 +135,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         length: row.length,
         grade: row.grade,
         stock: row.stock,
-        price: row.price,
+        costPrice: row.price,  // Зберігаємо ціну з Excel як собівартість
         supplier: row.supplier,
         awb: row.awb,
       },

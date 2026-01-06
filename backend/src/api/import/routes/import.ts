@@ -16,6 +16,15 @@ export default {
       },
     },
     {
+      method: 'POST',
+      path: '/imports/update-prices',
+      handler: 'import.updatePrices',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
+    {
       method: 'GET',
       path: '/imports/:id',
       handler: 'import.findOne',

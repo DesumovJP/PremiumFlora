@@ -196,7 +196,7 @@ export interface SupplyRowData {
     length: number | null;
     grade: string | null;
     stock: number;
-    price: number;
+    costPrice: number;  // Собівартість з Excel
     supplier: string | null;
     awb: string | null;
   };
