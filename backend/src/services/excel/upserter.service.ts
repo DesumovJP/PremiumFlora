@@ -160,12 +160,17 @@ export class UpserterService {
       if (groupRows.length > 1) {
         // Знайдено дублікат - агрегуємо
         const totalStock = groupRows.reduce((sum, r) => sum + r.stock, 0);
+        // Розраховуємо середньозважену ціну (собівартість)
+        const totalCost = groupRows.reduce((sum, r) => sum + r.stock * r.price, 0);
+        const weightedAvgPrice = totalStock > 0 ? Math.round(totalCost / totalStock * 100) / 100 : 0;
+
         const lastRow = groupRows[groupRows.length - 1];
         const firstRow = groupRows[0];
 
         this.strapi.log.warn(
           `🔀 Aggregating ${groupRows.length} duplicate rows for ${lastRow.flowerName} ${lastRow.length ?? lastRow.grade}cm: ` +
-          `${groupRows.map(r => r.stock).join(' + ')} = ${totalStock} stems`
+          `${groupRows.map(r => r.stock).join(' + ')} = ${totalStock} stems, ` +
+          `weighted avg price: ${weightedAvgPrice} (was: ${groupRows.map(r => r.price).join(', ')})`
         );
 
         warnings.push({
@@ -176,15 +181,17 @@ export class UpserterService {
           normalizedValue: totalStock,
         });
 
-        // Створюємо агрегований рядок
+        // Створюємо агрегований рядок з середньозваженою ціною
         aggregated.push({
           ...lastRow,
           stock: totalStock,
+          price: weightedAvgPrice,  // Середньозважена собівартість
           // Зберігаємо оригінальні хеші для відстеження
           original: {
             ...lastRow.original,
             _aggregatedFromHashes: groupRows.map(r => r.hash),
             _aggregatedStocks: groupRows.map(r => r.stock),
+            _aggregatedPrices: groupRows.map(r => r.price),
           },
         });
       } else {
