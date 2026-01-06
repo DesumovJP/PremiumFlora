@@ -30,6 +30,7 @@ export const VARIANT_FRAGMENT = gql`
     documentId
     length
     price
+    costPrice
     stock
   }
 `;
@@ -226,6 +227,7 @@ export const GET_VARIANT_BY_ID = gql`
       documentId
       length
       price
+      costPrice
       stock
       flower {
         documentId

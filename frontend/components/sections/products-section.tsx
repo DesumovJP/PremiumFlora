@@ -1345,7 +1345,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
             <TableHeader>
               <TableRow>
                 <TableHead className="px-4 text-center">Назва</TableHead>
-                <TableHead className="text-center">Висоти / ціни / кількість</TableHead>
+                <TableHead className="text-center">Висоти / собівартість → ціна / кількість</TableHead>
                 <TableHead className="text-center min-w-[7.5rem] px-6">Загальний запас</TableHead>
                 <TableHead className="text-center min-w-[6.5rem] px-4">Оновлено</TableHead>
                 <TableHead className="text-center min-w-[11.25rem] px-6">Дії</TableHead>
@@ -1380,13 +1380,24 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                       </div>
                     </TableCell>
                     <TableCell className="space-y-1">
-                      <div className="flex flex-wrap gap-2 max-w-md">
+                      <div className="flex flex-wrap gap-2 max-w-lg">
                         {product.variants.map((variant) => (
                           <Badge
                             key={variant.size}
-                            className={cn("text-xs px-2.5 py-1 w-auto flex items-center gap-1", stockTone(variant.stock))}
+                            className={cn("text-xs px-2.5 py-1 w-auto flex items-center gap-1.5", stockTone(variant.stock))}
                           >
-                            {variant.size} · {variant.price} грн · <Package className="h-3 w-3 shrink-0" /> {variant.stock} шт
+                            <span className="font-medium">{variant.size}</span>
+                            <span className="text-slate-400 dark:text-slate-500">·</span>
+                            {variant.costPrice !== undefined && variant.costPrice > 0 && (
+                              <>
+                                <span className="text-slate-500 dark:text-slate-400" title="Собівартість">{variant.costPrice.toFixed(2)}</span>
+                                <span className="text-slate-400 dark:text-slate-500">→</span>
+                              </>
+                            )}
+                            <span className="font-medium" title="Ціна продажу">{variant.price} грн</span>
+                            <span className="text-slate-400 dark:text-slate-500">·</span>
+                            <Package className="h-3 w-3 shrink-0" />
+                            <span>{variant.stock} шт</span>
                           </Badge>
                         ))}
                       </div>

@@ -104,6 +104,7 @@ export function convertFlowerToProduct(flower: GraphQLFlower): Product {
       documentId: v.documentId,
       size: `${v.length} см`,
       price: v.price ?? 0,
+      costPrice: v.costPrice ?? undefined,
       stock: v.stock ?? 0,
       length: v.length ?? 0,
     }));

@@ -54,6 +54,7 @@ export interface GraphQLVariant {
   documentId: string;
   length: number;
   price: number;
+  costPrice?: number;  // Собівартість (ціна закупки)
   stock: number;
 }
 

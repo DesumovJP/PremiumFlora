@@ -18,6 +18,7 @@ export interface Variant {
   documentId?: string;
   length: number;
   price: number;
+  costPrice?: number;  // Собівартість (ціна закупки)
   stock: number;
   /**
    * Текстове представлення розміру (напр. "50 см")
