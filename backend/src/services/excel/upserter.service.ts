@@ -45,6 +45,7 @@ export class UpserterService {
     result: UpsertResult;
     rowOutcomes: Map<string, SupplyRowData['outcome']>;
     aggregationWarnings: ImportWarning[];
+    aggregatedRows: NormalizedRow[];
   }> {
     this.strapi.log.info(`🚀 Starting upsert: ${rows.length} rows, stockMode=${options.stockMode}`);
 
@@ -131,7 +132,7 @@ export class UpserterService {
 
     this.strapi.log.info(`✅ Upsert completed: flowers(+${result.flowersCreated}/~${result.flowersUpdated}), variants(+${result.variantsCreated}/~${result.variantsUpdated})`);
 
-    return { result, rowOutcomes, aggregationWarnings };
+    return { result, rowOutcomes, aggregationWarnings, aggregatedRows: aggregated };
   }
 
   /**
@@ -312,7 +313,7 @@ export class UpserterService {
           type: 'update',
           entity: 'variant',
           documentId: existing.documentId,
-          data: { length: variantLength, stock: newStock, costPrice: costPrice },
+          data: { length: variantLength, stock: newStock, costPrice: costPrice, slug: row.slug },
           before: { stock: existing.stock, costPrice: existing.costPrice, price: existing.price },
           after: { stock: newStock, costPrice: costPrice, price: existing.price },
         },
@@ -346,7 +347,7 @@ export class UpserterService {
         type: 'create',
         entity: 'variant',
         documentId: (created as VariantRecord).documentId,
-        data: { length: variantLength, stock: row.stock, costPrice: costPrice, price: 0, flowerId: flower.id },
+        data: { length: variantLength, stock: row.stock, costPrice: costPrice, price: 0, flowerId: flower.id, slug: row.slug },
       },
     };
   }

@@ -161,11 +161,10 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
             if (processedKeys.has(key)) continue;
             processedKeys.add(key);
 
-            // Шукаємо відповідну операцію для варіанту
+            // Шукаємо відповідну операцію для варіанту по slug + length
             const matchingOp = variantOps.find(op =>
               op.data.length === row.length &&
-              // Перевіряємо чи операція для цієї квітки
-              (op.data.flowerId !== undefined || flowerDocIdBySlug.has(row.slug))
+              op.data.slug === row.slug
             );
 
             if (matchingOp) {

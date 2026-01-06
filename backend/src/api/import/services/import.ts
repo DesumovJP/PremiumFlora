@@ -117,11 +117,15 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
     strapi.log.info(`🔍 Checking upsert conditions: dryRun=${options.dryRun}, validRows=${valid.length}, willUpsert=${!options.dryRun && valid.length > 0}`);
 
+    // Для повернення з API - використовуємо агреговані рядки після upsert
+    let rowsToReturn = normalized;
+
     if (!options.dryRun && valid.length > 0) {
       strapi.log.info('▶️ Starting upsert process...');
       const upserter = new UpserterService(strapi);
-      const { result, rowOutcomes: outcomes, aggregationWarnings } = await upserter.upsert(valid, options);
+      const { result, rowOutcomes: outcomes, aggregationWarnings, aggregatedRows } = await upserter.upsert(valid, options);
       upsertResult = result;
+      rowsToReturn = aggregatedRows; // Повертаємо агреговані рядки з правильними цінами
       strapi.log.info('✅ Upsert completed', { result });
 
       // Додати попередження про агрегацію
@@ -242,7 +246,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       },
       errors,
       warnings: allWarnings,
-      rows: normalized,
+      rows: rowsToReturn,
       operations: upsertResult.operations,
     };
   },
