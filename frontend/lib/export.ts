@@ -97,16 +97,17 @@ export function exportProducts(products: Product[]): void {
     });
   });
 
-  // Add summary row
+  // Add summary row - сумуємо без проміжного округлення, округлюємо лише фінальний результат
   const totalStock = products.reduce((sum, p) => sum + p.variants.reduce((s, v) => s + v.stock, 0), 0);
   const totalCostValue = products.reduce((sum, p) => sum + p.variants.reduce((s, v) => {
     const costPrice = (v as { costPrice?: number }).costPrice ?? 0;
-    return s + Math.round(costPrice * v.stock * 100) / 100;
+    return s + costPrice * v.stock; // Без округлення
   }, 0), 0);
   const totalSaleValue = products.reduce((sum, p) => sum + p.variants.reduce((s, v) => {
-    return s + Math.round(v.price * v.stock * 100) / 100;
+    return s + v.price * v.stock; // Без округлення
   }, 0), 0);
 
+  // Округлюємо тільки фінальні суми
   rows.push(['РАЗОМ', '', '', '', totalStock, Math.round(totalCostValue * 100) / 100, Math.round(totalSaleValue * 100) / 100]);
 
   const data = [headers, ...rows];

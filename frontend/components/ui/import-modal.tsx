@@ -173,14 +173,18 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
               const stockAfter = matchingOp.after?.stock ?? row.stock;
               const priceAfter = matchingOp.after?.price ?? 0;
 
+              // Для агрегованих рядків row.stock вже містить загальну кількість
+              // stockAfter - stockBefore = кількість яку ми імпортували
+              const importedQty = stockAfter - stockBefore;
+
               entries.push({
                 documentId: matchingOp.documentId,
                 flowerName: row.flowerName,
                 length: row.length,
-                costPrice: row.price, // price в NormalizedRow - це собівартість
+                costPrice: row.price, // price в NormalizedRow - це собівартість (середньозважена для агрегованих)
                 salePrice: '',
-                originalStock: (row.original?.units as number) || row.stock,
-                importedStock: stockAfter,
+                originalStock: row.stock, // Агрегована кількість з Excel
+                importedStock: importedQty, // Кількість яку імпортували (stockAfter - stockBefore)
                 stockBefore,
                 stockAfter,
                 priceAfter,
@@ -376,6 +380,24 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                 );
               })}
             </tbody>
+            {/* Підсумковий рядок */}
+            <tfoot className="bg-slate-50 dark:bg-slate-800 sticky bottom-0">
+              <tr className="font-medium border-t border-slate-200 dark:border-slate-700">
+                <td className="px-3 py-2 text-right text-slate-700 dark:text-slate-300" colSpan={2}>
+                  ВСЬОГО:
+                </td>
+                <td className="px-3 py-2 text-center text-slate-700 dark:text-slate-300">
+                  {priceEntries.reduce((sum, e) => sum + e.originalStock, 0)}
+                </td>
+                <td className="px-3 py-2 text-center text-slate-700 dark:text-slate-300">
+                  {priceEntries.reduce((sum, e) => sum + e.importedStock, 0)}
+                </td>
+                <td className="px-3 py-2 text-right text-slate-700 dark:text-slate-300">
+                  {priceEntries.reduce((sum, e) => sum + e.originalStock * e.costPrice, 0).toFixed(2)} ₴
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
 
