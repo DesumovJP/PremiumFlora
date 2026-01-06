@@ -12,6 +12,12 @@ export type StockMode = 'replace' | 'add' | 'skip';
 export type PriceMode = 'replace' | 'lower' | 'skip';
 export type SupplyStatus = 'success' | 'failed' | 'dry-run';
 
+// Оверрайди для редагування нормалізації під час імпорту
+export interface RowOverride {
+  flowerName?: string;
+  length?: number;
+}
+
 export interface ImportOptions {
   dryRun: boolean;
   stockMode: StockMode;
@@ -20,6 +26,7 @@ export interface ImportOptions {
   supplier?: string;
   userId?: number;
   forceImport?: boolean; // Ігнорувати перевірку checksum і дозволити імпорт дублікату
+  rowOverrides?: Record<string, RowOverride>; // hash -> override values
 
   // Налаштування цін
   exchangeRate?: number; // Курс USD → UAH (наприклад, 41.5)

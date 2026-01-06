@@ -12,6 +12,7 @@ import type {
   UpsertOperation,
   StockMode,
   SupplyRowData,
+  ImportWarning,
 } from './types';
 
 interface FlowerRecord {
@@ -40,9 +41,12 @@ export class UpserterService {
   async upsert(
     rows: NormalizedRow[],
     options: ImportOptions
-  ): Promise<{ result: UpsertResult; rowOutcomes: Map<string, SupplyRowData['outcome']> }> {
-    this.strapi.log.info(`🚀 Starting upsert: ${rows.length} rows, stockMode=${options.stockMode}, priceMode=${options.priceMode}`);
-    this.strapi.log.info(`💰 Price calculation options: applyPriceCalculation=${options.applyPriceCalculation}, exchangeRate=${options.exchangeRate}, marginMultiplier=${options.marginMultiplier}`);
+  ): Promise<{
+    result: UpsertResult;
+    rowOutcomes: Map<string, SupplyRowData['outcome']>;
+    aggregationWarnings: ImportWarning[];
+  }> {
+    this.strapi.log.info(`🚀 Starting upsert: ${rows.length} rows, stockMode=${options.stockMode}`);
 
     const result: UpsertResult = {
       flowersCreated: 0,
@@ -53,10 +57,19 @@ export class UpserterService {
     };
 
     const rowOutcomes = new Map<string, SupplyRowData['outcome']>();
+    const aggregationWarnings: ImportWarning[] = [];
 
-    // Групувати рядки по flower slug для оптимізації
+    // 1. Спочатку агрегуємо дублікати по slug + length
+    const { aggregated, warnings } = this.aggregateVariants(rows);
+    aggregationWarnings.push(...warnings);
+
+    if (warnings.length > 0) {
+      this.strapi.log.warn(`⚠️ Found ${warnings.length} duplicate variants that were aggregated`);
+    }
+
+    // 2. Групувати агреговані рядки по flower slug
     const rowsBySlug = new Map<string, NormalizedRow[]>();
-    for (const row of rows) {
+    for (const row of aggregated) {
       const existing = rowsBySlug.get(row.slug) || [];
       existing.push(row);
       rowsBySlug.set(row.slug, existing);
@@ -92,7 +105,7 @@ export class UpserterService {
         });
       }
 
-      // Upsert Variants для цієї квітки
+      // Upsert Variants для цієї квітки (вже агреговані по length)
       for (const row of flowerRows) {
         const { created: variantCreated, operation } = await this.upsertVariant(
           flower,
@@ -102,10 +115,12 @@ export class UpserterService {
 
         if (variantCreated) {
           result.variantsCreated++;
-          rowOutcomes.set(row.hash, 'created');
+          // Маркуємо всі оригінальні хеші як created
+          this.markOriginalHashes(row, 'created', rowOutcomes);
         } else {
           result.variantsUpdated++;
-          rowOutcomes.set(row.hash, 'updated');
+          // Маркуємо всі оригінальні хеші як updated
+          this.markOriginalHashes(row, 'updated', rowOutcomes);
         }
 
         if (operation) {
@@ -116,7 +131,90 @@ export class UpserterService {
 
     this.strapi.log.info(`✅ Upsert completed: flowers(+${result.flowersCreated}/~${result.flowersUpdated}), variants(+${result.variantsCreated}/~${result.variantsUpdated})`);
 
-    return { result, rowOutcomes };
+    return { result, rowOutcomes, aggregationWarnings };
+  }
+
+  /**
+   * Агрегувати рядки з однаковим slug + length
+   * Сумує stock, бере останню ціну
+   */
+  private aggregateVariants(rows: NormalizedRow[]): {
+    aggregated: NormalizedRow[];
+    warnings: ImportWarning[];
+  } {
+    const grouped = new Map<string, NormalizedRow[]>();
+    const warnings: ImportWarning[] = [];
+
+    // Групуємо по slug + length
+    for (const row of rows) {
+      const variantLength = row.length ?? this.gradeToLength(row.grade);
+      const key = `${row.slug}:${variantLength}`;
+      const existing = grouped.get(key) || [];
+      existing.push(row);
+      grouped.set(key, existing);
+    }
+
+    const aggregated: NormalizedRow[] = [];
+
+    for (const [key, groupRows] of grouped) {
+      if (groupRows.length > 1) {
+        // Знайдено дублікат - агрегуємо
+        const totalStock = groupRows.reduce((sum, r) => sum + r.stock, 0);
+        const lastRow = groupRows[groupRows.length - 1];
+        const firstRow = groupRows[0];
+
+        this.strapi.log.warn(
+          `🔀 Aggregating ${groupRows.length} duplicate rows for ${lastRow.flowerName} ${lastRow.length ?? lastRow.grade}cm: ` +
+          `${groupRows.map(r => r.stock).join(' + ')} = ${totalStock} stems`
+        );
+
+        warnings.push({
+          row: firstRow.rowIndex,
+          field: 'stock',
+          message: `Знайдено ${groupRows.length} рядків для "${lastRow.flowerName}" ${lastRow.length ?? lastRow.grade}см. Кількість агреговано: ${groupRows.map(r => r.stock).join(' + ')} = ${totalStock} шт`,
+          originalValue: groupRows.map(r => r.stock),
+          normalizedValue: totalStock,
+        });
+
+        // Створюємо агрегований рядок
+        aggregated.push({
+          ...lastRow,
+          stock: totalStock,
+          // Зберігаємо оригінальні хеші для відстеження
+          original: {
+            ...lastRow.original,
+            _aggregatedFromHashes: groupRows.map(r => r.hash),
+            _aggregatedStocks: groupRows.map(r => r.stock),
+          },
+        });
+      } else {
+        aggregated.push(groupRows[0]);
+      }
+    }
+
+    return { aggregated, warnings };
+  }
+
+  /**
+   * Маркувати всі оригінальні хеші (включаючи агреговані)
+   */
+  private markOriginalHashes(
+    row: NormalizedRow,
+    outcome: SupplyRowData['outcome'],
+    rowOutcomes: Map<string, SupplyRowData['outcome']>
+  ): void {
+    // Маркуємо основний хеш
+    rowOutcomes.set(row.hash, outcome);
+
+    // Якщо рядок був агрегований - маркуємо всі оригінальні хеші
+    const aggregatedHashes = (row.original as Record<string, unknown>)?._aggregatedFromHashes;
+    if (Array.isArray(aggregatedHashes)) {
+      for (const hash of aggregatedHashes) {
+        if (typeof hash === 'string') {
+          rowOutcomes.set(hash, outcome);
+        }
+      }
+    }
   }
 
   /**

@@ -12,12 +12,19 @@ export type StockMode = 'replace' | 'add' | 'skip';
 export type PriceMode = 'replace' | 'lower' | 'skip';  // Legacy, kept for compatibility
 export type SupplyStatus = 'success' | 'failed' | 'dry-run';
 
+// Оверрайди для редагування нормалізації
+export interface RowOverride {
+  flowerName?: string;
+  length?: number;
+}
+
 export interface ImportOptions {
   dryRun?: boolean;
   stockMode?: StockMode;
   awb?: string;
   supplier?: string;
   forceImport?: boolean;
+  rowOverrides?: Record<string, RowOverride>; // hash -> override values
 }
 
 // ============================================

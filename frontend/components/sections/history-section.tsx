@@ -546,11 +546,14 @@ function ActivityItem({ activity }: { activity: Activity }) {
         const supplyTotals = details.supplyItems?.reduce(
           (acc, item) => {
             const qty = (item.stockAfter || 0) - (item.stockBefore || 0);
+            // Для вартості поставки використовуємо costPrice (собівартість)
+            const unitCost = (item as { costPrice?: number }).costPrice ?? item.priceAfter ?? 0;
+            // Для балансу використовуємо ціну продажу (priceAfter)
             const valueBefore = (item.stockBefore || 0) * (item.priceBefore || item.priceAfter || 0);
             const valueAfter = (item.stockAfter || 0) * (item.priceAfter || 0);
             return {
               totalQty: acc.totalQty + qty,
-              totalValue: acc.totalValue + qty * (item.priceAfter || 0),
+              totalValue: acc.totalValue + qty * unitCost,  // Вартість поставки по собівартості
               balanceBefore: acc.balanceBefore + valueBefore,
               balanceAfter: acc.balanceAfter + valueAfter,
             };
@@ -641,9 +644,10 @@ function ActivityItem({ activity }: { activity: Activity }) {
                           </span>
                           <span className="text-slate-400 ml-0.5">шт</span>
                         </span>
-                        {item.priceAfter !== undefined && item.priceAfter > 0 && (
-                          <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                            {item.priceAfter} ₴
+                        {/* Показуємо costPrice (собівартість) */}
+                        {((item as { costPrice?: number }).costPrice ?? 0) > 0 && (
+                          <span className="font-medium text-blue-600 dark:text-blue-400" title="Собівартість">
+                            {(item as { costPrice?: number }).costPrice} ₴
                           </span>
                         )}
                       </div>
@@ -895,7 +899,9 @@ function ShiftCalendar({ shifts, onSelectShift, currentMonth, onMonthChange }: C
                           const items = (a.details as any)?.supplyItems || [];
                           return sum + items.reduce((itemSum: number, item: any) => {
                             const qty = (item.stockAfter || 0) - (item.stockBefore || 0);
-                            return itemSum + qty * (item.priceAfter || 0);
+                            // Використовуємо costPrice для вартості поставки
+                            const unitCost = item.costPrice ?? item.priceAfter ?? 0;
+                            return itemSum + qty * unitCost;
                           }, 0);
                         }, 0);
 
@@ -1020,7 +1026,9 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
       for (const item of a.details.supplyItems) {
         const suppliedQty = (item.stockAfter || 0) - (item.stockBefore || 0);
         totalSuppliesQty += suppliedQty;
-        totalSuppliesAmount += suppliedQty * (item.priceAfter || 0);
+        // Використовуємо costPrice для вартості поставки
+        const unitCost = (item as { costPrice?: number }).costPrice ?? item.priceAfter ?? 0;
+        totalSuppliesAmount += suppliedQty * unitCost;
       }
     } else if (a.type === 'productCreate' && a.details.variants) {
       // Створення товару з варіантами зі складом - рахуємо як поставку
@@ -1275,10 +1283,12 @@ function ArchiveTab({ onExportShift }: ArchiveTabProps) {
           dailyData[day].writeOffs += variants.reduce((sum, v) => sum + (v.stock || 0) * (v.price || 0), 0);
         } else if (a.type === 'supply') {
           // Поставка - рахуємо з supplyItems
-          const items = (a.details as { supplyItems?: Array<{ stockBefore?: number; stockAfter?: number; priceAfter?: number }> })?.supplyItems || [];
+          const items = (a.details as { supplyItems?: Array<{ stockBefore?: number; stockAfter?: number; costPrice?: number; priceAfter?: number }> })?.supplyItems || [];
           dailyData[day].supplies += items.reduce((sum, item) => {
             const qty = (item.stockAfter || 0) - (item.stockBefore || 0);
-            return sum + qty * (item.priceAfter || 0);
+            // Використовуємо costPrice для вартості поставки
+            const unitCost = item.costPrice ?? item.priceAfter ?? 0;
+            return sum + qty * unitCost;
           }, 0);
         } else if (a.type === 'productCreate') {
           // Створення товару з залишком - рахуємо як поставку
@@ -1425,7 +1435,9 @@ export function HistorySection({
           for (const item of a.details.supplyItems) {
             const suppliedQty = (item.stockAfter || 0) - (item.stockBefore || 0);
             totalSuppliesQty += suppliedQty;
-            totalSuppliesAmount += suppliedQty * (item.priceAfter || 0);
+            // Використовуємо costPrice для вартості поставки
+            const unitCost = (item as { costPrice?: number }).costPrice ?? item.priceAfter ?? 0;
+            totalSuppliesAmount += suppliedQty * unitCost;
           }
         }
       } else if (a.type === 'paymentConfirm') {

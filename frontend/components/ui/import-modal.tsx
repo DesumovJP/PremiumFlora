@@ -10,14 +10,17 @@ import type {
   ImportOptions,
   ImportResponse,
   NormalizedRow,
+  RowOverride,
 } from "@/lib/import-types";
 
 interface SupplyItem {
   flowerName: string;
   length: number | null;
-  stockBefore?: number;
+  stockBefore: number;
   stockAfter: number;
-  costPrice: number;
+  costPrice: number;    // Собівартість з Excel (для розрахунку вартості поставки)
+  priceBefore: number;
+  priceAfter: number;   // Ціна продажу (для відображення балансу)
   isNew: boolean;
 }
 
@@ -30,6 +33,11 @@ interface PriceEntry {
   salePrice: string; // Зберігаємо як string для input
   originalStock: number;  // Оригінальна кількість з Excel
   importedStock: number;  // Імпортована кількість
+  // Для activity log
+  stockBefore: number;
+  stockAfter: number;
+  priceAfter: number;
+  isNew: boolean;
 }
 
 interface ImportModalProps {
@@ -59,6 +67,8 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
     dryRun: true,
     stockMode: "add",
   });
+  // Стан для редагування нормалізації (hash -> { flowerName, length })
+  const [rowEdits, setRowEdits] = useState<Record<string, RowOverride>>({});
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,10 +78,22 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
         setResult(null);
         setStep('upload');
         setPriceEntries([]);
+        setRowEdits({}); // Очищаємо редагування при зміні файлу
       }
     },
     []
   );
+
+  // Обробка редагування рядка
+  const handleRowEdit = useCallback((hash: string, field: keyof RowOverride, value: string | number) => {
+    setRowEdits(prev => ({
+      ...prev,
+      [hash]: {
+        ...prev[hash],
+        [field]: value,
+      },
+    }));
+  }, []);
 
   const handleImport = async () => {
     if (!file) return;
@@ -107,22 +129,51 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
     setResult(null);
 
     try {
-      const res = await importExcel(file, { ...options, dryRun: false });
+      // Передаємо rowOverrides якщо є редагування
+      const importOptions: ImportOptions = {
+        ...options,
+        dryRun: false,
+        rowOverrides: Object.keys(rowEdits).length > 0 ? rowEdits : undefined,
+      };
+      const res = await importExcel(file, importOptions);
       setResult(res);
 
       if (res.success && res.data.status === 'success') {
         // Підготувати дані для таблиці цін
         const entries: PriceEntry[] = [];
         const variantOps = res.data.operations?.filter(op => op.entity === 'variant') || [];
+        const flowerOps = res.data.operations?.filter(op => op.entity === 'flower') || [];
+
+        // Створюємо мапу slug → documentId для квіток
+        const flowerDocIdBySlug = new Map<string, string>();
+        for (const fOp of flowerOps) {
+          if (fOp.data.slug) {
+            flowerDocIdBySlug.set(fOp.data.slug, fOp.documentId);
+          }
+        }
 
         if (res.data.rows && res.data.rows.length > 0) {
+          // Групуємо рядки по slug + length для уникнення дублікатів (вони вже агреговані на бекенді)
+          const processedKeys = new Set<string>();
+
           for (const row of res.data.rows) {
+            const key = `${row.slug}:${row.length}`;
+            if (processedKeys.has(key)) continue;
+            processedKeys.add(key);
+
+            // Шукаємо відповідну операцію для варіанту
             const matchingOp = variantOps.find(op =>
               op.data.length === row.length &&
-              op.data.flowerId !== undefined
+              // Перевіряємо чи операція для цієї квітки
+              (op.data.flowerId !== undefined || flowerDocIdBySlug.has(row.slug))
             );
 
             if (matchingOp) {
+              const isNew = matchingOp.type === 'create';
+              const stockBefore = matchingOp.before?.stock ?? 0;
+              const stockAfter = matchingOp.after?.stock ?? row.stock;
+              const priceAfter = matchingOp.after?.price ?? 0;
+
               entries.push({
                 documentId: matchingOp.documentId,
                 flowerName: row.flowerName,
@@ -130,7 +181,11 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                 costPrice: row.price, // price в NormalizedRow - це собівартість
                 salePrice: '',
                 originalStock: (row.original?.units as number) || row.stock,
-                importedStock: row.stock,
+                importedStock: stockAfter,
+                stockBefore,
+                stockAfter,
+                priceAfter,
+                isNew,
               });
             }
           }
@@ -139,14 +194,17 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
         setPriceEntries(entries);
         setStep('pricing');
 
-        // Логування
+        // Логування з правильними даними
         if (onLogActivity) {
           const supplyItems: SupplyItem[] = entries.map(e => ({
             flowerName: e.flowerName,
             length: e.length,
-            stockAfter: e.importedStock,
-            costPrice: e.costPrice,
-            isNew: true,
+            stockBefore: e.stockBefore,
+            stockAfter: e.stockAfter,
+            costPrice: e.costPrice,       // Собівартість для розрахунку вартості поставки
+            priceBefore: 0,               // Ціна продажу до = 0 для нових
+            priceAfter: e.priceAfter,     // Ціна продажу для балансу
+            isNew: e.isNew,
           }));
 
           onLogActivity('supply', {
@@ -214,6 +272,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
     setResult(null);
     setStep('upload');
     setPriceEntries([]);
+    setRowEdits({});
     setOptions({
       dryRun: true,
       stockMode: "add",
@@ -434,38 +493,116 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                       </div>
                     )}
 
+                    {/* Warnings section */}
+                    {result.data.warnings && result.data.warnings.length > 0 && (
+                      <div className="mt-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-2">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                          <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                            Попередження ({result.data.warnings.length})
+                          </span>
+                        </div>
+                        <div className="max-h-20 overflow-y-auto text-xs text-amber-700 dark:text-amber-300 space-y-0.5">
+                          {result.data.warnings.slice(0, 5).map((warning, i) => (
+                            <div key={i} className="flex gap-1">
+                              <span className="text-amber-500">•</span>
+                              <span>{warning.message}</span>
+                            </div>
+                          ))}
+                          {result.data.warnings.length > 5 && (
+                            <div className="text-amber-500 italic">
+                              ...та ще {result.data.warnings.length - 5} попереджень
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Preview table for dry-run */}
                     {result.data.status === "dry-run" && result.data.rows && result.data.rows.length > 0 && (
                       <div className="mt-3 max-h-[200px] overflow-auto border border-blue-200 dark:border-blue-800 rounded-lg">
                         <table className="w-full text-xs">
                           <thead className="bg-blue-100 dark:bg-blue-900/40 sticky top-0">
                             <tr>
-                              <th className="text-left px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300">Назва</th>
+                              <th className="text-left px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300">
+                                <span title="Оригінал → Нормалізоване">Назва</span>
+                              </th>
                               <th className="text-center px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-12">См</th>
-                              <th className="text-center px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-16">К-сть (Excel)</th>
-                              <th className="text-center px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-16">К-сть (імп)</th>
-                              <th className="text-right px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-16">Ціна</th>
+                              <th className="text-center px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-16">
+                                <span title="Оригінальна кількість з Excel">К-сть (Excel)</span>
+                              </th>
+                              <th className="text-center px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-16">
+                                <span title="Кількість після нормалізації та агрегації">К-сть (імп)</span>
+                              </th>
+                              <th className="text-right px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-16">Собів.</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-blue-100 dark:divide-blue-800">
                             {result.data.rows.slice(0, 20).map((row, i) => {
                               const originalQty = (row.original?.units as number) || row.stock;
                               const qtyMismatch = originalQty !== row.stock;
+                              const originalName = (row.original?.variety as string) || '';
+                              const nameChanged = originalName && originalName !== row.flowerName;
+                              // Перевірка на агрегацію
+                              const isAggregated = Array.isArray((row.original as Record<string, unknown>)?._aggregatedFromHashes);
+                              const aggregatedCount = isAggregated
+                                ? ((row.original as Record<string, unknown>)?._aggregatedFromHashes as unknown[]).length
+                                : 0;
+                              // Редаговане значення
+                              const editedName = rowEdits[row.hash]?.flowerName;
+                              const displayName = editedName ?? row.flowerName;
+                              const isEdited = editedName !== undefined && editedName !== row.flowerName;
+
                               return (
-                                <tr key={i} className="hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                                  <td className="px-2 py-1 text-slate-700 dark:text-slate-300">{row.flowerName}</td>
+                                <tr key={i} className={cn(
+                                  "hover:bg-blue-50 dark:hover:bg-blue-900/20",
+                                  isAggregated && "bg-amber-50/50 dark:bg-amber-900/10",
+                                  isEdited && "bg-emerald-50/50 dark:bg-emerald-900/10"
+                                )}>
+                                  <td className="px-2 py-1">
+                                    <div className="flex flex-col gap-0.5">
+                                      <input
+                                        type="text"
+                                        value={displayName}
+                                        onChange={(e) => handleRowEdit(row.hash, 'flowerName', e.target.value)}
+                                        className={cn(
+                                          "w-full px-1.5 py-0.5 text-xs rounded border",
+                                          isEdited
+                                            ? "border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                                            : "border-transparent bg-transparent text-slate-700 dark:text-slate-300 hover:border-slate-200 dark:hover:border-slate-600 focus:border-blue-300 dark:focus:border-blue-600 focus:bg-white dark:focus:bg-slate-800"
+                                        )}
+                                        title="Клікніть щоб редагувати назву"
+                                      />
+                                      {(nameChanged || isEdited) && (
+                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 px-1.5" title={`Оригінал: ${originalName}`}>
+                                          ← {originalName.length > 20 ? originalName.slice(0, 20) + '...' : originalName}
+                                          {isEdited && <span className="ml-1 text-emerald-500">(змінено)</span>}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
                                   <td className="px-2 py-1 text-center text-slate-500 dark:text-slate-400">{row.length || '-'}</td>
                                   <td className={cn(
                                     "px-2 py-1 text-center",
                                     qtyMismatch ? "text-amber-600 dark:text-amber-400 font-medium" : "text-slate-500 dark:text-slate-400"
                                   )}>
-                                    {originalQty}
+                                    <span title={qtyMismatch ? `Оригінал: ${originalQty}, різниця через округлення або агрегацію` : undefined}>
+                                      {originalQty}
+                                      {isAggregated && (
+                                        <span className="ml-0.5 text-[10px] text-amber-500" title={`Агреговано з ${aggregatedCount} рядків`}>
+                                          ({aggregatedCount})
+                                        </span>
+                                      )}
+                                    </span>
                                   </td>
                                   <td className={cn(
                                     "px-2 py-1 text-center",
                                     qtyMismatch ? "text-amber-600 dark:text-amber-400 font-medium" : "text-slate-500 dark:text-slate-400"
                                   )}>
-                                    {row.stock}
+                                    <span title={qtyMismatch ? `Імпортовано: ${row.stock}` : undefined}>
+                                      {row.stock}
+                                      {qtyMismatch && <span className="ml-0.5">!</span>}
+                                    </span>
                                   </td>
                                   <td className="px-2 py-1 text-right text-slate-500 dark:text-slate-400">{row.price.toFixed(2)}</td>
                                 </tr>

@@ -103,8 +103,9 @@ export interface ActivityDetails {
     length: number | null;
     stockBefore?: number;
     stockAfter: number;
+    costPrice?: number;    // Собівартість (для розрахунку вартості поставки)
     priceBefore?: number;
-    priceAfter: number;
+    priceAfter: number;    // Ціна продажу (для балансу)
     isNew: boolean;
   }>;
 }
@@ -324,7 +325,10 @@ export function useActivityLog(): UseActivityLogReturn {
             for (const item of activity.details.supplyItems) {
               const suppliedQty = (item.stockAfter || 0) - (item.stockBefore || 0);
               acc.totalSuppliesQty += suppliedQty;
-              acc.totalSuppliesAmount += suppliedQty * (item.priceAfter || 0);
+              // Використовуємо costPrice (собівартість) для розрахунку вартості поставки
+              // Якщо costPrice не вказано, fallback на priceAfter для сумісності
+              const unitCost = item.costPrice ?? item.priceAfter ?? 0;
+              acc.totalSuppliesAmount += suppliedQty * unitCost;
             }
           }
           break;

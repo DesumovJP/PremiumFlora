@@ -32,6 +32,10 @@ export async function importExcel(
   if (options.forceImport !== undefined) {
     formData.append('forceImport', String(options.forceImport));
   }
+  // Передаємо оверрайди нормалізації як JSON
+  if (options.rowOverrides && Object.keys(options.rowOverrides).length > 0) {
+    formData.append('rowOverrides', JSON.stringify(options.rowOverrides));
+  }
 
   const authHeaders = getAuthHeaders();
   const headers: Record<string, string> = {};

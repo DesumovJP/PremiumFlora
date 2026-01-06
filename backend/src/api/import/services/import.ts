@@ -71,6 +71,32 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     // 4. Нормалізація
     const { normalized, warnings: normWarnings } = normalizerService.normalize(parsedRows);
 
+    // 4.5 Застосування оверрайдів нормалізації (якщо є)
+    if (options.rowOverrides && Object.keys(options.rowOverrides).length > 0) {
+      strapi.log.info('Applying row overrides:', { count: Object.keys(options.rowOverrides).length });
+
+      for (const row of normalized) {
+        const override = options.rowOverrides[row.hash];
+        if (override) {
+          if (override.flowerName && override.flowerName !== row.flowerName) {
+            strapi.log.info(`Overriding flowerName: "${row.flowerName}" → "${override.flowerName}"`);
+            row.flowerName = override.flowerName;
+            // Перерахуємо slug для нової назви
+            row.slug = override.flowerName
+              .toLowerCase()
+              .trim()
+              .replace(/[^a-z0-9а-яіїєґ\s-]/gi, '')
+              .replace(/\s+/g, '-')
+              .replace(/-+/g, '-');
+          }
+          if (override.length !== undefined && override.length !== row.length) {
+            strapi.log.info(`Overriding length: ${row.length} → ${override.length}`);
+            row.length = override.length;
+          }
+        }
+      }
+    }
+
     // 5. Валідація
     const { valid, errors, warnings: allWarnings } = validatorService.validate(
       normalized,
@@ -94,9 +120,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     if (!options.dryRun && valid.length > 0) {
       strapi.log.info('▶️ Starting upsert process...');
       const upserter = new UpserterService(strapi);
-      const { result, rowOutcomes: outcomes } = await upserter.upsert(valid, options);
+      const { result, rowOutcomes: outcomes, aggregationWarnings } = await upserter.upsert(valid, options);
       upsertResult = result;
       strapi.log.info('✅ Upsert completed', { result });
+
+      // Додати попередження про агрегацію
+      allWarnings.push(...aggregationWarnings);
 
       // Копіювати outcomes
       for (const [hash, outcome] of outcomes) {

@@ -9,6 +9,7 @@ export type {
   StockMode,
   PriceMode,
   SupplyStatus,
+  RowOverride,
   ImportOptions,
   ImportError,
   ImportWarning,

@@ -8,6 +8,12 @@ import type { Core } from '@strapi/strapi';
 import type { Context } from 'koa';
 import fs from 'fs/promises';
 
+// Оверрайди для редагування нормалізації
+interface RowOverride {
+  flowerName?: string;
+  length?: number;
+}
+
 interface ImportRequestBody {
   dryRun?: string | boolean;
   stockMode?: 'replace' | 'add' | 'skip';
@@ -18,6 +24,7 @@ interface ImportRequestBody {
   applyPriceCalculation?: string | boolean;
   exchangeRate?: string | number;
   marginMultiplier?: string | number;
+  rowOverrides?: string; // JSON string: Record<hash, RowOverride>
 }
 
 interface ImportServiceOptions {
@@ -31,6 +38,7 @@ interface ImportServiceOptions {
   applyPriceCalculation?: boolean;
   exchangeRate?: number;
   marginMultiplier?: number;
+  rowOverrides?: Record<string, RowOverride>;
 }
 
 /**
@@ -165,6 +173,17 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       // Отримати параметри з body
       const body = ctx.request.body as ImportRequestBody;
 
+      // Парсимо rowOverrides з JSON
+      let parsedRowOverrides: Record<string, RowOverride> | undefined;
+      if (body.rowOverrides) {
+        try {
+          parsedRowOverrides = JSON.parse(body.rowOverrides);
+          strapi.log.info('Parsed rowOverrides:', { count: Object.keys(parsedRowOverrides || {}).length });
+        } catch (e) {
+          strapi.log.warn('Failed to parse rowOverrides:', e);
+        }
+      }
+
       const options: ImportServiceOptions = {
         dryRun: body.dryRun === 'true' || body.dryRun === true,
         stockMode: body.stockMode || 'replace',
@@ -176,6 +195,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         applyPriceCalculation: body.applyPriceCalculation === 'true' || body.applyPriceCalculation === true,
         exchangeRate: body.exchangeRate ? parseFloat(String(body.exchangeRate)) : undefined,
         marginMultiplier: body.marginMultiplier ? parseFloat(String(body.marginMultiplier)) : undefined,
+        rowOverrides: parsedRowOverrides,
       };
 
       strapi.log.info('Import options:', {
