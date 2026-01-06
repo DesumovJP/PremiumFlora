@@ -76,27 +76,34 @@ function downloadWorkbook(wb: XLSX.WorkBook, filename: string): void {
 // ============================================
 
 export function exportProducts(products: Product[]): void {
-  const headers = ['Назва товару', 'Розмір (см)', 'Ціна (грн)', 'Кількість (шт)', 'Загальна вартість (грн)'];
+  const headers = ['Назва товару', 'Розмір (см)', 'Собівартість (грн)', 'Ціна (грн)', 'Кількість (шт)', 'Вартість закупки (грн)', 'Вартість продажу (грн)'];
 
   const rows: (string | number)[][] = [];
 
   products.forEach(product => {
     product.variants.forEach(variant => {
+      const costPrice = (variant as { costPrice?: number }).costPrice || 0;
       rows.push([
         product.name,
         variant.length,
+        costPrice,
         variant.price,
         variant.stock,
-        variant.price * variant.stock,
+        costPrice * variant.stock,  // Вартість закупки
+        variant.price * variant.stock,  // Вартість продажу
       ]);
     });
   });
 
   // Add summary row
   const totalStock = products.reduce((sum, p) => sum + p.variants.reduce((s, v) => s + v.stock, 0), 0);
-  const totalValue = products.reduce((sum, p) => sum + p.variants.reduce((s, v) => s + v.price * v.stock, 0), 0);
+  const totalCostValue = products.reduce((sum, p) => sum + p.variants.reduce((s, v) => {
+    const costPrice = (v as { costPrice?: number }).costPrice || 0;
+    return s + costPrice * v.stock;
+  }, 0), 0);
+  const totalSaleValue = products.reduce((sum, p) => sum + p.variants.reduce((s, v) => s + v.price * v.stock, 0), 0);
 
-  rows.push(['РАЗОМ', '', '', totalStock, totalValue]);
+  rows.push(['РАЗОМ', '', '', '', totalStock, totalCostValue, totalSaleValue]);
 
   const data = [headers, ...rows];
 
