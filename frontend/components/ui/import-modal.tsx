@@ -493,30 +493,6 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                       </div>
                     )}
 
-                    {/* Warnings section */}
-                    {result.data.warnings && result.data.warnings.length > 0 && (
-                      <div className="mt-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-2">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-                          <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                            Попередження ({result.data.warnings.length})
-                          </span>
-                        </div>
-                        <div className="max-h-20 overflow-y-auto text-xs text-amber-700 dark:text-amber-300 space-y-0.5">
-                          {result.data.warnings.slice(0, 5).map((warning, i) => (
-                            <div key={i} className="flex gap-1">
-                              <span className="text-amber-500">•</span>
-                              <span>{warning.message}</span>
-                            </div>
-                          ))}
-                          {result.data.warnings.length > 5 && (
-                            <div className="text-amber-500 italic">
-                              ...та ще {result.data.warnings.length - 5} попереджень
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
 
                     {/* Preview table for dry-run - ПОВНА ТАБЛИЦЯ */}
                     {result.data.status === "dry-run" && result.data.rows && result.data.rows.length > 0 && (
