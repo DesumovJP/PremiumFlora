@@ -30,20 +30,10 @@ export const VARIANT_FRAGMENT = gql`
     documentId
     length
     price
+    costPrice
     stock
   }
 `;
-
-// TODO: Додати costPrice після деплою бекенду
-// export const VARIANT_FRAGMENT_WITH_COST = gql`
-//   fragment VariantFields on Variant {
-//     documentId
-//     length
-//     price
-//     costPrice
-//     stock
-//   }
-// `;
 
 export const FLOWER_FRAGMENT = gql`
   fragment FlowerFields on Flower {
