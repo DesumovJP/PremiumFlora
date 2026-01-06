@@ -82,15 +82,17 @@ export function exportProducts(products: Product[]): void {
 
   products.forEach(product => {
     product.variants.forEach(variant => {
-      const costPrice = (variant as { costPrice?: number }).costPrice || 0;
+      const costPrice = (variant as { costPrice?: number }).costPrice ?? 0;
+      const costValue = Math.round(costPrice * variant.stock * 100) / 100;
+      const saleValue = Math.round(variant.price * variant.stock * 100) / 100;
       rows.push([
         product.name,
         variant.length,
         costPrice,
         variant.price,
         variant.stock,
-        costPrice * variant.stock,  // Вартість закупки
-        variant.price * variant.stock,  // Вартість продажу
+        costValue,  // Вартість закупки
+        saleValue,  // Вартість продажу
       ]);
     });
   });
@@ -98,12 +100,14 @@ export function exportProducts(products: Product[]): void {
   // Add summary row
   const totalStock = products.reduce((sum, p) => sum + p.variants.reduce((s, v) => s + v.stock, 0), 0);
   const totalCostValue = products.reduce((sum, p) => sum + p.variants.reduce((s, v) => {
-    const costPrice = (v as { costPrice?: number }).costPrice || 0;
-    return s + costPrice * v.stock;
+    const costPrice = (v as { costPrice?: number }).costPrice ?? 0;
+    return s + Math.round(costPrice * v.stock * 100) / 100;
   }, 0), 0);
-  const totalSaleValue = products.reduce((sum, p) => sum + p.variants.reduce((s, v) => s + v.price * v.stock, 0), 0);
+  const totalSaleValue = products.reduce((sum, p) => sum + p.variants.reduce((s, v) => {
+    return s + Math.round(v.price * v.stock * 100) / 100;
+  }, 0), 0);
 
-  rows.push(['РАЗОМ', '', '', '', totalStock, totalCostValue, totalSaleValue]);
+  rows.push(['РАЗОМ', '', '', '', totalStock, Math.round(totalCostValue * 100) / 100, Math.round(totalSaleValue * 100) / 100]);
 
   const data = [headers, ...rows];
 
