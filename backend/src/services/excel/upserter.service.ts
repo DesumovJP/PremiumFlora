@@ -160,9 +160,9 @@ export class UpserterService {
       if (groupRows.length > 1) {
         // Знайдено дублікат - агрегуємо
         const totalStock = groupRows.reduce((sum, r) => sum + r.stock, 0);
-        // Розраховуємо середньозважену ціну (собівартість)
+        // Розраховуємо середньозважену ціну (собівартість) - без округлення для точності
         const totalCost = groupRows.reduce((sum, r) => sum + r.stock * r.price, 0);
-        const weightedAvgPrice = totalStock > 0 ? Math.round(totalCost / totalStock * 100) / 100 : 0;
+        const weightedAvgPrice = totalStock > 0 ? totalCost / totalStock : 0;
 
         const lastRow = groupRows[groupRows.length - 1];
         const firstRow = groupRows[0];
