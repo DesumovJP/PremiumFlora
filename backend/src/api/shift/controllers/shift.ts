@@ -25,13 +25,14 @@ interface CloseShiftBody {
 
 /**
  * Отримати дату у форматі YYYY-MM-DD для заданого timestamp
- * Використовує локальний час (UTC+2/+3 для України)
+ * Використовує часовий пояс України (Europe/Kyiv)
  */
 function getDateString(date: Date = new Date()): string {
-  // Форматуємо як локальну дату
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  // Форматуємо дату в українському часовому поясі
+  const kyivDate = new Date(date.toLocaleString('en-US', { timeZone: 'Europe/Kyiv' }));
+  const year = kyivDate.getFullYear();
+  const month = String(kyivDate.getMonth() + 1).padStart(2, '0');
+  const day = String(kyivDate.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
