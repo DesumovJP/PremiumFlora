@@ -768,4 +768,72 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       };
     }
   },
+
+  /**
+   * Синхронізувати баланси клієнтів з неоплаченими транзакціями
+   * Це потрібно для міграції існуючих даних
+   */
+  async syncBalances() {
+    const knex = this.getKnex();
+
+    try {
+      strapi.log.info('🔄 Starting balance sync...');
+
+      // Отримуємо всіх клієнтів з їхніми неоплаченими транзакціями
+      const customers = await strapi.db.query('api::customer.customer').findMany({
+        populate: ['transactions'],
+      });
+
+      let updatedCount = 0;
+
+      for (const customer of customers) {
+        const transactions = (customer as any).transactions || [];
+
+        // Рахуємо загальний борг: сума (amount - paidAmount) для всіх неоплачених транзакцій
+        let totalDebt = 0;
+        for (const tx of transactions) {
+          if (tx.type === 'sale' && tx.paymentStatus === 'expected') {
+            const paidAmount = tx.paidAmount || tx.paid_amount || 0;
+            const debtAmount = tx.amount - paidAmount;
+            totalDebt += debtAmount;
+          }
+        }
+
+        // Баланс = -totalDebt (негативний = борг)
+        const newBalance = -totalDebt;
+        const currentBalance = (customer as any).balance || 0;
+
+        // Оновлюємо тільки якщо баланс змінився
+        if (currentBalance !== newBalance) {
+          await knex('customers')
+            .where('id', (customer as any).id)
+            .update({
+              balance: newBalance,
+              updated_at: new Date().toISOString(),
+            });
+
+          strapi.log.info(`💰 Customer "${(customer as any).name}" balance updated: ${currentBalance} → ${newBalance}`);
+          updatedCount++;
+        }
+      }
+
+      strapi.log.info(`✅ Balance sync completed. Updated ${updatedCount} customers.`);
+
+      return {
+        success: true,
+        updated: updatedCount,
+      };
+    } catch (error: any) {
+      strapi.log.error('❌ Balance sync error:', error);
+
+      return {
+        success: false,
+        updated: 0,
+        error: {
+          code: 'SYNC_ERROR',
+          message: error.message || 'Failed to sync balances',
+        },
+      };
+    }
+  },
 });

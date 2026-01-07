@@ -30,5 +30,13 @@ export default {
         middlewares: ['api::pos.pos-auth'],
       },
     },
+    {
+      method: 'POST',
+      path: '/pos/sync-balances',
+      handler: 'pos.syncBalances',
+      config: {
+        middlewares: ['api::pos.pos-auth'],
+      },
+    },
   ],
 };

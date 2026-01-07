@@ -57,6 +57,11 @@ interface PosService {
     message?: string;
     error?: { code: string; message: string };
   }>;
+  syncBalances: () => Promise<{
+    success: boolean;
+    updated: number;
+    error?: { code: string; message: string };
+  }>;
 }
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
@@ -278,6 +283,57 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           type: 'error',
           title: 'Внутрішня помилка',
           message: 'Сталася помилка при списанні. Спробуйте пізніше.',
+        },
+      };
+    }
+  },
+
+  /**
+   * POST /api/pos/sync-balances
+   * Синхронізувати баланси клієнтів з їх неоплаченими транзакціями
+   */
+  async syncBalances(ctx: Context) {
+    try {
+      const posService = strapi.service('api::pos.pos') as PosService;
+      const result = await posService.syncBalances();
+
+      if (result.success) {
+        ctx.status = 200;
+        ctx.body = {
+          success: true,
+          updated: result.updated,
+          alert: {
+            type: 'success',
+            title: 'Баланси синхронізовано',
+            message: `Оновлено балансів: ${result.updated}`,
+          },
+        };
+      } else {
+        ctx.status = 400;
+        ctx.body = {
+          success: false,
+          error: result.error,
+          alert: {
+            type: 'error',
+            title: 'Помилка синхронізації',
+            message: result.error?.message || 'Невідома помилка',
+          },
+        };
+      }
+    } catch (error) {
+      strapi.log.error('POS syncBalances error:', error);
+
+      ctx.status = 500;
+      ctx.body = {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'An error occurred while syncing balances',
+        },
+        alert: {
+          type: 'error',
+          title: 'Внутрішня помилка',
+          message: 'Сталася помилка при синхронізації балансів. Спробуйте пізніше.',
         },
       };
     }
