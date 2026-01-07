@@ -62,6 +62,13 @@ interface PosService {
     updated: number;
     error?: { code: string; message: string };
   }>;
+  returnSale: (transactionId: string, notes?: string) => Promise<{
+    success: boolean;
+    idempotent?: boolean;
+    data?: unknown;
+    message?: string;
+    error?: { code: string; message: string };
+  }>;
 }
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
@@ -112,14 +119,29 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
       // Валідація кожного item
       for (let i = 0; i < body.items.length; i++) {
-        const item = body.items[i];
-        if (!item.flowerSlug || !item.length || !item.qty || !item.price || !item.name) {
+        const item = body.items[i] as SaleItem & { isCustom?: boolean };
+
+        // Базові поля обов'язкові для всіх
+        if (!item.qty || !item.price || !item.name) {
           ctx.status = 400;
           ctx.body = {
             success: false,
             error: {
               code: 'INVALID_ITEM',
-              message: `Item at index ${i} is missing required fields (flowerSlug, length, qty, price, name)`,
+              message: `Item at index ${i} is missing required fields (qty, price, name)`,
+            },
+          };
+          return;
+        }
+
+        // Для звичайних товарів (не кастомних) потрібні flowerSlug та length
+        if (!item.isCustom && (!item.flowerSlug || !item.length)) {
+          ctx.status = 400;
+          ctx.body = {
+            success: false,
+            error: {
+              code: 'INVALID_ITEM',
+              message: `Item at index ${i} is missing required fields (flowerSlug, length) for non-custom item`,
             },
           };
           return;
@@ -404,6 +426,77 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           type: 'error',
           title: 'Внутрішня помилка',
           message: 'Сталася помилка при підтвердженні оплати. Спробуйте пізніше.',
+        },
+      };
+    }
+  },
+
+  /**
+   * POST /api/pos/transactions/:id/return
+   * Повернути замовлення (скасувати продаж)
+   */
+  async returnSale(ctx: Context) {
+    try {
+      const { id } = ctx.params;
+      const { notes } = ctx.request.body as { notes?: string };
+
+      if (!id) {
+        ctx.status = 400;
+        ctx.body = {
+          success: false,
+          error: {
+            code: 'MISSING_ID',
+            message: 'Transaction ID is required',
+          },
+        };
+        return;
+      }
+
+      // Виклик сервісу
+      const posService = strapi.service('api::pos.pos') as PosService;
+      const result = await posService.returnSale(id, notes);
+
+      if (result.success) {
+        ctx.status = 200;
+        ctx.body = {
+          success: true,
+          idempotent: result.idempotent || false,
+          data: result.data,
+          message: result.message,
+          alert: {
+            type: 'success',
+            title: result.idempotent ? 'Вже повернуто' : 'Замовлення повернуто',
+            message: result.idempotent
+              ? 'Це замовлення вже було скасовано раніше'
+              : 'Замовлення успішно повернуто. Склад та баланс клієнта оновлено.',
+          },
+        };
+      } else {
+        ctx.status = result.error?.code === 'TRANSACTION_NOT_FOUND' ? 404 : 400;
+        ctx.body = {
+          success: false,
+          error: result.error,
+          alert: {
+            type: 'error',
+            title: 'Помилка повернення',
+            message: result.error?.message || 'Невідома помилка',
+          },
+        };
+      }
+    } catch (error) {
+      strapi.log.error('POS returnSale error:', error);
+
+      ctx.status = 500;
+      ctx.body = {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'An error occurred while processing the return',
+        },
+        alert: {
+          type: 'error',
+          title: 'Внутрішня помилка',
+          message: 'Сталася помилка при поверненні замовлення. Спробуйте пізніше.',
         },
       };
     }

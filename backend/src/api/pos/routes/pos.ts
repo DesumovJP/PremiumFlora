@@ -38,5 +38,13 @@ export default {
         middlewares: ['api::pos.pos-auth'],
       },
     },
+    {
+      method: 'POST',
+      path: '/pos/transactions/:id/return',
+      handler: 'pos.returnSale',
+      config: {
+        middlewares: ['api::pos.pos-auth'],
+      },
+    },
   ],
 };

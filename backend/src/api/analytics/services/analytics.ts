@@ -952,9 +952,11 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
 
     // Отримуємо транзакції за місяць (вони містять costPrice в items)
+    // ВАЖЛИВО: виключаємо скасовані транзакції (повернення)
     const transactions = await strapi.db.query('api::transaction.transaction').findMany({
       where: {
         type: 'sale',
+        paymentStatus: { $ne: 'cancelled' },
         date: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
       },
     });

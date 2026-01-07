@@ -846,4 +846,212 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       };
     }
   },
+
+  /**
+   * Повернути замовлення (return/cancel sale) - АТОМАРНА ОПЕРАЦІЯ З ТРАНЗАКЦІЄЮ
+   *
+   * Що відбувається:
+   * 1. Повертає товари на склад (інкремент stock)
+   * 2. Оновлює статус транзакції на 'cancelled'
+   * 3. Оновлює статистику клієнта (order_count, total_spent)
+   * 4. Оновлює баланс клієнта (якщо був борг - знімає, якщо оплачено - додає кредит)
+   */
+  async returnSale(transactionDocumentId: string, notes?: string) {
+    const knex = this.getKnex();
+
+    strapi.log.info('🔙 Processing return for transaction:', { transactionDocumentId });
+
+    // 1. Знайти транзакцію
+    const transaction = await strapi.db.query('api::transaction.transaction').findOne({
+      where: { documentId: transactionDocumentId },
+      populate: ['customer'],
+    });
+
+    if (!transaction) {
+      return {
+        success: false,
+        error: {
+          code: 'TRANSACTION_NOT_FOUND',
+          message: `Транзакцію з id ${transactionDocumentId} не знайдено`,
+        },
+      };
+    }
+
+    if (transaction.type !== 'sale') {
+      return {
+        success: false,
+        error: {
+          code: 'INVALID_TRANSACTION_TYPE',
+          message: 'Повернути можна тільки транзакції типу "продаж"',
+        },
+      };
+    }
+
+    if (transaction.paymentStatus === 'cancelled') {
+      return {
+        success: true,
+        idempotent: true,
+        data: transaction,
+        message: 'Транзакція вже скасована',
+      };
+    }
+
+    // 2. Парсимо items
+    interface TransactionItem {
+      flowerSlug: string;
+      length: number;
+      qty: number;
+      price: number;
+      name: string;
+      isCustom?: boolean;
+    }
+
+    const items: TransactionItem[] = typeof transaction.items === 'string'
+      ? JSON.parse(transaction.items)
+      : (transaction.items || []);
+
+    try {
+      await knex.transaction(async (trx) => {
+        // 3. Повертаємо товари на склад (тільки не-кастомні)
+        for (const item of items) {
+          if (item.isCustom) {
+            strapi.log.info(`🏷️ Skipping stock return for custom item: ${item.name}`);
+            continue;
+          }
+
+          // Знаходимо варіант
+          const variant = await trx('variants')
+            .join('variants_flower_lnk', 'variants.id', 'variants_flower_lnk.variant_id')
+            .join('flowers', 'variants_flower_lnk.flower_id', 'flowers.id')
+            .where('flowers.slug', item.flowerSlug)
+            .andWhere('variants.length', item.length)
+            .select('variants.id', 'variants.stock')
+            .first();
+
+          if (!variant) {
+            // Пробуємо за documentId (fallback)
+            const variantByDocId = await trx('variants')
+              .join('variants_flower_lnk', 'variants.id', 'variants_flower_lnk.variant_id')
+              .join('flowers', 'variants_flower_lnk.flower_id', 'flowers.id')
+              .where('flowers.document_id', item.flowerSlug)
+              .andWhere('variants.length', item.length)
+              .select('variants.id', 'variants.stock')
+              .first();
+
+            if (variantByDocId) {
+              await trx('variants')
+                .where('id', variantByDocId.id)
+                .update({
+                  stock: trx.raw('stock + ?', [item.qty]),
+                });
+              strapi.log.info(`📦 Stock returned: ${item.name} +${item.qty}`);
+            } else {
+              strapi.log.warn(`⚠️ Variant not found for return: ${item.flowerSlug} ${item.length}cm`);
+            }
+          } else {
+            await trx('variants')
+              .where('id', variant.id)
+              .update({
+                stock: trx.raw('stock + ?', [item.qty]),
+              });
+            strapi.log.info(`📦 Stock returned: ${item.name} +${item.qty}`);
+          }
+        }
+
+        // 4. Оновлюємо статус транзакції
+        const returnNotes = notes
+          ? `${transaction.notes || ''}\n[ПОВЕРНЕННЯ] ${notes}`.trim()
+          : `${transaction.notes || ''}\n[ПОВЕРНЕННЯ]`.trim();
+
+        await trx('transactions')
+          .where('id', transaction.id)
+          .update({
+            payment_status: 'cancelled',
+            notes: returnNotes,
+            updated_at: new Date().toISOString(),
+          });
+
+        // 5. Оновлюємо статистику та баланс клієнта
+        if (transaction.customer) {
+          const customer = transaction.customer as { id: number };
+          const amount = transaction.amount || 0;
+          const paidAmount = transaction.paidAmount || 0;
+          const wasExpected = transaction.paymentStatus === 'expected';
+          const wasPaid = transaction.paymentStatus === 'paid';
+
+          if (wasPaid) {
+            // Було повністю оплачено:
+            // - Знімаємо з order_count та total_spent
+            // - Додаємо amount до балансу (кредит на повернення)
+            await trx('customers')
+              .where('id', customer.id)
+              .update({
+                order_count: trx.raw('GREATEST(COALESCE(order_count, 0) - 1, 0)'),
+                total_spent: trx.raw('GREATEST(COALESCE(total_spent, 0) - ?, 0)', [amount]),
+                balance: trx.raw('COALESCE(balance, 0) + ?', [amount]),
+                updated_at: new Date().toISOString(),
+              });
+            strapi.log.info('💰 Customer stats updated (paid return):', {
+              customerId: customer.id,
+              amountRefunded: amount,
+            });
+          } else if (wasExpected) {
+            // Було в борг (повністю або частково):
+            // - Знімаємо з order_count якщо було частково оплачено
+            // - Знімаємо paidAmount з total_spent
+            // - Повертаємо борг до балансу (debtAmount = amount - paidAmount)
+            const debtAmount = amount - paidAmount;
+
+            await trx('customers')
+              .where('id', customer.id)
+              .update({
+                ...(paidAmount > 0 && {
+                  order_count: trx.raw('GREATEST(COALESCE(order_count, 0) - 1, 0)'),
+                  total_spent: trx.raw('GREATEST(COALESCE(total_spent, 0) - ?, 0)', [paidAmount]),
+                }),
+                // Повертаємо борг (додаємо до балансу, бо борг був від'ємним)
+                balance: trx.raw('COALESCE(balance, 0) + ?', [debtAmount]),
+                updated_at: new Date().toISOString(),
+              });
+            strapi.log.info('💰 Customer stats updated (expected return):', {
+              customerId: customer.id,
+              debtCleared: debtAmount,
+              paidRefunded: paidAmount,
+            });
+          }
+        }
+
+        strapi.log.info('✅ Return processed successfully:', {
+          transactionId: transaction.id,
+          documentId: transactionDocumentId,
+        });
+      });
+
+      // Завантажуємо оновлену транзакцію
+      const updated = await strapi.db.query('api::transaction.transaction').findOne({
+        where: { id: transaction.id },
+        populate: ['customer'],
+      });
+
+      // Інвалідуємо кеш аналітики
+      invalidateAnalyticsCache();
+
+      return {
+        success: true,
+        idempotent: false,
+        data: updated,
+        message: 'Замовлення успішно повернуто',
+      };
+    } catch (error: any) {
+      strapi.log.error('❌ Return sale error:', error);
+
+      return {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Не вдалося повернути замовлення',
+        },
+      };
+    }
+  },
 });

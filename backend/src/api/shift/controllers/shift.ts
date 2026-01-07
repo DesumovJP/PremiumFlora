@@ -65,6 +65,25 @@ function calculateSummary(activities: Activity[]) {
 }
 
 /**
+ * Helper для отримання поточної вартості запасів
+ */
+async function getCurrentInventory(strapi: Core.Strapi): Promise<{ value: number; qty: number }> {
+  const variants = await strapi.db.query('api::variant.variant').findMany({});
+
+  let totalValue = 0;
+  let totalQty = 0;
+
+  for (const v of variants) {
+    const stock = Number(v.stock) || 0;
+    const price = Number(v.price) || 0;
+    totalQty += stock;
+    totalValue += stock * price;
+  }
+
+  return { value: Math.round(totalValue), qty: totalQty };
+}
+
+/**
  * Автоматично закрити всі активні зміни за попередні дні
  */
 async function autoClosePreviousDayShifts(strapi: Core.Strapi, todayDate: string): Promise<void> {
@@ -87,6 +106,9 @@ async function autoClosePreviousDayShifts(strapi: Core.Strapi, todayDate: string
     // Час закриття = кінець того дня (23:59:59)
     const closedAt = `${shift.shiftDate}T23:59:59.999Z`;
 
+    // Отримуємо поточну вартість запасів
+    const inventory = await getCurrentInventory(strapi);
+
     await docs('api::shift.shift').update({
       documentId: shift.documentId,
       data: {
@@ -97,10 +119,12 @@ async function autoClosePreviousDayShifts(strapi: Core.Strapi, todayDate: string
         totalSalesAmount: summary.totalSalesAmount,
         totalWriteOffs: summary.totalWriteOffs,
         totalWriteOffsQty: summary.totalWriteOffsQty,
+        inventoryValue: inventory.value,
+        inventoryQty: inventory.qty,
       },
     });
 
-    strapi.log.info(`[Shift] Auto-closed shift for ${shift.shiftDate} with ${activities.length} activities`);
+    strapi.log.info(`[Shift] Auto-closed shift for ${shift.shiftDate} with ${activities.length} activities, inventory: ${inventory.qty} items, ${inventory.value}₴`);
   }
 }
 
@@ -365,6 +389,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       const summary = calculateSummary(activities);
       const now = new Date().toISOString();
 
+      // Отримуємо поточну вартість запасів
+      const inventory = await getCurrentInventory(strapi);
+
       // Закриваємо зміну
       const closedShift = await docs('api::shift.shift').update({
         documentId: shift.documentId,
@@ -376,6 +403,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           totalSalesAmount: summary.totalSalesAmount,
           totalWriteOffs: summary.totalWriteOffs,
           totalWriteOffsQty: summary.totalWriteOffsQty,
+          inventoryValue: inventory.value,
+          inventoryQty: inventory.qty,
           notes: body.notes || null,
         },
       });
