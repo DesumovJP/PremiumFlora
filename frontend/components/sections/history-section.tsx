@@ -23,7 +23,8 @@ import {
 } from '@/hooks/use-activity-log';
 import { cn } from '@/lib/utils';
 import { getShifts, Shift } from '@/lib/strapi';
-import { exportShift } from '@/lib/export';
+import { exportShift, exportSaleInvoice } from '@/lib/export';
+import type { Transaction } from '@/lib/api-types';
 import {
   ChevronDown,
   ChevronRight,
@@ -220,21 +221,77 @@ function ActivityItem({ activity }: { activity: Activity }) {
               <span className="font-medium dark:text-admin-text-primary">Сума:</span>
               <span className="font-bold text-emerald-600">{Math.round(details.totalAmount || 0)} грн</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500 dark:text-admin-text-tertiary">Статус оплати:</span>
-              <Badge
-                tone={details.paymentStatus === 'paid' ? 'success' : 'warning'}
-                className="text-xs"
-              >
-                {details.paymentStatus === 'paid' ? 'Сплачено' : 'Очікується'}
-              </Badge>
-            </div>
+            {/* Деталізація оплати */}
+            {details.paymentStatus === 'paid' ? (
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Оплата:</span>
+                <span className="text-emerald-600 font-medium">Повністю сплачено</span>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {(details.paidAmount || 0) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 dark:text-admin-text-tertiary">Сплачено:</span>
+                    <span className="text-emerald-600 font-medium">{Math.round(details.paidAmount || 0)} грн</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-admin-text-tertiary">В борг:</span>
+                  <span className="text-rose-600 font-medium">{Math.round((details.totalAmount || 0) - (details.paidAmount || 0))} грн</span>
+                </div>
+              </div>
+            )}
             {details.notes && (
               <div className="border-t pt-2 dark:border-admin-border">
                 <span className="text-slate-500 dark:text-admin-text-tertiary block mb-1">Коментар:</span>
                 <span className="text-slate-700 dark:text-admin-text-secondary text-sm">{details.notes}</span>
               </div>
             )}
+            {/* Export invoice button */}
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full mt-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Convert activity to Transaction format
+                const transaction: Transaction = {
+                  id: 0,
+                  documentId: activity.id,
+                  date: activity.timestamp,
+                  type: 'sale',
+                  operationId: activity.id,
+                  paymentStatus: (details.paymentStatus as 'pending' | 'paid' | 'expected' | 'cancelled') || 'pending',
+                  amount: details.totalAmount || 0,
+                  items: (details.items || []).map(item => ({
+                    flowerSlug: '',
+                    length: parseInt(item.size) || 0,
+                    qty: item.qty,
+                    price: item.price,
+                    name: item.name,
+                    subtotal: item.qty * item.price,
+                  })),
+                  customer: details.customerName ? {
+                    id: 0,
+                    documentId: '',
+                    name: details.customerName,
+                    type: 'Regular',
+                    totalSpent: 0,
+                    orderCount: 0,
+                    balance: 0,
+                    createdAt: '',
+                    updatedAt: '',
+                  } : undefined,
+                  notes: details.notes,
+                  createdAt: activity.timestamp,
+                  updatedAt: activity.timestamp,
+                };
+                exportSaleInvoice(transaction);
+              }}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Експорт накладної
+            </Button>
           </div>
         );
 
@@ -644,10 +701,10 @@ function ActivityItem({ activity }: { activity: Activity }) {
                           </span>
                           <span className="text-slate-400 ml-0.5">шт</span>
                         </span>
-                        {/* Показуємо costPrice (собівартість) */}
+                        {/* Показуємо costPrice (собівартість в EUR) */}
                         {((item as { costPrice?: number }).costPrice ?? 0) > 0 && (
-                          <span className="font-medium text-blue-600 dark:text-blue-400" title="Собівартість">
-                            {(item as { costPrice?: number }).costPrice} ₴
+                          <span className="font-medium text-slate-500 dark:text-slate-400" title="Собівартість (закупка)">
+                            {(item as { costPrice?: number }).costPrice?.toFixed(2)} €
                           </span>
                         )}
                       </div>
@@ -675,8 +732,18 @@ function ActivityItem({ activity }: { activity: Activity }) {
   const getSummaryText = (): string => {
     const { details } = activity;
     switch (activity.type) {
-      case 'sale':
-        return `${details.customerName} - ${Math.round(details.totalAmount || 0)} грн`;
+      case 'sale': {
+        const total = Math.round(details.totalAmount || 0);
+        const paid = Math.round(details.paidAmount || 0);
+        const debt = total - paid;
+        if (details.paymentStatus === 'paid') {
+          return `${details.customerName} - ${total} грн (сплачено)`;
+        }
+        if (paid > 0) {
+          return `${details.customerName} - ${total} грн (сплачено ${paid}, в борг ${debt})`;
+        }
+        return `${details.customerName} - ${total} грн (в борг)`;
+      }
       case 'writeOff':
         return `${details.flowerName} (${details.length} см) - ${details.qty} шт`;
       case 'productEdit':
@@ -983,11 +1050,14 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
   activities.forEach((a) => {
     if (a.type === 'sale') {
       const amount = a.details.totalAmount || 0;
+      const paid = a.details.paidAmount || 0;
       const status = a.details.paymentStatus;
       if (!status || status === 'paid') {
         totalSalesPaid += amount;
       } else if (status === 'expected' || status === 'pending') {
-        totalSalesExpected += amount;
+        // Часткова оплата: paidAmount йде в paid, решта в expected
+        totalSalesPaid += paid;
+        totalSalesExpected += (amount - paid);
       }
     } else if (a.type === 'supply') {
       totalSupplies += 1;
@@ -1129,7 +1199,7 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
             <div className="rounded-lg bg-blue-50 dark:bg-blue-900/30 p-2">
               <p className="text-xs text-blue-600 dark:text-blue-400">Поставки</p>
               <p className="font-bold text-blue-700 dark:text-blue-300">
-                {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} ₴
+                {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} €
               </p>
               <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
                 {summary.totalSuppliesQty || 0} шт · {summary.totalSupplies || 0} поставок
@@ -1420,11 +1490,14 @@ export function HistorySection({
     shiftActivities.forEach((a) => {
       if (a.type === 'sale') {
         const amount = a.details.totalAmount || 0;
+        const paid = a.details.paidAmount || 0;
         const status = a.details.paymentStatus;
         if (!status || status === 'paid') {
           totalSalesPaid += amount;
         } else if (status === 'expected' || status === 'pending') {
-          totalSalesExpected += amount;
+          // Часткова оплата: paidAmount йде в paid, решта в expected
+          totalSalesPaid += paid;
+          totalSalesExpected += (amount - paid);
         }
         if (a.details.items) {
           totalSalesQty += a.details.items.reduce((sum, item) => sum + (item.qty || 0), 0);
@@ -1485,7 +1558,7 @@ export function HistorySection({
       productEdits: shift.summary?.productEdits ?? 0,
       customersCreated: shift.summary?.customersCreated ?? 0,
     };
-    exportShift(shiftActivities, shiftSummary, shift.startedAt, shift.closedAt);
+    exportShift(shiftActivities, shiftSummary, shift.startedAt, shift.closedAt, shift.inventoryValue, shift.inventoryQty);
   };
 
   return (
@@ -1611,7 +1684,7 @@ export function HistorySection({
                 <div className="rounded-xl border border-blue-100 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-900/20 p-3">
                   <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Поставки</p>
                   <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                    {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} ₴
+                    {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} €
                   </p>
                   <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
                     {summary.totalSuppliesQty || 0} шт · {summary.totalSupplies || 0} поставок

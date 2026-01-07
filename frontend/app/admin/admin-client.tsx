@@ -235,6 +235,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             };
           }),
           totalAmount,
+          paidAmount: paymentStatus === 'expected' ? paidAmount : totalAmount,
           discount,
           paymentStatus,
           notes: posComment || undefined,
@@ -577,7 +578,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   // Handle export shift
   const handleExportShift = () => {
     if (!shiftStartedAt || activities.length === 0) return;
-    exportShift(activities, shiftSummary, shiftStartedAt);
+    exportShift(activities, shiftSummary, shiftStartedAt, null, inventoryValue, summary.stock);
   };
 
   // Уникаємо hydration mismatch - рендеримо тільки після монтування
@@ -667,8 +668,6 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
               }
             }}
             onMonthChange={handleAnalyticsMonthChange}
-            globalPendingAmount={pendingPaymentsAmount}
-            globalPendingCount={pendingPaymentsCount}
           />
         </TabsContent>
 

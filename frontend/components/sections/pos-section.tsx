@@ -39,6 +39,7 @@ import {
   PlusCircle,
   Edit3,
   Tag,
+  Banknote,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 
@@ -325,7 +326,7 @@ function CartPanel({
           )}
           onClick={() => setClientModalOpen(true)}
         >
-          <span className="flex items-center gap-3 truncate flex-1">
+          <span className="flex items-center gap-3 truncate flex-1 min-w-0">
             <div className={cn(
               "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
               selectedClientObj
@@ -339,41 +340,57 @@ function CartPanel({
                   : "text-slate-400"
               )} />
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className={cn(
-                "text-sm truncate",
-                selectedClientObj
-                  ? "text-slate-900 dark:text-admin-text-primary font-medium"
-                  : "text-slate-500 dark:text-admin-text-muted"
-              )}>
-                {selectedClientObj?.name || "Оберіть клієнта"}
-              </span>
-              {selectedClientObj && (selectedClientObj.balance ?? 0) !== 0 && (
-                <span className={cn(
-                  "text-xs font-medium",
-                  (selectedClientObj.balance ?? 0) > 0
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-rose-600 dark:text-rose-400"
-                )}>
-                  {(selectedClientObj.balance ?? 0) > 0 ? "Переплата: +" : "Борг: "}
-                  {Math.abs(selectedClientObj.balance ?? 0).toLocaleString('uk-UA')} ₴
-                </span>
-              )}
-            </div>
+            <span className={cn(
+              "text-sm truncate",
+              selectedClientObj
+                ? "text-slate-900 dark:text-admin-text-primary font-medium"
+                : "text-slate-500 dark:text-admin-text-muted"
+            )}>
+              {selectedClientObj?.name || "Оберіть клієнта"}
+            </span>
           </span>
           <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
         </Button>
+
+        {/* Customer Balance - prominent display under client selector */}
+        {selectedClientObj && (
+          <div className={cn(
+            "mt-2 rounded-lg px-3 py-2 flex items-center justify-between",
+            (selectedClientObj.balance ?? 0) < 0
+              ? "bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/50"
+              : (selectedClientObj.balance ?? 0) > 0
+                ? "bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50"
+                : "bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
+          )}>
+            <span className="text-xs text-slate-600 dark:text-slate-400">Баланс клієнта:</span>
+            <span className={cn(
+              "text-sm font-bold",
+              (selectedClientObj.balance ?? 0) < 0
+                ? "text-rose-600 dark:text-rose-400"
+                : (selectedClientObj.balance ?? 0) > 0
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-slate-600 dark:text-slate-400"
+            )}>
+              {(selectedClientObj.balance ?? 0) < 0 && "−"}
+              {(selectedClientObj.balance ?? 0) > 0 && "+"}
+              {Math.abs(selectedClientObj.balance ?? 0).toLocaleString('uk-UA')} ₴
+              {(selectedClientObj.balance ?? 0) < 0 && (
+                <span className="text-xs font-normal ml-1 text-rose-500 dark:text-rose-400">(борг)</span>
+              )}
+            </span>
+          </div>
+        )}
       </CardHeader>
 
       {/* Cart Items */}
-      <CardContent className="flex-1 min-h-0 pt-0 p-0 flex flex-col">
+      <CardContent className="flex-1 min-h-0 pt-0 p-0 flex flex-col overflow-hidden">
         {cart.length === 0 ? (
           <div className="flex-1 flex items-center justify-center bg-[var(--admin-bg)]">
             <EmptyCart />
           </div>
         ) : (
-          <ScrollArea className="h-full max-h-none bg-[var(--admin-bg)]">
-            <div className="p-4 sm:p-5 space-y-3">
+          <ScrollArea className="flex-1 min-h-0 w-full max-w-full overflow-x-hidden bg-[var(--admin-bg)]">
+            <div className="p-4 pr-5 sm:p-5 sm:pr-6 space-y-3 w-full max-w-full overflow-hidden box-border">
               {groupedCart.map((group) => (
                 <CartGroupItem
                   key={group.name}
@@ -428,110 +445,35 @@ function CartPanel({
             </div>
           )}
 
-          {/* Partial Payment Input - shown when "В борг" is selected */}
-          {paymentStatus === 'expected' && onPaidAmountChange && (
-            <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50">
-              <div className="flex-1">
-                <p className="text-xs text-amber-700 dark:text-amber-400 font-medium mb-1">Часткова оплата (необов'язково)</p>
-                {!showPaidAmount ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowPaidAmount(true)}
-                    className="text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300"
-                  >
-                    {paidAmount > 0 ? `Оплачено: ${paidAmount} ₴` : 'Вказати суму →'}
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      value={paidAmount || ''}
-                      onChange={(e) => onPaidAmountChange(Math.max(0, Math.min(Number(e.target.value) || 0, payable)))}
-                      placeholder="0"
-                      className="h-8 w-24 text-sm bg-white dark:bg-admin-surface"
-                    />
-                    <span className="text-sm text-amber-600 dark:text-amber-400">₴</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowPaidAmount(false);
-                        onPaidAmountChange(0);
-                      }}
-                      className="text-xs text-amber-500 hover:text-amber-700"
-                    >
-                      Скасувати
-                    </button>
-                  </div>
-                )}
+          {/* Order Summary - unified style */}
+          <div className="rounded-xl border border-slate-200/80 dark:border-[var(--admin-border)] bg-[var(--admin-bg)] dark:bg-[var(--admin-bg)] overflow-hidden">
+            {/* Discount Row */}
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 dark:border-[var(--admin-border)]">
+              <div className="flex items-center gap-2">
+                <Percent className="h-3.5 w-3.5 text-[var(--admin-text-muted)]" />
+                <span className="text-sm text-[var(--admin-text-secondary)]">Знижка</span>
               </div>
-              {paidAmount > 0 && (
-                <div className="text-right">
-                  <p className="text-xs text-amber-600 dark:text-amber-500">Борг:</p>
-                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                    {Math.round(payable - paidAmount)} ₴
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Order Summary */}
-          <div className="space-y-2">
-            {/* Subtotal */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[var(--admin-text-secondary)]">Сума товарів</span>
-              <span className="text-sm font-semibold text-[var(--admin-text-primary)]">{Math.round(cartTotal)} ₴</span>
-            </div>
-
-            {/* Add custom item */}
-            {onAddCustomItem && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-[var(--admin-text-secondary)]">Послуга / інше</span>
-                <button
-                  type="button"
-                  onClick={() => setShowCustomItemModal(true)}
-                  className="flex items-center gap-1.5 text-sm font-medium transition-all rounded-md px-2 py-1 -mr-2 text-[var(--admin-text-tertiary)] hover:text-emerald-600 dark:hover:text-emerald-400"
-                >
-                  <PlusCircle className="h-3.5 w-3.5" />
-                  <span>Додати</span>
-                </button>
-              </div>
-            )}
-
-            {/* Discount */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[var(--admin-text-secondary)]">Знижка</span>
               {!showDiscount ? (
                 <button
                   type="button"
                   onClick={() => setShowDiscount(true)}
                   className={cn(
-                    "flex items-center gap-1.5 text-sm font-medium transition-all rounded-md px-2 py-1 -mr-2",
+                    "text-sm font-medium transition-colors",
                     discount > 0
                       ? "text-rose-600 dark:text-rose-400"
-                      : "text-[var(--admin-text-tertiary)] hover:text-emerald-600 dark:hover:text-emerald-400"
+                      : "text-[var(--admin-text-muted)] hover:text-emerald-600 dark:hover:text-emerald-400"
                   )}
                 >
-                  {discount > 0 ? (
-                    <>−{discount} ₴</>
-                  ) : (
-                    <>
-                      <Percent className="h-3.5 w-3.5" />
-                      <span>Додати</span>
-                    </>
-                  )}
+                  {discount > 0 ? `−${discount} ₴` : '+ Додати'}
                 </button>
               ) : (
-                <div className="flex items-center gap-1">
-                  <span className="text-sm text-[var(--admin-text-muted)]">−</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm text-rose-500">−</span>
                   <Input
                     type="number"
-                    className="h-7 w-16 text-right text-sm px-2 font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="h-7 w-20 text-right text-sm px-2 font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     value={discount || ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setDiscount(Math.max(0, Number(val) || 0));
-                    }}
+                    onChange={(e) => setDiscount(Math.max(0, Number(e.target.value) || 0))}
                     onBlur={() => setShowDiscount(false)}
                     onKeyDown={(e) => e.key === 'Enter' && setShowDiscount(false)}
                     autoFocus
@@ -541,53 +483,123 @@ function CartPanel({
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Comment */}
-          {onCommentChange && (
-            <>
-              {!showComment ? (
+            {/* Custom Item Row */}
+            {onAddCustomItem && (
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 dark:border-[var(--admin-border)]">
+                <div className="flex items-center gap-2">
+                  <Tag className="h-3.5 w-3.5 text-[var(--admin-text-muted)]" />
+                  <span className="text-sm text-[var(--admin-text-secondary)]">Послуга / інше</span>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setShowComment(true)}
-                  className={cn(
-                    "flex items-center gap-2 text-sm transition-all rounded-lg px-3 py-2 w-full border border-dashed",
-                    comment
-                      ? "text-[var(--admin-text-primary)] border-[var(--admin-border)] bg-[var(--admin-bg)]"
-                      : "text-[var(--admin-text-tertiary)] border-[var(--admin-border-subtle)] hover:border-[var(--admin-border)] hover:text-[var(--admin-text-secondary)]"
-                  )}
+                  onClick={() => setShowCustomItemModal(true)}
+                  className="text-sm font-medium text-[var(--admin-text-muted)] hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                 >
-                  <MessageSquare className="h-4 w-4 shrink-0" />
-                  {comment ? (
-                    <span className="truncate text-left">{comment}</span>
-                  ) : (
-                    <span>Додати коментар</span>
-                  )}
+                  + Додати
                 </button>
-              ) : (
-                <div className="relative">
-                  <textarea
-                    value={comment}
-                    onChange={(e) => onCommentChange(e.target.value)}
-                    placeholder="Коментар до замовлення..."
-                    className="w-full rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] pl-3 pr-8 py-2.5 text-sm text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-muted)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 focus:outline-none resize-none transition-all"
-                    rows={2}
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowComment(false);
-                      if (!comment) onCommentChange('');
-                    }}
-                    className="absolute top-2 right-2 p-1 text-[var(--admin-text-muted)] hover:text-[var(--admin-text-secondary)] transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+              </div>
+            )}
+
+            {/* Comment Row */}
+            {onCommentChange && (
+              <div className="px-4 py-2.5 border-b border-slate-100 dark:border-[var(--admin-border)]">
+                {!showComment ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <MessageSquare className="h-3.5 w-3.5 text-[var(--admin-text-muted)] shrink-0" />
+                      {comment ? (
+                        <span className="text-sm text-[var(--admin-text-primary)] truncate">{comment}</span>
+                      ) : (
+                        <span className="text-sm text-[var(--admin-text-secondary)]">Коментар</span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowComment(true)}
+                      className={cn(
+                        "text-sm font-medium transition-colors shrink-0 ml-2",
+                        comment
+                          ? "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                          : "text-[var(--admin-text-muted)] hover:text-emerald-600 dark:hover:text-emerald-400"
+                      )}
+                    >
+                      {comment ? 'Змінити' : '+ Додати'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <textarea
+                      value={comment}
+                      onChange={(e) => onCommentChange(e.target.value)}
+                      placeholder="Коментар до замовлення..."
+                      className="w-full rounded-lg border border-slate-200 dark:border-[var(--admin-border)] bg-white dark:bg-admin-surface pl-3 pr-8 py-2 text-sm text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-muted)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 focus:outline-none resize-none transition-all"
+                      rows={2}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowComment(false)}
+                      className="absolute top-2 right-2 p-1 text-[var(--admin-text-muted)] hover:text-[var(--admin-text-secondary)] transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Partial Payment Row - shown when "В борг" is selected */}
+            {paymentStatus === 'expected' && onPaidAmountChange && (
+              <div className="px-4 py-2.5 bg-amber-50/50 dark:bg-amber-900/10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Banknote className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                    <span className="text-sm text-amber-700 dark:text-amber-400">Сплачено зараз</span>
+                  </div>
+                  {!showPaidAmount ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowPaidAmount(true)}
+                      className="text-sm font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+                    >
+                      {paidAmount > 0 ? `${paidAmount} ₴` : '+ Вказати'}
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <Input
+                        type="number"
+                        value={paidAmount || ''}
+                        onChange={(e) => onPaidAmountChange(Math.max(0, Math.min(Number(e.target.value) || 0, payable)))}
+                        placeholder="0"
+                        className="h-7 w-20 text-right text-sm px-2 font-medium bg-white dark:bg-admin-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        autoFocus
+                      />
+                      <span className="text-sm text-amber-600 dark:text-amber-400">₴</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowPaidAmount(false);
+                          onPaidAmountChange(0);
+                        }}
+                        className="ml-1 p-1 text-amber-400 hover:text-amber-600 transition-colors"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </>
-          )}
+                {paidAmount > 0 && (
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-amber-200/50 dark:border-amber-800/30">
+                    <span className="text-xs text-amber-600/80 dark:text-amber-400/80">В борг за це замовлення:</span>
+                    <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                      {Math.round(payable - paidAmount)} ₴
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Total & Checkout */}
           <div className="pt-3 border-t border-[var(--admin-border-subtle)] space-y-3">
@@ -1169,14 +1181,14 @@ function CartGroupItem({
 
   return (
     <div className={cn(
-      "rounded-xl border overflow-hidden shadow-sm hover:shadow-md transition-shadow",
+      "rounded-xl border overflow-hidden shadow-sm hover:shadow-md transition-shadow w-full max-w-full",
       isCustomGroup
         ? "border-amber-200/80 dark:border-amber-800/50 bg-amber-50/30 dark:bg-amber-900/10"
         : "border-slate-200/80 dark:border-[var(--admin-border)] bg-white dark:bg-admin-surface"
     )}>
       {/* Product Header */}
       <div className={cn(
-        "flex items-center gap-3 p-3 sm:p-3.5",
+        "flex items-center gap-3 p-3 sm:p-3.5 min-w-0 max-w-full overflow-hidden",
         isCustomGroup
           ? "bg-gradient-to-r from-amber-50 to-amber-50/50 dark:from-amber-900/20 dark:to-amber-900/10"
           : "bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-800/30"
@@ -1244,12 +1256,12 @@ function CartGroupItem({
       </div>
 
       {/* Variants List */}
-      <div className="divide-y divide-slate-100 dark:divide-[var(--admin-border)]">
+      <div className="divide-y divide-slate-100 dark:divide-[var(--admin-border)] overflow-hidden max-w-full">
         {group.lines.map((line) => (
           <div
             key={line.id}
             className={cn(
-              "flex items-center gap-2 sm:gap-3 px-3 sm:px-3.5 py-2.5 sm:py-3 transition-colors",
+              "flex items-center gap-2 sm:gap-3 px-3 sm:px-3.5 py-2.5 sm:py-3 transition-colors min-w-0 max-w-full overflow-hidden",
               line.isCustom
                 ? "hover:bg-amber-50/50 dark:hover:bg-amber-900/10"
                 : "hover:bg-slate-50/50 dark:hover:bg-slate-800/20"
@@ -1289,7 +1301,7 @@ function CartGroupItem({
                   <button
                     onClick={() => handlePriceClick(line.id, line.price)}
                     className={cn(
-                      "text-xs sm:text-sm flex-1 text-left flex items-center gap-1 group",
+                      "text-xs sm:text-sm flex-1 min-w-0 text-left flex items-center gap-1 group truncate",
                       onUpdatePrice ? "cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400" : "cursor-default",
                       line.originalPrice && line.originalPrice !== line.price
                         ? "text-emerald-600 dark:text-emerald-400 font-medium"
@@ -1313,7 +1325,7 @@ function CartGroupItem({
             )}
 
             {/* Quantity Controls */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 onClick={() => onUpdateQty(line.id, -1)}
                 className="h-7 w-7 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-admin-border text-slate-500 hover:bg-slate-100 hover:border-slate-300 dark:hover:bg-admin-surface-elevated active:scale-95 transition-all"

@@ -135,6 +135,7 @@ export interface Transaction {
   operationId: string;
   paymentStatus: PaymentStatus;
   amount: number;
+  paidAmount?: number; // Скільки сплачено (для часткової оплати)
   items: TransactionItem[];
   customer?: Customer;
   paymentDate?: string;

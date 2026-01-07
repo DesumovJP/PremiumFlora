@@ -43,6 +43,7 @@ export interface ActivityDetails {
     stockAfter?: number;
   }>;
   totalAmount?: number;
+  paidAmount?: number; // Скільки сплачено (для часткової оплати)
   discount?: number;
   paymentStatus?: string;
 
@@ -252,6 +253,7 @@ export function useActivityLog(): UseActivityLogReturn {
       switch (activity.type) {
         case 'sale': {
           const amount = activity.details.totalAmount || 0;
+          const paid = activity.details.paidAmount || 0;
           const status = activity.details.paymentStatus;
           acc.totalSales += 1;
           acc.totalSalesAmount += amount;
@@ -262,7 +264,9 @@ export function useActivityLog(): UseActivityLogReturn {
           if (!status || status === 'paid') {
             acc.totalSalesPaid += amount;
           } else if (status === 'expected' || status === 'pending') {
-            acc.totalSalesExpected += amount;
+            // Часткова оплата: paidAmount йде в paid, решта в expected
+            acc.totalSalesPaid += paid;
+            acc.totalSalesExpected += (amount - paid);
           }
           break;
         }

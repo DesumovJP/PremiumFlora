@@ -18,7 +18,8 @@ import { Modal } from "@/components/ui/modal";
 import type { Customer, Transaction } from "@/lib/api-types";
 import type { ActivityType, ActivityDetails } from "@/hooks/use-activity-log";
 import { getTransactions, confirmPayment, invalidatePendingPaymentsCache, updateCustomerBalance } from "@/lib/strapi";
-import { exportClientTransactions } from "@/lib/export";
+import { returnSale } from "@/lib/api";
+import { exportClientTransactions, exportSaleInvoice } from "@/lib/export";
 
 type ClientsSectionProps = {
   customers: Customer[];
@@ -41,6 +42,9 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
   const [balanceAmount, setBalanceAmount] = useState<string>("");
   const [isUpdatingBalance, setIsUpdatingBalance] = useState(false);
   const [selectedCustomerForBalance, setSelectedCustomerForBalance] = useState<Customer | null>(null);
+  // State for return sale modal
+  const [transactionToReturn, setTransactionToReturn] = useState<Transaction | null>(null);
+  const [isReturning, setIsReturning] = useState(false);
 
   // Convert Customer to Client for display (including balance)
   const baseClients: (Client & { balance?: number })[] = useMemo(() => {
@@ -366,6 +370,38 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
     }
   };
 
+  const handleReturnSale = async (transaction: Transaction) => {
+    if (isReturning) return;
+
+    setIsReturning(true);
+    try {
+      const result = await returnSale(transaction.documentId);
+      if (result.success) {
+        // Оновлюємо транзакцію в списку
+        setTransactions((prev) =>
+          prev.map((t) =>
+            t.documentId === transaction.documentId
+              ? { ...t, paymentStatus: 'cancelled' as const }
+              : t
+          )
+        );
+
+        // Оновлюємо кеш та баланси
+        invalidatePendingPaymentsCache();
+        if (onCustomersUpdate) {
+          onCustomersUpdate();
+        }
+
+        // Закриваємо діалог
+        setTransactionToReturn(null);
+      }
+    } catch (error) {
+      console.error('Failed to return sale:', error);
+    } finally {
+      setIsReturning(false);
+    }
+  };
+
   return (
     <>
     <Card className="admin-card border border-slate-100 dark:border-[var(--admin-border)] bg-white/90 dark:bg-admin-surface shadow-md">
@@ -429,92 +465,167 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
         ) : (
         <>
         <div className="grid gap-4">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 animate-stagger">
+          {/* Мобільні картки */}
+          <div className="grid gap-2.5 sm:hidden">
             {filteredClients.length === 0 && searchQuery ? (
-              <div className="col-span-full text-center py-8 text-slate-500 dark:text-admin-text-tertiary">
+              <div className="text-center py-8 text-slate-500 dark:text-admin-text-tertiary">
                 Клієнтів за запитом "{searchQuery}" не знайдено
               </div>
             ) : null}
             {filteredClients.map((client) => (
-              <Card
+              <div
                 key={client.id}
                 className={cn(
-                  "border cursor-pointer transition-all duration-200 group bg-white dark:bg-slate-800/60",
-                  "hover:shadow-md",
+                  "border rounded-xl cursor-pointer transition-all duration-200 group bg-white dark:bg-slate-800/60 overflow-hidden",
+                  "hover:shadow-md active:scale-[0.99]",
                   selected?.id === client.id
                     ? "border-emerald-400 dark:border-emerald-500 shadow-md ring-1 ring-emerald-200 dark:ring-emerald-500/30"
                     : "border-[var(--admin-border)]"
                 )}
                 onClick={() => handleSelect(client)}
               >
-                <CardContent className="p-4">
-                  {/* Header: Name + VIP + Pending + Delete */}
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-[var(--admin-text-primary)] truncate">
-                          {client.name}
-                        </h3>
-                        {client.isVip && (
-                          <Badge tone="success" className="text-[10px] font-medium shrink-0">
-                            VIP
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-[var(--admin-text-tertiary)] mt-0.5 truncate">
-                        {client.city}
-                      </p>
-                    </div>
-                    <button
-                      onClick={(e) => handleDeleteClick(e, client)}
-                      className="rounded-lg p-1.5 text-[var(--admin-text-muted)] hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
-                      aria-label="Видалити"
-                    >
-                      <Trash className="h-3.5 w-3.5" />
-                    </button>
+                {/* Header */}
+                <div className="flex items-center gap-3 p-3 bg-slate-50/50 dark:bg-slate-800/30">
+                  <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-semibold text-sm shrink-0">
+                    {client.name.charAt(0).toUpperCase()}
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-[var(--admin-text-primary)] truncate">
+                        {client.name}
+                      </h3>
+                      {client.isVip && (
+                        <Badge tone="success" className="text-[10px] font-medium shrink-0">
+                          VIP
+                        </Badge>
+                      )}
+                    </div>
+                    {client.contact && client.contact !== '-' && (
+                      <p className="text-xs text-[var(--admin-text-tertiary)] truncate flex items-center gap-1">
+                        <Phone className="h-3 w-3" />
+                        {client.contact}
+                      </p>
+                    )}
+                  </div>
+                  {client.lastOrder && client.lastOrder !== '-' && (
+                    <div className="text-right shrink-0">
+                      <p className="text-[10px] text-[var(--admin-text-muted)] uppercase">останнє</p>
+                      <p className="text-xs font-medium text-[var(--admin-text-secondary)]">{client.lastOrder}</p>
+                    </div>
+                  )}
+                </div>
 
-                  {/* Key metrics - clean and simple */}
-                  <div className="flex items-center justify-between gap-4 py-2 border-t border-[var(--admin-border-subtle)]">
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-[var(--admin-text-primary)]">{client.orders}</p>
-                      <p className="text-[10px] text-[var(--admin-text-muted)] uppercase tracking-wide">замовлень</p>
-                    </div>
-                    <div className="text-center flex-1">
-                      <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{client.spent.toLocaleString("uk-UA")} ₴</p>
-                      <p className="text-[10px] text-[var(--admin-text-muted)] uppercase tracking-wide">витрачено</p>
-                    </div>
-                    <div className="text-center">
-                      <p className={cn(
-                        "text-lg font-bold",
+                {/* Metrics row */}
+                <div className="flex items-center divide-x divide-slate-100 dark:divide-slate-700/50">
+                  <div className="flex-1 py-2.5 px-3 text-center">
+                    <p className="text-lg font-bold text-[var(--admin-text-primary)]">{client.orders}</p>
+                    <p className="text-[10px] text-[var(--admin-text-muted)] uppercase">замовлень</p>
+                  </div>
+                  <div className="flex-1 py-2.5 px-3 text-center">
+                    <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{client.spent.toLocaleString("uk-UA")}</p>
+                    <p className="text-[10px] text-[var(--admin-text-muted)] uppercase">витрачено ₴</p>
+                  </div>
+                  <div className="flex-1 py-2.5 px-3 text-center">
+                    <p className={cn(
+                      "text-lg font-bold",
+                      (client.balance || 0) > 0
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : (client.balance || 0) < 0
+                        ? "text-rose-600 dark:text-rose-400"
+                        : "text-[var(--admin-text-muted)]"
+                    )}>
+                      {(client.balance || 0) > 0 ? '+' : ''}{(client.balance || 0).toLocaleString('uk-UA')}
+                    </p>
+                    <p className="text-[10px] text-[var(--admin-text-muted)] uppercase">баланс ₴</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Десктопна таблиця */}
+          <div className="hidden sm:block overflow-x-auto rounded-xl border border-slate-200 dark:border-admin-border">
+            {filteredClients.length === 0 && searchQuery ? (
+              <div className="text-center py-8 text-slate-500 dark:text-admin-text-tertiary bg-white dark:bg-admin-surface">
+                Клієнтів за запитом "{searchQuery}" не знайдено
+              </div>
+            ) : (
+              <table className="w-full text-sm table-fixed">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                    <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 w-[40%]">Клієнт</th>
+                    <th className="py-2.5 pl-2 pr-1 text-right text-xs font-medium text-slate-500 dark:text-slate-400 w-[10%]">Замовлень</th>
+                    <th className="py-2.5 px-1 text-right text-xs font-medium text-slate-500 dark:text-slate-400 w-[14%]">Витрачено</th>
+                    <th className="py-2.5 px-1 text-right text-xs font-medium text-slate-500 dark:text-slate-400 w-[14%]">Баланс</th>
+                    <th className="py-2.5 pl-1 pr-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 w-[22%]">Останнє</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50 bg-white dark:bg-admin-surface">
+                  {filteredClients.map((client) => (
+                    <tr
+                      key={client.id}
+                      className={cn(
+                        "cursor-pointer transition-colors",
+                        selected?.id === client.id
+                          ? "bg-emerald-50 dark:bg-emerald-900/20"
+                          : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+                      )}
+                      onClick={() => handleSelect(client)}
+                    >
+                      {/* Client */}
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-semibold text-sm shrink-0">
+                            {client.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0 overflow-hidden">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-slate-900 dark:text-white truncate">
+                                {client.name}
+                              </span>
+                              {client.isVip && (
+                                <Badge tone="success" className="text-[10px] font-medium shrink-0">
+                                  VIP
+                                </Badge>
+                              )}
+                            </div>
+                            {client.contact && client.contact !== '-' && (
+                              <p className="text-xs text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
+                                <Phone className="h-3 w-3" />
+                                {client.contact}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      {/* Orders */}
+                      <td className="py-2.5 pl-2 pr-1 text-right font-medium text-slate-600 dark:text-slate-300">
+                        {client.orders}
+                      </td>
+                      {/* Spent */}
+                      <td className="py-2.5 px-1 text-right font-medium text-emerald-600 dark:text-emerald-400">
+                        {client.spent.toLocaleString("uk-UA")} ₴
+                      </td>
+                      {/* Balance */}
+                      <td className={cn(
+                        "py-2.5 px-1 text-right font-medium",
                         (client.balance || 0) > 0
                           ? "text-emerald-600 dark:text-emerald-400"
                           : (client.balance || 0) < 0
                           ? "text-rose-600 dark:text-rose-400"
-                          : "text-[var(--admin-text-muted)]"
+                          : "text-slate-400 dark:text-slate-500"
                       )}>
                         {(client.balance || 0) > 0 ? '+' : ''}{(client.balance || 0).toLocaleString('uk-UA')} ₴
-                      </p>
-                      <p className="text-[10px] text-[var(--admin-text-muted)] uppercase tracking-wide">баланс</p>
-                    </div>
-                  </div>
-
-                  {/* Contact - subtle, on demand */}
-                  <div className="flex items-center gap-3 pt-2 border-t border-[var(--admin-border-subtle)] text-xs text-[var(--admin-text-tertiary)]">
-                    <span className="flex items-center gap-1 truncate">
-                      <Phone className="h-3 w-3 shrink-0" />
-                      {client.contact}
-                    </span>
-                    {client.email !== '-' && (
-                      <span className="flex items-center gap-1 truncate">
-                        <Mail className="h-3 w-3 shrink-0" />
-                        {client.email}
-                      </span>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                      </td>
+                      {/* Last order */}
+                      <td className="py-2.5 pl-1 pr-3 text-center text-slate-500 dark:text-slate-400">
+                        {client.lastOrder && client.lastOrder !== '-' ? client.lastOrder : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
 
           {/* Модалка з історією замовлень (для всіх екранів) */}
@@ -660,25 +771,30 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                               </div>
                               <div className="flex items-center gap-3">
                                 <div className="text-right">
-                                  <p className="font-medium text-emerald-600 dark:text-emerald-400 text-sm mb-1">
-                                    {transaction.amount?.toLocaleString('uk-UA') || '—'} грн
-                                  </p>
-                                  <Badge
-                                    tone={
-                                      transaction.paymentStatus === 'paid'
-                                        ? 'success'
-                                        : transaction.paymentStatus === 'expected'
-                                        ? 'warning'
-                                        : 'neutral'
-                                    }
-                                    className="text-xs"
-                                  >
-                                    {transaction.paymentStatus === 'paid'
-                                      ? 'Оплачено'
-                                      : transaction.paymentStatus === 'expected'
-                                      ? 'Очікується'
-                                      : 'В очікуванні'}
-                                  </Badge>
+                                  {transaction.paymentStatus === 'cancelled' ? (
+                                    <p className="font-medium text-slate-400 line-through text-sm">
+                                      {transaction.amount?.toLocaleString('uk-UA') || '—'} грн
+                                    </p>
+                                  ) : transaction.paymentStatus === 'paid' ? (
+                                    <p className="font-medium text-emerald-600 dark:text-emerald-400 text-sm">
+                                      {transaction.amount?.toLocaleString('uk-UA') || '—'} грн
+                                    </p>
+                                  ) : (
+                                    // Очікується оплата - показуємо деталізацію
+                                    <div className="space-y-0.5">
+                                      <p className="font-medium text-slate-900 dark:text-white text-sm">
+                                        {transaction.amount?.toLocaleString('uk-UA') || '—'} грн
+                                      </p>
+                                      {(transaction.paidAmount || 0) > 0 && (
+                                        <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                                          Сплачено: {transaction.paidAmount?.toLocaleString('uk-UA')} грн
+                                        </p>
+                                      )}
+                                      <p className="text-xs text-rose-600 dark:text-rose-400">
+                                        В борг: {((transaction.amount || 0) - (transaction.paidAmount || 0)).toLocaleString('uk-UA')} грн
+                                      </p>
+                                    </div>
+                                  )}
                                 </div>
                                 <ChevronDown className={cn(
                                   "h-5 w-5 text-slate-400 transition-transform shrink-0",
@@ -718,20 +834,45 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                                   </div>
                                 )}
 
-                                {/* Кнопка підтвердження оплати */}
-                                {(transaction.paymentStatus === 'expected' || transaction.paymentStatus === 'pending') && (
+                                {/* Action buttons */}
+                                <div className="flex gap-2">
+                                  {(transaction.paymentStatus === 'expected' || transaction.paymentStatus === 'pending') && (
+                                    <Button
+                                      size="sm"
+                                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setPaymentToConfirm(transaction);
+                                      }}
+                                    >
+                                      <Check className="h-4 w-4 mr-2" />
+                                      Підтвердити оплату
+                                    </Button>
+                                  )}
                                   <Button
                                     size="sm"
-                                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    variant="outline"
+                                    className={transaction.paymentStatus === 'cancelled' ? 'w-full' : ''}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setPaymentToConfirm(transaction);
+                                      exportSaleInvoice(transaction);
                                     }}
                                   >
-                                    <Check className="h-4 w-4 mr-2" />
-                                    Підтвердити оплату
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Накладна
                                   </Button>
-                                )}
+                                  {transaction.paymentStatus !== 'cancelled' && (
+                                    <button
+                                      className="text-xs text-slate-400 hover:text-rose-500 dark:text-slate-500 dark:hover:text-rose-400 transition-colors px-2"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setTransactionToReturn(transaction);
+                                      }}
+                                    >
+                                      Повернути
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             )}
                           </div>
@@ -745,6 +886,20 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                       </p>
                     </div>
                   )}
+                  </div>
+
+                  {/* Delete client button */}
+                  <div className="border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
+                    <button
+                      className="text-xs text-slate-400 hover:text-rose-500 dark:text-slate-500 dark:hover:text-rose-400 transition-colors flex items-center gap-1"
+                      onClick={() => {
+                        handleDeleteClick(new MouseEvent('click') as unknown as React.MouseEvent, selected);
+                        setSelected(null);
+                      }}
+                    >
+                      <Trash className="h-3 w-3" />
+                      Видалити
+                    </button>
                   </div>
                 </div>
               </div>
@@ -798,8 +953,8 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
     >
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Імʼя або назва компанії <span className="text-red-500">*</span>
+          <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">
+            Імʼя або назва компанії <span className="text-rose-500">*</span>
           </label>
           <Input
             placeholder="Введіть імʼя клієнта або назву компанії"
@@ -810,7 +965,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">
             Телефон
           </label>
           <Input
@@ -822,7 +977,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">
             Email
           </label>
           <Input
@@ -834,7 +989,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">
             Місто / адреса
           </label>
           <Input
@@ -864,7 +1019,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
           <Button
             onClick={handleConfirmDelete}
             disabled={isDeleting}
-            className="bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-200"
+            className="bg-rose-600 text-white hover:bg-rose-700 focus-visible:ring-rose-200"
           >
             {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Видалити"}
           </Button>
@@ -944,6 +1099,69 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
       )}
     </Modal>
 
+    {/* Модалка повернення замовлення */}
+    <Modal
+      open={!!transactionToReturn}
+      onOpenChange={(v) => {
+        if (!v) setTransactionToReturn(null);
+      }}
+      title="Повернути замовлення?"
+      size="sm"
+      footer={
+        <>
+          <Button variant="outline" onClick={() => setTransactionToReturn(null)} disabled={isReturning}>
+            Скасувати
+          </Button>
+          <Button
+            onClick={() => transactionToReturn && handleReturnSale(transactionToReturn)}
+            disabled={isReturning}
+            className="bg-rose-600 text-white hover:bg-rose-700 focus-visible:ring-rose-200"
+          >
+            {isReturning ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Повернути'}
+          </Button>
+        </>
+      }
+    >
+      {transactionToReturn && (
+        <div className="space-y-4">
+          <div className="rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-rose-700 dark:text-rose-400">Сума до повернення</span>
+              <span className="text-2xl font-bold text-rose-800 dark:text-rose-300">
+                {Number(transactionToReturn.amount).toLocaleString('uk-UA')} грн
+              </span>
+            </div>
+          </div>
+          <div className="text-sm text-slate-600 dark:text-admin-text-secondary space-y-2">
+            <p>
+              <span className="text-slate-500">Дата:</span>{' '}
+              <span className="font-medium text-slate-800 dark:text-admin-text-primary">
+                {new Date(transactionToReturn.date).toLocaleDateString('uk-UA')}
+              </span>
+            </p>
+            {transactionToReturn.items && transactionToReturn.items.length > 0 && (
+              <div className="pt-2 border-t border-slate-100 dark:border-admin-border">
+                <p className="text-slate-500 mb-1">Товари:</p>
+                <ul className="space-y-1">
+                  {transactionToReturn.items.slice(0, 3).map((item, idx) => (
+                    <li key={idx} className="text-slate-700 dark:text-admin-text-secondary">
+                      {item.name} × {item.qty}
+                    </li>
+                  ))}
+                  {transactionToReturn.items.length > 3 && (
+                    <li className="text-slate-500">... та ще {transactionToReturn.items.length - 3} товар(ів)</li>
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-rose-600 dark:text-rose-400">
+            Товари повернуться на склад, а баланс клієнта буде оновлено.
+          </p>
+        </div>
+      )}
+    </Modal>
+
     {/* Модалка зміни балансу */}
     <Modal
       open={balanceModalOpen}
@@ -1006,7 +1224,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
     >
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">
             Баланс (грн)
           </label>
           <Input
