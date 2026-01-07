@@ -14,6 +14,7 @@ import {
   UserPlus,
   Truck,
   XCircle,
+  Wallet,
 } from 'lucide-react';
 import type { ActivityType } from '@/hooks/use-activity-log';
 
@@ -65,6 +66,11 @@ export const activityConfig: Record<
     icon: Trash,
     label: 'Видалення клієнта',
     color: 'text-rose-600 bg-rose-50 dark:bg-rose-900/30',
+  },
+  balanceEdit: {
+    icon: Wallet,
+    label: 'Зміна балансу',
+    color: 'text-violet-600 bg-violet-50 dark:bg-violet-900/30',
   },
   supply: {
     icon: Truck,

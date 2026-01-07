@@ -1186,8 +1186,18 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
               const newBalance = parseFloat(balanceAmount) || 0;
               setIsUpdatingBalance(true);
               try {
+                const balanceBefore = selectedCustomerForBalance.balance || 0;
                 const result = await updateCustomerBalance(selectedCustomerForBalance.documentId, newBalance);
                 if (result.success) {
+                  // Log activity for shift history
+                  if (onLogActivity) {
+                    onLogActivity('balanceEdit', {
+                      customerName: selectedCustomerForBalance.name,
+                      customerId: selectedCustomerForBalance.documentId,
+                      balanceBefore,
+                      balanceAfter: newBalance,
+                    });
+                  }
                   // Update local state
                   setUpdatedClients((prev) => ({
                     ...prev,

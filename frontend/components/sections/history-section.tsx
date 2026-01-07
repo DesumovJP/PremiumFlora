@@ -42,6 +42,7 @@ import {
   History,
   RefreshCw,
   XCircle,
+  Wallet,
   Calendar,
   CalendarDays,
   Warehouse,
@@ -118,6 +119,11 @@ const activityConfig: Record<
     label: 'Видалення клієнта',
     color: 'text-rose-600 bg-rose-50 dark:bg-rose-900/30',
   },
+  balanceEdit: {
+    icon: Wallet,
+    label: 'Зміна балансу',
+    color: 'text-violet-600 bg-violet-50 dark:bg-violet-900/30',
+  },
   supply: {
     icon: Truck,
     label: 'Поставка',
@@ -193,21 +199,31 @@ function ActivityItem({ activity }: { activity: Activity }) {
               <div className="space-y-1">
                 <span className="text-slate-500 dark:text-admin-text-tertiary">Товари:</span>
                 <div className="ml-2 space-y-1.5">
-                  {details.items.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-xs gap-2">
-                      <div className="flex-1 min-w-0">
-                        <span className="dark:text-admin-text-secondary">
-                          {item.name} ({item.size}) x{item.qty}
-                        </span>
-                        {item.stockBefore !== undefined && item.stockAfter !== undefined && (
-                          <span className="ml-2 text-slate-400 dark:text-admin-text-muted">
-                            {item.stockBefore}→{item.stockAfter} шт
+                  {details.items.map((item, idx) => {
+                    const hasEditedPrice = item.originalPrice && item.originalPrice !== item.price;
+                    return (
+                      <div key={idx} className="flex justify-between items-center text-xs gap-2">
+                        <div className="flex-1 min-w-0">
+                          <span className="dark:text-admin-text-secondary">
+                            {item.name} ({item.size}) x{item.qty}
                           </span>
-                        )}
+                          {item.stockBefore !== undefined && item.stockAfter !== undefined && (
+                            <span className="ml-2 text-slate-400 dark:text-admin-text-muted">
+                              {item.stockBefore}→{item.stockAfter} шт
+                            </span>
+                          )}
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <span className="font-medium dark:text-admin-text-primary">{Math.round(item.price * item.qty)} грн</span>
+                          {hasEditedPrice && (
+                            <span className="ml-1 text-slate-400 line-through text-[10px]">
+                              {Math.round(item.originalPrice! * item.qty)}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <span className="font-medium dark:text-admin-text-primary shrink-0">{Math.round(item.price * item.qty)} грн</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -270,6 +286,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
                     price: item.price,
                     name: item.name,
                     subtotal: item.qty * item.price,
+                    ...(item.originalPrice && { originalPrice: item.originalPrice }),
                   })),
                   customer: details.customerName ? {
                     id: 0,
@@ -598,6 +615,58 @@ function ActivityItem({ activity }: { activity: Activity }) {
           </div>
         );
 
+      case 'balanceEdit': {
+        const balanceBefore = details.balanceBefore ?? 0;
+        const balanceAfter = details.balanceAfter ?? 0;
+        const diff = balanceAfter - balanceBefore;
+        return (
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-500 dark:text-admin-text-tertiary">Клієнт:</span>
+              <span className="font-medium dark:text-admin-text-primary">{details.customerName}</span>
+            </div>
+            {/* Підсумок зміни балансу */}
+            <div className={cn(
+              "p-3 rounded-lg",
+              diff > 0
+                ? "bg-emerald-50 dark:bg-emerald-900/20"
+                : diff < 0
+                  ? "bg-rose-50 dark:bg-rose-900/20"
+                  : "bg-slate-50 dark:bg-slate-800/50"
+            )}>
+              <div className="flex justify-between items-center">
+                <span className={cn(
+                  "font-medium",
+                  diff > 0 ? "text-emerald-700 dark:text-emerald-300" :
+                  diff < 0 ? "text-rose-700 dark:text-rose-300" :
+                  "text-slate-600 dark:text-slate-400"
+                )}>
+                  {diff > 0 ? '+' : ''}{Math.round(diff)} ₴
+                </span>
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500 dark:text-admin-text-tertiary">Було:</span>
+              <span className={cn(
+                "font-medium",
+                balanceBefore < 0 ? "text-rose-600" : balanceBefore > 0 ? "text-emerald-600" : "dark:text-admin-text-primary"
+              )}>
+                {Math.round(balanceBefore)} ₴
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500 dark:text-admin-text-tertiary">Стало:</span>
+              <span className={cn(
+                "font-medium",
+                balanceAfter < 0 ? "text-rose-600" : balanceAfter > 0 ? "text-emerald-600" : "dark:text-admin-text-primary"
+              )}>
+                {Math.round(balanceAfter)} ₴
+              </span>
+            </div>
+          </div>
+        );
+      }
+
       case 'supply': {
         // Розрахувати підсумки поставки
         const supplyTotals = details.supplyItems?.reduce(
@@ -758,6 +827,10 @@ function ActivityItem({ activity }: { activity: Activity }) {
         return details.customerName || '';
       case 'customerDelete':
         return details.customerName || '';
+      case 'balanceEdit': {
+        const diff = (details.balanceAfter ?? 0) - (details.balanceBefore ?? 0);
+        return `${details.customerName} ${diff >= 0 ? '+' : ''}${Math.round(diff)} ₴`;
+      }
       case 'supply':
         return details.productName || details.filename || 'Імпорт';
       default:

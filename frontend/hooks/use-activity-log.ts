@@ -28,6 +28,7 @@ export type ActivityType =
   | 'paymentConfirm'
   | 'customerCreate'
   | 'customerDelete'
+  | 'balanceEdit'
   | 'supply';
 
 export interface ActivityDetails {
@@ -39,6 +40,7 @@ export interface ActivityDetails {
     size: string;
     qty: number;
     price: number;
+    originalPrice?: number; // Оригінальна ціна, якщо була змінена
     stockBefore?: number;
     stockAfter?: number;
   }>;
@@ -78,6 +80,9 @@ export interface ActivityDetails {
   // Customer
   phone?: string;
   email?: string;
+  // Balance edit
+  balanceBefore?: number;
+  balanceAfter?: number;
 
   // Payment
   transactionId?: string;
