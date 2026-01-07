@@ -123,3 +123,7 @@ export {
   searchFlowersForSupply,
   getAllFlowersForSupply,
 } from './supply';
+
+// Currency API
+export { getEurRate } from './currency';
+export type { CurrencyRateInfo } from './currency';

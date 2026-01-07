@@ -14,6 +14,7 @@ import type {
   SupplyRowData,
   ImportWarning,
 } from './types';
+import { getEurRate } from '../currency/currency.service';
 
 interface FlowerRecord {
   id: number;
@@ -321,9 +322,10 @@ export class UpserterService {
     }
 
     // Створити новий варіант
-    // Базова ціна продажу = собівартість + 10%
-    const basePrice = Math.round(costPrice * 1.10 * 100) / 100;
-    this.strapi.log.info(`🌱 Creating variant: ${flower.name} ${variantLength}cm - stock ${row.stock}, costPrice ${costPrice}, basePrice ${basePrice} (+10%)`);
+    // Базова ціна продажу = собівартість (EUR) × 1.10 × курс EUR/UAH
+    const eurRate = await getEurRate();
+    const basePrice = Math.round(costPrice * 1.10 * eurRate * 100) / 100;
+    this.strapi.log.info(`🌱 Creating variant: ${flower.name} ${variantLength}cm - stock ${row.stock}, costPrice ${costPrice}€, basePrice ${basePrice}₴ (+10% × ${eurRate} EUR/UAH)`);
 
     const created = await this.strapi.db.query('api::variant.variant').create({
       data: {

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Modal } from "./modal";
 import { Button } from "./button";
-import { importExcel, updateVariantPrices } from "@/lib/strapi";
+import { importExcel, updateVariantPrices, getEurRate, type CurrencyRateInfo } from "@/lib/strapi";
 import { cn } from "@/lib/utils";
-import { Upload, Check, AlertCircle, Info, Save } from "lucide-react";
+import { Upload, Check, AlertCircle, Info, Save, RefreshCw } from "lucide-react";
 import type {
   ImportOptions,
   ImportResponse,
@@ -69,6 +69,32 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
   });
   // Стан для редагування нормалізації (hash -> { flowerName, length })
   const [rowEdits, setRowEdits] = useState<Record<string, RowOverride>>({});
+  // Курс EUR/UAH
+  const [eurRate, setEurRate] = useState<CurrencyRateInfo | null>(null);
+  const [eurRateLoading, setEurRateLoading] = useState(false);
+
+  // Завантажити курс при відкритті модалки
+  useEffect(() => {
+    if (open && !eurRate) {
+      setEurRateLoading(true);
+      getEurRate()
+        .then(setEurRate)
+        .catch(console.error)
+        .finally(() => setEurRateLoading(false));
+    }
+  }, [open, eurRate]);
+
+  const refreshEurRate = useCallback(async () => {
+    setEurRateLoading(true);
+    try {
+      const rate = await getEurRate();
+      setEurRate(rate);
+    } catch (error) {
+      console.error('Failed to refresh EUR rate:', error);
+    } finally {
+      setEurRateLoading(false);
+    }
+  }, []);
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -440,6 +466,42 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
           </>
         ) : (
           <>
+            {/* EUR Rate Info */}
+            <div className="flex items-center justify-between rounded-lg bg-blue-50 dark:bg-blue-900/20 px-4 py-3 border border-blue-100 dark:border-blue-800">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-blue-700 dark:text-blue-300">
+                  Курс НБУ:
+                </span>
+                {eurRateLoading ? (
+                  <span className="text-sm text-blue-600 dark:text-blue-400 animate-pulse">
+                    Завантаження...
+                  </span>
+                ) : eurRate ? (
+                  <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                    {eurRate.rate.toFixed(2)} ₴/€
+                  </span>
+                ) : (
+                  <span className="text-sm text-blue-600 dark:text-blue-400">
+                    Недоступно
+                  </span>
+                )}
+                {eurRate && (
+                  <span className="text-xs text-blue-500 dark:text-blue-400">
+                    ({eurRate.date})
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={refreshEurRate}
+                disabled={eurRateLoading}
+                className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors disabled:opacity-50"
+                title="Оновити курс"
+              >
+                <RefreshCw className={cn("h-4 w-4 text-blue-600 dark:text-blue-400", eurRateLoading && "animate-spin")} />
+              </button>
+            </div>
+
             {/* File upload */}
             <label className="group flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 px-4 py-4 transition-colors hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors">
