@@ -6,7 +6,7 @@
 
 import * as XLSX from 'xlsx';
 import type { Product } from "@/lib/types";
-import type { Customer, DashboardData } from "@/lib/api-types";
+import type { Customer, DashboardData, Transaction, TransactionItem } from "@/lib/api-types";
 import type { Activity, ShiftSummary } from "@/hooks/use-activity-log";
 
 // ============================================
@@ -552,4 +552,142 @@ export function exportShift(
   const shiftDate = new Date(shiftStartedAt);
   const dateStr = `${shiftDate.getFullYear()}-${String(shiftDate.getMonth() + 1).padStart(2, '0')}-${String(shiftDate.getDate()).padStart(2, '0')}`;
   downloadWorkbook(wb, `shift_${dateStr}.xlsx`);
+}
+
+// ============================================
+// Client Transactions Export
+// ============================================
+
+/**
+ * Export client transactions with detailed information
+ */
+export function exportClientTransactions(
+  customer: Customer,
+  transactions: Transaction[],
+  balance: number
+): void {
+  // Sheet 1: Client Summary
+  const summaryHeaders = ['Показник', 'Значення'];
+  const summaryRows: (string | number)[][] = [
+    ["Ім'я / Компанія", customer.name],
+    ['Тип клієнта', customer.type === 'VIP' ? 'VIP' : customer.type === 'Wholesale' ? 'Оптовий' : 'Звичайний'],
+    ['Телефон', customer.phone || '-'],
+    ['Email', customer.email || '-'],
+    ['Адреса', customer.address || '-'],
+    ['', ''],
+    ['═══ СТАТИСТИКА ═══', ''],
+    ['Всього замовлень', transactions.length],
+    ['Загальна сума покупок (грн)', Math.round(transactions.reduce((sum, t) => sum + (t.amount || 0), 0))],
+    ['', ''],
+    ['═══ БАЛАНС ═══', ''],
+    ['Поточний баланс (грн)', balance],
+    ['Статус', balance > 0 ? 'Переплата' : balance < 0 ? 'Борг' : 'По нулях'],
+  ];
+
+  const summaryData = [summaryHeaders, ...summaryRows];
+  const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+  summaryWs['!ref'] = `A1:B${summaryData.length}`;
+  summaryWs['!cols'] = [{ wch: 25 }, { wch: 35 }];
+
+  // Sheet 2: All Transactions
+  const transactionsHeaders = ['Дата', 'Час', 'Товар', 'Розмір', 'К-сть', 'Ціна (грн)', 'Сума (грн)', 'Статус оплати', 'Коментар'];
+  const transactionsRows: (string | number)[][] = [];
+
+  transactions.forEach(transaction => {
+    const date = new Date(transaction.date);
+    const dateStr = date.toLocaleDateString('uk-UA');
+    const timeStr = date.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+    const paymentStatus = transaction.paymentStatus === 'paid' ? 'Оплачено' :
+                          transaction.paymentStatus === 'expected' ? 'Очікує оплати' :
+                          transaction.paymentStatus === 'cancelled' ? 'Скасовано' : 'В очікуванні';
+
+    if (!transaction.items || transaction.items.length === 0) {
+      transactionsRows.push([dateStr, timeStr, '-', '-', '-', '-', transaction.amount || 0, paymentStatus, transaction.notes || '']);
+    } else {
+      transaction.items.forEach((item: TransactionItem, index: number) => {
+        transactionsRows.push([
+          index === 0 ? dateStr : '',
+          index === 0 ? timeStr : '',
+          item.name,
+          item.length ? `${item.length} см` : '-',
+          item.qty,
+          item.price,
+          item.subtotal || (item.qty * item.price),
+          index === 0 ? paymentStatus : '',
+          index === 0 ? (transaction.notes || '') : '',
+        ]);
+      });
+      // Add subtotal row for this transaction
+      transactionsRows.push(['', '', '', '', '', 'Разом:', transaction.amount || 0, '', '']);
+    }
+  });
+
+  // Add total summary
+  const totalAmount = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+  const paidAmount = transactions.filter(t => t.paymentStatus === 'paid').reduce((sum, t) => sum + (t.amount || 0), 0);
+  const pendingAmount = transactions.filter(t => t.paymentStatus === 'expected' || t.paymentStatus === 'pending').reduce((sum, t) => sum + (t.amount || 0), 0);
+
+  transactionsRows.push(['', '', '', '', '', '', '', '', '']);
+  transactionsRows.push(['', '', '', '', '', 'ВСЬОГО:', Math.round(totalAmount), '', '']);
+  transactionsRows.push(['', '', '', '', '', 'Оплачено:', Math.round(paidAmount), '', '']);
+  transactionsRows.push(['', '', '', '', '', 'Очікується:', Math.round(pendingAmount), '', '']);
+
+  const transactionsData = [transactionsHeaders, ...transactionsRows];
+  const transactionsWs = XLSX.utils.aoa_to_sheet(transactionsData);
+  applyCenterAlignment(transactionsWs);
+  setColumnWidths(transactionsWs, transactionsData);
+
+  // Sheet 3: Payment History (only paid transactions)
+  const paidTransactions = transactions.filter(t => t.paymentStatus === 'paid');
+  const paymentsHeaders = ['Дата оплати', 'Дата замовлення', 'Сума (грн)', 'Товари'];
+  const paymentsRows: (string | number)[][] = paidTransactions.map(t => {
+    const paymentDate = t.paymentDate ? new Date(t.paymentDate).toLocaleDateString('uk-UA') : new Date(t.date).toLocaleDateString('uk-UA');
+    const orderDate = new Date(t.date).toLocaleDateString('uk-UA');
+    const itemsStr = t.items?.map((item: TransactionItem) => `${item.name} (${item.length}см) × ${item.qty}`).join(', ') || '-';
+    return [paymentDate, orderDate, t.amount || 0, itemsStr];
+  });
+
+  // Add totals
+  if (paymentsRows.length > 0) {
+    paymentsRows.push(['', 'ВСЬОГО:', Math.round(paidAmount), '']);
+  }
+
+  const paymentsData = [paymentsHeaders, ...paymentsRows];
+  const paymentsWs = XLSX.utils.aoa_to_sheet(paymentsData);
+  applyCenterAlignment(paymentsWs);
+  setColumnWidths(paymentsWs, paymentsData);
+
+  // Sheet 4: Pending Payments
+  const pendingTransactions = transactions.filter(t => t.paymentStatus === 'expected' || t.paymentStatus === 'pending');
+  const pendingHeaders = ['Дата замовлення', 'Сума (грн)', 'Товари', 'Коментар'];
+  const pendingRows: (string | number)[][] = pendingTransactions.map(t => {
+    const orderDate = new Date(t.date).toLocaleDateString('uk-UA');
+    const itemsStr = t.items?.map((item: TransactionItem) => `${item.name} (${item.length}см) × ${item.qty}`).join(', ') || '-';
+    return [orderDate, t.amount || 0, itemsStr, t.notes || ''];
+  });
+
+  // Add totals
+  if (pendingRows.length > 0) {
+    pendingRows.push(['ВСЬОГО:', Math.round(pendingAmount), '', '']);
+  }
+
+  const pendingData = [pendingHeaders, ...pendingRows];
+  const pendingWs = XLSX.utils.aoa_to_sheet(pendingData);
+  applyCenterAlignment(pendingWs);
+  setColumnWidths(pendingWs, pendingData);
+
+  // Create workbook
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, summaryWs, 'Клієнт');
+  XLSX.utils.book_append_sheet(wb, transactionsWs, 'Всі замовлення');
+  if (paidTransactions.length > 0) {
+    XLSX.utils.book_append_sheet(wb, paymentsWs, 'Оплачені');
+  }
+  if (pendingTransactions.length > 0) {
+    XLSX.utils.book_append_sheet(wb, pendingWs, 'Очікують оплати');
+  }
+
+  // Generate safe filename
+  const safeName = customer.name.replace(/[^a-zA-Zа-яА-ЯіІїЇєЄ0-9]/g, '_').slice(0, 30);
+  downloadWorkbook(wb, `client_${safeName}_${getTimestamp()}.xlsx`);
 }

@@ -47,6 +47,10 @@ export interface SaleItem {
   qty: number;
   price: number;
   name: string;
+  // Для кастомних позицій (послуги, товари з чужого складу)
+  isCustom?: boolean; // true = не змінювати склад
+  customNote?: string; // Коментар до кастомної позиції
+  originalPrice?: number; // Оригінальна ціна (якщо змінена)
 }
 
 export interface CreateSaleInput {
@@ -56,6 +60,7 @@ export interface CreateSaleInput {
   discount?: number;
   notes?: string;
   paymentStatus?: PaymentStatus;
+  paidAmount?: number; // Скільки оплачено (для часткової оплати)
 }
 
 export interface WriteOffInput {

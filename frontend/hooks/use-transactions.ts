@@ -31,6 +31,7 @@ function convertTransaction(t: GraphQLTransaction): Transaction {
           type: t.customer.type || "Regular",
           totalSpent: 0,
           orderCount: 0,
+          balance: 0,
           createdAt: "",
           updatedAt: "",
         }

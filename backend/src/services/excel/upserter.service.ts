@@ -321,14 +321,16 @@ export class UpserterService {
     }
 
     // Створити новий варіант
-    this.strapi.log.info(`🌱 Creating variant: ${flower.name} ${variantLength}cm - stock ${row.stock}, costPrice ${costPrice}`);
+    // Базова ціна продажу = собівартість + 10%
+    const basePrice = Math.round(costPrice * 1.10 * 100) / 100;
+    this.strapi.log.info(`🌱 Creating variant: ${flower.name} ${variantLength}cm - stock ${row.stock}, costPrice ${costPrice}, basePrice ${basePrice} (+10%)`);
 
     const created = await this.strapi.db.query('api::variant.variant').create({
       data: {
         length: variantLength,
         stock: row.stock,
         costPrice: costPrice,
-        price: 0, // Ціна продажу буде встановлена адміністратором
+        price: basePrice, // Базова ціна продажу = собівартість + 10%
         flower: flower.id,
         locale: 'en',
       },
@@ -347,7 +349,7 @@ export class UpserterService {
         type: 'create',
         entity: 'variant',
         documentId: (created as VariantRecord).documentId,
-        data: { length: variantLength, stock: row.stock, costPrice: costPrice, price: 0, flowerId: flower.id, slug: row.slug },
+        data: { length: variantLength, stock: row.stock, costPrice: costPrice, price: basePrice, flowerId: flower.id, slug: row.slug },
       },
     };
   }

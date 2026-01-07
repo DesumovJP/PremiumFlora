@@ -12,12 +12,13 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Client } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Mail, MapPin, Phone, Plus, X, Loader2, Trash, Download, Check, ChevronDown } from "lucide-react";
+import { Mail, MapPin, Phone, Plus, X, Loader2, Trash, Download, Check, ChevronDown, Wallet, FileSpreadsheet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import type { Customer, Transaction } from "@/lib/api-types";
 import type { ActivityType, ActivityDetails } from "@/hooks/use-activity-log";
-import { getTransactions, confirmPayment, invalidatePendingPaymentsCache } from "@/lib/strapi";
+import { getTransactions, confirmPayment, invalidatePendingPaymentsCache, updateCustomerBalance } from "@/lib/strapi";
+import { exportClientTransactions } from "@/lib/export";
 
 type ClientsSectionProps = {
   customers: Customer[];
@@ -27,16 +28,22 @@ type ClientsSectionProps = {
   onDeleteCustomer: (documentId: string) => Promise<void>;
   onLogActivity?: (type: ActivityType, details: ActivityDetails) => Promise<void>;
   onPendingPaymentsChange?: (total: number) => void;
+  onCustomersUpdate?: () => void; // Callback to refresh customers list after balance change
 };
 
-export function ClientsSection({ customers, isLoading = false, onOpenExport, onAddCustomer, onDeleteCustomer, onLogActivity, onPendingPaymentsChange }: ClientsSectionProps) {
+export function ClientsSection({ customers, isLoading = false, onOpenExport, onAddCustomer, onDeleteCustomer, onLogActivity, onPendingPaymentsChange, onCustomersUpdate }: ClientsSectionProps) {
   // State for payment confirmation
   const [confirmingPaymentId, setConfirmingPaymentId] = useState<string | null>(null);
   // State for confirmation dialog
   const [paymentToConfirm, setPaymentToConfirm] = useState<Transaction | null>(null);
+  // State for balance modal
+  const [balanceModalOpen, setBalanceModalOpen] = useState(false);
+  const [balanceAmount, setBalanceAmount] = useState<string>("");
+  const [isUpdatingBalance, setIsUpdatingBalance] = useState(false);
+  const [selectedCustomerForBalance, setSelectedCustomerForBalance] = useState<Customer | null>(null);
 
-  // Convert Customer to Client for display
-  const baseClients: Client[] = useMemo(() => {
+  // Convert Customer to Client for display (including balance)
+  const baseClients: (Client & { balance?: number })[] = useMemo(() => {
     return customers.map((c) => ({
       id: c.documentId,
       name: c.name,
@@ -47,14 +54,15 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
       spent: c.totalSpent,
       lastOrder: c.updatedAt ? new Date(c.updatedAt).toLocaleDateString('uk-UA') : '-',
       isVip: c.type === 'VIP',
+      balance: c.balance || 0,
     }));
   }, [customers]);
 
   // Локальний стан для оновлених даних клієнтів (після завантаження транзакцій)
-  const [updatedClients, setUpdatedClients] = useState<Record<string, Partial<Client>>>({});
+  const [updatedClients, setUpdatedClients] = useState<Record<string, Partial<Client & { balance?: number }>>>({});
 
   // Об'єднуємо базові дані з оновленими
-  const clients: Client[] = useMemo(() => {
+  const clients: (Client & { balance?: number })[] = useMemo(() => {
     return baseClients.map((client) => {
       const updates = updatedClients[client.id];
       return updates ? { ...client, ...updates } : client;
@@ -479,13 +487,15 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                     <div className="text-center">
                       <p className={cn(
                         "text-lg font-bold",
-                        client.pendingPayment && client.pendingPayment > 0
-                          ? "text-amber-600 dark:text-amber-400"
+                        (client.balance || 0) > 0
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : (client.balance || 0) < 0
+                          ? "text-rose-600 dark:text-rose-400"
                           : "text-[var(--admin-text-muted)]"
                       )}>
-                        {(client.pendingPayment || 0).toLocaleString('uk-UA')} ₴
+                        {(client.balance || 0) > 0 ? '+' : ''}{(client.balance || 0).toLocaleString('uk-UA')} ₴
                       </p>
-                      <p className="text-[10px] text-[var(--admin-text-muted)] uppercase tracking-wide">борг</p>
+                      <p className="text-[10px] text-[var(--admin-text-muted)] uppercase tracking-wide">баланс</p>
                     </div>
                   </div>
 
@@ -538,6 +548,53 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                     <MetricBox label="Витрачено" value={`${selected.spent.toLocaleString("uk-UA")} грн`} />
                     <MetricBox label="Останнє" value={selected.lastOrder} />
                   </div>
+
+                  {/* Balance section */}
+                  <div className={cn(
+                    "rounded-xl border p-3",
+                    (selected.balance || 0) > 0
+                      ? "border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/70 dark:bg-emerald-900/20"
+                      : (selected.balance || 0) < 0
+                      ? "border-rose-200 dark:border-rose-900/50 bg-rose-50/70 dark:bg-rose-900/20"
+                      : "border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50"
+                  )}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium flex items-center gap-2">
+                        <Wallet className="h-4 w-4" />
+                        Баланс
+                      </span>
+                      <span className={cn(
+                        "text-lg font-bold",
+                        (selected.balance || 0) > 0
+                          ? "text-emerald-700 dark:text-emerald-400"
+                          : (selected.balance || 0) < 0
+                          ? "text-rose-700 dark:text-rose-400"
+                          : "text-slate-600 dark:text-slate-400"
+                      )}>
+                        {(selected.balance || 0) > 0 ? '+' : ''}{(selected.balance || 0).toLocaleString('uk-UA')} грн
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                      {(selected.balance || 0) > 0 ? 'Клієнт має переплату' : (selected.balance || 0) < 0 ? 'Клієнт має заборгованість' : 'Баланс по нулях'}
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        const customer = customers.find(c => c.documentId === selected.id);
+                        if (customer) {
+                          setSelectedCustomerForBalance(customer);
+                          setBalanceAmount((customer.balance || 0).toString());
+                          setBalanceModalOpen(true);
+                        }
+                      }}
+                    >
+                      <Wallet className="h-4 w-4 mr-2" />
+                      Змінити баланс
+                    </Button>
+                  </div>
+
                   {(selected.pendingPayment || 0) > 0 && (
                     <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-900/20 p-3">
                       <div className="flex items-center justify-between">
@@ -548,6 +605,23 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                       </div>
                     </div>
                   )}
+
+                  {/* Export client transactions button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      const customer = customers.find(c => c.documentId === selected.id);
+                      if (customer) {
+                        exportClientTransactions(customer, transactions, customer.balance || 0);
+                      }
+                    }}
+                    disabled={isLoadingTransactions}
+                  >
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Експортувати історію
+                  </Button>
                   <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide">
                   {isLoadingTransactions ? (
                     <div className="flex items-center justify-center py-8">
@@ -879,6 +953,158 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
           </p>
         </div>
       )}
+    </Modal>
+
+    {/* Модалка зміни балансу */}
+    <Modal
+      open={balanceModalOpen}
+      onOpenChange={(v) => {
+        setBalanceModalOpen(v);
+        if (!v) {
+          setSelectedCustomerForBalance(null);
+          setBalanceAmount("");
+        }
+      }}
+      title="Змінити баланс клієнта"
+      description={selectedCustomerForBalance?.name}
+      size="sm"
+      footer={
+        <>
+          <Button variant="outline" onClick={() => setBalanceModalOpen(false)} disabled={isUpdatingBalance}>
+            Скасувати
+          </Button>
+          <Button
+            onClick={async () => {
+              if (!selectedCustomerForBalance) return;
+              const newBalance = parseFloat(balanceAmount) || 0;
+              setIsUpdatingBalance(true);
+              try {
+                const result = await updateCustomerBalance(selectedCustomerForBalance.documentId, newBalance);
+                if (result.success) {
+                  // Update local state
+                  setUpdatedClients((prev) => ({
+                    ...prev,
+                    [selectedCustomerForBalance.documentId]: {
+                      ...prev[selectedCustomerForBalance.documentId],
+                      balance: newBalance,
+                    },
+                  }));
+                  // Update selected client if it's the same
+                  if (selected?.id === selectedCustomerForBalance.documentId) {
+                    setSelected((prev) => prev ? { ...prev, balance: newBalance } : null);
+                  }
+                  // Refresh customers list if callback provided
+                  if (onCustomersUpdate) {
+                    onCustomersUpdate();
+                  }
+                  setBalanceModalOpen(false);
+                  setSelectedCustomerForBalance(null);
+                  setBalanceAmount("");
+                }
+              } catch (error) {
+                console.error('Failed to update balance:', error);
+              } finally {
+                setIsUpdatingBalance(false);
+              }
+            }}
+            disabled={isUpdatingBalance}
+            className="bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-200"
+          >
+            {isUpdatingBalance ? <Loader2 className="h-4 w-4 animate-spin" /> : "Зберегти"}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Баланс (грн)
+          </label>
+          <Input
+            type="number"
+            step="0.01"
+            placeholder="0"
+            value={balanceAmount}
+            onChange={(e) => setBalanceAmount(e.target.value)}
+            autoFocus
+          />
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Додатнє значення = переплата клієнта, від'ємне = борг клієнта
+          </p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const current = parseFloat(balanceAmount) || 0;
+              setBalanceAmount((current + 100).toString());
+            }}
+          >
+            +100
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const current = parseFloat(balanceAmount) || 0;
+              setBalanceAmount((current + 500).toString());
+            }}
+          >
+            +500
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const current = parseFloat(balanceAmount) || 0;
+              setBalanceAmount((current + 1000).toString());
+            }}
+          >
+            +1000
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const current = parseFloat(balanceAmount) || 0;
+              setBalanceAmount((current - 100).toString());
+            }}
+          >
+            -100
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const current = parseFloat(balanceAmount) || 0;
+              setBalanceAmount((current - 500).toString());
+            }}
+          >
+            -500
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const current = parseFloat(balanceAmount) || 0;
+              setBalanceAmount((current - 1000).toString());
+            }}
+          >
+            -1000
+          </Button>
+        </div>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full text-slate-500"
+          onClick={() => setBalanceAmount("0")}
+        >
+          Скинути на 0
+        </Button>
+      </div>
     </Modal>
 
     </>

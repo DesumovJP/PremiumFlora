@@ -94,6 +94,7 @@ export interface GraphQLCustomer {
   address: string | null;
   totalSpent: number;
   orderCount: number;
+  balance: number;
   createdAt: string;
   updatedAt: string;
 }

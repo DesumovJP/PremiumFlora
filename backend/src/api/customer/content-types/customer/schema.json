@@ -37,6 +37,10 @@
     "orderCount": {
       "type": "integer"
     },
+    "balance": {
+      "type": "decimal",
+      "default": 0
+    },
     "transactions": {
       "type": "relation",
       "relation": "oneToMany",

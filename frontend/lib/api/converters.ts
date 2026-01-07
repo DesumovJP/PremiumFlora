@@ -143,6 +143,7 @@ export function convertCustomer(c: GraphQLCustomer): Customer {
     address: c.address || undefined,
     totalSpent: Number(c.totalSpent) || 0,
     orderCount: c.orderCount || 0,
+    balance: Number(c.balance) || 0,
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
   };
@@ -169,6 +170,7 @@ export function convertTransaction(t: GraphQLTransaction): Transaction {
           type: t.customer.type || 'Regular',
           totalSpent: 0,
           orderCount: 0,
+          balance: 0,
           createdAt: '',
           updatedAt: '',
         }

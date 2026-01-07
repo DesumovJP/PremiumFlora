@@ -36,6 +36,9 @@ import {
   MessageSquare,
   Percent,
   X,
+  PlusCircle,
+  Edit3,
+  Tag,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 
@@ -50,6 +53,8 @@ type PosSectionProps = {
   onAdd: (product: Product, variant: Variant) => void;
   onUpdateQty: (id: string, delta: number) => void;
   onRemove: (id: string) => void;
+  onUpdatePrice?: (id: string, newPrice: number) => void;
+  onAddCustomItem?: (item: { name: string; price: number; note?: string }) => void;
   cartTotal: number;
   onCheckout?: () => Promise<void>;
   isCheckingOut?: boolean;
@@ -57,6 +62,8 @@ type PosSectionProps = {
   hideDesktopCart?: boolean;
   paymentStatus?: 'paid' | 'expected';
   onPaymentStatusChange?: (status: 'paid' | 'expected') => void;
+  paidAmount?: number;
+  onPaidAmountChange?: (amount: number) => void;
   comment?: string;
   onCommentChange?: (value: string) => void;
   onAddCustomer?: (data: { name: string; phone: string; email: string; address: string }) => Promise<void>;
@@ -73,6 +80,8 @@ export function PosSection({
   onAdd,
   onUpdateQty,
   onRemove,
+  onUpdatePrice,
+  onAddCustomItem,
   cartTotal,
   onCheckout,
   isCheckingOut = false,
@@ -80,6 +89,8 @@ export function PosSection({
   hideDesktopCart = false,
   paymentStatus = 'expected',
   onPaymentStatusChange,
+  paidAmount = 0,
+  onPaidAmountChange,
   comment = '',
   onCommentChange,
   onAddCustomer,
@@ -93,11 +104,15 @@ export function PosSection({
         cart={cart}
         onUpdateQty={onUpdateQty}
         onRemove={onRemove}
+        onUpdatePrice={onUpdatePrice}
+        onAddCustomItem={onAddCustomItem}
         cartTotal={cartTotal}
         onCheckout={onCheckout}
         isCheckingOut={isCheckingOut}
         paymentStatus={paymentStatus}
         onPaymentStatusChange={onPaymentStatusChange}
+        paidAmount={paidAmount}
+        onPaidAmountChange={onPaidAmountChange}
         comment={comment}
         onCommentChange={onCommentChange}
         onAddCustomer={onAddCustomer}
@@ -200,11 +215,15 @@ function CartPanel({
   cart,
   onUpdateQty,
   onRemove,
+  onUpdatePrice,
+  onAddCustomItem,
   cartTotal,
   onCheckout,
   isCheckingOut = false,
   paymentStatus = 'expected',
   onPaymentStatusChange,
+  paidAmount = 0,
+  onPaidAmountChange,
   comment = '',
   onCommentChange,
   onAddCustomer,
@@ -215,11 +234,15 @@ function CartPanel({
   cart: CartLine[];
   onUpdateQty: (id: string, delta: number) => void;
   onRemove: (id: string) => void;
+  onUpdatePrice?: (id: string, newPrice: number) => void;
+  onAddCustomItem?: (item: { name: string; price: number; note?: string }) => void;
   cartTotal: number;
   onCheckout?: () => Promise<void>;
   isCheckingOut?: boolean;
   paymentStatus?: 'paid' | 'expected';
   onPaymentStatusChange?: (status: 'paid' | 'expected') => void;
+  paidAmount?: number;
+  onPaidAmountChange?: (amount: number) => void;
   comment?: string;
   onCommentChange?: (value: string) => void;
   onAddCustomer?: (data: { name: string; phone: string; email: string; address: string }) => Promise<void>;
@@ -227,6 +250,13 @@ function CartPanel({
   const [discount, setDiscount] = useState<number>(0);
   const [showDiscount, setShowDiscount] = useState(false);
   const [showComment, setShowComment] = useState(!!comment);
+  const [showPaidAmount, setShowPaidAmount] = useState(false);
+
+  // Custom item modal state
+  const [showCustomItemModal, setShowCustomItemModal] = useState(false);
+  const [customItemName, setCustomItemName] = useState('');
+  const [customItemPrice, setCustomItemPrice] = useState('');
+  const [customItemNote, setCustomItemNote] = useState('');
 
   // Client selection modal state
   const [clientModalOpen, setClientModalOpen] = useState(false);
@@ -290,12 +320,12 @@ function CartPanel({
         <Button
           variant="outline"
           className={cn(
-            "w-full justify-between text-left font-normal h-11 px-4",
+            "w-full justify-between text-left font-normal h-auto min-h-[2.75rem] px-4 py-2",
             !selectedClientObj && "border-dashed border-slate-300 dark:border-admin-border"
           )}
           onClick={() => setClientModalOpen(true)}
         >
-          <span className="flex items-center gap-3 truncate">
+          <span className="flex items-center gap-3 truncate flex-1">
             <div className={cn(
               "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
               selectedClientObj
@@ -309,14 +339,27 @@ function CartPanel({
                   : "text-slate-400"
               )} />
             </div>
-            <span className={cn(
-              "text-sm",
-              selectedClientObj
-                ? "text-slate-900 dark:text-admin-text-primary font-medium"
-                : "text-slate-500 dark:text-admin-text-muted"
-            )}>
-              {selectedClientObj?.name || "Оберіть клієнта"}
-            </span>
+            <div className="flex flex-col min-w-0">
+              <span className={cn(
+                "text-sm truncate",
+                selectedClientObj
+                  ? "text-slate-900 dark:text-admin-text-primary font-medium"
+                  : "text-slate-500 dark:text-admin-text-muted"
+              )}>
+                {selectedClientObj?.name || "Оберіть клієнта"}
+              </span>
+              {selectedClientObj && (selectedClientObj.balance ?? 0) !== 0 && (
+                <span className={cn(
+                  "text-xs font-medium",
+                  (selectedClientObj.balance ?? 0) > 0
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-rose-600 dark:text-rose-400"
+                )}>
+                  {(selectedClientObj.balance ?? 0) > 0 ? "Переплата: +" : "Борг: "}
+                  {Math.abs(selectedClientObj.balance ?? 0).toLocaleString('uk-UA')} ₴
+                </span>
+              )}
+            </div>
           </span>
           <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
         </Button>
@@ -337,6 +380,7 @@ function CartPanel({
                   group={group}
                   onRemove={onRemove}
                   onUpdateQty={onUpdateQty}
+                  onUpdatePrice={onUpdatePrice}
                 />
               ))}
             </div>
@@ -353,7 +397,11 @@ function CartPanel({
             <div className="flex rounded-lg bg-[var(--admin-bg)] dark:bg-[var(--admin-bg)] p-1 gap-1 border border-slate-200/60 dark:border-[var(--admin-border)]">
               <button
                 type="button"
-                onClick={() => onPaymentStatusChange('paid')}
+                onClick={() => {
+                  onPaymentStatusChange('paid');
+                  setShowPaidAmount(false);
+                  onPaidAmountChange?.(0);
+                }}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-semibold transition-all",
                   paymentStatus === 'paid'
@@ -380,6 +428,53 @@ function CartPanel({
             </div>
           )}
 
+          {/* Partial Payment Input - shown when "В борг" is selected */}
+          {paymentStatus === 'expected' && onPaidAmountChange && (
+            <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50">
+              <div className="flex-1">
+                <p className="text-xs text-amber-700 dark:text-amber-400 font-medium mb-1">Часткова оплата (необов'язково)</p>
+                {!showPaidAmount ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowPaidAmount(true)}
+                    className="text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300"
+                  >
+                    {paidAmount > 0 ? `Оплачено: ${paidAmount} ₴` : 'Вказати суму →'}
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={paidAmount || ''}
+                      onChange={(e) => onPaidAmountChange(Math.max(0, Math.min(Number(e.target.value) || 0, payable)))}
+                      placeholder="0"
+                      className="h-8 w-24 text-sm bg-white dark:bg-admin-surface"
+                    />
+                    <span className="text-sm text-amber-600 dark:text-amber-400">₴</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowPaidAmount(false);
+                        onPaidAmountChange(0);
+                      }}
+                      className="text-xs text-amber-500 hover:text-amber-700"
+                    >
+                      Скасувати
+                    </button>
+                  </div>
+                )}
+              </div>
+              {paidAmount > 0 && (
+                <div className="text-right">
+                  <p className="text-xs text-amber-600 dark:text-amber-500">Борг:</p>
+                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                    {Math.round(payable - paidAmount)} ₴
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Order Summary */}
           <div className="space-y-2">
             {/* Subtotal */}
@@ -387,6 +482,21 @@ function CartPanel({
               <span className="text-sm text-[var(--admin-text-secondary)]">Сума товарів</span>
               <span className="text-sm font-semibold text-[var(--admin-text-primary)]">{Math.round(cartTotal)} ₴</span>
             </div>
+
+            {/* Add custom item */}
+            {onAddCustomItem && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-[var(--admin-text-secondary)]">Послуга / інше</span>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomItemModal(true)}
+                  className="flex items-center gap-1.5 text-sm font-medium transition-all rounded-md px-2 py-1 -mr-2 text-[var(--admin-text-tertiary)] hover:text-emerald-600 dark:hover:text-emerald-400"
+                >
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  <span>Додати</span>
+                </button>
+              </div>
+            )}
 
             {/* Discount */}
             <div className="flex items-center justify-between">
@@ -634,6 +744,90 @@ function CartPanel({
           </ScrollArea>
         </div>
       )}
+    </Modal>
+
+    {/* Custom Item Modal */}
+    <Modal
+      open={showCustomItemModal}
+      onOpenChange={(open) => {
+        setShowCustomItemModal(open);
+        if (!open) {
+          setCustomItemName('');
+          setCustomItemPrice('');
+          setCustomItemNote('');
+        }
+      }}
+      title="Додати послугу / інше"
+      description="Додайте товар з іншого складу або послугу"
+    >
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Назва *
+          </label>
+          <Input
+            placeholder="Наприклад: Доставка, Квіти з іншого складу..."
+            value={customItemName}
+            onChange={(e) => setCustomItemName(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Сума (грн) *
+          </label>
+          <Input
+            type="number"
+            placeholder="0"
+            value={customItemPrice}
+            onChange={(e) => setCustomItemPrice(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Коментар
+          </label>
+          <Input
+            placeholder="Деталі позиції..."
+            value={customItemNote}
+            onChange={(e) => setCustomItemNote(e.target.value)}
+          />
+        </div>
+        <div className="flex gap-2 pt-2">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => {
+              setShowCustomItemModal(false);
+              setCustomItemName('');
+              setCustomItemPrice('');
+              setCustomItemNote('');
+            }}
+          >
+            Скасувати
+          </Button>
+          <Button
+            className="flex-1"
+            onClick={() => {
+              const price = parseFloat(customItemPrice);
+              if (customItemName.trim() && !isNaN(price) && price !== 0 && onAddCustomItem) {
+                onAddCustomItem({
+                  name: customItemName.trim(),
+                  price,
+                  note: customItemNote.trim() || undefined,
+                });
+                setShowCustomItemModal(false);
+                setCustomItemName('');
+                setCustomItemPrice('');
+                setCustomItemNote('');
+              }
+            }}
+            disabled={!customItemName.trim() || !customItemPrice || parseFloat(customItemPrice) === 0}
+          >
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Додати
+          </Button>
+        </div>
+      </div>
     </Modal>
     </>
   );
@@ -904,13 +1098,17 @@ function CartGroupItem({
   group,
   onRemove,
   onUpdateQty,
+  onUpdatePrice,
 }: {
   group: GroupedCartItem;
   onRemove: (id: string) => void;
   onUpdateQty: (id: string, delta: number) => void;
+  onUpdatePrice?: (id: string, newPrice: number) => void;
 }) {
   const [editingQty, setEditingQty] = useState<string | null>(null);
   const [qtyValue, setQtyValue] = useState<string>('');
+  const [editingPrice, setEditingPrice] = useState<string | null>(null);
+  const [priceValue, setPriceValue] = useState<string>('');
 
   const handleQtyClick = (lineId: string, currentQty: number) => {
     setEditingQty(lineId);
@@ -940,14 +1138,56 @@ function CartGroupItem({
     }
   };
 
+  // Price editing handlers
+  const handlePriceClick = (lineId: string, currentPrice: number) => {
+    if (onUpdatePrice) {
+      setEditingPrice(lineId);
+      setPriceValue(Math.round(currentPrice).toString());
+    }
+  };
+
+  const handlePriceBlur = (lineId: string, currentPrice: number) => {
+    const newPrice = parseFloat(priceValue) || 0;
+    if (newPrice !== currentPrice && newPrice > 0 && onUpdatePrice) {
+      onUpdatePrice(lineId, newPrice);
+    }
+    setEditingPrice(null);
+    setPriceValue('');
+  };
+
+  const handlePriceKeyDown = (e: React.KeyboardEvent, lineId: string, currentPrice: number) => {
+    if (e.key === 'Enter') {
+      handlePriceBlur(lineId, currentPrice);
+    } else if (e.key === 'Escape') {
+      setEditingPrice(null);
+      setPriceValue('');
+    }
+  };
+
   const totalQty = group.lines.reduce((sum, line) => sum + line.qty, 0);
+  const isCustomGroup = group.lines.some(line => line.isCustom);
 
   return (
-    <div className="rounded-xl border border-slate-200/80 dark:border-[var(--admin-border)] bg-white dark:bg-admin-surface overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+    <div className={cn(
+      "rounded-xl border overflow-hidden shadow-sm hover:shadow-md transition-shadow",
+      isCustomGroup
+        ? "border-amber-200/80 dark:border-amber-800/50 bg-amber-50/30 dark:bg-amber-900/10"
+        : "border-slate-200/80 dark:border-[var(--admin-border)] bg-white dark:bg-admin-surface"
+    )}>
       {/* Product Header */}
-      <div className="flex items-center gap-3 p-3 sm:p-3.5 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-800/30">
+      <div className={cn(
+        "flex items-center gap-3 p-3 sm:p-3.5",
+        isCustomGroup
+          ? "bg-gradient-to-r from-amber-50 to-amber-50/50 dark:from-amber-900/20 dark:to-amber-900/10"
+          : "bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-800/30"
+      )}>
         {/* Product Image */}
-        <div className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-admin-surface ring-1 ring-slate-200/50 dark:ring-slate-700/50">
+        <div className={cn(
+          "h-12 w-12 sm:h-14 sm:w-14 shrink-0 overflow-hidden rounded-lg ring-1",
+          isCustomGroup
+            ? "bg-amber-100 dark:bg-amber-900/30 ring-amber-200/50 dark:ring-amber-700/50"
+            : "bg-slate-100 dark:bg-admin-surface ring-slate-200/50 dark:ring-slate-700/50"
+        )}>
           {group.image ? (
             <img
               src={group.image}
@@ -956,31 +1196,48 @@ function CartGroupItem({
               loading="lazy"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-admin-text-muted">
-              <Package className="h-6 w-6" />
+            <div className={cn(
+              "flex h-full w-full items-center justify-center",
+              isCustomGroup ? "text-amber-400 dark:text-amber-500" : "text-slate-300 dark:text-admin-text-muted"
+            )}>
+              {isCustomGroup ? <Tag className="h-6 w-6" /> : <Package className="h-6 w-6" />}
             </div>
           )}
         </div>
 
         {/* Product Info */}
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-admin-text-primary truncate leading-tight">
-            {group.name}
-          </h4>
+          <div className="flex items-center gap-2">
+            <h4 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-admin-text-primary truncate leading-tight">
+              {group.name}
+            </h4>
+            {isCustomGroup && (
+              <Badge tone="warning" className="text-[10px] px-1.5 py-0">
+                Інше
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-xs text-slate-500 dark:text-admin-text-tertiary">
               {totalQty} шт
             </span>
-            <span className="text-xs text-slate-300 dark:text-slate-600">•</span>
-            <span className="text-xs text-slate-500 dark:text-admin-text-tertiary">
-              {group.lines.length} {group.lines.length === 1 ? 'варіант' : 'варіанти'}
-            </span>
+            {!isCustomGroup && (
+              <>
+                <span className="text-xs text-slate-300 dark:text-slate-600">•</span>
+                <span className="text-xs text-slate-500 dark:text-admin-text-tertiary">
+                  {group.lines.length} {group.lines.length === 1 ? 'варіант' : 'варіанти'}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
         {/* Total Price */}
         <div className="text-right shrink-0">
-          <p className="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400">
+          <p className={cn(
+            "text-base sm:text-lg font-bold",
+            isCustomGroup ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
+          )}>
             {Math.round(group.total)} ₴
           </p>
         </div>
@@ -991,17 +1248,69 @@ function CartGroupItem({
         {group.lines.map((line) => (
           <div
             key={line.id}
-            className="flex items-center gap-2 sm:gap-3 px-3 sm:px-3.5 py-2.5 sm:py-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors"
+            className={cn(
+              "flex items-center gap-2 sm:gap-3 px-3 sm:px-3.5 py-2.5 sm:py-3 transition-colors",
+              line.isCustom
+                ? "hover:bg-amber-50/50 dark:hover:bg-amber-900/10"
+                : "hover:bg-slate-50/50 dark:hover:bg-slate-800/20"
+            )}
           >
-            {/* Size Badge */}
-            <Badge tone="outline" className="shrink-0 text-xs font-medium px-2 py-0.5 min-w-[50px] justify-center">
-              {line.size}
-            </Badge>
+            {/* Size Badge or Custom Note */}
+            {line.isCustom ? (
+              line.customNote ? (
+                <span className="text-xs text-amber-600 dark:text-amber-400 italic flex-1 truncate" title={line.customNote}>
+                  {line.customNote}
+                </span>
+              ) : (
+                <span className="flex-1" />
+              )
+            ) : (
+              <>
+                <Badge tone="outline" className="shrink-0 text-xs font-medium px-2 py-0.5 min-w-[50px] justify-center">
+                  {line.size}
+                </Badge>
 
-            {/* Unit Price */}
-            <span className="text-xs sm:text-sm text-slate-500 dark:text-admin-text-muted flex-1">
-              {Math.round(line.price)} ₴/шт
-            </span>
+                {/* Unit Price - editable */}
+                {editingPrice === line.id ? (
+                  <div className="flex items-center gap-1 flex-1">
+                    <Input
+                      type="number"
+                      min="0"
+                      value={priceValue}
+                      onChange={(e) => setPriceValue(e.target.value)}
+                      onBlur={() => handlePriceBlur(line.id, line.price)}
+                      onKeyDown={(e) => handlePriceKeyDown(e, line.id, line.price)}
+                      className="h-6 w-16 text-xs text-right p-1 font-medium"
+                      autoFocus
+                    />
+                    <span className="text-xs text-slate-400">₴/шт</span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handlePriceClick(line.id, line.price)}
+                    className={cn(
+                      "text-xs sm:text-sm flex-1 text-left flex items-center gap-1 group",
+                      onUpdatePrice ? "cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400" : "cursor-default",
+                      line.originalPrice && line.originalPrice !== line.price
+                        ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                        : "text-slate-500 dark:text-admin-text-muted"
+                    )}
+                    disabled={!onUpdatePrice}
+                    title={onUpdatePrice ? "Натисніть для зміни ціни" : undefined}
+                  >
+                    {Math.round(line.price)} ₴/шт
+                    {line.originalPrice && line.originalPrice !== line.price && (
+                      <span className="text-[10px] text-slate-400 line-through ml-1">
+                        {Math.round(line.originalPrice)}₴
+                      </span>
+                    )}
+                    {onUpdatePrice && (
+                      <Edit3 className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
+                    )}
+                  </button>
+                )}
+              </>
+            )}
 
             {/* Quantity Controls */}
             <div className="flex items-center gap-1">

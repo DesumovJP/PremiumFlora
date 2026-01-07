@@ -51,6 +51,7 @@ export {
   getCustomerById,
   createCustomer,
   deleteCustomer,
+  updateCustomerBalance,
 } from './customers';
 
 // Transactions API

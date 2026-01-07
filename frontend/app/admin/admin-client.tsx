@@ -54,6 +54,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   const [supplyOpen, setSupplyOpen] = useState(false);
   const [discount, setDiscount] = useState<number>(0);
   const [paymentStatus, setPaymentStatus] = useState<'paid' | 'expected'>('paid');
+  const [paidAmount, setPaidAmount] = useState<number>(0);
   const [posComment, setPosComment] = useState<string>('');
 
   // Real data states
@@ -187,9 +188,14 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
           qty: line.qty,
           price: line.price,
           name: line.name,
+          // Include custom item fields
+          ...(line.isCustom && { isCustom: true }),
+          ...(line.customNote && { customNote: line.customNote }),
+          ...(line.originalPrice !== undefined && { originalPrice: line.originalPrice }),
         })),
         discount,
         paymentStatus: paymentStatus,
+        paidAmount: paymentStatus === 'expected' ? paidAmount : undefined,
         notes: posComment || undefined,
       });
 
@@ -201,6 +207,19 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
           customerName,
           customerId: selectedClient,
           items: cart.map((line) => {
+            // Кастомні позиції не мають складу
+            if (line.isCustom) {
+              return {
+                name: line.name,
+                size: line.size,
+                qty: line.qty,
+                price: line.price,
+                stockBefore: 0,
+                stockAfter: 0,
+                isCustom: true,
+                customNote: line.customNote,
+              };
+            }
             // Знаходимо варіант щоб отримати поточний stock
             const product = products.find(p => p.slug === line.flowerSlug || p.id === line.flowerSlug);
             const variant = product?.variants.find(v => v.length === line.length);
@@ -212,6 +231,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
               price: line.price,
               stockBefore,
               stockAfter: stockBefore - line.qty,
+              ...(line.originalPrice && { originalPrice: line.originalPrice }),
             };
           }),
           totalAmount,
@@ -238,6 +258,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
         setSelectedClient(undefined);
         setDiscount(0);
         setPaymentStatus('expected');
+        setPaidAmount(0);
         setPosComment('');
         await refreshProducts();
         await fetchCustomers(); // Оновити дані клієнтів
@@ -397,6 +418,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
       spent: c.totalSpent,
       lastOrder: "",
       isVip: c.type === "VIP",
+      balance: c.balance || 0,
     }));
   }, [customers]);
 
@@ -430,14 +452,6 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   // Use pending payments total and count from API
   const pendingPaymentsAmount = clientsPendingTotal;
   const pendingPaymentsCount = clientsPendingCount;
-
-  // Calculate items to reorder (low stock items - stock <= 100, same as modal/API)
-  const itemsToReorder = useMemo(() => {
-    const LOW_STOCK_THRESHOLD = 100;
-    return products.reduce((count, product) => {
-      return count + product.variants.filter(v => v.stock <= LOW_STOCK_THRESHOLD).length;
-    }, 0);
-  }, [products]);
 
   // Handler to show pending payments (navigate to clients tab)
   const handleShowPendingPayments = () => {
@@ -527,6 +541,39 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
     setCart((current) => current.filter((line) => line.id !== id));
   };
 
+  // Update price for a cart item
+  const updatePrice = (id: string, newPrice: number) => {
+    setCart((current) =>
+      current.map((line) => {
+        if (line.id === id) {
+          // Store original price if not already stored
+          const originalPrice = line.originalPrice ?? line.price;
+          return { ...line, price: newPrice, originalPrice };
+        }
+        return line;
+      })
+    );
+  };
+
+  // Add custom item to cart
+  const addCustomItem = (item: { name: string; price: number; note?: string }) => {
+    const customId = `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    setCart((current) => [
+      ...current,
+      {
+        id: customId,
+        name: item.name,
+        size: '-',
+        price: item.price,
+        qty: 1,
+        flowerSlug: 'custom',
+        length: 0,
+        isCustom: true,
+        customNote: item.note,
+      },
+    ]);
+  };
+
   // Handle export shift
   const handleExportShift = () => {
     if (!shiftStartedAt || activities.length === 0) return;
@@ -566,11 +613,15 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             onAdd={addToCart}
             onUpdateQty={updateQty}
             onRemove={removeLine}
+            onUpdatePrice={updatePrice}
+            onAddCustomItem={addCustomItem}
             cartTotal={cartTotal}
             onCheckout={handleCheckout}
             isCheckingOut={isCheckingOut}
             paymentStatus={paymentStatus}
             onPaymentStatusChange={setPaymentStatus}
+            paidAmount={paidAmount}
+            onPaidAmountChange={setPaidAmount}
             comment={posComment}
             onCommentChange={setPosComment}
             onAddCustomer={handleAddCustomer}
@@ -656,12 +707,16 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
         onAdd={addToCart}
         onUpdateQty={updateQty}
         onRemove={removeLine}
+        onUpdatePrice={updatePrice}
+        onAddCustomItem={addCustomItem}
         cartTotal={cartTotal}
         onCheckout={handleCheckout}
         isCheckingOut={isCheckingOut}
         renderOnlyCart
         paymentStatus={paymentStatus}
         onPaymentStatusChange={setPaymentStatus}
+        paidAmount={paidAmount}
+        onPaidAmountChange={setPaidAmount}
         comment={posComment}
         onCommentChange={setPosComment}
         onAddCustomer={handleAddCustomer}
@@ -693,7 +748,6 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             onOpenSupply={() => setSupplyOpen(true)}
             pendingPaymentsAmount={pendingPaymentsAmount}
             onShowPendingPayments={handleShowPendingPayments}
-            itemsToReorder={itemsToReorder}
           />
         </aside>
 
@@ -731,7 +785,6 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
                 onOpenSupply={() => setSupplyOpen(true)}
                 pendingPaymentsAmount={pendingPaymentsAmount}
                 onShowPendingPayments={handleShowPendingPayments}
-                itemsToReorder={itemsToReorder}
               />
             </SheetContent>
           </Sheet>
@@ -763,12 +816,16 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
                 onAdd={addToCart}
                 onUpdateQty={updateQty}
                 onRemove={removeLine}
+                onUpdatePrice={updatePrice}
+                onAddCustomItem={addCustomItem}
                 cartTotal={cartTotal}
                 onCheckout={handleCheckout}
                 isCheckingOut={isCheckingOut}
                 renderOnlyCart
                 paymentStatus={paymentStatus}
                 onPaymentStatusChange={setPaymentStatus}
+                paidAmount={paidAmount}
+                onPaidAmountChange={setPaidAmount}
                 comment={posComment}
                 onCommentChange={setPosComment}
                 onAddCustomer={handleAddCustomer}

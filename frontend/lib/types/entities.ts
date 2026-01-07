@@ -76,6 +76,7 @@ export interface Customer {
   address?: string;
   totalSpent: number;
   orderCount: number;
+  balance: number; // Баланс клієнта: >0 - переплата, <0 - борг, 0 - по нулям
   transactions?: Transaction[];
   createdAt: string;
   updatedAt: string;
@@ -96,6 +97,7 @@ export interface Client {
   lastOrder: string;
   isVip?: boolean;
   pendingPayment?: number;
+  balance?: number;
 }
 
 // ============================================
@@ -116,6 +118,10 @@ export interface TransactionItem {
   price: number;
   name: string;
   subtotal?: number;
+  // Для кастомних позицій (послуги, товари з чужого складу)
+  isCustom?: boolean;
+  customNote?: string;
+  originalPrice?: number; // Оригінальна ціна (якщо змінена)
 }
 
 /**

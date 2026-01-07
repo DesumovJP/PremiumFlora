@@ -13,6 +13,7 @@ import {
 import {
   CREATE_CUSTOMER,
   DELETE_CUSTOMER,
+  UPDATE_CUSTOMER,
 } from '../graphql/mutations';
 import type {
   GraphQLCustomer,
@@ -104,6 +105,37 @@ export async function deleteCustomer(documentId: string): Promise<ApiResponse<vo
       error: {
         code: 'DELETE_FAILED',
         message: error instanceof Error ? error.message : 'Failed to delete customer',
+      },
+    };
+  }
+}
+
+/**
+ * Оновити баланс клієнта
+ * @param documentId - ID клієнта
+ * @param balance - нове значення балансу (>0 переплата, <0 борг)
+ */
+export async function updateCustomerBalance(
+  documentId: string,
+  balance: number
+): Promise<ApiResponse<Customer>> {
+  try {
+    const result = await graphqlRequest<{ updateCustomer: GraphQLCustomer }>(
+      UPDATE_CUSTOMER,
+      { documentId, data: { balance } }
+    );
+
+    return {
+      success: true,
+      data: convertCustomer(result.updateCustomer),
+    };
+  } catch (error) {
+    console.error('Error updating customer balance:', error);
+    return {
+      success: false,
+      error: {
+        code: 'UPDATE_FAILED',
+        message: error instanceof Error ? error.message : 'Failed to update customer balance',
       },
     };
   }

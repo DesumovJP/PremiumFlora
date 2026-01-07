@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NavItem } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -26,11 +25,10 @@ type SidebarProps = {
   onOpenSupply?: () => void;
   pendingPaymentsAmount?: number;
   onShowPendingPayments?: () => void;
-  itemsToReorder?: number;
 };
 
 
-export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenSupply, pendingPaymentsAmount = 0, onShowPendingPayments, itemsToReorder = 0 }: SidebarProps) {
+export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenSupply, pendingPaymentsAmount = 0, onShowPendingPayments }: SidebarProps) {
   const router = useRouter();
   const BrandIcon = brand.icon;
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -226,14 +224,6 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
             <span className="flex-1 text-[15px] font-medium text-[var(--admin-text-secondary)] group-hover:text-[var(--admin-text-primary)]">
               Поставка
             </span>
-            {itemsToReorder > 0 && (
-              <Badge
-                className="bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[11px] px-1.5 py-0 font-medium"
-                title={`${itemsToReorder} позицій потребують поставки`}
-              >
-                {itemsToReorder}
-              </Badge>
-            )}
           </button>
           <button
             onClick={onShowPendingPayments}

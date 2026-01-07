@@ -38,6 +38,10 @@
     "amount": {
       "type": "integer"
     },
+    "paidAmount": {
+      "type": "integer",
+      "default": 0
+    },
     "items": {
       "type": "json"
     },

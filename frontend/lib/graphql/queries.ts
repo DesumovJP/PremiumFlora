@@ -64,6 +64,7 @@ export const CUSTOMER_FRAGMENT = gql`
     address
     totalSpent
     orderCount
+    balance
     createdAt
     updatedAt
   }

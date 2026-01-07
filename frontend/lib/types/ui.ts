@@ -30,6 +30,11 @@ export interface CartLine {
   image?: string;
   flowerSlug: string;
   length: number;
+  // Для кастомних цін (знижка/націнка для клієнта)
+  originalPrice?: number; // Оригінальна ціна, якщо змінена
+  // Для кастомних позицій (послуги, товари з чужого складу)
+  isCustom?: boolean; // true = кастомна позиція без впливу на склад
+  customNote?: string; // Коментар до кастомної позиції
 }
 
 // ============================================

@@ -20,6 +20,10 @@ interface SaleItem {
   qty: number;
   price: number;
   name: string;
+  // Для кастомних позицій (послуги, товари з чужого складу)
+  isCustom?: boolean; // true = не змінювати склад
+  customNote?: string; // Коментар до кастомної позиції
+  originalPrice?: number; // Оригінальна ціна (якщо змінена)
 }
 
 interface CreateSaleInput {
@@ -29,6 +33,7 @@ interface CreateSaleInput {
   discount?: number;
   notes?: string;
   paymentStatus?: 'pending' | 'paid' | 'expected';
+  paidAmount?: number; // Скільки оплачено (для часткової оплати)
 }
 
 interface CreateWriteOffInput {
@@ -135,6 +140,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   /**
    * Валідація наявності stock для всіх items
+   * Кастомні позиції (isCustom: true) пропускаються - вони не впливають на склад
    */
   async validateStock(items: SaleItem[]): Promise<{
     valid: boolean;
@@ -145,6 +151,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const variants = new Map<string, VariantWithFlower>();
 
     for (const item of items) {
+      // Пропускаємо кастомні позиції - вони не мають складу
+      if (item.isCustom) {
+        strapi.log.info(`🏷️ Skipping stock validation for custom item: ${item.name}`);
+        continue;
+      }
+
       const key = `${item.flowerSlug}-${item.length}`;
       const variant = await this.findVariant(item.flowerSlug, item.length);
 
@@ -244,9 +256,16 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         }
 
         // 4b. Атомарний декремент stock з перевіркою (захист від race condition)
+        // Кастомні позиції (isCustom: true) пропускаються - вони не впливають на склад
         const stockUpdates: Array<{ flowerSlug: string; length: number; decremented: number }> = [];
 
         for (const item of data.items) {
+          // Пропускаємо кастомні позиції - вони не мають складу
+          if (item.isCustom) {
+            strapi.log.info(`🏷️ Skipping stock decrement for custom item: ${item.name}`);
+            continue;
+          }
+
           const key = `${item.flowerSlug}-${item.length}`;
           const variant = variants.get(key)!;
 
@@ -270,9 +289,13 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           });
         }
 
-        // 4c. Обчислити загальну суму
+        // 4c. Обчислити загальну суму та суму оплати
         const subtotal = data.items.reduce((sum, item) => sum + item.price * item.qty, 0);
         const amount = Math.round(subtotal - (data.discount || 0));
+        // paidAmount: скільки оплачено (для paid = amount, для expected = 0 або часткова оплата)
+        const paidAmount = data.paymentStatus === 'paid'
+          ? amount
+          : Math.min(data.paidAmount ?? 0, amount);
 
         strapi.log.info('📝 Creating transaction in DB transaction:', {
           operationId: data.operationId,
@@ -290,6 +313,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           operation_id: data.operationId,
           payment_status: data.paymentStatus || 'pending',
           amount,
+          paid_amount: paidAmount,
           items: JSON.stringify(data.items.map(item => ({
             flowerSlug: item.flowerSlug,
             length: item.length,
@@ -297,6 +321,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
             price: item.price,
             name: item.name,
             subtotal: item.price * item.qty,
+            // Зберігаємо дані про кастомні позиції та змінені ціни
+            ...(item.isCustom && { isCustom: true }),
+            ...(item.customNote && { customNote: item.customNote }),
+            ...(item.originalPrice !== undefined && { originalPrice: item.originalPrice }),
           }))),
           notes: data.notes || null,
           created_at: new Date().toISOString(),
@@ -306,8 +334,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         const transactionId = typeof transactionResult === 'object' ? transactionResult.id : transactionResult;
         const txDocId = typeof transactionResult === 'object' ? transactionResult.document_id : transactionDocumentId;
 
-        // 4e. Оновити статистику клієнта якщо оплачено
+        // 4e. Оновити статистику клієнта та баланс
+        // Борг = amount - paidAmount (те що не оплачено)
+        const debtAmount = amount - paidAmount;
+
         if (data.paymentStatus === 'paid') {
+          // Оплачено повністю - оновлюємо статистику, баланс не змінюється
           await trx('customers')
             .where('id', customer.id)
             .update({
@@ -315,6 +347,27 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
               total_spent: trx.raw('COALESCE(total_spent, 0) + ?', [amount]),
               updated_at: new Date().toISOString(),
             });
+        } else if (data.paymentStatus === 'expected') {
+          // В борг (повністю або частково) - оновлюємо баланс на суму боргу
+          // Негативний баланс = борг клієнта
+          // Також оновлюємо статистику на суму, яка вже оплачена
+          await trx('customers')
+            .where('id', customer.id)
+            .update({
+              balance: trx.raw('COALESCE(balance, 0) - ?', [debtAmount]),
+              // Якщо частково оплачено - враховуємо в статистиці
+              ...(paidAmount > 0 && {
+                order_count: trx.raw('COALESCE(order_count, 0) + 1'),
+                total_spent: trx.raw('COALESCE(total_spent, 0) + ?', [paidAmount]),
+              }),
+              updated_at: new Date().toISOString(),
+            });
+          strapi.log.info('💰 Customer balance updated:', {
+            customerId: customer.id,
+            paidAmount,
+            debtAmount,
+            newDebt: -debtAmount,
+          });
         }
 
         strapi.log.info('✅ Transaction created successfully in DB transaction:', {
@@ -652,17 +705,41 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
             updated_at: new Date().toISOString(),
           });
 
-        // Оновити статистику клієнта
+        // Оновити статистику клієнта та повернути баланс
         if (transaction.customer) {
           const customer = transaction.customer as { id: number };
+          // Борг = amount - paidAmount (те що було не оплачено)
+          const previouslyPaid = transaction.paidAmount || 0;
+          const debtAmount = transaction.amount - previouslyPaid;
+          const remainingToPay = transaction.amount - previouslyPaid;
+
           await trx('customers')
             .where('id', customer.id)
             .update({
-              order_count: trx.raw('COALESCE(order_count, 0) + 1'),
-              total_spent: trx.raw('COALESCE(total_spent, 0) + ?', [transaction.amount]),
+              // Якщо раніше не було враховано в статистиці (paidAmount = 0)
+              ...(previouslyPaid === 0 && {
+                order_count: trx.raw('COALESCE(order_count, 0) + 1'),
+              }),
+              // Додаємо до total_spent тільки те, що ще не було оплачено
+              total_spent: trx.raw('COALESCE(total_spent, 0) + ?', [remainingToPay]),
+              // Повертаємо баланс (погашаємо борг) - додаємо суму боргу назад
+              balance: trx.raw('COALESCE(balance, 0) + ?', [debtAmount]),
               updated_at: new Date().toISOString(),
             });
+          strapi.log.info('💰 Customer balance restored (payment confirmed):', {
+            customerId: customer.id,
+            previouslyPaid,
+            debtAmount,
+            remainingToPay,
+          });
         }
+
+        // Оновлюємо paidAmount в транзакції на повну суму
+        await trx('transactions')
+          .where('id', transaction.id)
+          .update({
+            paid_amount: transaction.amount,
+          });
       });
 
       // Завантажити оновлену транзакцію
