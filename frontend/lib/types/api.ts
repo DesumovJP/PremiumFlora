@@ -245,4 +245,8 @@ export interface DashboardData {
   totalPendingAmount: number;
   pendingOrdersCount: number;
   pendingByCustomer: PendingCustomer[];
+  // Прибуток за місяць (реальний, розрахований з собівартості)
+  monthlyProfit: number;
+  monthlyProfitMargin: number;
+  monthlyCostOfGoods: number;
 }

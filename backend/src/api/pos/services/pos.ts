@@ -51,6 +51,7 @@ interface VariantWithFlower {
   length: number;
   stock: number;
   price: number;
+  costPrice?: number;
   flower?: {
     id: number;
     documentId: string;
@@ -314,18 +315,27 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           payment_status: data.paymentStatus || 'pending',
           amount,
           paid_amount: paidAmount,
-          items: JSON.stringify(data.items.map(item => ({
-            flowerSlug: item.flowerSlug,
-            length: item.length,
-            qty: item.qty,
-            price: item.price,
-            name: item.name,
-            subtotal: item.price * item.qty,
-            // Зберігаємо дані про кастомні позиції та змінені ціни
-            ...(item.isCustom && { isCustom: true }),
-            ...(item.customNote && { customNote: item.customNote }),
-            ...(item.originalPrice !== undefined && { originalPrice: item.originalPrice }),
-          }))),
+          items: JSON.stringify(data.items.map(item => {
+            // Отримуємо costPrice з варіанту для розрахунку прибутку
+            const key = `${item.flowerSlug}-${item.length}`;
+            const variant = variants.get(key);
+            const costPrice = item.isCustom ? 0 : (variant?.costPrice ?? 0);
+
+            return {
+              flowerSlug: item.flowerSlug,
+              length: item.length,
+              qty: item.qty,
+              price: item.price,
+              costPrice, // Собівартість для розрахунку прибутку
+              name: item.name,
+              subtotal: item.price * item.qty,
+              profit: (item.price - costPrice) * item.qty, // Прибуток по позиції
+              // Зберігаємо дані про кастомні позиції та змінені ціни
+              ...(item.isCustom && { isCustom: true }),
+              ...(item.customNote && { customNote: item.customNote }),
+              ...(item.originalPrice !== undefined && { originalPrice: item.originalPrice }),
+            };
+          })),
           notes: data.notes || null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),

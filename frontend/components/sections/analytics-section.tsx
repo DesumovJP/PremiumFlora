@@ -63,6 +63,9 @@ const emptyData: DashboardData = {
   totalPendingAmount: 0,
   pendingOrdersCount: 0,
   pendingByCustomer: [],
+  monthlyProfit: 0,
+  monthlyProfitMargin: 0,
+  monthlyCostOfGoods: 0,
 };
 
 // Масив назв місяців для індексації
@@ -89,6 +92,8 @@ export function AnalyticsSection({
     topWriteOffFlowers = [],
     topCustomers = [],
     pendingByCustomer = [],
+    monthlyProfit = 0,
+    monthlyProfitMargin = 0,
   } = data ?? emptyData;
 
   // Стан для вибраного місяця
@@ -173,9 +178,6 @@ export function AnalyticsSection({
     [weeklyRevenue]
   );
 
-  // Орієнтовний дохід (≈50% від виручки)
-  const estimatedIncome = Math.round(totalRevenue * 0.5);
-
   // Вартість запасів = сума (кількість × ціна) для всіх варіантів
   const inventoryValue = useMemo(
     () => stockLevels.reduce((acc, item) => acc + (item.value || item.stock * item.price), 0),
@@ -248,7 +250,7 @@ export function AnalyticsSection({
 
         {/* Дохід + Вартість запасів + Очікуються оплати */}
         <div className="grid gap-3 sm:grid-cols-3">
-          {/* Орієнтовний дохід */}
+          {/* Прибуток за місяць */}
           <div className="rounded-lg border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 p-3">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 flex-1 min-w-0">
@@ -258,19 +260,19 @@ export function AnalyticsSection({
                 <div className="min-w-0">
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
-                      Дохід
+                      Прибуток
                     </span>
                     <span className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">
                       за місяць
                     </span>
                   </div>
                   <span className="text-xs text-emerald-600 dark:text-emerald-400">
-                    50% від {totalRevenue.toLocaleString('uk-UA')}₴
+                    {monthlyProfitMargin}% від {totalRevenue.toLocaleString('uk-UA')}₴
                   </span>
                 </div>
               </div>
               <span className="text-lg font-semibold text-emerald-700 dark:text-emerald-300 shrink-0">
-                {estimatedIncome.toLocaleString('uk-UA')} ₴
+                {monthlyProfit.toLocaleString('uk-UA')} ₴
               </span>
             </div>
           </div>

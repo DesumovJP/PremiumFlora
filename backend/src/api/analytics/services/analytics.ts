@@ -935,6 +935,68 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   /**
+   * Отримати прибуток за місяць (ціна продажу - собівартість)
+   * Використовує дані з shifts та transactions
+   */
+  async getMonthlyProfit(year?: number, month?: number): Promise<{
+    profit: number;
+    revenue: number;
+    costOfGoods: number;
+    margin: number;
+  }> {
+    const now = new Date();
+    const targetYear = year ?? now.getFullYear();
+    const targetMonth = month ?? now.getMonth();
+
+    const startOfMonth = new Date(targetYear, targetMonth, 1);
+    const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
+
+    // Отримуємо транзакції за місяць (вони містять costPrice в items)
+    const transactions = await strapi.db.query('api::transaction.transaction').findMany({
+      where: {
+        type: 'sale',
+        date: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
+      },
+    });
+
+    let totalRevenue = 0;
+    let totalCostOfGoods = 0;
+
+    interface TransactionItem {
+      qty?: number;
+      price?: number;
+      costPrice?: number;
+      profit?: number;
+    }
+
+    transactions.forEach((tx: { amount: number; items: TransactionItem[] | string }) => {
+      // items може бути string (JSON) або array
+      const items: TransactionItem[] = typeof tx.items === 'string'
+        ? JSON.parse(tx.items)
+        : (tx.items || []);
+
+      items.forEach((item) => {
+        const qty = item.qty || 0;
+        const price = item.price || 0;
+        const costPrice = item.costPrice || 0;
+
+        totalRevenue += price * qty;
+        totalCostOfGoods += costPrice * qty;
+      });
+    });
+
+    const profit = totalRevenue - totalCostOfGoods;
+    const margin = totalRevenue > 0 ? Math.round((profit / totalRevenue) * 100) : 0;
+
+    return {
+      profit: Math.round(profit),
+      revenue: Math.round(totalRevenue),
+      costOfGoods: Math.round(totalCostOfGoods),
+      margin,
+    };
+  },
+
+  /**
    * Отримати план поставок
    */
   async getSupplyPlan(): Promise<{
@@ -1008,6 +1070,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       topWriteOffFlowers,
       paymentSummary,
       pendingPayments,
+      monthlyProfitData,
     ] = await Promise.all([
       this.getKpis(year, month),
       this.getWeeklyRevenue(year, month),
@@ -1022,6 +1085,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       this.getTopWriteOffFlowers(),
       this.getPaymentSummary(year, month),
       this.getTotalPendingPayments(),
+      this.getMonthlyProfit(year, month),
     ]);
 
     const data = {
@@ -1041,6 +1105,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       totalPendingAmount: pendingPayments.totalPendingAmount,
       pendingOrdersCount: pendingPayments.pendingOrdersCount,
       pendingByCustomer: pendingPayments.pendingByCustomer,
+      // Прибуток за місяць (реальний, не оцінка)
+      monthlyProfit: monthlyProfitData.profit,
+      monthlyProfitMargin: monthlyProfitData.margin,
+      monthlyCostOfGoods: monthlyProfitData.costOfGoods,
     };
 
     // Зберегти в кеш
