@@ -13,6 +13,10 @@ import type { Core } from '@strapi/strapi';
 import type { Knex } from 'knex';
 import { invalidateAnalyticsCache } from '../../analytics/services/analytics';
 
+// Курс EUR/UAH для конвертації costPrice (EUR) в UAH при розрахунку прибутку
+// TODO: Реалізувати динамічний курс через NBU API
+const EUR_UAH_RATE = 45.5;
+
 // Types
 interface SaleItem {
   flowerSlug: string;
@@ -316,20 +320,23 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           amount,
           paid_amount: paidAmount,
           items: JSON.stringify(data.items.map(item => {
-            // Отримуємо costPrice з варіанту для розрахунку прибутку
+            // Отримуємо costPrice з варіанту та конвертуємо EUR → UAH
             const key = `${item.flowerSlug}-${item.length}`;
             const variant = variants.get(key);
-            const costPrice = item.isCustom ? 0 : (variant?.costPrice ?? 0);
+            // costPrice в варіанті зберігається в EUR, конвертуємо в UAH
+            const costPriceEur = item.isCustom ? 0 : (variant?.costPrice ?? 0);
+            const costPriceUah = Math.round(costPriceEur * EUR_UAH_RATE * 100) / 100;
 
             return {
               flowerSlug: item.flowerSlug,
               length: item.length,
               qty: item.qty,
               price: item.price,
-              costPrice, // Собівартість для розрахунку прибутку
+              costPrice: costPriceUah, // Собівартість в UAH для розрахунку прибутку
+              costPriceEur, // Оригінальна собівартість в EUR
               name: item.name,
               subtotal: item.price * item.qty,
-              profit: (item.price - costPrice) * item.qty, // Прибуток по позиції
+              profit: Math.round((item.price - costPriceUah) * item.qty), // Прибуток по позиції в UAH
               // Зберігаємо дані про кастомні позиції та змінені ціни
               ...(item.isCustom && { isCustom: true }),
               ...(item.customNote && { customNote: item.customNote }),
