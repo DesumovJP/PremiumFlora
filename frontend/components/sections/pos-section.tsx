@@ -306,7 +306,7 @@ function CartPanel({
     <>
     <Card className="admin-card flex h-full max-h-full flex-col border-0 border-l border-slate-200 dark:border-[var(--admin-border)] bg-[var(--admin-surface)] dark:bg-admin-surface-elevated shadow-none overflow-hidden" style={{ borderRadius: 0 }}>
       {/* Header - Compact and clean */}
-      <CardHeader className="pb-3 p-4 sm:p-5 sm:pb-4 border-b border-slate-200/80 dark:border-[var(--admin-border)] bg-[var(--admin-surface)] dark:bg-admin-surface">
+      <CardHeader className="pb-3 p-4 sm:p-5 sm:pb-4 border-b border-slate-200/80 dark:border-[var(--admin-border)] bg-[var(--admin-surface)] dark:bg-admin-surface shrink-0">
         <div className="flex items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
             <CardTitle className="text-lg sm:text-xl font-semibold tracking-tight">Кошик</CardTitle>
@@ -407,8 +407,8 @@ function CartPanel({
 
       {/* Footer - Order Summary */}
       <CardFooter className="flex flex-col gap-0 p-0 shrink-0 border-t border-slate-200/80 dark:border-[var(--admin-border)] bg-[var(--admin-surface)] dark:bg-admin-surface">
-        {/* All content in one wrapper */}
-        <div className="w-full p-4 sm:p-5 space-y-4">
+        {/* Scrollable options area - only scrolls if needed */}
+        <div className="w-full max-h-[35vh] overflow-y-auto p-4 pb-0 sm:p-5 sm:pb-0 space-y-4">
           {/* Payment Status Toggle */}
           {onPaymentStatusChange && (
             <div className="flex rounded-lg bg-[var(--admin-bg)] dark:bg-[var(--admin-bg)] p-1 gap-1 border border-slate-200/60 dark:border-[var(--admin-border)]">
@@ -600,34 +600,34 @@ function CartPanel({
               </div>
             )}
           </div>
+        </div>
 
-          {/* Total & Checkout */}
-          <div className="pt-3 border-t border-[var(--admin-border-subtle)] space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-[var(--admin-text-secondary)]">До сплати</span>
-              <span className="text-2xl sm:text-3xl font-bold text-[var(--admin-text-primary)] tracking-tight">
-                {Math.round(payable)} <span className="text-lg font-semibold text-[var(--admin-text-tertiary)]">₴</span>
-              </span>
-            </div>
-
-            <Button
-              className="w-full h-12 rounded-xl text-base font-semibold shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all disabled:shadow-none"
-              disabled={!canCheckout}
-              onClick={onCheckout}
-            >
-              {isCheckingOut ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Оформлення...
-                </span>
-              ) : (
-                "Оформити замовлення"
-              )}
-            </Button>
+        {/* Total & Checkout - Always visible at bottom */}
+        <div className="w-full p-4 pt-3 sm:p-5 sm:pt-3 border-t border-slate-200/80 dark:border-[var(--admin-border)] space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-[var(--admin-text-secondary)]">До сплати</span>
+            <span className="text-2xl sm:text-3xl font-bold text-[var(--admin-text-primary)] tracking-tight">
+              {Math.round(payable)} <span className="text-lg font-semibold text-[var(--admin-text-tertiary)]">₴</span>
+            </span>
           </div>
+
+          <Button
+            className="w-full h-12 rounded-xl text-base font-semibold shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all disabled:shadow-none"
+            disabled={!canCheckout}
+            onClick={onCheckout}
+          >
+            {isCheckingOut ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Оформлення...
+              </span>
+            ) : (
+              "Оформити замовлення"
+            )}
+          </Button>
         </div>
       </CardFooter>
     </Card>
