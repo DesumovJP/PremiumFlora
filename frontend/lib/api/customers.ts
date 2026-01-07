@@ -1,10 +1,10 @@
 /**
  * Customers API
  *
- * CRUD операції для клієнтів (GraphQL)
+ * CRUD операції для клієнтів (GraphQL + REST)
  */
 
-import { graphqlRequest } from './client';
+import { graphqlRequest, API_URL, fetchWithRetry, getAuthHeaders } from './client';
 import { convertCustomer } from './converters';
 import {
   GET_CUSTOMERS,
@@ -13,7 +13,6 @@ import {
 import {
   CREATE_CUSTOMER,
   DELETE_CUSTOMER,
-  UPDATE_CUSTOMER,
 } from '../graphql/mutations';
 import type {
   GraphQLCustomer,
@@ -111,24 +110,38 @@ export async function deleteCustomer(documentId: string): Promise<ApiResponse<vo
 }
 
 /**
- * Оновити баланс клієнта
+ * Оновити баланс клієнта (через REST API)
  * @param documentId - ID клієнта
  * @param balance - нове значення балансу (>0 переплата, <0 борг)
  */
 export async function updateCustomerBalance(
   documentId: string,
   balance: number
-): Promise<ApiResponse<Customer>> {
+): Promise<ApiResponse<{ documentId: string; name: string; balance: number }>> {
   try {
-    const result = await graphqlRequest<{ updateCustomer: GraphQLCustomer }>(
-      UPDATE_CUSTOMER,
-      { documentId, data: { balance } }
+    const response = await fetchWithRetry(
+      `${API_URL}/pos/customers/${documentId}/balance`,
+      {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ balance }),
+      },
+      { retries: 3, backoff: 1000 }
     );
 
-    return {
-      success: true,
-      data: convertCustomer(result.updateCustomer),
-    };
+    const result = await response.json();
+
+    if (result.success) {
+      return {
+        success: true,
+        data: result.data,
+      };
+    } else {
+      return {
+        success: false,
+        error: result.error,
+      };
+    }
   } catch (error) {
     console.error('Error updating customer balance:', error);
     return {

@@ -94,3 +94,33 @@ export async function confirmPayment(
     };
   }
 }
+
+/**
+ * Повернути замовлення (скасувати продаж)
+ * Повертає товари на склад, оновлює баланс клієнта
+ */
+export async function returnSale(
+  transactionId: string,
+  notes?: string
+): Promise<ConfirmPaymentResponse> {
+  try {
+    const response = await fetchWithRetry(
+      `${API_URL}/pos/transactions/${transactionId}/return`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ notes }),
+      },
+      { retries: 3, backoff: 1000 }
+    );
+
+    return response.json();
+  } catch (error) {
+    console.error('Error returning sale:', error);
+    const errorResponse = createNetworkErrorWithAlert('Failed to connect to server after retries');
+    return {
+      ...errorResponse,
+      success: false,
+    };
+  }
+}

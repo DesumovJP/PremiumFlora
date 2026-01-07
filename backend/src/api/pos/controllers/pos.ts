@@ -501,4 +501,99 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       };
     }
   },
+
+  /**
+   * PUT /api/pos/customers/:id/balance
+   * Оновити баланс клієнта
+   */
+  async updateCustomerBalance(ctx: Context) {
+    try {
+      const { id } = ctx.params;
+      const { balance } = ctx.request.body as { balance: number };
+
+      if (!id) {
+        ctx.status = 400;
+        ctx.body = {
+          success: false,
+          error: {
+            code: 'MISSING_ID',
+            message: 'Customer ID is required',
+          },
+        };
+        return;
+      }
+
+      if (balance === undefined || balance === null) {
+        ctx.status = 400;
+        ctx.body = {
+          success: false,
+          error: {
+            code: 'MISSING_BALANCE',
+            message: 'Balance value is required',
+          },
+        };
+        return;
+      }
+
+      // Знайти клієнта
+      const customer = await strapi.db.query('api::customer.customer').findOne({
+        where: { documentId: id },
+      });
+
+      if (!customer) {
+        ctx.status = 404;
+        ctx.body = {
+          success: false,
+          error: {
+            code: 'CUSTOMER_NOT_FOUND',
+            message: 'Customer not found',
+          },
+        };
+        return;
+      }
+
+      // Оновити баланс
+      const updated = await strapi.db.query('api::customer.customer').update({
+        where: { id: customer.id },
+        data: { balance },
+      });
+
+      strapi.log.info('💰 Customer balance updated:', {
+        customerId: id,
+        oldBalance: customer.balance,
+        newBalance: balance,
+      });
+
+      ctx.status = 200;
+      ctx.body = {
+        success: true,
+        data: {
+          documentId: updated.documentId,
+          name: updated.name,
+          balance: updated.balance,
+        },
+        alert: {
+          type: 'success',
+          title: 'Баланс оновлено',
+          message: `Баланс клієнта "${updated.name}" оновлено до ${balance} ₴`,
+        },
+      };
+    } catch (error) {
+      strapi.log.error('POS updateCustomerBalance error:', error);
+
+      ctx.status = 500;
+      ctx.body = {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'An error occurred while updating balance',
+        },
+        alert: {
+          type: 'error',
+          title: 'Внутрішня помилка',
+          message: 'Сталася помилка при оновленні балансу.',
+        },
+      };
+    }
+  },
 });

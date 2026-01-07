@@ -51,5 +51,14 @@ export default {
         middlewares: ['api::pos.pos-auth'],
       },
     },
+    {
+      method: 'PUT',
+      path: '/pos/customers/:id/balance',
+      handler: 'pos.updateCustomerBalance',
+      config: {
+        auth: false,
+        middlewares: ['api::pos.pos-auth'],
+      },
+    },
   ],
 };
