@@ -20,6 +20,7 @@ import {
 
 export type ActivityType =
   | 'sale'
+  | 'saleReturn'
   | 'writeOff'
   | 'productEdit'
   | 'productCreate'
@@ -43,6 +44,8 @@ export interface ActivityDetails {
     originalPrice?: number; // Оригінальна ціна, якщо була змінена
     stockBefore?: number;
     stockAfter?: number;
+    isCustom?: boolean; // Послуга / інше (не впливає на склад)
+    customNote?: string; // Коментар до послуги
   }>;
   totalAmount?: number;
   paidAmount?: number; // Скільки сплачено (для часткової оплати)
@@ -114,6 +117,14 @@ export interface ActivityDetails {
     priceAfter: number;    // Ціна продажу (для балансу)
     isNew: boolean;
   }>;
+
+  // Sale Return (повернення)
+  originalSaleId?: string;        // ID оригінального продажу
+  originalSaleDate?: string;      // Дата оригінального продажу
+  returnAmount?: number;          // Сума повернення
+  returnReason?: string;          // Причина повернення
+  // Товари що повертаються (використовуємо items[] з stockBefore/After)
+  // Баланс клієнта (використовуємо balanceBefore/After)
 }
 
 export interface Activity {
@@ -129,6 +140,9 @@ export interface ShiftSummary {
   totalSalesQty: number;       // Кількість проданих квіток (шт)
   totalSalesPaid: number;      // Оплачені продажі
   totalSalesExpected: number;  // Очікують оплати
+  totalReturns: number;        // Кількість повернень
+  totalReturnsAmount: number;  // Сума повернень (грн)
+  totalReturnsQty: number;     // Кількість повернутих квіток (шт)
   totalWriteOffs: number;
   totalWriteOffsQty: number;
   totalWriteOffsAmount: number; // Сума списань (грн)
@@ -275,6 +289,34 @@ export function useActivityLog(): UseActivityLogReturn {
           }
           break;
         }
+        case 'saleReturn': {
+          // Повернення віднімає від продажів
+          const returnAmount = activity.details.returnAmount || activity.details.totalAmount || 0;
+          const returnPaid = activity.details.paidAmount || 0;
+          const originalStatus = activity.details.paymentStatus;
+
+          acc.totalReturns += 1;
+          acc.totalReturnsAmount += returnAmount;
+
+          // Віднімаємо від загальних продажів
+          acc.totalSalesAmount -= returnAmount;
+
+          // Рахуємо кількість повернутих квіток
+          const returnQty = activity.details.items?.reduce((sum, item) => sum + (item.qty || 0), 0) || 0;
+          acc.totalReturnsQty += returnQty;
+          acc.totalSalesQty -= returnQty;
+
+          // Коригуємо paid/expected залежно від оригінального статусу
+          if (!originalStatus || originalStatus === 'paid') {
+            // Було повністю сплачено - віднімаємо від оплачених
+            acc.totalSalesPaid -= returnAmount;
+          } else if (originalStatus === 'expected' || originalStatus === 'pending') {
+            // Було частково сплачено або в борг
+            acc.totalSalesPaid -= returnPaid;
+            acc.totalSalesExpected -= (returnAmount - returnPaid);
+          }
+          break;
+        }
         case 'writeOff': {
           acc.totalWriteOffs += 1;
           const qty = activity.details.qty || 0;
@@ -352,6 +394,9 @@ export function useActivityLog(): UseActivityLogReturn {
       totalSalesQty: 0,
       totalSalesPaid: 0,
       totalSalesExpected: 0,
+      totalReturns: 0,
+      totalReturnsAmount: 0,
+      totalReturnsQty: 0,
       totalWriteOffs: 0,
       totalWriteOffsQty: 0,
       totalWriteOffsAmount: 0,

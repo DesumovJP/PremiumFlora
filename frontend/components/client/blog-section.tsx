@@ -95,10 +95,7 @@ export function BlogSection({ posts }: BlogSectionProps) {
                   className="flex-shrink-0 w-[280px] snap-start"
                 >
                   <Card
-                    className="group h-full flex flex-col overflow-hidden border-0 bg-[#fafafa] cursor-pointer rounded-xl active:scale-[0.98] transition-all duration-150"
-                    style={{
-                      boxShadow: '3px 3px 8px rgba(0, 0, 0, 0.06), -3px -3px 8px rgba(255, 255, 255, 0.8)',
-                    }}
+                    className="group h-full flex flex-col overflow-hidden bg-white cursor-pointer rounded-xl active:scale-[0.98] transition-all duration-150 border border-slate-100"
                     onClick={() => setSelectedPost(post)}
                   >
                     {/* Image */}
@@ -156,10 +153,7 @@ export function BlogSection({ posts }: BlogSectionProps) {
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 >
                   <Card
-                    className="group h-full flex flex-col overflow-hidden border-0 bg-[#fafafa] cursor-pointer rounded-2xl transition-all duration-200"
-                    style={{
-                      boxShadow: '3px 3px 8px rgba(0, 0, 0, 0.06), -3px -3px 8px rgba(255, 255, 255, 0.8)',
-                    }}
+                    className="group h-full flex flex-col overflow-hidden bg-white cursor-pointer rounded-2xl transition-all duration-200 border border-slate-100 hover:border-amber-200 hover:shadow-lg"
                     onClick={() => setSelectedPost(post)}
                   >
                     {/* Image */}

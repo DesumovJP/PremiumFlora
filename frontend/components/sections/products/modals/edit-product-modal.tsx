@@ -1,11 +1,14 @@
 /**
  * Edit Product Modal
+ *
+ * Дозволяє редагувати: зображення, опис, ціну варіантів
+ * Склад і варіанти змінюються через поставку/списання
  */
 
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash, Upload, Package } from "lucide-react";
+import { Upload, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 import type { EditData } from "../types";
@@ -21,9 +24,10 @@ type EditProductModalProps = {
   onSave: () => void;
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleVariantChange: (documentId: string, field: "price" | "stock" | "length", value: number) => void;
-  addVariant: () => void;
-  removeVariant: (documentId: string) => void;
-  undoDeleteVariant: (documentId: string) => void;
+  // Застарілі пропси - залишені для сумісності
+  addVariant?: () => void;
+  removeVariant?: (documentId: string) => void;
+  undoDeleteVariant?: (documentId: string) => void;
 };
 
 export function EditProductModal({
@@ -37,9 +41,6 @@ export function EditProductModal({
   onSave,
   handleImageChange,
   handleVariantChange,
-  addVariant,
-  removeVariant,
-  undoDeleteVariant,
 }: EditProductModalProps) {
   return (
     <Modal
@@ -113,135 +114,56 @@ export function EditProductModal({
             </div>
           </div>
 
-          {/* Variants */}
+          {/* Variants - only price editable */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-slate-700">Варіанти</label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addVariant}
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Додати варіант
-              </Button>
+              <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Варіанти</label>
+              <span className="text-xs text-slate-400">Склад змінюється через поставку/списання</span>
             </div>
-            <div className="space-y-3">
-              {editData.variants.filter(v => !v.isDeleted).length === 0 ? (
-                <p className="text-sm text-slate-500 py-2">Немає варіантів. Додайте хоча б один.</p>
+            <div className="space-y-2">
+              {editData.variants.filter(v => !v.isDeleted && !v.isNew).length === 0 ? (
+                <p className="text-sm text-slate-500 py-2">Немає варіантів.</p>
               ) : (
-                editData.variants.filter(v => !v.isDeleted).map((variant) => (
+                editData.variants.filter(v => !v.isDeleted && !v.isNew).map((variant) => (
                   <div
                     key={variant.documentId}
-                    className={cn(
-                      "flex gap-2 rounded-lg border p-3",
-                      variant.isNew
-                        ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-900/20"
-                        : "border-slate-200 bg-slate-50 dark:border-admin-border dark:bg-admin-surface"
-                    )}
+                    className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 dark:border-admin-border dark:bg-admin-surface p-3"
                   >
-                    <div className="flex-1">
-                      <label className="text-xs text-slate-600">Довжина, см</label>
-                      {variant.isNew ? (
+                    {/* Length - readonly */}
+                    <div className="w-20 shrink-0">
+                      <p className="text-lg font-bold text-slate-800 dark:text-white">
+                        {variant.length} см
+                      </p>
+                    </div>
+
+                    {/* Stock - readonly */}
+                    <div className="flex-1 text-center">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {variant.stock} шт
+                      </p>
+                    </div>
+
+                    {/* Price - editable */}
+                    <div className="w-28 shrink-0">
+                      <div className="flex items-center gap-1">
                         <Input
                           type="number"
-                          min="1"
-                          placeholder="60"
-                          value={variant.length || ""}
-                          onChange={(e) => {
-                            const value = e.target.value === "" ? 0 : parseInt(e.target.value);
-                            if (!isNaN(value)) {
-                              handleVariantChange(variant.documentId, "length", value);
-                            }
-                          }}
-                          className="mt-1"
-                        />
-                      ) : (
-                        <p className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary mt-2">
-                          {variant.length} см
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <label className="text-xs text-slate-600">Ціна, грн</label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="100"
-                        value={variant.price || ""}
-                        onChange={(e) => {
-                          const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
-                          if (!isNaN(value)) {
-                            handleVariantChange(variant.documentId, "price", value);
-                          }
-                        }}
-                        className="mt-1"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="text-xs text-slate-600">Залишок, шт</label>
-                      {variant.isNew ? (
-                        <Input
-                          type="number"
+                          step="0.01"
                           min="0"
-                          placeholder="0"
-                          value={variant.stock || ""}
+                          value={variant.price || ""}
                           onChange={(e) => {
-                            const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                            const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
                             if (!isNaN(value)) {
-                              handleVariantChange(variant.documentId, "stock", value);
+                              handleVariantChange(variant.documentId, "price", value);
                             }
                           }}
-                          className="mt-1"
+                          className="text-right"
                         />
-                      ) : (
-                        <p className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary mt-2" title="Змінюйте через списання або поставку">
-                          {variant.stock} шт
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center self-center">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeVariant(variant.documentId)}
-                        className="h-9 w-9 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
-                        title="Видалити варіант"
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
+                        <span className="text-sm text-slate-500 shrink-0">₴</span>
+                      </div>
                     </div>
                   </div>
                 ))
-              )}
-              {/* Показуємо видалені варіанти як закреслені */}
-              {editData.variants.filter(v => v.isDeleted).length > 0 && (
-                <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-admin-border">
-                  <p className="text-xs text-slate-500">Буде видалено після збереження:</p>
-                  {editData.variants.filter(v => v.isDeleted).map((variant) => (
-                    <div
-                      key={variant.documentId}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50/50 dark:border-rose-800 dark:bg-rose-900/20 p-2"
-                    >
-                      <span className="text-sm text-rose-600 line-through">
-                        {variant.length} см · {variant.price} грн · {variant.stock} шт
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => undoDeleteVariant(variant.documentId)}
-                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-xs h-7 px-2"
-                      >
-                        Відмінити
-                      </Button>
-                    </div>
-                  ))}
-                </div>
               )}
             </div>
           </div>

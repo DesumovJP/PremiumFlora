@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
   getTasks,
@@ -550,27 +551,124 @@ export function TodoSection() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Дедлайн *
-              </label>
+          {/* Дедлайн - простий вибір */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Дедлайн <span className="text-red-500">*</span>
+            </label>
+
+            {/* Швидкі кнопки для дати */}
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {[
+                { label: "Сьогодні", days: 0 },
+                { label: "Завтра", days: 1 },
+                { label: "Через 3 дні", days: 3 },
+                { label: "Через тиждень", days: 7 },
+              ].map(({ label, days }) => {
+                const targetDate = new Date();
+                targetDate.setDate(targetDate.getDate() + days);
+                const dateStr = targetDate.toISOString().split("T")[0];
+                const currentDate = formData.dueDate?.split("T")[0];
+                const isSelected = currentDate === dateStr;
+
+                return (
+                  <button
+                    key={days}
+                    type="button"
+                    onClick={() => {
+                      const currentTime = formData.dueDate?.split("T")[1] || "12:00";
+                      setFormData({ ...formData, dueDate: `${dateStr}T${currentTime}` });
+                    }}
+                    className={cn(
+                      "px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors",
+                      isSelected
+                        ? "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400"
+                        : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    )}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Дата і час в рядок */}
+            <div className="flex gap-2">
               <Input
-                type="datetime-local"
-                value={formData.dueDate}
-                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                type="date"
+                value={formData.dueDate?.split("T")[0] || ""}
+                onChange={(e) => {
+                  const currentTime = formData.dueDate?.split("T")[1] || "12:00";
+                  setFormData({ ...formData, dueDate: `${e.target.value}T${currentTime}` });
+                }}
+                className="flex-1"
                 required
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Нагадування
-              </label>
               <Input
-                type="datetime-local"
-                value={formData.reminderAt}
-                onChange={(e) => setFormData({ ...formData, reminderAt: e.target.value })}
+                type="time"
+                value={formData.dueDate?.split("T")[1]?.slice(0, 5) || "12:00"}
+                onChange={(e) => {
+                  const currentDate = formData.dueDate?.split("T")[0] || new Date().toISOString().split("T")[0];
+                  setFormData({ ...formData, dueDate: `${currentDate}T${e.target.value}` });
+                }}
+                className="w-24"
               />
+            </div>
+
+            {/* Показуємо обраний час */}
+            {formData.dueDate && (
+              <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                📅 {new Date(formData.dueDate).toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" })} о {formData.dueDate.split("T")[1]?.slice(0, 5) || "12:00"}
+              </p>
+            )}
+          </div>
+
+          {/* Нагадування - опціонально */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Нагадування <span className="text-slate-400 font-normal">(опціонально)</span>
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { label: "Без нагадування", value: "" },
+                { label: "За 1 год", hours: 1 },
+                { label: "За 3 год", hours: 3 },
+                { label: "За день", hours: 24 },
+              ].map((option) => {
+                const isNoReminder = option.value === "";
+                const isSelected = isNoReminder
+                  ? !formData.reminderAt
+                  : formData.reminderAt && formData.dueDate && (() => {
+                      const due = new Date(formData.dueDate);
+                      const reminder = new Date(formData.reminderAt);
+                      const diffHours = (due.getTime() - reminder.getTime()) / (1000 * 60 * 60);
+                      return Math.abs(diffHours - (option.hours || 0)) < 0.1;
+                    })();
+
+                return (
+                  <button
+                    key={option.label}
+                    type="button"
+                    onClick={() => {
+                      if (isNoReminder) {
+                        setFormData({ ...formData, reminderAt: "" });
+                      } else if (formData.dueDate && option.hours) {
+                        const dueDate = new Date(formData.dueDate);
+                        dueDate.setHours(dueDate.getHours() - option.hours);
+                        setFormData({ ...formData, reminderAt: dueDate.toISOString().slice(0, 16) });
+                      }
+                    }}
+                    className={cn(
+                      "px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors",
+                      isSelected
+                        ? "bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400"
+                        : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -579,31 +677,39 @@ export function TodoSection() {
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Категорія
               </label>
-              <select
+              <Select
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value as TaskCategory })}
-                className="w-full h-11 px-3 py-2 border border-slate-200 dark:border-admin-border rounded-xl bg-white dark:bg-admin-surface-elevated text-slate-900 dark:text-white focus:border-emerald-500 dark:focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 dark:focus:ring-emerald-400/20 transition-colors duration-200"
+                onValueChange={(value) => setFormData({ ...formData, category: value as TaskCategory })}
               >
-                <option value="delivery">🚚 Доставка</option>
-                <option value="supply">📦 Поставка</option>
-                <option value="maintenance">🔧 Обслуговування</option>
-                <option value="meeting">👥 Зустріч</option>
-                <option value="other">📝 Інше</option>
-              </select>
+                <SelectTrigger className="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="delivery">🚚 Доставка</SelectItem>
+                  <SelectItem value="supply">📦 Поставка</SelectItem>
+                  <SelectItem value="maintenance">🔧 Обслуговування</SelectItem>
+                  <SelectItem value="meeting">👥 Зустріч</SelectItem>
+                  <SelectItem value="other">📝 Інше</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Пріоритет
               </label>
-              <select
+              <Select
                 value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value as TaskPriority })}
-                className="w-full h-11 px-3 py-2 border border-slate-200 dark:border-admin-border rounded-xl bg-white dark:bg-admin-surface-elevated text-slate-900 dark:text-white focus:border-emerald-500 dark:focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 dark:focus:ring-emerald-400/20 transition-colors duration-200"
+                onValueChange={(value) => setFormData({ ...formData, priority: value as TaskPriority })}
               >
-                <option value="low">⬇️ Низький</option>
-                <option value="medium">➡️ Середній</option>
-                <option value="high">⬆️ Високий</option>
-              </select>
+                <SelectTrigger className="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">⬇️ Низький</SelectItem>
+                  <SelectItem value="medium">➡️ Середній</SelectItem>
+                  <SelectItem value="high">⬆️ Високий</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

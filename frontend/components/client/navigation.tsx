@@ -76,7 +76,7 @@ function MobileNavLink({
       )} />
 
       <span className={cn(
-        "text-[14px] font-medium tracking-[-0.01em] pl-4",
+        "text-[13px] font-medium tracking-[-0.01em] pl-4",
         "transition-colors duration-200",
         isActive
           ? "text-emerald-600 dark:text-emerald-400"
@@ -95,7 +95,7 @@ function MobileNavLink({
   );
 }
 
-// Contact button for mobile drawer - soft neumorphic style
+// Contact button for mobile drawer
 function MobileContactButton({
   href,
   icon: Icon,
@@ -120,23 +120,17 @@ function MobileContactButton({
       rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
       className={cn(
         "flex items-center gap-3 rounded-xl p-3",
-        "bg-[#fafafa] transition-all duration-200",
-        "hover:-translate-y-0.5 active:translate-y-0",
+        "bg-white border border-slate-100 transition-all duration-200",
+        "hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md active:translate-y-0",
         // Staggered animation
         "opacity-0 translate-y-2 animate-[slideUpFade_0.3s_ease-out_forwards]",
         className,
       )}
       style={{
         animationDelay: `${180 + index * 40}ms`,
-        boxShadow: '2px 2px 6px rgba(0, 0, 0, 0.04), -2px -2px 6px rgba(255, 255, 255, 0.8)',
       }}
     >
-      <div
-        className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f5f5f5]"
-        style={{
-          boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.03), inset -1px -1px 2px rgba(255, 255, 255, 0.6)',
-        }}
-      >
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
         {Icon && <Icon className="h-4 w-4 text-emerald-600" strokeWidth={1.5} />}
         {IconComponent && <IconComponent className="h-4 w-4 text-emerald-600" />}
       </div>
@@ -310,20 +304,12 @@ export function Navigation() {
                       key={index}
                       href={phone.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="group flex items-center gap-3 p-3 rounded-xl bg-[#fafafa] transition-all duration-200 hover:bg-emerald-50 active:scale-[0.98]"
-                      style={{
-                        boxShadow: '3px 3px 6px rgba(0, 0, 0, 0.04), -3px -3px 6px rgba(255, 255, 255, 0.9)',
-                      }}
+                      className="group flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-100 transition-all duration-200 hover:border-emerald-200 hover:shadow-md active:scale-[0.98]"
                     >
-                      <div
-                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-white"
-                        style={{
-                          boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.8)',
-                        }}
-                      >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
                         <Phone className="h-4 w-4 text-emerald-600" strokeWidth={1.5} />
                       </div>
-                      <span className="text-sm font-medium text-slate-700 group-hover:text-emerald-700 transition-colors">
+                      <span className="text-xs font-medium text-slate-700 group-hover:text-emerald-700 transition-colors">
                         {phone.number}
                       </span>
                     </a>
@@ -343,20 +329,12 @@ export function Navigation() {
                   <a
                     href={contacts.viber.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="group flex flex-col items-center gap-2 p-3.5 rounded-xl bg-[#fafafa] transition-all duration-200 hover:bg-[#7360f2]/5 active:scale-[0.98]"
-                    style={{
-                      boxShadow: '3px 3px 6px rgba(0, 0, 0, 0.04), -3px -3px 6px rgba(255, 255, 255, 0.9)',
-                    }}
+                    className="group flex flex-col items-center gap-2 p-3.5 rounded-xl bg-white border border-slate-100 transition-all duration-200 hover:border-[#7360f2]/30 hover:shadow-md active:scale-[0.98]"
                   >
-                    <div
-                      className="w-10 h-10 rounded-xl bg-white flex items-center justify-center transition-colors group-hover:bg-[#7360f2]/10"
-                      style={{
-                        boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.8)',
-                      }}
-                    >
+                    <div className="w-10 h-10 rounded-xl bg-[#7360f2]/10 flex items-center justify-center transition-colors group-hover:bg-[#7360f2]/20">
                       <ViberIcon className="h-5 w-5 text-[#7360f2]" />
                     </div>
-                    <span className="text-sm font-medium text-slate-600 group-hover:text-[#7360f2] transition-colors">Viber</span>
+                    <span className="text-xs font-medium text-slate-600 group-hover:text-[#7360f2] transition-colors">Viber</span>
                   </a>
 
                   {/* Telegram */}
@@ -365,20 +343,12 @@ export function Navigation() {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="group flex flex-col items-center gap-2 p-3.5 rounded-xl bg-[#fafafa] transition-all duration-200 hover:bg-[#0088cc]/5 active:scale-[0.98]"
-                    style={{
-                      boxShadow: '3px 3px 6px rgba(0, 0, 0, 0.04), -3px -3px 6px rgba(255, 255, 255, 0.9)',
-                    }}
+                    className="group flex flex-col items-center gap-2 p-3.5 rounded-xl bg-white border border-slate-100 transition-all duration-200 hover:border-[#0088cc]/30 hover:shadow-md active:scale-[0.98]"
                   >
-                    <div
-                      className="w-10 h-10 rounded-xl bg-white flex items-center justify-center transition-colors group-hover:bg-[#0088cc]/10"
-                      style={{
-                        boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.8)',
-                      }}
-                    >
+                    <div className="w-10 h-10 rounded-xl bg-[#0088cc]/10 flex items-center justify-center transition-colors group-hover:bg-[#0088cc]/20">
                       <TelegramIcon className="h-5 w-5 text-[#0088cc]" />
                     </div>
-                    <span className="text-sm font-medium text-slate-600 group-hover:text-[#0088cc] transition-colors">Telegram</span>
+                    <span className="text-xs font-medium text-slate-600 group-hover:text-[#0088cc] transition-colors">Telegram</span>
                   </a>
                 </div>
 

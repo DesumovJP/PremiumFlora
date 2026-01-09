@@ -31,7 +31,7 @@ export function FullscreenModal({
 
         {/* Content - slide up from bottom with CSS animation */}
         <Dialog.Content
-          className="fixed inset-0 z-50 flex flex-col bg-[var(--admin-surface)] outline-none animate-fullscreen-in"
+          className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-slate-900 outline-none animate-fullscreen-in"
         >
           {/* Visually hidden title for accessibility */}
           <VisuallyHidden.Root>
@@ -42,8 +42,8 @@ export function FullscreenModal({
           <header
             className={cn(
               "sticky top-0 z-20 shrink-0",
-              "bg-[var(--admin-surface)]",
-              "border-b border-[var(--admin-border-subtle)]",
+              "bg-white dark:bg-slate-900",
+              "border-b border-slate-100 dark:border-slate-800",
               "safe-area-inset-top"
             )}
           >

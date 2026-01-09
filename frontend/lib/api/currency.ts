@@ -26,7 +26,7 @@ interface CurrencyResponse {
  * Отримати поточний курс EUR/UAH
  */
 export async function getEurRate(): Promise<CurrencyRateInfo> {
-  const response = await fetchWithRetry(`${API_URL}/currency/eur`);
+  const response = await fetchWithRetry(`${API_URL}/currency/eur`, {});
 
   if (!response.ok) {
     throw new Error(`Failed to fetch EUR rate: ${response.status}`);

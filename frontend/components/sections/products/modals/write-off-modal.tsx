@@ -69,7 +69,7 @@ export function WriteOffModal({
       }
     >
       <div className="space-y-4">
-        <div className="rounded-xl border border-slate-100 dark:border-admin-border bg-slate-50/60 dark:bg-admin-surface p-3">
+        <div className="rounded-xl border border-slate-100 dark:border-admin-border bg-slate-50/60 dark:bg-admin-surface p-4">
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-admin-surface">
               {product.image ? (
@@ -87,8 +87,8 @@ export function WriteOffModal({
               )}
             </div>
             <div>
-              <p className="font-semibold text-slate-900">{product.name}</p>
-              <p className="text-sm text-slate-600">
+              <p className="font-semibold text-slate-900 dark:text-admin-text-primary">{product.name}</p>
+              <p className="text-sm text-slate-600 dark:text-admin-text-secondary">
                 {product.variants.length} варіантів на складі
               </p>
             </div>
@@ -96,8 +96,8 @@ export function WriteOffModal({
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1">
-            <label className="text-sm text-slate-600">Розмір (варіант)</label>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Розмір (варіант)</label>
             <Select
               value={data.selectedVariant}
               onValueChange={(v) => onDataChange({ ...data, selectedVariant: v, qty: 1 })}
@@ -114,8 +114,8 @@ export function WriteOffModal({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1">
-            <label className="text-sm text-slate-600">Кількість для списання</label>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Кількість для списання</label>
             <Input
               type="number"
               min={1}
@@ -144,8 +144,8 @@ export function WriteOffModal({
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1">
-            <label className="text-sm text-slate-600">Причина списання</label>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Причина списання</label>
             <Select
               value={data.reason}
               onValueChange={(v) => onDataChange({ ...data, reason: v as WriteOffReason })}
@@ -162,8 +162,8 @@ export function WriteOffModal({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1">
-            <label className="text-sm text-slate-600">Примітка (опціонально)</label>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Примітка (опціонально)</label>
             <Input
               placeholder="Додаткова інформація..."
               value={data.notes}

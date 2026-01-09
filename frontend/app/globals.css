@@ -28,10 +28,10 @@
   --admin-surface-overlay: rgba(238, 241, 239, 0.95);
   --admin-border: #c8d1cb;
   --admin-border-subtle: #dae1dc;
-  --admin-text-primary: #1a2332;
-  --admin-text-secondary: #3d4a5c;
-  --admin-text-tertiary: #5c6b7a;
-  --admin-text-muted: #7d8a96;
+  --admin-text-primary: #111827;
+  --admin-text-secondary: #1f2937;
+  --admin-text-tertiary: #374151;
+  --admin-text-muted: #6b7280;
   
   /* Brand Colors */
   --brand-primary: #0f9c6e;
@@ -49,14 +49,14 @@
   --info: #3b82f6;
   --info-light: #dbeafe;
   
-  /* Shadows - Neumorphism Style */
+  /* Shadows - Modern soft shadows */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  --shadow-neumorphic: 8px 8px 16px rgba(0, 0, 0, 0.08), -8px -8px 16px rgba(255, 255, 255, 0.8);
-  --shadow-neumorphic-inset: inset 2px 2px 4px rgba(0, 0, 0, 0.06), inset -2px -2px 4px rgba(255, 255, 255, 0.8);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 16px 40px -8px rgba(0, 0, 0, 0.12);
+  --shadow-card: 0 2px 8px -2px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 12px 32px -8px rgba(0, 0, 0, 0.12);
   
   /* Spacing Scale (rem) */
   --space-0: 0;
@@ -195,6 +195,13 @@ html.dark {
   --color-admin-text-secondary: var(--admin-text-secondary);
   --color-admin-text-tertiary: var(--admin-text-tertiary);
   --color-admin-text-muted: var(--admin-text-muted);
+
+  /* Darker slate colors for better contrast */
+  --color-slate-400: #64748b;
+  --color-slate-500: #475569;
+  --color-slate-600: #334155;
+  --color-slate-700: #1e293b;
+  --color-slate-800: #0f172a;
 }
 
 * {
@@ -563,7 +570,7 @@ p:not([class*="text-xs"]):not([class*="text-sm"]):not([class*="text-base"]):not(
 .text-display {
   /* Responsive: mobile-first */
   font-size: 1.75rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: var(--tracking-tighter);
   line-height: var(--leading-tight);
   color: var(--admin-text-primary);

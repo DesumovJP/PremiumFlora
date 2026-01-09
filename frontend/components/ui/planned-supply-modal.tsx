@@ -5,7 +5,7 @@ import { Modal } from "./modal";
 import { Button } from "./button";
 import { Input } from "./input";
 import { cn } from "@/lib/utils";
-import { Plus, X, Search, Download, AlertTriangle, Package, Eraser } from "lucide-react";
+import { Plus, X, Search, Download, Package, Eraser, Check } from "lucide-react";
 import {
   getLowStockVariants,
   searchFlowersForSupply,
@@ -16,11 +16,10 @@ import type {
   FlowerSearchResult,
 } from "@/lib/planned-supply-types";
 
-// LocalStorage ключ для збереження введених кількостей
-const STORAGE_KEY = 'pf-planned-supply-quantities';
+// LocalStorage ключ для збереження
+const STORAGE_KEY = 'pf-planned-supply-items';
 
-// Функції для роботи з localStorage
-const loadSavedQuantities = (): Record<string, number> => {
+const loadSavedItems = (): Record<string, { qty: number; active: boolean }> => {
   if (typeof window === 'undefined') return {};
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -30,37 +29,23 @@ const loadSavedQuantities = (): Record<string, number> => {
   }
 };
 
-const saveQuantities = (quantities: Record<string, number>) => {
+const saveItemsToStorage = (items: PlannedSupplyItem[]) => {
   if (typeof window === 'undefined') return;
   try {
-    // Видаляємо нульові значення
-    const filtered = Object.fromEntries(
-      Object.entries(quantities).filter(([, v]) => v > 0)
-    );
-    if (Object.keys(filtered).length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    const data: Record<string, { qty: number; active: boolean }> = {};
+    items.forEach(item => {
+      if (item.plannedQuantity > 0 || item.isActive) {
+        data[item.id] = { qty: item.plannedQuantity, active: item.isActive || false };
+      }
+    });
+    if (Object.keys(data).length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }
   } catch {
-    // Ignore errors
+    // Ignore
   }
-};
-
-const clearSavedQuantities = () => {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // Ignore errors
-  }
-};
-
-// Функція визначення статусу залишку (відносно порогу)
-const getStockStatus = (stock: number, threshold: number): 'critical' | 'low' | 'good' => {
-  if (stock < threshold * 0.5) return 'critical';  // < 50% від порогу
-  if (stock <= threshold) return 'low';            // <= поріг
-  return 'good';
 };
 
 // Тип для згрупованих товарів
@@ -71,10 +56,9 @@ type GroupedSupplyItem = {
   imageUrl?: string | null;
   items: PlannedSupplyItem[];
   totalPlanned: number;
-  hasNewItems: boolean;
+  hasActiveItems: boolean;
 };
 
-// Функція групування товарів
 function groupSupplyItems(items: PlannedSupplyItem[]): GroupedSupplyItem[] {
   const groups: Record<string, GroupedSupplyItem> = {};
 
@@ -88,18 +72,22 @@ function groupSupplyItems(items: PlannedSupplyItem[]): GroupedSupplyItem[] {
         imageUrl: item.imageUrl,
         items: [],
         totalPlanned: 0,
-        hasNewItems: false,
+        hasActiveItems: false,
       };
     }
     groups[key].items.push(item);
-    groups[key].totalPlanned += item.plannedQuantity;
-    if (item.isNew) {
-      groups[key].flowerName = item.flowerName;
-      groups[key].hasNewItems = true;
+    if (item.isActive && item.plannedQuantity > 0) {
+      groups[key].totalPlanned += item.plannedQuantity;
+      groups[key].hasActiveItems = true;
     }
   });
 
-  return Object.values(groups);
+  // Sort: active groups first
+  return Object.values(groups).sort((a, b) => {
+    if (a.hasActiveItems && !b.hasActiveItems) return -1;
+    if (!a.hasActiveItems && b.hasActiveItems) return 1;
+    return 0;
+  });
 }
 
 interface PlannedSupplyModalProps {
@@ -113,25 +101,24 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<FlowerSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
-  const [threshold, setThreshold] = useState(100);
-  const [showManualAdd, setShowManualAdd] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     if (open) {
-      loadLowStockItems();
+      loadAllItems();
     }
-  }, [open, threshold]);
+  }, [open]);
 
-  const loadLowStockItems = async () => {
+  const loadAllItems = async () => {
     setLoading(true);
     try {
-      const result = await getLowStockVariants(threshold);
+      const result = await getLowStockVariants(9999); // Завантажити всі
       if (result.success && result.data) {
-        // Завантажити збережені кількості
-        const savedQuantities = loadSavedQuantities();
+        const savedData = loadSavedItems();
 
-        const lowStockItems: PlannedSupplyItem[] = result.data.map((variant: LowStockVariant) => {
+        const allItems: PlannedSupplyItem[] = result.data.map((variant: LowStockVariant) => {
           const id = `${variant.flowerId}-${variant.variantId}`;
+          const saved = savedData[id];
           return {
             id,
             flowerId: variant.flowerId,
@@ -143,29 +130,25 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
             imageUrl: variant.imageUrl,
             length: variant.length,
             currentStock: variant.currentStock,
-            plannedQuantity: savedQuantities[id] || 0,
+            plannedQuantity: saved?.qty || 0,
             price: variant.price,
             isNew: false,
             isManual: false,
+            isActive: saved?.active || false,
           };
         });
 
-        const sorted = lowStockItems.sort((a, b) => {
-          const statusA = getStockStatus(a.currentStock, threshold);
-          const statusB = getStockStatus(b.currentStock, threshold);
-
-          if (statusA === 'critical' && statusB !== 'critical') return -1;
-          if (statusA !== 'critical' && statusB === 'critical') return 1;
-          if (statusA === 'low' && statusB !== 'low') return -1;
-          if (statusA !== 'low' && statusB === 'low') return 1;
-
+        // Sort: active first, then by stock ascending
+        const sorted = allItems.sort((a, b) => {
+          if (a.isActive && !b.isActive) return -1;
+          if (!a.isActive && b.isActive) return 1;
           return a.currentStock - b.currentStock;
         });
 
         setItems(sorted);
       }
     } catch (error) {
-      console.error("Error loading low stock items:", error);
+      console.error("Error loading items:", error);
     } finally {
       setLoading(false);
     }
@@ -176,7 +159,6 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
       setSearchResults([]);
       return;
     }
-
     setSearching(true);
     try {
       const result = await searchFlowersForSupply(query);
@@ -184,20 +166,60 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
         setSearchResults(result.data);
       }
     } catch (error) {
-      console.error("Error searching flowers:", error);
+      console.error("Error searching:", error);
     } finally {
       setSearching(false);
     }
   }, []);
 
-  const addVariantFromSearch = (flower: FlowerSearchResult, variant: FlowerSearchResult["variants"][0]) => {
-    const existingItem = items.find(
-      (item) => item.flowerId === flower.id && item.variantId === variant.id
+  const toggleActive = (id: string) => {
+    setItems(prev => {
+      const updated = prev.map(item => {
+        if (item.id === id) {
+          const newActive = !item.isActive;
+          return {
+            ...item,
+            isActive: newActive,
+            plannedQuantity: newActive && item.plannedQuantity === 0 ? 100 : item.plannedQuantity,
+          };
+        }
+        return item;
+      });
+      saveItemsToStorage(updated);
+      return updated;
+    });
+  };
+
+  const updateQuantity = (id: string, qty: number) => {
+    const newQty = Math.max(0, qty);
+    setItems(prev => {
+      const updated = prev.map(item =>
+        item.id === id ? { ...item, plannedQuantity: newQty, isActive: newQty > 0 ? true : item.isActive } : item
+      );
+      saveItemsToStorage(updated);
+      return updated;
+    });
+  };
+
+  const addFromSearch = (flower: FlowerSearchResult, variant: FlowerSearchResult["variants"][0]) => {
+    const existingIdx = items.findIndex(
+      item => item.flowerId === flower.id && item.variantId === variant.id
     );
 
-    if (existingItem) {
-      updatePlannedQuantity(existingItem.id, existingItem.plannedQuantity + 100);
+    if (existingIdx >= 0) {
+      // Activate existing
+      setItems(prev => {
+        const updated = [...prev];
+        updated[existingIdx] = {
+          ...updated[existingIdx],
+          isActive: true,
+          plannedQuantity: updated[existingIdx].plannedQuantity || 100,
+        };
+        saveItemsToStorage(updated);
+        return updated;
+      });
     } else {
+      // Add new
       const newItem: PlannedSupplyItem = {
         id: `manual-${flower.id}-${variant.id}`,
         flowerId: flower.id,
@@ -206,392 +228,236 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
         variantDocumentId: variant.documentId,
         flowerName: flower.name,
         flowerSlug: flower.slug,
+        imageUrl: flower.imageUrl,
         length: variant.length,
         currentStock: variant.stock,
         plannedQuantity: 100,
         price: variant.price,
         isNew: false,
         isManual: true,
+        isActive: true,
       };
-      setItems((prev) => [newItem, ...prev]);
+      setItems(prev => {
+        const updated = [newItem, ...prev];
+        saveItemsToStorage(updated);
+        return updated;
+      });
     }
 
     setSearchQuery("");
     setSearchResults([]);
-    setShowManualAdd(false);
+    setShowSearch(false);
   };
 
-  const addNewItem = () => {
-    const newItem: PlannedSupplyItem = {
-      id: `new-${Date.now()}`,
-      flowerName: "Нова квітка",
-      flowerSlug: "",
-      length: 50,
-      currentStock: 0,
-      plannedQuantity: 100,
-      price: 0,
-      isNew: true,
-      isManual: true,
-    };
-    setItems((prev) => [newItem, ...prev]);
-    setShowManualAdd(false);
-  };
-
-  const updatePlannedQuantity = (id: string, quantity: number) => {
-    const newQuantity = Math.max(0, quantity);
-    setItems((prev) => {
-      const updated = prev.map((item) =>
-        item.id === id ? { ...item, plannedQuantity: newQuantity } : item
-      );
-      // Зберегти в localStorage
-      const quantities = updated.reduce((acc, item) => {
-        if (item.plannedQuantity > 0) {
-          acc[item.id] = item.plannedQuantity;
-        }
-        return acc;
-      }, {} as Record<string, number>);
-      saveQuantities(quantities);
+  const clearAll = () => {
+    setItems(prev => {
+      const updated = prev.map(item => ({ ...item, plannedQuantity: 0, isActive: false }));
+      localStorage.removeItem(STORAGE_KEY);
       return updated;
     });
   };
 
-  const updateNewItem = (id: string, field: keyof PlannedSupplyItem, value: any) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, [field]: value } : item
-      )
-    );
-  };
-
-  const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const clearAllQuantities = () => {
-    setItems((prev) =>
-      prev.map((item) => ({ ...item, plannedQuantity: 0 }))
-    );
-    clearSavedQuantities();
-  };
-
   const handleExport = () => {
-    const itemsToExport = items.filter((item) => item.plannedQuantity > 0);
-
-    if (itemsToExport.length === 0) {
-      alert("Додайте кількість для хоча б одного товару");
+    const toExport = items.filter(item => item.isActive && item.plannedQuantity > 0);
+    if (toExport.length === 0) {
+      alert("Оберіть товари для експорту");
       return;
     }
 
     const headers = ["Назва квітки", "Довжина (см)", "Замовлення"];
-    const rows = itemsToExport.map((item) => [
-      item.flowerName,
-      item.length,
-      item.plannedQuantity,
-    ]);
+    const rows = toExport.map(item => [item.flowerName, item.length, item.plannedQuantity]);
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
 
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((row) => row.join(",")),
-    ].join("\n");
-
-    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `planned-supply-${new Date().toISOString().split("T")[0]}.csv`);
-    link.style.visibility = "hidden";
+    link.href = URL.createObjectURL(blob);
+    link.download = `supply-${new Date().toISOString().split("T")[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   const handleClose = () => {
-    setItems([]);
     setSearchQuery("");
     setSearchResults([]);
-    setShowManualAdd(false);
+    setShowSearch(false);
     onOpenChange(false);
   };
 
-  const itemsWithPlannedQty = items.filter((item) => item.plannedQuantity > 0);
+  const activeItems = items.filter(item => item.isActive && item.plannedQuantity > 0);
+  const totalQty = activeItems.reduce((sum, item) => sum + item.plannedQuantity, 0);
 
   return (
     <Modal
       open={open}
       onOpenChange={(v) => !v && handleClose()}
-      title="Планування поставки"
-      description="Товари з низькими залишками для замовлення"
+      title="Поставка"
+      description="Оберіть товари для замовлення"
       size="2xl"
     >
-      <div className="space-y-4">
-        {/* Threshold control */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1">
-            <Input
-              type="number"
-              value={threshold}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === '') {
-                  setThreshold(0);
-                } else {
-                  const num = parseInt(value);
-                  if (!isNaN(num) && num >= 0) {
-                    setThreshold(num);
-                  }
-                }
-              }}
-              onBlur={(e) => {
-                const value = e.target.value;
-                const num = parseInt(value);
-                if (value === '' || isNaN(num) || num < 0) {
-                  setThreshold(100);
-                }
-              }}
-              min="0"
-              max="1000"
-              className="pr-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              placeholder="Поріг залишків"
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-stone-400">
-              шт
-            </span>
-          </div>
-          <Button
-            onClick={loadLowStockItems}
-            disabled={loading}
-            variant="outline"
-          >
-            {loading ? "..." : "Оновити"}
-          </Button>
-        </div>
-
-        {/* Empty state */}
-        {items.length === 0 && !loading && (
-          <div className="py-8 text-center">
-            <p className="text-sm text-stone-500 dark:text-slate-400">
-              Немає товарів з низькими залишками
-            </p>
-          </div>
-        )}
-
-        {/* Manual add */}
-        {!showManualAdd ? (
-          <button
-            onClick={() => setShowManualAdd(true)}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-dashed border-stone-200 dark:border-slate-700 text-sm text-stone-500 dark:text-slate-400 hover:border-stone-300 dark:hover:border-slate-600 hover:text-stone-600 dark:hover:text-slate-300 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            Додати товар
-          </button>
-        ) : (
-          <div className="rounded-lg border border-stone-200 dark:border-slate-700 p-3 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-stone-700 dark:text-slate-300">Додати товар</span>
+      <div className="space-y-3">
+        {/* Header */}
+        <div className="flex items-center gap-2">
+          {!showSearch ? (
+            <>
+              <button
+                onClick={() => setShowSearch(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+              >
+                <Search className="h-4 w-4" />
+                Пошук
+              </button>
+              {activeItems.length > 0 && (
+                <button
+                  onClick={clearAll}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-stone-500 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-600 dark:hover:text-rose-400 transition-colors ml-auto"
+                >
+                  <Eraser className="h-3.5 w-3.5" />
+                  Скинути
+                </button>
+              )}
+            </>
+          ) : (
+            <div className="flex-1 flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                <Input
+                  type="text"
+                  placeholder="Пошук квітки..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    handleSearch(e.target.value);
+                  }}
+                  className="pl-9 h-9"
+                  autoFocus
+                />
+              </div>
               <button
                 onClick={() => {
-                  setShowManualAdd(false);
+                  setShowSearch(false);
                   setSearchQuery("");
                   setSearchResults([]);
                 }}
-                className="text-stone-400 hover:text-stone-600 dark:hover:text-slate-300"
+                className="p-2 text-stone-400 hover:text-stone-600"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
+          )}
+        </div>
 
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-              <Input
-                type="text"
-                placeholder="Пошук квітки..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  handleSearch(e.target.value);
-                }}
-                className="pl-9"
-              />
-            </div>
-
-            {searchResults.length > 0 && (
-              <div className="max-h-40 overflow-y-auto space-y-1">
-                {searchResults.map((flower) =>
-                  flower.variants.map((variant) => (
-                    <button
-                      key={`${flower.id}-${variant.id}`}
-                      onClick={() => addVariantFromSearch(flower, variant)}
-                      className="w-full rounded-lg p-2 text-left text-sm hover:bg-stone-50 dark:hover:bg-slate-800"
-                    >
-                      <div className="font-medium text-stone-900 dark:text-white">{flower.name}</div>
-                      <div className="text-xs text-stone-500 dark:text-slate-400">
-                        {variant.length} см • Залишок: {variant.stock}
-                      </div>
-                    </button>
-                  ))
-                )}
-              </div>
+        {/* Search results */}
+        {showSearch && searchResults.length > 0 && (
+          <div className="rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 max-h-40 overflow-y-auto">
+            {searchResults.map(flower =>
+              flower.variants.map(variant => (
+                <button
+                  key={`${flower.id}-${variant.id}`}
+                  onClick={() => addFromSearch(flower, variant)}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-stone-50 dark:hover:bg-slate-700/50 border-b border-stone-100 dark:border-slate-700 last:border-0"
+                >
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-stone-900 dark:text-white">{flower.name}</div>
+                    <div className="text-xs text-stone-500">{variant.length} см • {variant.stock} шт</div>
+                  </div>
+                  <Plus className="h-4 w-4 text-emerald-500" />
+                </button>
+              ))
             )}
-
-            {searching && (
-              <div className="text-center text-sm text-stone-500">Пошук...</div>
-            )}
-
-            <button
-              onClick={addNewItem}
-              className="w-full py-2 rounded-lg text-sm text-stone-600 dark:text-slate-400 hover:bg-stone-50 dark:hover:bg-slate-800"
-            >
-              + Додати неіснуючий товар
-            </button>
           </div>
         )}
 
         {/* Items list */}
-        {items.length > 0 && (
-          <div className="space-y-2">
-            {/* Статус-бар */}
-            {(() => {
-              const criticalThreshold = Math.round(threshold * 0.5);
-              const criticalCount = items.filter(i => getStockStatus(i.currentStock, threshold) === 'critical').length;
-              const lowCount = items.filter(i => getStockStatus(i.currentStock, threshold) === 'low').length;
-              return (
-                <div className="flex flex-col gap-2 p-3 rounded-lg bg-[var(--admin-bg)]">
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs text-[var(--admin-text-secondary)]">
-                      <span className="font-medium">Потребують поставки:</span>{' '}
-                      <span className="text-[var(--admin-text-primary)]">{groupSupplyItems(items).length} квіток</span>
-                      <span className="text-[var(--admin-text-tertiary)]"> ({items.length} позицій)</span>
-                    </div>
-                    {itemsWithPlannedQty.length > 0 && (
-                      <button
-                        onClick={clearAllQuantities}
-                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-stone-600 dark:text-slate-300 bg-stone-100 dark:bg-slate-700 hover:bg-rose-100 dark:hover:bg-rose-900/30 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
-                      >
-                        <Eraser className="h-3.5 w-3.5" />
-                        Очистити
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-4 text-[11px]">
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-                      <span className="text-rose-600 dark:text-rose-400 font-medium">{criticalCount}</span>
-                      <span className="text-[var(--admin-text-tertiary)]">критично (&lt;{criticalThreshold})</span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                      <span className="text-amber-600 dark:text-amber-400 font-medium">{lowCount}</span>
-                      <span className="text-[var(--admin-text-tertiary)]">низько ({criticalThreshold}-{threshold})</span>
-                    </span>
-                  </div>
-                </div>
-              );
-            })()}
-
-            <div className="max-h-[500px] overflow-y-auto space-y-2">
-              {groupSupplyItems(items).map((group) => (
-                <div
-                  key={group.groupKey}
-                  className="rounded-lg border border-stone-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-800/30"
-                >
-                  {/* Group header */}
-                  <div className="flex items-center gap-3 px-3 py-2 bg-stone-50 dark:bg-slate-800/50">
-                    <div className="h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-stone-100 dark:bg-slate-700">
-                      {group.imageUrl ? (
-                        <img
-                          src={group.imageUrl}
-                          alt={group.flowerName}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-stone-400 dark:text-slate-500">
-                          <Package className="h-4 w-4" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm text-stone-900 dark:text-white truncate">
-                          {group.flowerName}
-                        </span>
-                        {group.hasNewItems && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
-                            Новий
-                          </span>
-                        )}
+        {loading ? (
+          <div className="py-8 text-center text-sm text-stone-500">Завантаження...</div>
+        ) : items.length === 0 ? (
+          <div className="py-8 text-center text-sm text-stone-500">Немає товарів</div>
+        ) : (
+          <div className="max-h-[450px] overflow-y-auto space-y-2">
+            {groupSupplyItems(items).map(group => (
+              <div
+                key={group.groupKey}
+                className={cn(
+                  "rounded-lg border overflow-hidden transition-colors",
+                  group.hasActiveItems
+                    ? "border-emerald-200 dark:border-emerald-800/50 bg-emerald-50/30 dark:bg-emerald-900/10"
+                    : "border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800/30"
+                )}
+              >
+                {/* Group header */}
+                <div className={cn(
+                  "flex items-center gap-3 px-3 py-2",
+                  group.hasActiveItems
+                    ? "bg-emerald-50 dark:bg-emerald-900/20"
+                    : "bg-stone-50 dark:bg-slate-800/50"
+                )}>
+                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-stone-100 dark:bg-slate-700">
+                    {group.imageUrl ? (
+                      <img src={group.imageUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-stone-400">
+                        <Package className="h-4 w-4" />
                       </div>
-                      <span className="text-xs text-stone-500 dark:text-slate-400">
-                        {group.items.length} варіантів
-                      </span>
-                    </div>
-                    {group.totalPlanned > 0 && (
-                      <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                        {group.totalPlanned} шт
-                      </span>
                     )}
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium text-sm text-stone-900 dark:text-white truncate block">
+                      {group.flowerName}
+                    </span>
+                    <span className="text-xs text-stone-500 dark:text-slate-400">
+                      {group.items.length} {group.items.length === 1 ? 'варіант' : 'варіанти'}
+                    </span>
+                  </div>
+                  {group.totalPlanned > 0 && (
+                    <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                      {group.totalPlanned} шт
+                    </span>
+                  )}
+                </div>
 
-                  {/* Variants */}
-                  <div className="divide-y divide-stone-100 dark:divide-slate-700">
-                    {group.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-transparent"
-                      >
-                        {item.isNew ? (
-                          <div className="flex-1 flex items-center gap-2">
-                            <div className="flex-1">
-                              <Input
-                                type="text"
-                                value={item.flowerName}
-                                onChange={(e) => updateNewItem(item.id, "flowerName", e.target.value)}
-                                placeholder="Назва"
-                                className="h-8 text-sm"
-                              />
-                            </div>
-                            <div className="w-16">
-                              <div className="relative">
-                                <Input
-                                  type="number"
-                                  value={item.length}
-                                  onChange={(e) =>
-                                    updateNewItem(item.id, "length", parseInt(e.target.value) || 0)
-                                  }
-                                  className="h-8 text-xs pr-6 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                />
-                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-stone-400">см</span>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <span className="text-xs px-2 py-0.5 rounded bg-stone-100 dark:bg-slate-700 text-stone-600 dark:text-slate-300">
-                              {item.length} см
-                            </span>
-                            <span className={cn(
-                              "text-xs",
-                              getStockStatus(item.currentStock, threshold) === 'critical'
-                                ? "text-rose-600 dark:text-rose-400"
-                                : getStockStatus(item.currentStock, threshold) === 'low'
-                                ? "text-amber-600 dark:text-amber-400"
-                                : "text-stone-500 dark:text-slate-400"
-                            )}>
-                              {item.currentStock} шт
-                            </span>
-                            {getStockStatus(item.currentStock, threshold) === 'critical' && (
-                              <AlertTriangle className="h-3 w-3 text-rose-500" />
-                            )}
-                          </div>
+                {/* Variants */}
+                <div className="divide-y divide-stone-100 dark:divide-slate-700">
+                  {group.items.map(item => (
+                    <div
+                      key={item.id}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 transition-colors",
+                        item.isActive ? "bg-emerald-50/50 dark:bg-emerald-900/10" : ""
+                      )}
+                    >
+                      {/* Checkbox */}
+                      <button
+                        onClick={() => toggleActive(item.id)}
+                        className={cn(
+                          "h-5 w-5 rounded border-2 flex items-center justify-center transition-colors shrink-0",
+                          item.isActive
+                            ? "bg-emerald-500 border-emerald-500 text-white"
+                            : "border-stone-300 dark:border-slate-600 hover:border-emerald-400"
                         )}
+                      >
+                        {item.isActive && <Check className="h-3 w-3" />}
+                      </button>
 
+                      {/* Info */}
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-xs px-2 py-0.5 rounded bg-stone-100 dark:bg-slate-700 text-stone-600 dark:text-slate-300">
+                          {item.length} см
+                        </span>
+                        <span className="text-xs text-stone-500 dark:text-slate-400">
+                          {item.currentStock} шт
+                        </span>
+                      </div>
+
+                      {/* Quantity controls */}
+                      {item.isActive && (
                         <div className="flex items-center gap-1">
-                          {/* Швидкі кнопки */}
                           <div className="flex gap-0.5">
-                            {[50, 100, 200].map((qty) => (
+                            {[25, 100].map(qty => (
                               <button
                                 key={qty}
-                                onClick={() => updatePlannedQuantity(item.id, item.plannedQuantity + qty)}
-                                className="px-1.5 py-1 text-[10px] font-medium rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
+                                onClick={() => updateQuantity(item.id, item.plannedQuantity + qty)}
+                                className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/60"
                               >
                                 +{qty}
                               </button>
@@ -600,53 +466,40 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
                           <Input
                             type="number"
                             value={item.plannedQuantity}
-                            onChange={(e) =>
-                              updatePlannedQuantity(item.id, parseInt(e.target.value) || 0)
-                            }
+                            onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)}
                             min="0"
-                            step="25"
                             className="w-16 h-7 text-xs text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
-                          <button
-                            onClick={() => removeItem(item.id)}
-                            className="p-1 text-stone-400 hover:text-rose-500"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-3 border-t border-stone-100 dark:border-slate-800">
+          {activeItems.length > 0 ? (
+            <div className="text-sm">
+              <span className="text-stone-500 dark:text-slate-400">Обрано: {activeItems.length}</span>
+              <span className="mx-2 text-stone-300">•</span>
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">{totalQty} шт</span>
             </div>
+          ) : (
+            <span className="text-sm text-stone-400">Оберіть товари</span>
+          )}
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleClose} size="sm">
+              Закрити
+            </Button>
+            <Button onClick={handleExport} disabled={activeItems.length === 0} size="sm">
+              <Download className="mr-1.5 h-4 w-4" />
+              Експорт
+            </Button>
           </div>
-        )}
-
-        {/* Summary */}
-        {itemsWithPlannedQty.length > 0 && (
-          <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
-            <span className="text-sm text-emerald-700 dark:text-emerald-400">
-              {itemsWithPlannedQty.length} позицій до експорту
-            </span>
-            <span className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
-              {itemsWithPlannedQty.reduce((sum, item) => sum + item.plannedQuantity, 0)} шт
-            </span>
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex justify-end gap-2 pt-2 border-t border-stone-100 dark:border-slate-800">
-          <Button variant="outline" onClick={handleClose}>
-            Закрити
-          </Button>
-          <Button
-            onClick={handleExport}
-            disabled={itemsWithPlannedQty.length === 0}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Експортувати
-          </Button>
         </div>
       </div>
     </Modal>

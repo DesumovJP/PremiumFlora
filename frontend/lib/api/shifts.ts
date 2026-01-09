@@ -48,6 +48,8 @@ export interface Shift {
   totalSalesAmount: number;
   totalWriteOffs: number;
   totalWriteOffsQty: number;
+  inventoryValue?: number; // Вартість запасів на кінець зміни
+  inventoryQty?: number; // Кількість товарів на складі на кінець зміни
   notes?: string;
   createdAt: string;
   updatedAt: string;

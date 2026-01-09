@@ -75,26 +75,29 @@ export function CatalogClient({ products }: CatalogClientProps) {
               </p>
             </div>
 
-            {/* Right: Feature badges - centered on mobile */}
+            {/* Right: Feature badges - neumorphic style like home hero */}
             <div className="flex justify-center sm:justify-end gap-2 sm:gap-3 flex-shrink-0 w-full sm:w-auto">
               {[
-                { icon: Package, label: 'Від 50 шт', color: 'emerald' },
-                { icon: Truck, label: 'Щоп\'ятниці', color: 'cyan' },
-                { icon: Sparkles, label: '7+ днів', color: 'amber' },
+                { icon: Package, label: 'Від 50 шт' },
+                { icon: Truck, label: 'Щоп\'ятниці' },
+                { icon: Sparkles, label: '7+ днів' },
               ].map((f) => (
                 <div
                   key={f.label}
-                  className={cn(
-                    "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium",
-                    "bg-slate-50 border border-slate-100",
-                    "flex-1 sm:flex-initial max-w-[120px] sm:max-w-none",
-                    f.color === 'emerald' && "text-emerald-600",
-                    f.color === 'cyan' && "text-cyan-600",
-                    f.color === 'amber' && "text-amber-600",
-                  )}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#fafafa] flex-1 sm:flex-initial max-w-[130px] sm:max-w-none"
+                  style={{
+                    boxShadow: '3px 3px 6px rgba(0, 0, 0, 0.06), -3px -3px 6px rgba(255, 255, 255, 0.9)',
+                  }}
                 >
-                  <f.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="truncate">{f.label}</span>
+                  <div
+                    className="w-7 h-7 rounded-lg bg-white flex items-center justify-center flex-shrink-0"
+                    style={{
+                      boxShadow: 'inset 1px 1px 2px rgba(0, 0, 0, 0.04), inset -1px -1px 2px rgba(255, 255, 255, 0.7)',
+                    }}
+                  >
+                    <f.icon className="w-3.5 h-3.5 text-slate-500" strokeWidth={1.5} />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-700 truncate">{f.label}</span>
                 </div>
               ))}
             </div>

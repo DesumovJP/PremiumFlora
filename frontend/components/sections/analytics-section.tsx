@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2, Download, ChevronLeft, ChevronRight, AlertCircle, DollarSign, ShoppingCart, Receipt, Package, Trash2, Calendar, Users, Warehouse, TrendingUp } from "lucide-react";
+import { Loader2, Download, ChevronLeft, ChevronRight, DollarSign, ShoppingCart, Receipt, Package, Trash2, Calendar, Users, Warehouse, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo, useState, useEffect } from "react";
 
@@ -43,8 +43,6 @@ type AnalyticsSectionProps = {
   onRefresh?: () => void;
   onOpenExport: () => void;
   onMonthChange?: (year: number, month: number) => void;
-  globalPendingAmount?: number;
-  globalPendingCount?: number;
 };
 
 // Default empty data
@@ -80,8 +78,6 @@ export function AnalyticsSection({
   onRefresh,
   onOpenExport,
   onMonthChange,
-  globalPendingAmount = 0,
-  globalPendingCount = 0,
 }: AnalyticsSectionProps) {
   const {
     weeklyRevenue = [],
@@ -91,7 +87,6 @@ export function AnalyticsSection({
     stockLevels = [],
     topWriteOffFlowers = [],
     topCustomers = [],
-    pendingByCustomer = [],
     monthlyProfit = 0,
     monthlyProfitMargin = 0,
   } = data ?? emptyData;
@@ -248,8 +243,8 @@ export function AnalyticsSection({
           </div>
         </div>
 
-        {/* Дохід + Вартість запасів + Очікуються оплати */}
-        <div className="grid gap-3 sm:grid-cols-3">
+        {/* Дохід + Вартість запасів */}
+        <div className="grid gap-3 sm:grid-cols-2">
           {/* Прибуток за місяць */}
           <div className="rounded-lg border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 p-3">
             <div className="flex items-center justify-between gap-3">
@@ -300,35 +295,6 @@ export function AnalyticsSection({
               </div>
               <span className="text-lg font-semibold text-slate-900 dark:text-white shrink-0">
                 {Math.round(inventoryValue).toLocaleString('uk-UA')} ₴
-              </span>
-            </div>
-          </div>
-
-          {/* Очікуються оплати */}
-          <div className={`rounded-lg border p-3 ${globalPendingAmount > 0 ? 'border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50'}`}>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${globalPendingAmount > 0 ? 'bg-amber-100 dark:bg-amber-800/40' : 'bg-slate-100 dark:bg-slate-700'}`}>
-                  <AlertCircle className={`h-4 w-4 ${globalPendingAmount > 0 ? 'text-amber-500' : 'text-slate-400'}`} />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-baseline gap-1.5">
-                    <span className={`text-sm font-medium ${globalPendingAmount > 0 ? 'text-amber-800 dark:text-amber-300' : 'text-slate-700 dark:text-slate-300'}`}>
-                      Очікує оплати
-                    </span>
-                    <span className={`text-[10px] ${globalPendingAmount > 0 ? 'text-amber-600/70 dark:text-amber-400/70' : 'text-slate-400 dark:text-slate-500'}`}>
-                      зараз
-                    </span>
-                  </div>
-                  {globalPendingCount > 0 && (
-                    <span className="text-xs text-amber-600 dark:text-amber-400">
-                      {globalPendingCount} зам.
-                    </span>
-                  )}
-                </div>
-              </div>
-              <span className={`text-lg font-semibold shrink-0 ${globalPendingAmount > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-900 dark:text-white'}`}>
-                {Math.round(globalPendingAmount).toLocaleString('uk-UA')} ₴
               </span>
             </div>
           </div>

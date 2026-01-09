@@ -53,14 +53,12 @@ export function ProductCard({ product, className, variant = "grid", index = 0 }:
       <Link href={`/catalog/${product.id}`} className="h-full">
         <Card
           className={cn(
-            "group flex h-full overflow-hidden rounded-2xl border-0 transition-all duration-300",
-            "bg-[#fafafa] dark:bg-[#1a1f2e]",
-            "hover:-translate-y-1",
+            "group flex h-full overflow-hidden rounded-2xl transition-all duration-300",
+            "bg-white dark:bg-[#1a1f2e]",
+            "border border-slate-100 dark:border-slate-800",
+            "hover:-translate-y-1 hover:shadow-lg hover:border-emerald-100",
             className
           )}
-          style={{
-            boxShadow: '3px 3px 8px rgba(0, 0, 0, 0.06), -3px -3px 8px rgba(255, 255, 255, 0.8)',
-          }}
         >
           <div className="flex w-full flex-col lg:flex-row">
             {/* Image Container - Horizontal - Optimized */}
@@ -145,19 +143,17 @@ export function ProductCard({ product, className, variant = "grid", index = 0 }:
     );
   }
 
-  // Grid view (default) - Neumorphic Style
+  // Grid view (default) - Modern Style
   return (
     <Link href={`/catalog/${product.id}`} className="h-full">
       <Card
           className={cn(
-            "group relative flex h-full flex-col overflow-hidden rounded-2xl border-0 transition-all duration-300",
-            "bg-[#fafafa] dark:bg-[#1a1f2e]",
-            "hover:-translate-y-1",
+            "group relative flex h-full flex-col overflow-hidden rounded-2xl transition-all duration-300",
+            "bg-white dark:bg-[#1a1f2e]",
+            "border border-slate-100 dark:border-slate-800",
+            "hover:-translate-y-1 hover:shadow-lg hover:border-emerald-100",
             className
           )}
-          style={{
-            boxShadow: '3px 3px 8px rgba(0, 0, 0, 0.06), -3px -3px 8px rgba(255, 255, 255, 0.8)',
-          }}
       >
         {/* Popular Badge */}
         {isPopular && (

@@ -73,15 +73,8 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
     });
   }, [baseClients, updatedClients]);
 
-  // Розраховуємо загальну суму боргів і повідомляємо батьківський компонент
-  useEffect(() => {
-    if (onPendingPaymentsChange) {
-      const total = clients.reduce((sum, client) => {
-        return sum + (client.pendingPayment || 0);
-      }, 0);
-      onPendingPaymentsChange(total);
-    }
-  }, [clients, onPendingPaymentsChange]);
+  // Примітка: загальну суму боргів отримуємо з API в батьківському компоненті
+  // Оновлюємо тільки після підтвердження оплати (див. handleConfirmPayment)
 
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Client | null>(null);
@@ -375,6 +368,10 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
 
     setIsReturning(true);
     try {
+      // Зберігаємо баланс клієнта ДО повернення
+      const customerBefore = customers.find(c => c.documentId === transaction.customer?.documentId);
+      const balanceBefore = customerBefore?.balance ?? 0;
+
       const result = await returnSale(transaction.documentId);
       if (result.success) {
         // Оновлюємо транзакцію в списку
@@ -390,6 +387,56 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
         invalidatePendingPaymentsCache();
         if (onCustomersUpdate) {
           onCustomersUpdate();
+        }
+
+        // Логуємо повернення в історію зміни
+        if (onLogActivity) {
+          // Розраховуємо баланс після повернення
+          // При поверненні: якщо було "в борг" - борг скасовується, якщо було "сплачено" - баланс збільшується
+          const returnAmount = transaction.amount || 0;
+          const paidAmount = transaction.paidAmount || 0;
+          const wasPaid = transaction.paymentStatus === 'paid';
+          const wasPartiallyPaid = !wasPaid && paidAmount > 0;
+
+          // Баланс змінюється на суму що була сплачена (повертаємо гроші/компенсуємо)
+          const balanceAfter = wasPaid
+            ? balanceBefore + returnAmount  // Повністю сплачено - повертаємо всю суму
+            : wasPartiallyPaid
+              ? balanceBefore + paidAmount   // Частково сплачено - повертаємо сплачену частину
+              : balanceBefore;               // Не сплачено (борг) - баланс не змінюється, просто скасовуємо борг
+
+          await onLogActivity('saleReturn', {
+            // Клієнт
+            customerName: transaction.customer?.name || 'Невідомий',
+            customerId: transaction.customer?.documentId,
+            // Оригінальний продаж
+            originalSaleId: transaction.documentId,
+            originalSaleDate: transaction.date || transaction.createdAt,
+            // Сума повернення
+            returnAmount: returnAmount,
+            totalAmount: returnAmount,
+            paidAmount: paidAmount,
+            paymentStatus: transaction.paymentStatus,
+            // Баланс клієнта до/після
+            balanceBefore: balanceBefore,
+            balanceAfter: balanceAfter,
+            // Товари що повертаються (з усіма деталями)
+            items: (transaction.items || []).map(item => ({
+              name: item.name || 'Товар',
+              size: item.length ? String(item.length) : '-',
+              qty: item.qty || 0,
+              price: item.price || 0,
+              originalPrice: item.originalPrice,
+              isCustom: item.isCustom,
+              customNote: item.customNote,
+              // Залишок на складі: при поверненні товар повертається на склад
+              // Якщо немає даних про склад - показуємо що повернуто
+              stockBefore: undefined,  // Не знаємо точно скільки було
+              stockAfter: undefined,   // Не знаємо точно скільки стало
+            })),
+            // Примітки
+            notes: transaction.notes,
+          });
         }
 
         // Закриваємо діалог

@@ -36,6 +36,7 @@ export interface PlannedSupplyItem {
   price: number;
   isNew?: boolean;
   isManual?: boolean;
+  isActive?: boolean;
 }
 
 export interface FlowerSearchResult {
@@ -43,6 +44,7 @@ export interface FlowerSearchResult {
   documentId: string;
   name: string;
   slug: string;
+  imageUrl?: string | null;
   variants: Array<{
     id: number;
     documentId: string;

@@ -694,7 +694,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
 
   // Cart Panel for desktop (only shown on POS tab)
   const desktopCartPanel = tab === "pos" && (
-    <aside className="h-full overflow-y-auto border-l border-slate-100 dark:border-[#30363d] bg-white/95 dark:bg-admin-surface-elevated">
+    <aside className="h-full overflow-hidden border-l border-slate-100 dark:border-[#30363d] bg-white/95 dark:bg-admin-surface-elevated">
       <PosSection
         products={filteredProducts}
         clients={clientsForPos}
@@ -800,7 +800,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
                 )}
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80 p-0 admin-surface" hideCloseButton suppressHydrationWarning>
+            <SheetContent side="right" className="w-80 p-0 admin-surface h-full overflow-hidden" hideCloseButton suppressHydrationWarning>
               <VisuallyHidden asChild>
                 <Dialog.Title>Кошик</Dialog.Title>
               </VisuallyHidden>

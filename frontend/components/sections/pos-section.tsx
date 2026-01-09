@@ -40,6 +40,7 @@ import {
   Edit3,
   Tag,
   Banknote,
+  Wallet,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 
@@ -317,69 +318,72 @@ function CartPanel({
             )}
           </div>
         </div>
-        {/* Client selector - opens modal */}
-        <Button
-          variant="outline"
-          className={cn(
-            "w-full justify-between text-left font-normal h-auto min-h-[2.75rem] px-4 py-2",
-            !selectedClientObj && "border-dashed border-slate-300 dark:border-admin-border"
-          )}
-          onClick={() => setClientModalOpen(true)}
-        >
-          <span className="flex items-center gap-3 truncate flex-1 min-w-0">
-            <div className={cn(
-              "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
-              selectedClientObj
-                ? "bg-emerald-100 dark:bg-emerald-900/30"
-                : "bg-slate-100 dark:bg-admin-surface"
-            )}>
-              <User className={cn(
-                "h-4 w-4",
-                selectedClientObj
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-slate-400"
-              )} />
+        {/* Client selector - styled block */}
+        <div className="rounded-xl border border-slate-200/80 dark:border-[var(--admin-border)] bg-[var(--admin-bg)] dark:bg-[var(--admin-bg)] overflow-hidden">
+          {/* Client Row */}
+          <button
+            type="button"
+            onClick={() => setClientModalOpen(true)}
+            className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <User className="h-3.5 w-3.5 text-[var(--admin-text-muted)]" />
+              <span className="text-sm text-[var(--admin-text-secondary)]">Клієнт</span>
             </div>
-            <span className={cn(
-              "text-sm truncate",
-              selectedClientObj
-                ? "text-slate-900 dark:text-admin-text-primary font-medium"
-                : "text-slate-500 dark:text-admin-text-muted"
-            )}>
-              {selectedClientObj?.name || "Оберіть клієнта"}
-            </span>
-          </span>
-          <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
-        </Button>
+            {selectedClientObj ? (
+              <span className="text-sm font-medium text-[var(--admin-text-primary)] truncate max-w-[140px]">
+                {selectedClientObj.name}
+              </span>
+            ) : (
+              <span className="text-sm font-medium text-[var(--admin-text-muted)] hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                + Обрати
+              </span>
+            )}
+          </button>
 
-        {/* Customer Balance - prominent display under client selector */}
-        {selectedClientObj && (
-          <div className={cn(
-            "mt-2 rounded-lg px-3 py-2 flex items-center justify-between",
-            (selectedClientObj.balance ?? 0) < 0
-              ? "bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/50"
-              : (selectedClientObj.balance ?? 0) > 0
-                ? "bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50"
-                : "bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
-          )}>
-            <span className="text-xs text-slate-600 dark:text-slate-400">Баланс клієнта:</span>
-            <span className={cn(
-              "text-sm font-bold",
+          {/* Balance Row - shown when client selected */}
+          {selectedClientObj && (
+            <div className={cn(
+              "flex items-center justify-between px-4 py-2.5 border-t border-slate-100 dark:border-[var(--admin-border)]",
               (selectedClientObj.balance ?? 0) < 0
-                ? "text-rose-600 dark:text-rose-400"
+                ? "bg-rose-50/50 dark:bg-rose-900/10"
                 : (selectedClientObj.balance ?? 0) > 0
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-slate-600 dark:text-slate-400"
+                  ? "bg-emerald-50/50 dark:bg-emerald-900/10"
+                  : ""
             )}>
-              {(selectedClientObj.balance ?? 0) < 0 && "−"}
-              {(selectedClientObj.balance ?? 0) > 0 && "+"}
-              {Math.abs(selectedClientObj.balance ?? 0).toLocaleString('uk-UA')} ₴
-              {(selectedClientObj.balance ?? 0) < 0 && (
-                <span className="text-xs font-normal ml-1 text-rose-500 dark:text-rose-400">(борг)</span>
-              )}
-            </span>
-          </div>
-        )}
+              <div className="flex items-center gap-2">
+                <Wallet className={cn(
+                  "h-3.5 w-3.5",
+                  (selectedClientObj.balance ?? 0) < 0
+                    ? "text-rose-500 dark:text-rose-400"
+                    : (selectedClientObj.balance ?? 0) > 0
+                      ? "text-emerald-500 dark:text-emerald-400"
+                      : "text-[var(--admin-text-muted)]"
+                )} />
+                <span className={cn(
+                  "text-sm",
+                  (selectedClientObj.balance ?? 0) < 0
+                    ? "text-rose-600 dark:text-rose-400"
+                    : (selectedClientObj.balance ?? 0) > 0
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-[var(--admin-text-secondary)]"
+                )}>Баланс</span>
+              </div>
+              <span className={cn(
+                "text-sm font-bold",
+                (selectedClientObj.balance ?? 0) < 0
+                  ? "text-rose-600 dark:text-rose-400"
+                  : (selectedClientObj.balance ?? 0) > 0
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-[var(--admin-text-secondary)]"
+              )}>
+                {(selectedClientObj.balance ?? 0) < 0 && "−"}
+                {(selectedClientObj.balance ?? 0) > 0 && "+"}
+                {Math.abs(selectedClientObj.balance ?? 0).toLocaleString('uk-UA')} ₴
+              </span>
+            </div>
+          )}
+        </div>
       </CardHeader>
 
       {/* Cart Items */}
@@ -894,214 +898,160 @@ function ProductCard({
   const variants = product.variants.filter((variant) => variant != null);
   const isCompactGrid = variants.length >= 3;
 
-  // Horizontal layout for compact mode (mobile "half" grid)
+  // Компактний режим (мобільний)
   if (compact) {
     return (
-      <Card
-        className="overflow-hidden border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800/60 shadow-sm shadow-emerald-500/5 w-full"
-      >
-        <div className="flex items-center">
-          {/* Left: Image thumbnail */}
-          <div className="w-16 h-16 shrink-0 overflow-hidden bg-slate-100 dark:bg-admin-surface rounded-md m-1.5">
+      <Card className="overflow-hidden border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800/60 shadow-sm w-full">
+        {/* Хедер: мініатюра + назва + загальний склад */}
+        <div className="flex items-center gap-2 px-2 py-1.5 bg-slate-50/50 dark:bg-slate-800/30">
+          <div className="w-8 h-8 shrink-0 overflow-hidden bg-slate-100 dark:bg-slate-700 rounded-md">
             {product.image ? (
-              <img
-                src={product.image}
-                alt={product.name}
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
+              <img src={product.image} alt={product.name} className="h-full w-full object-cover" loading="lazy" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-slate-400 dark:text-admin-text-muted">
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+              <div className="flex h-full w-full items-center justify-center text-slate-300">
+                <Package className="h-3.5 w-3.5" />
               </div>
             )}
           </div>
-          {/* Right: Name and variants */}
-          <div className="flex-1 min-w-0 p-2 space-y-1.5">
-            <div className="flex items-start justify-between gap-1">
-              <h3 className="font-bold text-[var(--admin-text-primary)] text-sm leading-snug line-clamp-1">
-                {product.name}
-              </h3>
-              {firstVariant && (
-                <Badge
-                  tone="success"
-                  className="shrink-0 px-2 py-1 text-[10px] leading-none font-bold shadow-sm"
-                >
-                  {totalStock} шт
-                </Badge>
-              )}
-            </div>
-            {/* Variants grid - always 2 columns */}
-            <div className="grid grid-cols-2 gap-1">
-              {variants.map((variant) => {
-                const stock = variant?.stock ?? 0;
-                const price = variant?.price ?? 0;
-                const size = variant?.size ?? "N/A";
-                const variantKey = `${product.id}-${variant.size}`;
-                const isAdded = addedVariants.has(variantKey);
-
-                return (
-                  <div
-                    key={variant.size || Math.random()}
-                    className={cn(
-                      "relative flex items-center justify-between px-1.5 py-1 rounded-md border min-w-0 gap-1",
-                      isAdded
-                        ? "border-emerald-500 dark:border-emerald-500 bg-emerald-100/80 dark:bg-emerald-900/40 animate-bounce-in"
-                        : "border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-800/40 hover:border-emerald-300 dark:hover:border-emerald-600 hover:bg-emerald-50/60 dark:hover:bg-emerald-900/30 pos-variant-item",
-                      "cursor-pointer transition-all duration-200 overflow-hidden hover-scale"
-                    )}
-                    onClick={() => variant && handleAdd(variant)}
-                  >
-                    {isAdded && (
-                      <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-emerald-500 animate-fade-in">
-                        <div className="flex items-center justify-center rounded-full bg-white dark:bg-admin-surface p-0.5 animate-scale-in">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex flex-col items-start gap-0.5 min-w-0">
-                      <p className="font-semibold text-slate-900 dark:text-admin-text-primary text-[10px] leading-tight truncate">
-                        {size}
-                      </p>
-                      <div
-                        className={cn(
-                          "flex items-center gap-0.5",
-                          stock >= 300
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : stock >= 150
-                            ? "text-amber-600 dark:text-amber-400"
-                            : "text-rose-600 dark:text-rose-400"
-                        )}
-                        title={`${stock} шт на складі`}
-                      >
-                        <Package className="h-2 w-2 shrink-0" />
-                        <span className="font-medium text-[9px]">{stock}</span>
-                      </div>
-                    </div>
-                    <p className="font-semibold text-emerald-700 dark:text-emerald-400 text-[10px] shrink-0">
-                      {Math.round(price)}₴
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </Card>
-    );
-  }
-
-  // Standard vertical layout
-  return (
-    <Card
-      className={cn(
-        "overflow-hidden border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800/60 shadow-sm shadow-emerald-500/5",
-        "w-full"
-      )}
-    >
-      {/* Image with name overlay */}
-      <div className={cn("relative w-full overflow-hidden bg-slate-100 dark:bg-admin-surface", "h-20 sm:h-28")}>
-        {product.image ? (
-          <img
-            src={product.image}
-            alt={product.name}
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-slate-400 dark:text-admin-text-muted">
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-        )}
-        {/* Gradient overlay with name - improved readability */}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-black dark:via-black/70 dark:to-transparent px-2.5 pb-2 pt-8 sm:px-3 sm:pb-2.5 sm:pt-10">
-          <div className="flex items-end justify-between gap-2">
-            <h3
-              className="font-bold leading-snug line-clamp-2 text-slate-900 dark:text-white text-sm sm:text-base"
-            >
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-slate-800 dark:text-white text-xs leading-tight truncate">
               {product.name}
             </h3>
-            {firstVariant && (
-              <Badge
-                tone="success"
-                className="shrink-0 px-2 py-1 text-[10px] sm:text-xs leading-none font-bold shadow-sm"
-              >
-                {totalStock} шт
-              </Badge>
-            )}
           </div>
+          <span className="text-[10px] font-medium text-slate-400 shrink-0">{totalStock}</span>
         </div>
-      </div>
-      <CardContent
-        className="p-2 pt-2 sm:p-3 sm:pt-2 overflow-hidden"
-      >
-        {/* Завжди сітка 2x2 для консистентної висоти */}
-        <div className="grid grid-cols-2 gap-1.5 min-h-[4.5rem] sm:min-h-[5rem]">
+        {/* Варіанти */}
+        <div className="p-2 grid grid-cols-2 gap-1.5">
           {variants.slice(0, 4).map((variant) => {
             const stock = variant?.stock ?? 0;
             const price = variant?.price ?? 0;
             const size = variant?.size ?? "N/A";
             const variantKey = `${product.id}-${variant.size}`;
             const isAdded = addedVariants.has(variantKey);
+            const isOutOfStock = stock === 0;
+            const isLowStock = stock > 0 && stock < 50;
 
             return (
-              <div
+              <button
                 key={variant.size || Math.random()}
+                type="button"
+                disabled={isOutOfStock}
                 className={cn(
-                  "relative flex items-center justify-between rounded-md border min-w-0 px-1.5 py-1.5 sm:px-2 sm:py-2 gap-1",
+                  "relative h-12 rounded-lg transition-all duration-200 overflow-hidden",
                   isAdded
-                    ? "border-emerald-500 dark:border-emerald-500 bg-emerald-100/80 dark:bg-emerald-900/40 animate-bounce-in"
-                    : "border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-800/40 hover:border-emerald-300 dark:hover:border-emerald-600 hover:bg-emerald-50/60 dark:hover:bg-emerald-900/30 pos-variant-item",
-                  "cursor-pointer transition-all duration-200 overflow-hidden hover-scale"
+                    ? "bg-emerald-500 shadow-md shadow-emerald-500/25 ring-1 ring-emerald-400/50"
+                    : isOutOfStock
+                    ? "bg-slate-50 dark:bg-slate-800/30 opacity-50 cursor-not-allowed"
+                    : "bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 active:scale-[0.98] cursor-pointer"
                 )}
-                onClick={() => variant && handleAdd(variant)}
+                onClick={() => variant && !isOutOfStock && handleAdd(variant)}
               >
-                {isAdded && (
-                  <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-emerald-500 animate-fade-in">
-                    <div className="flex items-center justify-center rounded-full bg-white dark:bg-admin-surface p-1 animate-scale-in">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                    </div>
+                {isAdded ? (
+                  <div className="flex items-center justify-center h-full gap-1.5 text-white">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span className="text-sm font-semibold whitespace-nowrap">{size}</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full gap-0.5">
+                    {/* Розмір - головний акцент */}
+                    <span className={cn(
+                      "text-sm font-semibold whitespace-nowrap",
+                      isOutOfStock ? "text-slate-400" : "text-slate-800 dark:text-white"
+                    )}>{size}</span>
+                    {/* Ціна · кількість - один рядок */}
+                    <span className={cn(
+                      "text-[11px] whitespace-nowrap",
+                      isOutOfStock ? "text-slate-400" : "text-slate-400 dark:text-slate-500"
+                    )}>
+                      {price}₴ <span className="text-slate-300 dark:text-slate-600">·</span> {stock} шт
+                    </span>
                   </div>
                 )}
-                <div className="flex flex-col items-start gap-0.5 min-w-0">
-                  <p className="font-semibold text-slate-900 dark:text-admin-text-primary text-[10px] sm:text-xs leading-tight truncate">
-                    {size}
-                  </p>
-                  <div
-                    className={cn(
-                      "flex items-center gap-0.5",
-                      stock >= 300
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : stock >= 150
-                        ? "text-amber-600 dark:text-amber-400"
-                        : "text-rose-600 dark:text-rose-400"
-                    )}
-                    title={`${stock} шт на складі`}
-                  >
-                    <Package className="h-2 w-2 sm:h-2.5 sm:w-2.5 shrink-0" />
-                    <span className="font-medium text-[9px] sm:text-[10px]">{stock}</span>
-                  </div>
-                </div>
-                <p className="font-semibold text-emerald-700 dark:text-emerald-400 text-[10px] sm:text-xs shrink-0">
-                  {Math.round(price)}₴
-                </p>
-              </div>
+              </button>
             );
           })}
-          {/* Порожні слоти для консистентної висоти */}
-          {variants.length < 4 && Array.from({ length: 4 - Math.min(variants.length, 4) }).map((_, i) => (
-            <div key={`empty-${i}`} className="min-h-[2rem]" />
-          ))}
         </div>
-        {/* Показуємо індикатор якщо є більше 4 варіантів */}
-        {variants.length > 4 && (
-          <p className="text-[10px] text-center text-slate-400 mt-1">+{variants.length - 4} ще</p>
-        )}
-      </CardContent>
+      </Card>
+    );
+  }
+
+  // Стандартний режим (десктоп)
+  return (
+    <Card className="overflow-hidden border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800/60 shadow-sm w-full">
+      {/* Хедер: мініатюра + назва + загальний склад */}
+      <div className="flex items-center gap-2.5 px-2.5 py-2 bg-slate-50/50 dark:bg-slate-800/30">
+        <div className="w-11 h-11 shrink-0 overflow-hidden bg-slate-100 dark:bg-slate-700 rounded-lg">
+          {product.image ? (
+            <img src={product.image} alt={product.name} className="h-full w-full object-cover" loading="lazy" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-slate-500">
+              <Package className="h-5 w-5" />
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-slate-800 dark:text-white text-sm leading-tight line-clamp-2">
+            {product.name}
+          </h3>
+          <p className="text-[11px] text-slate-400 mt-0.5">{totalStock} шт на складі</p>
+        </div>
+      </div>
+
+      {/* Варіанти - горизонтальна структура кнопки */}
+      <div className="p-2.5 grid grid-cols-2 gap-2">
+        {variants.slice(0, 4).map((variant) => {
+          const stock = variant?.stock ?? 0;
+          const price = variant?.price ?? 0;
+          const size = variant?.size ?? "N/A";
+          const variantKey = `${product.id}-${variant.size}`;
+          const isAdded = addedVariants.has(variantKey);
+          const isOutOfStock = stock === 0;
+          const isLowStock = stock > 0 && stock < 50;
+
+          return (
+            <button
+              key={variant.size || Math.random()}
+              type="button"
+              disabled={isOutOfStock}
+              className={cn(
+                "relative h-14 rounded-xl transition-all duration-200 overflow-hidden",
+                isAdded
+                  ? "bg-emerald-500 shadow-lg shadow-emerald-500/25 ring-2 ring-emerald-400/50"
+                  : isOutOfStock
+                  ? "bg-slate-50 dark:bg-slate-800/30 opacity-50 cursor-not-allowed"
+                  : "bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm active:scale-[0.98] cursor-pointer"
+              )}
+              onClick={() => variant && !isOutOfStock && handleAdd(variant)}
+            >
+              {isAdded ? (
+                <div className="flex items-center justify-center h-full gap-2 text-white">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span className="text-base font-semibold whitespace-nowrap">{size}</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full gap-0.5">
+                  {/* Розмір - головний акцент */}
+                  <span className={cn(
+                    "text-base font-semibold whitespace-nowrap tracking-tight",
+                    isOutOfStock ? "text-slate-400" : "text-slate-800 dark:text-white"
+                  )}>{size}</span>
+                  {/* Ціна · кількість - один рядок */}
+                  <span className={cn(
+                    "text-xs whitespace-nowrap",
+                    isOutOfStock ? "text-slate-400" : "text-slate-400 dark:text-slate-500"
+                  )}>
+                    {price}₴ <span className="text-slate-300 dark:text-slate-600">·</span> {stock} шт
+                  </span>
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      {/* Індикатор додаткових варіантів */}
+      {variants.length > 4 && (
+        <p className="text-[10px] text-center text-slate-400 pb-2">+{variants.length - 4} ще</p>
+      )}
     </Card>
   );
 }

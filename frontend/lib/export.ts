@@ -155,6 +155,7 @@ export function exportAnalytics(data: DashboardData): void {
 
 const activityTypeLabels: Record<string, string> = {
   sale: 'Продаж',
+  saleReturn: 'Повернення',
   writeOff: 'Списання',
   productEdit: 'Редагування товару',
   productCreate: 'Створення товару',
@@ -162,6 +163,7 @@ const activityTypeLabels: Record<string, string> = {
   paymentConfirm: 'Підтвердження оплати',
   customerCreate: 'Новий клієнт',
   customerDelete: 'Видалення клієнта',
+  balanceEdit: 'Зміна балансу',
   supply: 'Поставка',
 };
 
@@ -185,9 +187,13 @@ export function exportShift(
   // Summary
   rows.push(toCsvRow(['ПІДСУМОК']));
   rows.push(toCsvRow(['Продажів', summary.totalSales]));
-  rows.push(toCsvRow(['Сума продажів', Math.round(summary.totalSalesAmount)]));
-  rows.push(toCsvRow(['  - оплачено', Math.round(summary.totalSalesPaid || 0)]));
-  rows.push(toCsvRow(['  - в борг', Math.round(summary.totalSalesExpected || 0)]));
+  rows.push(toCsvRow(['Сума продажів', round2(summary.totalSalesAmount)]));
+  rows.push(toCsvRow(['  - оплачено', round2(summary.totalSalesPaid || 0)]));
+  rows.push(toCsvRow(['  - в борг', round2(summary.totalSalesExpected || 0)]));
+  if ((summary.totalReturns || 0) > 0) {
+    rows.push(toCsvRow(['Повернень', summary.totalReturns]));
+    rows.push(toCsvRow(['Сума повернень', round2(summary.totalReturnsAmount || 0)]));
+  }
   rows.push(toCsvRow(['Списань', summary.totalWriteOffs]));
   rows.push(toCsvRow(['Поставок', summary.totalSupplies || 0]));
   rows.push('');
@@ -227,6 +233,39 @@ export function exportShift(
         });
         if (items.length > 1) {
           rows.push(toCsvRow(['', '', '', '', '', 'Разом:', details.totalAmount, '']));
+        }
+      }
+    });
+    rows.push('');
+  }
+
+  // Returns
+  const returnActivities = activities.filter(a => a.type === 'saleReturn');
+  if (returnActivities.length > 0) {
+    rows.push(toCsvRow(['ПОВЕРНЕННЯ']));
+    rows.push(toCsvRow(['Час', 'Клієнт', 'Товар', 'Розмір', 'К-сть', 'Ціна', 'Сума']));
+
+    returnActivities.forEach(activity => {
+      const { details, timestamp } = activity;
+      const time = new Date(timestamp).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+      const items = details.items || [];
+
+      if (items.length === 0) {
+        rows.push(toCsvRow([time, details.customerName, '-', '-', '-', '-', details.returnAmount || details.totalAmount || 0]));
+      } else {
+        items.forEach((item: { name: string; size?: string; qty: number; price: number }, idx: number) => {
+          rows.push(toCsvRow([
+            idx === 0 ? time : '',
+            idx === 0 ? details.customerName : '',
+            item.name,
+            item.size || '-',
+            item.qty,
+            round2(item.price),
+            round2(item.qty * item.price),
+          ]));
+        });
+        if (items.length > 1) {
+          rows.push(toCsvRow(['', '', '', '', '', 'Разом:', round2(details.returnAmount || details.totalAmount || 0)]));
         }
       }
     });
@@ -307,17 +346,25 @@ export function exportShift(
 
     switch (activity.type) {
       case 'sale':
-        details = `${activity.details.customerName} - ${activity.details.totalAmount} грн`;
+        details = `${activity.details.customerName} - ${round2(activity.details.totalAmount || 0)} грн`;
+        break;
+      case 'saleReturn':
+        details = `${activity.details.customerName} - повернення ${round2(activity.details.returnAmount || activity.details.totalAmount || 0)} грн`;
         break;
       case 'writeOff':
         details = `${activity.details.flowerName} - ${activity.details.qty} шт`;
         break;
       case 'paymentConfirm':
-        details = `${activity.details.customerName} - ${activity.details.amount} грн`;
+        details = `${activity.details.customerName} - ${round2(activity.details.amount || 0)} грн`;
         break;
       case 'customerCreate':
         details = activity.details.customerName || '';
         break;
+      case 'balanceEdit': {
+        const diff = (activity.details.balanceAfter ?? 0) - (activity.details.balanceBefore ?? 0);
+        details = `${activity.details.customerName} ${diff >= 0 ? '+' : ''}${round2(diff)} грн`;
+        break;
+      }
       case 'supply':
         const supplyItems = activity.details.supplyItems as Array<{ stockBefore?: number; stockAfter?: number }> | undefined;
         const totalQty = supplyItems?.reduce((sum, i) => sum + ((i.stockAfter || 0) - (i.stockBefore || 0)), 0) || 0;
@@ -439,6 +486,11 @@ export function exportClientTransactions(
 // Sale Invoice Export
 // ============================================
 
+// Округлення до 2 знаків після коми
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
 export function exportSaleInvoice(transaction: Transaction): void {
   const rows: string[] = [];
   const date = new Date(transaction.date);
@@ -486,9 +538,9 @@ export function exportSaleInvoice(transaction: Transaction): void {
         item.isCustom ? `${item.name} (${item.customNote || 'інше'})` : item.name,
         item.length ? `${item.length} см` : '-',
         item.qty,
-        item.originalPrice && item.originalPrice !== item.price ? Math.round(item.originalPrice) : '-',
-        Math.round(item.price),
-        Math.round(subtotal),
+        item.originalPrice && item.originalPrice !== item.price ? round2(item.originalPrice) : '-',
+        round2(item.price),
+        round2(subtotal),
       ]));
     } else {
       rows.push(toCsvRow([
@@ -496,8 +548,8 @@ export function exportSaleInvoice(transaction: Transaction): void {
         item.isCustom ? `${item.name} (${item.customNote || 'інше'})` : item.name,
         item.length ? `${item.length} см` : '-',
         item.qty,
-        Math.round(item.price),
-        Math.round(subtotal),
+        round2(item.price),
+        round2(subtotal),
       ]));
     }
   });
@@ -505,35 +557,35 @@ export function exportSaleInvoice(transaction: Transaction): void {
   rows.push('');
   // Adjust column count based on whether we have edited prices
   if (hasEditedPrices) {
-    rows.push(toCsvRow(['', '', '', '', '', 'Разом товари:', Math.round(itemsTotal)]));
+    rows.push(toCsvRow(['', '', '', '', '', 'Разом товари:', round2(itemsTotal)]));
   } else {
-    rows.push(toCsvRow(['', '', '', '', 'Разом товари:', Math.round(itemsTotal)]));
+    rows.push(toCsvRow(['', '', '', '', 'Разом товари:', round2(itemsTotal)]));
   }
 
   // Additional charges (discount, service, etc.)
   const totalAmount = transaction.amount || 0;
   const diff = totalAmount - itemsTotal;
 
-  if (diff !== 0) {
+  if (Math.abs(diff) > 0.01) {
     if (diff < 0) {
       if (hasEditedPrices) {
-        rows.push(toCsvRow(['', '', '', '', '', 'Знижка:', Math.round(diff)]));
+        rows.push(toCsvRow(['', '', '', '', '', 'Знижка:', round2(diff)]));
       } else {
-        rows.push(toCsvRow(['', '', '', '', 'Знижка:', Math.round(diff)]));
+        rows.push(toCsvRow(['', '', '', '', 'Знижка:', round2(diff)]));
       }
     } else {
       if (hasEditedPrices) {
-        rows.push(toCsvRow(['', '', '', '', '', 'Додатково:', Math.round(diff)]));
+        rows.push(toCsvRow(['', '', '', '', '', 'Додатково:', round2(diff)]));
       } else {
-        rows.push(toCsvRow(['', '', '', '', 'Додатково:', Math.round(diff)]));
+        rows.push(toCsvRow(['', '', '', '', 'Додатково:', round2(diff)]));
       }
     }
   }
 
   if (hasEditedPrices) {
-    rows.push(toCsvRow(['', '', '', '', '', 'ДО СПЛАТИ:', Math.round(totalAmount)]));
+    rows.push(toCsvRow(['', '', '', '', '', 'ДО СПЛАТИ:', round2(totalAmount)]));
   } else {
-    rows.push(toCsvRow(['', '', '', '', 'ДО СПЛАТИ:', Math.round(totalAmount)]));
+    rows.push(toCsvRow(['', '', '', '', 'ДО СПЛАТИ:', round2(totalAmount)]));
   }
 
   // Payment status
@@ -550,4 +602,99 @@ export function exportSaleInvoice(transaction: Transaction): void {
 
   const invoiceNum = (transaction.operationId || transaction.documentId).slice(-8);
   downloadCsv(rows.join('\n'), `invoice_${invoiceNum}_${dateStr.replace(/\./g, '-')}.csv`);
+}
+
+// ============================================
+// Return Invoice Export
+// ============================================
+
+export interface ReturnInvoiceData {
+  returnDate: string;
+  originalSaleDate?: string;
+  originalSaleId?: string;
+  customerName?: string;
+  customerPhone?: string;
+  returnAmount: number;
+  balanceBefore?: number;
+  balanceAfter?: number;
+  items: Array<{
+    name: string;
+    size?: string;
+    qty: number;
+    price: number;
+    stockBefore?: number;
+    stockAfter?: number;
+    isCustom?: boolean;
+    customNote?: string;
+  }>;
+  reason?: string;
+}
+
+export function exportReturnInvoice(data: ReturnInvoiceData): void {
+  const rows: string[] = [];
+  const date = new Date(data.returnDate);
+  const dateStr = date.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const timeStr = date.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+
+  // Header
+  rows.push(toCsvRow(['НАКЛАДНА ПОВЕРНЕННЯ']));
+  rows.push(toCsvRow(['Дата повернення', dateStr]));
+  rows.push(toCsvRow(['Час', timeStr]));
+
+  if (data.originalSaleDate) {
+    const origDate = new Date(data.originalSaleDate);
+    rows.push(toCsvRow(['Дата продажу', origDate.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' })]));
+  }
+  if (data.originalSaleId) {
+    rows.push(toCsvRow(['№ продажу', data.originalSaleId.slice(-8)]));
+  }
+
+  // Customer info
+  if (data.customerName) {
+    rows.push('');
+    rows.push(toCsvRow(['КЛІЄНТ']));
+    rows.push(toCsvRow(["Ім'я", data.customerName]));
+    if (data.customerPhone) {
+      rows.push(toCsvRow(['Телефон', data.customerPhone]));
+    }
+    if (data.balanceBefore !== undefined && data.balanceAfter !== undefined) {
+      rows.push(toCsvRow(['Баланс до', round2(data.balanceBefore)]));
+      rows.push(toCsvRow(['Баланс після', round2(data.balanceAfter)]));
+    }
+  }
+
+  rows.push('');
+
+  // Items
+  rows.push(toCsvRow(['ПОВЕРНЕНІ ТОВАРИ']));
+  rows.push(toCsvRow(['№', 'Назва', 'Розмір', 'К-сть', 'Ціна', 'Сума', 'Склад до', 'Склад після']));
+
+  let itemsTotal = 0;
+  data.items.forEach((item, idx) => {
+    const subtotal = item.qty * item.price;
+    itemsTotal += subtotal;
+
+    rows.push(toCsvRow([
+      idx + 1,
+      item.isCustom ? `${item.name} (${item.customNote || 'послуга'})` : item.name,
+      item.size && item.size !== '-' ? `${item.size} см` : '-',
+      item.qty,
+      round2(item.price),
+      round2(subtotal),
+      item.stockBefore !== undefined ? item.stockBefore : '-',
+      item.stockAfter !== undefined ? item.stockAfter : '-',
+    ]));
+  });
+
+  rows.push('');
+  rows.push(toCsvRow(['', '', '', '', '', 'СУМА ПОВЕРНЕННЯ:', round2(data.returnAmount), '']));
+
+  // Reason
+  if (data.reason) {
+    rows.push('');
+    rows.push(toCsvRow(['Причина', data.reason]));
+  }
+
+  const returnDateForFile = dateStr.replace(/\./g, '-');
+  downloadCsv(rows.join('\n'), `return_${returnDateForFile}_${timeStr.replace(/:/g, '')}.csv`);
 }

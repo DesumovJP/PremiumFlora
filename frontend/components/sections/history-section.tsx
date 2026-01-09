@@ -23,7 +23,7 @@ import {
 } from '@/hooks/use-activity-log';
 import { cn } from '@/lib/utils';
 import { getShifts, Shift } from '@/lib/strapi';
-import { exportShift, exportSaleInvoice } from '@/lib/export';
+import { exportShift, exportSaleInvoice, exportReturnInvoice } from '@/lib/export';
 import type { Transaction } from '@/lib/api-types';
 import {
   ChevronDown,
@@ -78,6 +78,11 @@ const activityConfig: Record<
     icon: ShoppingBag,
     label: 'Продаж',
     color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30',
+  },
+  saleReturn: {
+    icon: RefreshCw,
+    label: 'Повернення',
+    color: 'text-rose-600 bg-rose-50 dark:bg-rose-900/30',
   },
   writeOff: {
     icon: PackageMinus,
@@ -198,28 +203,75 @@ function ActivityItem({ activity }: { activity: Activity }) {
             {details.items && details.items.length > 0 && (
               <div className="space-y-1">
                 <span className="text-slate-500 dark:text-admin-text-tertiary">Товари:</span>
-                <div className="ml-2 space-y-1.5">
+                <div className="ml-2 space-y-2">
                   {details.items.map((item, idx) => {
                     const hasEditedPrice = item.originalPrice && item.originalPrice !== item.price;
+                    const isDiscount = hasEditedPrice && item.price < item.originalPrice;
+                    const isMarkup = hasEditedPrice && item.price > item.originalPrice;
+                    const priceDiff = hasEditedPrice ? Math.round((item.price - item.originalPrice) * item.qty) : 0;
+
                     return (
-                      <div key={idx} className="flex justify-between items-center text-xs gap-2">
-                        <div className="flex-1 min-w-0">
-                          <span className="dark:text-admin-text-secondary">
-                            {item.name} ({item.size}) x{item.qty}
-                          </span>
-                          {item.stockBefore !== undefined && item.stockAfter !== undefined && (
-                            <span className="ml-2 text-slate-400 dark:text-admin-text-muted">
-                              {item.stockBefore}→{item.stockAfter} шт
-                            </span>
-                          )}
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <span className="font-medium dark:text-admin-text-primary">{Math.round(item.price * item.qty)} грн</span>
-                          {hasEditedPrice && (
-                            <span className="ml-1 text-slate-400 line-through text-[10px]">
-                              {Math.round(item.originalPrice! * item.qty)}
-                            </span>
-                          )}
+                      <div key={idx} className="rounded-lg bg-slate-50 dark:bg-admin-surface-elevated p-2">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex-1 min-w-0">
+                            {/* Item name with custom badge */}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {item.isCustom && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+                                  Послуга
+                                </span>
+                              )}
+                              <span className="text-xs font-medium dark:text-admin-text-secondary">
+                                {item.name}
+                              </span>
+                            </div>
+
+                            {/* Custom note if present */}
+                            {item.customNote && (
+                              <div className="mt-0.5 text-[10px] text-slate-500 dark:text-admin-text-muted italic">
+                                "{item.customNote}"
+                              </div>
+                            )}
+
+                            {/* Size, qty, stock info */}
+                            <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400 dark:text-admin-text-muted">
+                              {!item.isCustom && item.size && item.size !== '-' && (
+                                <span>{item.size} см</span>
+                              )}
+                              <span>×{item.qty} шт</span>
+                              {!item.isCustom && item.stockBefore !== undefined && item.stockAfter !== undefined && (
+                                <span className="text-slate-400">
+                                  (залишок: {item.stockBefore}→{item.stockAfter})
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Price section */}
+                          <div className="shrink-0 text-right">
+                            <div className="font-semibold text-xs dark:text-admin-text-primary">
+                              {Math.round(item.price * item.qty)} грн
+                            </div>
+                            {hasEditedPrice && (
+                              <div className="flex items-center justify-end gap-1 mt-0.5">
+                                <span className="text-slate-400 line-through text-[10px]">
+                                  {Math.round(item.originalPrice! * item.qty)}
+                                </span>
+                                <span className={cn(
+                                  "text-[10px] font-medium",
+                                  isDiscount ? "text-emerald-600" : "text-rose-600"
+                                )}>
+                                  {isDiscount ? `−${Math.abs(priceDiff)}` : `+${priceDiff}`}
+                                </span>
+                              </div>
+                            )}
+                            {/* Per unit price if qty > 1 */}
+                            {item.qty > 1 && (
+                              <div className="text-[10px] text-slate-400 dark:text-admin-text-muted">
+                                {item.price} грн/шт
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -280,13 +332,15 @@ function ActivityItem({ activity }: { activity: Activity }) {
                   paymentStatus: (details.paymentStatus as 'pending' | 'paid' | 'expected' | 'cancelled') || 'pending',
                   amount: details.totalAmount || 0,
                   items: (details.items || []).map(item => ({
-                    flowerSlug: '',
+                    flowerSlug: item.isCustom ? 'custom' : '',
                     length: parseInt(item.size) || 0,
                     qty: item.qty,
                     price: item.price,
                     name: item.name,
                     subtotal: item.qty * item.price,
                     ...(item.originalPrice && { originalPrice: item.originalPrice }),
+                    ...(item.isCustom && { isCustom: true }),
+                    ...(item.customNote && { customNote: item.customNote }),
                   })),
                   customer: details.customerName ? {
                     id: 0,
@@ -311,6 +365,186 @@ function ActivityItem({ activity }: { activity: Activity }) {
             </Button>
           </div>
         );
+
+      case 'saleReturn': {
+        // Підраховуємо кількість повернутих товарів
+        const returnedQty = details.items?.reduce((sum, item) => sum + (item.qty || 0), 0) || 0;
+        const balanceDiff = (details.balanceAfter ?? 0) - (details.balanceBefore ?? 0);
+
+        return (
+          <div className="space-y-3 text-sm">
+            {/* Підсумок повернення */}
+            <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20">
+              <div className="flex justify-between items-center">
+                <span className="text-rose-700 dark:text-rose-300 font-medium">
+                  Повернено: {returnedQty} шт
+                </span>
+                <span className="text-rose-700 dark:text-rose-300 font-semibold">
+                  −{Math.round(details.returnAmount || details.totalAmount || 0).toLocaleString()} ₴
+                </span>
+              </div>
+            </div>
+
+            {/* Клієнт */}
+            <div className="flex justify-between">
+              <span className="text-slate-500 dark:text-admin-text-tertiary">Клієнт:</span>
+              <span className="font-medium dark:text-admin-text-primary">{details.customerName}</span>
+            </div>
+
+            {/* Оригінальний продаж */}
+            {details.originalSaleDate && (
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Дата продажу:</span>
+                <span className="dark:text-admin-text-primary">
+                  {new Date(details.originalSaleDate).toLocaleDateString('uk-UA', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+              </div>
+            )}
+
+            {/* Зміна балансу клієнта */}
+            {(details.balanceBefore !== undefined || details.balanceAfter !== undefined) && (
+              <div className="p-2 rounded-lg bg-slate-50 dark:bg-admin-surface">
+                <div className="text-xs text-slate-500 dark:text-admin-text-tertiary mb-1">Баланс клієнта:</div>
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "font-medium",
+                    (details.balanceBefore ?? 0) < 0 ? "text-rose-600" : "text-slate-700 dark:text-admin-text-primary"
+                  )}>
+                    {Math.round(details.balanceBefore ?? 0)} ₴
+                  </span>
+                  <span className="text-slate-400">→</span>
+                  <span className={cn(
+                    "font-medium",
+                    (details.balanceAfter ?? 0) < 0 ? "text-rose-600" : "text-emerald-600"
+                  )}>
+                    {Math.round(details.balanceAfter ?? 0)} ₴
+                  </span>
+                  <span className={cn(
+                    "text-xs font-medium ml-auto",
+                    balanceDiff > 0 ? "text-emerald-600" : balanceDiff < 0 ? "text-rose-600" : "text-slate-500"
+                  )}>
+                    ({balanceDiff >= 0 ? '+' : ''}{Math.round(balanceDiff)} ₴)
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Товари що повертаються */}
+            {details.items && details.items.length > 0 && (
+              <div className="space-y-1.5">
+                <span className="text-slate-500 dark:text-admin-text-tertiary">Повернуті товари:</span>
+                <div className="ml-2 space-y-2">
+                  {details.items.map((item, idx) => (
+                    <div key={idx} className="rounded-lg bg-rose-50/50 dark:bg-rose-900/10 p-2 border border-rose-100 dark:border-rose-800/30">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          {/* Item name with custom badge */}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {item.isCustom && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+                                Послуга
+                              </span>
+                            )}
+                            <span className="text-xs font-medium dark:text-admin-text-secondary">
+                              {item.name}
+                            </span>
+                          </div>
+
+                          {/* Custom note if present */}
+                          {item.customNote && (
+                            <div className="mt-0.5 text-[10px] text-slate-500 dark:text-admin-text-muted italic">
+                              "{item.customNote}"
+                            </div>
+                          )}
+
+                          {/* Size, qty, stock info */}
+                          <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400 dark:text-admin-text-muted">
+                            {!item.isCustom && item.size && item.size !== '-' && (
+                              <span>{item.size} см</span>
+                            )}
+                            <span>×{item.qty} шт</span>
+                            {!item.isCustom && (
+                              item.stockBefore !== undefined && item.stockAfter !== undefined ? (
+                                <span className="text-emerald-600">
+                                  (склад: {item.stockBefore}→{item.stockAfter})
+                                </span>
+                              ) : (
+                                <span className="text-emerald-600">
+                                  (повернено на склад)
+                                </span>
+                              )
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Price section */}
+                        <div className="shrink-0 text-right">
+                          <div className="font-semibold text-xs text-rose-600">
+                            −{Math.round(item.price * item.qty)} грн
+                          </div>
+                          {item.qty > 1 && (
+                            <div className="text-[10px] text-slate-400 dark:text-admin-text-muted">
+                              {item.price} грн/шт
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Причина повернення */}
+            {(details.returnReason || details.notes) && (
+              <div className="border-t pt-2 dark:border-admin-border">
+                <span className="text-slate-500 dark:text-admin-text-tertiary block mb-1">Причина:</span>
+                <span className="text-slate-700 dark:text-admin-text-secondary text-sm italic">
+                  {details.returnReason || details.notes}
+                </span>
+              </div>
+            )}
+
+            {/* Експорт накладної повернення */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full mt-2"
+              onClick={() => {
+                exportReturnInvoice({
+                  returnDate: activity.timestamp,
+                  originalSaleDate: details.originalSaleDate,
+                  originalSaleId: details.originalSaleId,
+                  customerName: details.customerName,
+                  returnAmount: details.returnAmount || details.totalAmount || 0,
+                  balanceBefore: details.balanceBefore,
+                  balanceAfter: details.balanceAfter,
+                  items: (details.items || []).map(item => ({
+                    name: item.name,
+                    size: item.size,
+                    qty: item.qty,
+                    price: item.price,
+                    stockBefore: item.stockBefore,
+                    stockAfter: item.stockAfter,
+                    isCustom: item.isCustom,
+                    customNote: item.customNote,
+                  })),
+                  reason: details.returnReason || details.notes,
+                });
+              }}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Експорт накладної
+            </Button>
+          </div>
+        );
+      }
 
       case 'writeOff':
         return (
@@ -813,6 +1047,10 @@ function ActivityItem({ activity }: { activity: Activity }) {
         }
         return `${details.customerName} - ${total} грн (в борг)`;
       }
+      case 'saleReturn': {
+        const returnAmount = Math.round(details.returnAmount || details.totalAmount || 0);
+        return `${details.customerName} - повернення ${returnAmount} грн`;
+      }
       case 'writeOff':
         return `${details.flowerName} (${details.length} см) - ${details.qty} шт`;
       case 'productEdit':
@@ -1114,11 +1352,14 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
 
   const activities = (shift.activities || []) as Activity[];
 
-  // Підраховуємо paid/expected/supplies з activities
+  // Підраховуємо paid/expected/supplies/returns з activities
   let totalSalesPaid = 0;
   let totalSalesExpected = 0;
   let totalSupplies = 0;
   let confirmedPaymentsTotal = 0;
+  let totalReturns = 0;
+  let totalReturnsAmount = 0;
+  let totalReturnsQty = 0;
 
   activities.forEach((a) => {
     if (a.type === 'sale') {
@@ -1131,6 +1372,21 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
         // Часткова оплата: paidAmount йде в paid, решта в expected
         totalSalesPaid += paid;
         totalSalesExpected += (amount - paid);
+      }
+    } else if (a.type === 'saleReturn') {
+      // Повернення
+      const returnAmount = a.details.returnAmount || a.details.totalAmount || 0;
+      const returnPaid = a.details.paidAmount || 0;
+      const originalStatus = a.details.paymentStatus;
+      totalReturns += 1;
+      totalReturnsAmount += returnAmount;
+      totalReturnsQty += a.details.items?.reduce((sum, item) => sum + (item.qty || 0), 0) || 0;
+      // Віднімаємо від paid/expected
+      if (!originalStatus || originalStatus === 'paid') {
+        totalSalesPaid -= returnAmount;
+      } else if (originalStatus === 'expected' || originalStatus === 'pending') {
+        totalSalesPaid -= returnPaid;
+        totalSalesExpected -= (returnAmount - returnPaid);
       }
     } else if (a.type === 'supply') {
       totalSupplies += 1;
@@ -1149,10 +1405,18 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
   let totalWriteOffsAmount = 0;
   let totalSuppliesQty = 0;
   let totalSuppliesAmount = 0;
+  let totalSalesAmount = 0;
 
   activities.forEach((a) => {
-    if (a.type === 'sale' && a.details.items) {
-      totalSalesQty += a.details.items.reduce((sum, item) => sum + (item.qty || 0), 0);
+    if (a.type === 'sale') {
+      totalSalesAmount += a.details.totalAmount || 0;
+      if (a.details.items) {
+        totalSalesQty += a.details.items.reduce((sum, item) => sum + (item.qty || 0), 0);
+      }
+    } else if (a.type === 'saleReturn') {
+      // Віднімаємо повернення від продажів
+      totalSalesAmount -= a.details.returnAmount || a.details.totalAmount || 0;
+      totalSalesQty -= a.details.items?.reduce((sum, item) => sum + (item.qty || 0), 0) || 0;
     } else if (a.type === 'writeOff') {
       totalWriteOffsQty += a.details.qty || 0;
       totalWriteOffsAmount += a.details.amount || 0;
@@ -1186,10 +1450,13 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
 
   const summary: ShiftSummary = {
     totalSales: shift.summary?.totalSales ?? shift.totalSales ?? 0,
-    totalSalesAmount: shift.summary?.totalSalesAmount ?? shift.totalSalesAmount ?? 0,
+    totalSalesAmount: shift.summary?.totalSalesAmount ?? totalSalesAmount ?? shift.totalSalesAmount ?? 0,
     totalSalesQty: shift.summary?.totalSalesQty ?? totalSalesQty,
     totalSalesPaid: shift.summary?.totalSalesPaid ?? totalSalesPaid,
     totalSalesExpected: shift.summary?.totalSalesExpected ?? totalSalesExpected,
+    totalReturns: shift.summary?.totalReturns ?? totalReturns,
+    totalReturnsAmount: shift.summary?.totalReturnsAmount ?? totalReturnsAmount,
+    totalReturnsQty: shift.summary?.totalReturnsQty ?? totalReturnsQty,
     totalWriteOffs: shift.summary?.totalWriteOffs ?? shift.totalWriteOffs ?? 0,
     totalWriteOffsQty: shift.summary?.totalWriteOffsQty ?? totalWriteOffsQty,
     totalWriteOffsAmount: shift.summary?.totalWriteOffsAmount ?? totalWriteOffsAmount,
@@ -1257,6 +1524,12 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
               <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">
                 {summary.totalSalesQty || 0} шт
               </p>
+              {/* Повернення */}
+              {(summary.totalReturns || 0) > 0 && (
+                <p className="text-xs text-rose-500 dark:text-rose-400 mt-1">
+                  −{Math.round(summary.totalReturnsAmount || 0).toLocaleString()} ₴ ({summary.totalReturns})
+                </p>
+              )}
             </div>
             {/* Списання */}
             <div className="rounded-lg bg-amber-50 dark:bg-amber-900/30 p-2">
@@ -1549,12 +1822,16 @@ export function HistorySection({
 
   const handleExportArchivedShift = (shift: Shift) => {
     const shiftActivities = (shift.activities || []) as Activity[];
-    // Підраховуємо paid/expected/supplies та нові поля з activities для архівних змін
+    // Підраховуємо paid/expected/supplies/returns та нові поля з activities для архівних змін
     let totalSalesPaid = 0;
     let totalSalesExpected = 0;
     let totalSupplies = 0;
     let confirmedPaymentsTotal = 0;
     let totalSalesQty = 0;
+    let totalSalesAmount = 0;
+    let totalReturns = 0;
+    let totalReturnsAmount = 0;
+    let totalReturnsQty = 0;
     let totalWriteOffsQty = 0;
     let totalWriteOffsAmount = 0;
     let totalSuppliesQty = 0;
@@ -1565,6 +1842,7 @@ export function HistorySection({
         const amount = a.details.totalAmount || 0;
         const paid = a.details.paidAmount || 0;
         const status = a.details.paymentStatus;
+        totalSalesAmount += amount;
         if (!status || status === 'paid') {
           totalSalesPaid += amount;
         } else if (status === 'expected' || status === 'pending') {
@@ -1574,6 +1852,24 @@ export function HistorySection({
         }
         if (a.details.items) {
           totalSalesQty += a.details.items.reduce((sum, item) => sum + (item.qty || 0), 0);
+        }
+      } else if (a.type === 'saleReturn') {
+        // Повернення
+        const returnAmount = a.details.returnAmount || a.details.totalAmount || 0;
+        const returnPaid = a.details.paidAmount || 0;
+        const originalStatus = a.details.paymentStatus;
+        totalReturns += 1;
+        totalReturnsAmount += returnAmount;
+        totalSalesAmount -= returnAmount;
+        const returnQty = a.details.items?.reduce((sum, item) => sum + (item.qty || 0), 0) || 0;
+        totalReturnsQty += returnQty;
+        totalSalesQty -= returnQty;
+        // Віднімаємо від paid/expected
+        if (!originalStatus || originalStatus === 'paid') {
+          totalSalesPaid -= returnAmount;
+        } else if (originalStatus === 'expected' || originalStatus === 'pending') {
+          totalSalesPaid -= returnPaid;
+          totalSalesExpected -= (returnAmount - returnPaid);
         }
       } else if (a.type === 'supply') {
         totalSupplies += 1;
@@ -1617,10 +1913,13 @@ export function HistorySection({
 
     const shiftSummary: ShiftSummary = {
       totalSales: shift.summary?.totalSales ?? shift.totalSales ?? 0,
-      totalSalesAmount: shift.summary?.totalSalesAmount ?? shift.totalSalesAmount ?? 0,
+      totalSalesAmount: shift.summary?.totalSalesAmount ?? totalSalesAmount ?? shift.totalSalesAmount ?? 0,
       totalSalesQty: shift.summary?.totalSalesQty ?? totalSalesQty,
       totalSalesPaid: shift.summary?.totalSalesPaid ?? totalSalesPaid,
       totalSalesExpected: shift.summary?.totalSalesExpected ?? totalSalesExpected,
+      totalReturns: shift.summary?.totalReturns ?? totalReturns,
+      totalReturnsAmount: shift.summary?.totalReturnsAmount ?? totalReturnsAmount,
+      totalReturnsQty: shift.summary?.totalReturnsQty ?? totalReturnsQty,
       totalWriteOffs: shift.summary?.totalWriteOffs ?? shift.totalWriteOffs ?? 0,
       totalWriteOffsQty: shift.summary?.totalWriteOffsQty ?? totalWriteOffsQty,
       totalWriteOffsAmount: shift.summary?.totalWriteOffsAmount ?? totalWriteOffsAmount,
@@ -1740,6 +2039,12 @@ export function HistorySection({
                   <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">
                     {summary.totalSalesQty || 0} шт · {summary.totalSales || 0} продажів
                   </p>
+                  {/* Показуємо повернення якщо вони є */}
+                  {(summary.totalReturns || 0) > 0 && (
+                    <p className="text-xs text-rose-500 dark:text-rose-400 mt-1">
+                      −{Math.round(summary.totalReturnsAmount || 0).toLocaleString()} ₴ повернено ({summary.totalReturns})
+                    </p>
+                  )}
                 </div>
 
                 {/* Списання */}

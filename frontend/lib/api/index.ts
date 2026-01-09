@@ -67,6 +67,7 @@ export {
   createSale,
   createWriteOff,
   confirmPayment,
+  returnSale,
 } from './pos';
 
 // Analytics API

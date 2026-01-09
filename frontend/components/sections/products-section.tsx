@@ -24,9 +24,16 @@ import {
 } from "@/components/ui/select";
 import { StatPill } from "@/components/ui/stat-pill";
 import { Product, Variant } from "@/lib/types";
-import { CheckCircle2, Trash, PackageMinus, Plus, X, Pencil, Eye, Download, Package, ArrowUpDown, Upload, FileSpreadsheet } from "lucide-react";
+import { CheckCircle2, Trash, PackageMinus, Plus, X, Pencil, Eye, Download, Package, ArrowUpDown, Upload, FileSpreadsheet, MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Modal } from "@/components/ui/modal";
 import { ImportModal } from "@/components/ui/import-modal";
+import { EditProductModal } from "./products/modals/edit-product-modal";
 import { useState, useMemo, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -605,10 +612,8 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
             if (!createResponse.ok) {
               const errorData = await createResponse.json().catch(() => ({}));
               variantErrors.push(`Новий варіант ${variant.length} см: ${errorData.error?.message || "Помилка створення"}`);
-            } else {
-              // Логуємо створення нового варіанту
-              changesLog[`Новий варіант ${variant.length} см`] = { from: '-', to: `${variant.stock} шт, ${variant.price} грн` };
             }
+            // Не логуємо як редагування - нові варіанти додаються тільки через поставку
           } else {
             // Знаходимо оригінальний варіант для порівняння
             const originalVariant = editData.originalVariants.find(ov => ov.documentId === variant.documentId);
@@ -998,9 +1003,9 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       }
 
       // Handle supply mode - update existing variants by ADDING quantity
-      if (draft.isSupplyMode) {
-        const supplyDetails: Array<{ length: number; addedQty: number; newStock: number }> = [];
+      const supplyDetails: Array<{ length: number; addedQty: number; newStock: number }> = [];
 
+      if (draft.isSupplyMode) {
         for (const existingVariant of draft.existingVariants) {
           if (existingVariant.addQuantity > 0) {
             const newStock = existingVariant.currentStock + existingVariant.addQuantity;
@@ -1032,27 +1037,12 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           }
         }
 
-        // Log supply activity
-        if (onLogActivity && supplyDetails.length > 0) {
-          onLogActivity('supply', {
-            productName: draft.flowerName,
-            supplyItems: supplyDetails.map(d => {
-              const variant = draft.existingVariants.find(v => v.length === d.length);
-              return {
-                flowerName: draft.flowerName,
-                length: d.length,
-                stockBefore: d.newStock - d.addedQty,
-                stockAfter: d.newStock,
-                priceBefore: variant?.price || 0,
-                priceAfter: variant?.price || 0,
-                isNew: false,
-              };
-            }),
-          });
-        }
+        // Supply details будуть доповнені новими варіантами нижче
       }
 
-      // 2. Створити варіанти
+      // 2. Створити/оновити варіанти з draft.variants
+      const newVariantsDetails: Array<{ length: number; stock: number; price: number }> = [];
+
       for (const variant of draft.variants) {
         const length = parseInt(variant.length);
         const price = parseFloat(variant.price);
@@ -1083,7 +1073,6 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                 length,
                 price,
                 stock,
-                // Strapi v5: use connect syntax for relations
                 flower: {
                   connect: [{ documentId: flowerDocumentId }]
                 },
@@ -1107,7 +1096,6 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                 length,
                 price,
                 stock,
-                // Strapi v5: use connect syntax for relations
                 flower: {
                   connect: [{ documentId: flowerDocumentId }]
                 },
@@ -1119,7 +1107,60 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
             console.error("Помилка створення варіанту:", errorText);
           } else {
             console.log(`✅ Variant created: ${length}cm for flower ${flowerDocumentId}`);
+            // Запам'ятовуємо для логування
+            newVariantsDetails.push({ length, stock, price });
           }
+        }
+      }
+
+      // Log supply activity (для існуючих варіантів з addQuantity та нових варіантів)
+      if (draft.isSupplyMode && onLogActivity) {
+        const supplyItems: Array<{
+          flowerName: string;
+          length: number;
+          stockBefore: number;
+          stockAfter: number;
+          costPrice: number;
+          priceBefore: number;
+          priceAfter: number;
+          isNew: boolean;
+        }> = [];
+
+        // Додаємо існуючі варіанти з addQuantity
+        for (const d of supplyDetails) {
+          const variant = draft.existingVariants.find(v => v.length === d.length);
+          supplyItems.push({
+            flowerName: draft.flowerName,
+            length: d.length,
+            stockBefore: d.newStock - d.addedQty,
+            stockAfter: d.newStock,
+            costPrice: 0,
+            priceBefore: variant?.price || 0,
+            priceAfter: variant?.price || 0,
+            isNew: false,
+          });
+        }
+
+        // Додаємо нові варіанти
+        for (const nv of newVariantsDetails) {
+          supplyItems.push({
+            flowerName: draft.flowerName,
+            length: nv.length,
+            stockBefore: 0,
+            stockAfter: nv.stock,
+            costPrice: 0,
+            priceBefore: 0,
+            priceAfter: nv.price,
+            isNew: true,
+          });
+        }
+
+        if (supplyItems.length > 0) {
+          console.log('📦 Logging supply activity:', { productName: draft.flowerName, supplyItems });
+          onLogActivity('supply', {
+            productName: draft.flowerName,
+            supplyItems,
+          });
         }
       }
 
@@ -1189,7 +1230,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
               Заплановані закупки
             </Button>
             <Button onClick={() => setOpen(true)} className="flex-1 sm:flex-none sm:w-auto">
-              Додати товар
+              Поставка
             </Button>
           </div>
           {/* Desktop: Export button */}
@@ -1228,231 +1269,201 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           </Select>
         </div>
 
-        {/* Мобільна карткова версія без горизонтального скролу */}
-        <div className="grid gap-3 sm:hidden animate-stagger">
+        {/* Мобільна карткова версія - компактний дизайн */}
+        <div className="grid gap-2.5 sm:hidden">
           {sortedProducts.map((product, index) => {
             const total = product.variants.reduce((acc, variant) => acc + variant.stock, 0);
-            // Використовуємо стабільний ключ: documentId, slug або комбінацію з індексом
             const key = product.documentId || product.slug || `product-fallback-${index}-${product.name}`;
             return (
-              <Card key={key} className="border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface-elevated shadow-sm rounded-xl animate-fade-in">
-                <CardContent className="flex gap-3 p-3">
-                  <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-admin-surface">
+              <div key={key} className="border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface-elevated rounded-xl overflow-hidden">
+                {/* Header row */}
+                <div className="flex items-center gap-3 p-3 bg-slate-50/50 dark:bg-slate-800/30">
+                  <div className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-admin-surface">
                     {product.image ? (
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
+                      <img src={product.image} alt="" className="h-full w-full object-cover" loading="lazy" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-slate-400">
-                        <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                      <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-slate-600">
+                        <Package className="h-5 w-5" />
                       </div>
                     )}
                   </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary">{product.name}</p>
-                        <p className="text-xs text-slate-500 dark:text-admin-text-tertiary">Загальний запас: {total} шт</p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          aria-label="Редагувати товар" 
-                          title="Редагувати товар"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEditModal(product);
-                          }}
-                          className="h-8 w-8"
-                        >
-                          <Pencil className="h-4 w-4 text-emerald-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Списати товар"
-                          title="Списати товар"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openWriteOffModal(product);
-                          }}
-                          className="h-8 w-8"
-                        >
-                          <PackageMinus className="h-4 w-4 text-amber-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Видалити товар"
-                          title="Видалити товар"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openDeleteModal(product);
-                          }}
-                          className="h-8 w-8"
-                        >
-                          <Trash className="h-4 w-4 text-rose-600" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {product.variants.map((variant) => (
-                        <Badge
-                          key={variant.size}
-                          className={cn("text-xs px-2.5 py-1 w-auto", stockTone(variant.stock))}
-                        >
-                          {variant.size} · {variant.price} грн · {variant.stock} шт
-                        </Badge>
-                      ))}
-                    </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-900 dark:text-admin-text-primary truncate">{product.name}</p>
+                    <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                      <Package className="h-3.5 w-3.5" />
+                      {total} шт
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                        <MoreVertical className="h-5 w-5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => openEditModal(product)} className="text-emerald-600 dark:text-emerald-400">
+                        <Pencil className="h-4 w-4" />
+                        Редагувати
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openWriteOffModal(product)} className="text-amber-600 dark:text-amber-400">
+                        <PackageMinus className="h-4 w-4" />
+                        Списання
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openDeleteModal(product)} className="text-rose-500 dark:text-rose-400">
+                        <Trash className="h-4 w-4" />
+                        Видалити
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                {/* Variants table - sorted by length */}
+                <div className="border-t border-slate-100 dark:border-slate-700/50">
+                  {[...product.variants].sort((a, b) => a.length - b.length).map((variant, idx) => (
+                    <div key={variant.size} className={cn(
+                      "flex items-center px-3 py-2.5 text-sm",
+                      idx > 0 && "border-t border-slate-100 dark:border-slate-700/50"
+                    )}>
+                      <span className="w-12 font-semibold text-slate-700 dark:text-slate-300">{variant.size}</span>
+                      <span className="flex-1 flex items-center gap-1.5">
+                        {variant.costPrice !== undefined && variant.costPrice > 0 && (
+                          <>
+                            <span className="text-slate-400 dark:text-slate-500">{variant.costPrice.toFixed(2)} €</span>
+                            <span className="text-slate-300 dark:text-slate-600">→</span>
+                          </>
+                        )}
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">{variant.price} ₴</span>
+                      </span>
+                      <span className={cn(
+                        "font-semibold tabular-nums",
+                        variant.stock < 20 ? "text-rose-600 dark:text-rose-400" :
+                        variant.stock < 50 ? "text-amber-600 dark:text-amber-400" :
+                        "text-slate-600 dark:text-slate-400"
+                      )}>
+                        {variant.stock} шт
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             );
           })}
         </div>
 
         {/* Десктопна таблиця */}
-        <div className="hidden overflow-x-auto sm:block">
-          <Table className="min-w-[56.25rem] overflow-hidden rounded-2xl border border-slate-100 table-border-dark bg-white dark:bg-admin-surface">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="px-4 text-center">Назва</TableHead>
-                <TableHead className="text-center">Висоти / собівартість → ціна / кількість</TableHead>
-                <TableHead className="text-center min-w-[7.5rem] px-6">Загальний запас</TableHead>
-                <TableHead className="text-center min-w-[6.5rem] px-4">Оновлено</TableHead>
-                <TableHead className="text-center min-w-[11.25rem] px-6">Дії</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+        <div className="hidden sm:block overflow-x-auto rounded-xl border border-slate-200 dark:border-admin-border">
+          <table className="w-full text-sm table-fixed">
+            <thead>
+              <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 w-[28%]">Товар</th>
+                <th className="py-2.5 pl-2 pr-1 text-left text-xs font-medium text-slate-500 dark:text-slate-400 w-[7%]">Розмір</th>
+                <th className="py-2.5 px-1 text-right text-xs font-medium text-slate-500 dark:text-slate-400 w-[7%]">Залишок</th>
+                <th className="py-2.5 px-1 text-right text-xs font-medium text-slate-500 dark:text-slate-400 w-[9%]">Продаж</th>
+                <th className="py-2.5 pl-1 pr-2 text-right text-xs font-medium text-slate-500 dark:text-slate-400 w-[9%]">Закупка</th>
+                <th className="py-2.5 px-2 text-right text-xs font-medium text-slate-500 dark:text-slate-400 w-[10%]">Всього</th>
+                <th className="py-2.5 px-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400 w-[30%]">Дії</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-admin-surface">
               {sortedProducts.map((product, index) => {
                 const total = product.variants.reduce((acc, variant) => acc + variant.stock, 0);
-                // Використовуємо стабільний ключ: documentId, slug або комбінацію з індексом
                 const key = product.documentId || product.slug || `product-fallback-${index}-${product.name}`;
-                return (
-                  <TableRow key={key} className="align-top">
-                    <TableCell className="px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 overflow-hidden rounded-xl bg-slate-100 dark:bg-admin-surface">
-                          {product.image ? (
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              className="h-full w-full object-cover"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-slate-400">
-                              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                        <span className="font-semibold text-slate-900 dark:text-admin-text-primary">{product.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="space-y-1">
-                      <div className="flex flex-wrap gap-2 max-w-lg">
-                        {product.variants.map((variant) => (
-                          <Badge
-                            key={variant.size}
-                            className={cn("text-xs px-2.5 py-1 w-auto flex items-center gap-1.5", stockTone(variant.stock))}
-                          >
-                            <span className="font-medium">{variant.size}</span>
-                            <span className="text-slate-400 dark:text-slate-500">·</span>
-                            {variant.costPrice !== undefined && variant.costPrice > 0 && (
-                              <>
-                                <span className="text-slate-500 dark:text-slate-400" title="Собівартість">{variant.costPrice.toFixed(2)}</span>
-                                <span className="text-slate-400 dark:text-slate-500">→</span>
-                              </>
+                // Сортуємо варіанти за довжиною (зростання)
+                const sortedVariants = [...product.variants].sort((a, b) => a.length - b.length);
+                const variantCount = sortedVariants.length;
+
+                return sortedVariants.map((variant, vIdx) => (
+                  <tr
+                    key={`${key}-${variant.size}`}
+                    className={cn(
+                      "hover:bg-slate-50/50 dark:hover:bg-slate-800/30",
+                      vIdx === variantCount - 1 && "border-b border-slate-200 dark:border-slate-700"
+                    )}
+                  >
+                    {/* Product - only on first variant row */}
+                    {vIdx === 0 && (
+                      <td className="py-2.5 px-3" rowSpan={variantCount}>
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-admin-surface">
+                            {product.image ? (
+                              <img src={product.image} alt="" className="h-full w-full object-cover" loading="lazy" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-slate-600">
+                                <Package className="h-5 w-5" />
+                              </div>
                             )}
-                            <span className="font-medium" title="Ціна продажу">{variant.price} грн</span>
-                            <span className="text-slate-400 dark:text-slate-500">·</span>
-                            <Package className="h-3 w-3 shrink-0" />
-                            <span>{variant.stock} шт</span>
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-semibold text-emerald-700 min-w-[7.5rem] px-6 text-center align-middle">{total} шт</TableCell>
-                    <TableCell className="text-xs text-slate-500 dark:text-admin-text-tertiary min-w-[7.5rem] px-4 text-center align-middle">
-                      {product.updatedAt
-                        ? (
-                          <div className="flex flex-col">
-                            <span>{new Date(product.updatedAt).toLocaleDateString('uk-UA', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              year: '2-digit',
-                            })}</span>
-                            <span className="text-slate-400">{new Date(product.updatedAt).toLocaleTimeString('uk-UA', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}</span>
                           </div>
-                        )
-                        : '—'}
-                    </TableCell>
-                    <TableCell className="min-w-[11.25rem] px-6 text-center align-middle">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Показувати на сайті"
-                          title="Показувати на сайті"
-                          onClick={() => {
-                            const productUrl = `/catalog/${product.slug || product.documentId}`;
-                            if (productUrl !== '/catalog/') {
-                              window.open(productUrl, '_blank');
-                            }
-                          }}
-                          className="h-8 w-8"
-                        >
-                          <Eye className="h-4 w-4 text-blue-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Редагувати товар"
-                          title="Редагувати товар"
-                          onClick={() => openEditModal(product)}
-                          className="h-8 w-8"
-                        >
-                          <Pencil className="h-4 w-4 text-emerald-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Списати товар"
-                          title="Списати товар"
-                          onClick={() => openWriteOffModal(product)}
-                          className="h-8 w-8"
-                        >
-                          <PackageMinus className="h-4 w-4 text-amber-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Видалити товар"
-                          title="Видалити товар"
-                          onClick={() => openDeleteModal(product)}
-                          className="h-8 w-8"
-                        >
-                          <Trash className="h-4 w-4 text-rose-600" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
+                          <span className="font-medium text-slate-900 dark:text-white">{product.name}</span>
+                        </div>
+                      </td>
+                    )}
+                    {/* Size */}
+                    <td className="py-2.5 pl-2 pr-1 text-left font-medium text-slate-700 dark:text-slate-300">{variant.size}</td>
+                    {/* Stock */}
+                    <td className={cn(
+                      "py-2.5 px-1 text-right font-medium",
+                      variant.stock < 20 ? "text-rose-600 dark:text-rose-400" :
+                      variant.stock < 50 ? "text-amber-600 dark:text-amber-400" :
+                      "text-slate-600 dark:text-slate-300"
+                    )}>
+                      {variant.stock} шт
+                    </td>
+                    {/* Sale price */}
+                    <td className="py-2.5 px-1 text-right font-medium text-emerald-600 dark:text-emerald-400">
+                      {variant.price} ₴
+                    </td>
+                    {/* Cost price */}
+                    <td className="py-2.5 pl-1 pr-2 text-right text-slate-500 dark:text-slate-400">
+                      {variant.costPrice !== undefined && variant.costPrice > 0 ? `${variant.costPrice.toFixed(2)} €` : '—'}
+                    </td>
+                    {/* Total - only on first variant row */}
+                    {vIdx === 0 && (
+                      <td className="py-2.5 px-2 text-right font-medium text-slate-900 dark:text-white" rowSpan={variantCount}>
+                        {total} шт
+                      </td>
+                    )}
+                    {/* Actions - only on first variant row */}
+                    {vIdx === 0 && (
+                      <td className="py-2.5 px-2 text-center" rowSpan={variantCount}>
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => {
+                              const productUrl = `/catalog/${product.slug || product.documentId}`;
+                              if (productUrl !== '/catalog/') window.open(productUrl, '_blank');
+                            }}
+                            className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            title="На сайті"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => openEditModal(product)}
+                            className="p-1.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                            title="Редагувати"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => openWriteOffModal(product)}
+                            className="p-1.5 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
+                            title="Списання"
+                          >
+                            <PackageMinus className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(product)}
+                            className="p-1.5 text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                            title="Видалити"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ));
               })}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
         </div>
       </CardContent>
     </Card>
@@ -1463,10 +1474,10 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         setOpen(v);
         if (!v) resetForm();
       }}
-      title={draft.isSupplyMode ? "Поставка товару" : "Додати товар"}
+      title={draft.isSupplyMode ? "Поставка товару" : "Поставка"}
       description={draft.isSupplyMode
         ? "Додайте кількість до існуючих варіантів або створіть новий розмір."
-        : "Створіть нову позицію: назва, висота/розмір, ціна та кількість."
+        : "Оберіть існуючу квітку або створіть нову позицію."
       }
       footer={
         <>
@@ -1829,7 +1840,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
         return (
           <div className="space-y-4">
-            <div className="rounded-xl border border-slate-100 dark:border-admin-border bg-slate-50/60 dark:bg-admin-surface p-3">
+            <div className="rounded-xl border border-slate-100 dark:border-admin-border bg-slate-50/60 dark:bg-admin-surface p-4">
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-admin-surface">
                   {writeOffTarget.image ? (
@@ -1847,8 +1858,8 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                   )}
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-900">{writeOffTarget.name}</p>
-                  <p className="text-sm text-slate-600">
+                  <p className="font-semibold text-slate-900 dark:text-admin-text-primary">{writeOffTarget.name}</p>
+                  <p className="text-sm text-slate-600 dark:text-admin-text-secondary">
                     {writeOffTarget.variants.length} варіантів на складі
                   </p>
                 </div>
@@ -1856,8 +1867,8 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <label className="text-sm text-slate-600">Розмір (варіант)</label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Розмір (варіант)</label>
                 <Select
                   value={writeOffData.selectedVariant}
                   onValueChange={(v) => setWriteOffData((d) => ({ ...d, selectedVariant: v, qty: 1 }))}
@@ -1874,8 +1885,8 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1">
-                <label className="text-sm text-slate-600">Кількість для списання</label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Кількість для списання</label>
                 <Input
                   type="number"
                   min={1}
@@ -1905,8 +1916,8 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <label className="text-sm text-slate-600">Причина списання</label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Причина списання</label>
                 <Select
                   value={writeOffData.reason}
                   onValueChange={(v) => setWriteOffData((d) => ({ ...d, reason: v as WriteOffReason }))}
@@ -1923,8 +1934,8 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1">
-                <label className="text-sm text-slate-600">Примітка (опціонально)</label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Примітка (опціонально)</label>
                 <Input
                   placeholder="Додаткова інформація..."
                   value={writeOffData.notes}
@@ -1938,7 +1949,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
     </Modal>
 
     {/* Edit Modal */}
-    <Modal
+    <EditProductModal
       open={editModalOpen}
       onOpenChange={(v) => {
         setEditModalOpen(v);
@@ -1947,217 +1958,15 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           setEditData({ image: null, imagePreview: null, description: "", originalDescription: "", variants: [], originalVariants: [] });
         }
       }}
-      title="Редагувати товар"
-      description={editingProduct ? `Редагування "${editingProduct.name}"` : ""}
-      size="lg"
-      footer={
-        <>
-          <Button variant="outline" onClick={() => setEditModalOpen(false)} disabled={isSavingEdit}>
-            Скасувати
-          </Button>
-          <Button onClick={handleSaveEdit} disabled={isSavingEdit || isLoadingEditData}>
-            {isSavingEdit ? "Збереження..." : "Зберегти зміни"}
-          </Button>
-        </>
-      }
-    >
-      {isLoadingEditData ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-sm text-slate-500">Завантаження даних...</div>
-        </div>
-      ) : editingProduct ? (
-        <div className="space-y-4">
-          {/* Image & Description - Two columns */}
-          <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-4">
-            {/* Image */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Зображення</label>
-              <label className="group block cursor-pointer">
-                <div className={cn(
-                  "relative h-32 w-32 sm:h-[120px] sm:w-[120px] rounded-xl overflow-hidden transition-all",
-                  "ring-1 ring-slate-200 dark:ring-slate-700",
-                  "group-hover:ring-2 group-hover:ring-emerald-400 dark:group-hover:ring-emerald-500"
-                )}>
-                  {editData.imagePreview ? (
-                    <img
-                      src={editData.imagePreview}
-                      alt="Preview"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-full w-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                      <Package className="h-10 w-10 text-slate-300 dark:text-slate-600" />
-                    </div>
-                  )}
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
-                    <Upload className="h-6 w-6 text-white" />
-                  </div>
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={handleEditImageChange}
-                />
-              </label>
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">Опис</label>
-              <textarea
-                value={editData.description}
-                onChange={(e) => setEditData((prev) => ({ ...prev, description: e.target.value }))}
-                placeholder="Введіть опис квітки..."
-                className="w-full h-[120px] rounded-xl border border-slate-200 dark:border-admin-border bg-white dark:bg-admin-surface px-3 py-2 text-sm text-slate-900 dark:text-admin-text-primary focus:border-emerald-500 dark:focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 dark:focus:ring-emerald-400/20 transition-colors duration-200 resize-none"
-              />
-            </div>
-          </div>
-
-          {/* Variants */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-slate-700">Варіанти</label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addEditVariant}
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Додати варіант
-              </Button>
-            </div>
-            <div className="space-y-3">
-              {editData.variants.filter(v => !v.isDeleted).length === 0 ? (
-                <p className="text-sm text-slate-500 py-2">Немає варіантів. Додайте хоча б один.</p>
-              ) : (
-                editData.variants.filter(v => !v.isDeleted).map((variant, idx) => (
-                  <div
-                    key={variant.documentId || `edit-variant-${idx}`}
-                    className={cn(
-                      "flex gap-2 rounded-lg border p-3",
-                      variant.isNew
-                        ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-900/20"
-                        : "border-slate-200 bg-slate-50 dark:border-admin-border dark:bg-admin-surface"
-                    )}
-                  >
-                    <div className="flex-1">
-                      <label className="text-xs text-slate-600">Довжина, см</label>
-                      {variant.isNew ? (
-                        <Input
-                          type="number"
-                          min="1"
-                          placeholder="60"
-                          value={variant.length || ""}
-                          onChange={(e) => {
-                            const value = e.target.value === "" ? 0 : parseInt(e.target.value);
-                            if (!isNaN(value)) {
-                              handleEditVariantChange(variant.documentId, "length", value);
-                            }
-                          }}
-                          className="mt-1"
-                        />
-                      ) : (
-                        <p className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary mt-2">
-                          {variant.length} см
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <label className="text-xs text-slate-600">Ціна, грн</label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="100"
-                        value={variant.price || ""}
-                        onChange={(e) => {
-                          const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
-                          if (!isNaN(value)) {
-                            handleEditVariantChange(variant.documentId, "price", value);
-                          }
-                        }}
-                        className="mt-1"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="text-xs text-slate-600">Кількість, шт</label>
-                      {variant.isNew ? (
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="100"
-                          value={variant.stock || ""}
-                          onChange={(e) => {
-                            const value = e.target.value === "" ? 0 : parseInt(e.target.value);
-                            if (!isNaN(value)) {
-                              handleEditVariantChange(variant.documentId, "stock", value);
-                            }
-                          }}
-                          className="mt-1"
-                        />
-                      ) : (
-                        <p className="text-sm font-semibold text-slate-900 dark:text-admin-text-primary mt-2">
-                          {variant.stock} шт
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center self-center">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeEditVariant(variant.documentId)}
-                        className="h-9 w-9 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
-                        title="Видалити варіант"
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              )}
-              {/* Показуємо видалені варіанти як закреслені */}
-              {editData.variants.filter(v => v.isDeleted).length > 0 && (
-                <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-admin-border">
-                  <p className="text-xs text-slate-500">Буде видалено після збереження:</p>
-                  {editData.variants.filter(v => v.isDeleted).map((variant, idx) => (
-                    <div
-                      key={variant.documentId || `deleted-variant-${idx}`}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50/50 dark:border-rose-800 dark:bg-rose-900/20 p-2"
-                    >
-                      <span className="text-sm text-rose-600 line-through">
-                        {variant.length} см · {variant.price} грн · {variant.stock} шт
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          // Відмінити видалення
-                          setEditData((prev) => ({
-                            ...prev,
-                            variants: prev.variants.map((v) =>
-                              v.documentId === variant.documentId ? { ...v, isDeleted: false } : v
-                            ),
-                          }));
-                        }}
-                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-xs h-7 px-2"
-                      >
-                        Відмінити
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      ) : null}
-    </Modal>
+      product={editingProduct}
+      editData={editData}
+      setEditData={setEditData}
+      isLoading={isLoadingEditData}
+      isSaving={isSavingEdit}
+      onSave={handleSaveEdit}
+      handleImageChange={handleEditImageChange}
+      handleVariantChange={handleEditVariantChange}
+    />
 
     {/* Delete Confirmation Modal */}
     <Modal
