@@ -209,7 +209,8 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
               const isNew = matchingOp.type === 'create';
               const stockBefore = matchingOp.before?.stock ?? 0;
               const stockAfter = matchingOp.after?.stock ?? row.stock;
-              const priceAfter = matchingOp.after?.price ?? 0;
+              // Для create операцій ціна в data.price, для update - в after.price
+              const priceAfter = matchingOp.after?.price ?? matchingOp.data?.price ?? 0;
 
               // Для агрегованих рядків row.stock вже містить загальну кількість
               // stockAfter - stockBefore = кількість яку ми імпортували
