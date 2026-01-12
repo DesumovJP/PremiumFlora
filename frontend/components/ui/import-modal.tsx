@@ -5,7 +5,7 @@ import { Modal } from "./modal";
 import { Button } from "./button";
 import { importExcel, updateVariantPrices, getEurRate, type CurrencyRateInfo } from "@/lib/strapi";
 import { cn } from "@/lib/utils";
-import { Upload, Check, AlertCircle, Info, Save, RefreshCw } from "lucide-react";
+import { Upload, Check, AlertCircle, Info, RefreshCw } from "lucide-react";
 import type {
   ImportOptions,
   ImportResponse,
@@ -345,7 +345,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
         </div>
 
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Кількість та собівартість оновлено. За бажанням встановіть ціни продажу або натисніть «Пропустити».
+          Кількість та собівартість оновлено. Перегляньте результат імпорту нижче.
         </p>
 
         <div className="max-h-[400px] overflow-auto border border-slate-200 dark:border-slate-700 rounded-lg">
@@ -356,18 +356,18 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                 <th className="text-center px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-16">См</th>
                 <th className="text-center px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-20">
                   <div className="flex flex-col">
-                    <span>Кількість</span>
+                    <span>К-сть</span>
                     <span className="text-xs font-normal text-slate-500">(Excel)</span>
                   </div>
                 </th>
                 <th className="text-center px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-20">
                   <div className="flex flex-col">
-                    <span>Кількість</span>
-                    <span className="text-xs font-normal text-slate-500">(імпорт)</span>
+                    <span>К-сть</span>
+                    <span className="text-xs font-normal text-slate-500">(додано)</span>
                   </div>
                 </th>
-                <th className="text-right px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-24">Собівартість</th>
-                <th className="text-center px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-28">Ціна продажу</th>
+                <th className="text-right px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-20">Ціна €</th>
+                <th className="text-right px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-24">Сума €</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -403,16 +403,8 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                     <td className="px-3 py-2 text-right text-slate-600 dark:text-slate-400">
                       {entry.costPrice.toFixed(2)}
                     </td>
-                    <td className="px-3 py-2">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        value={entry.salePrice}
-                        onChange={(e) => handlePriceChange(index, e.target.value)}
-                        className="w-full h-8 rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 text-sm text-center text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                      />
+                    <td className="px-3 py-2 text-right text-slate-700 dark:text-slate-300 font-medium">
+                      {(entry.originalStock * entry.costPrice).toFixed(2)}
                     </td>
                   </tr>
                 );
@@ -430,10 +422,12 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                 <td className="px-3 py-2 text-center text-slate-700 dark:text-slate-300">
                   {priceEntries.reduce((sum, e) => sum + e.importedStock, 0)}
                 </td>
-                <td className="px-3 py-2 text-right text-slate-700 dark:text-slate-300">
-                  {priceEntries.reduce((sum, e) => sum + e.originalStock * e.costPrice, 0).toFixed(2)} €
+                <td className="px-3 py-2 text-right text-slate-500 dark:text-slate-400">
+                  -
                 </td>
-                <td></td>
+                <td className="px-3 py-2 text-right text-slate-700 dark:text-slate-300">
+                  {priceEntries.reduce((sum, e) => sum + e.originalStock * e.costPrice, 0).toFixed(2)}
+                </td>
               </tr>
             </tfoot>
           </table>
@@ -444,7 +438,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
             <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
             <p className="text-sm text-amber-700 dark:text-amber-300">
               Деякі рядки позначені жовтим - розбіжність між кількістю в Excel та імпортованою.
-              Перевірте правильність даних.
+              Це може бути через агрегацію дублікатів.
             </p>
           </div>
         )}
@@ -476,17 +470,9 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
         {step === 'pricing' ? (
           <>
             {renderPricingTable()}
-            <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
-              <Button variant="outline" onClick={handleSkipPricing}>
-                Пропустити
-              </Button>
-              <Button
-                onClick={handleSavePrices}
-                disabled={savingPrices}
-                className="gap-2"
-              >
-                <Save className="h-4 w-4" />
-                {savingPrices ? "Збереження..." : "Зберегти ціни"}
+            <div className="flex justify-end pt-3 border-t border-slate-200 dark:border-slate-700">
+              <Button onClick={handleSkipPricing}>
+                Готово
               </Button>
             </div>
           </>
