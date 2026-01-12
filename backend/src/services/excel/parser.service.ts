@@ -380,9 +380,15 @@ export class ParserService {
     const secondCell = String(row[1] ?? '').toLowerCase().trim();
 
     // Colombia format summary indicators
+    // НЕ фільтруємо HB/QB/FB самі по собі - це коди типів боксів
+    // Фільтруємо тільки якщо це summary рядок (наприклад "HB Total" або рядок де тільки total)
     if (format === 'colombia') {
-      if (['hb', 'qb', 'fb', 'total'].includes(firstCell)) return true;
-      if (['hb', 'qb', 'fb', 'total'].includes(secondCell)) return true;
+      if (firstCell === 'total') return true;
+      if (secondCell === 'total') return true;
+      // HB/QB/FB + total в іншій колонці = summary рядок
+      if (['hb', 'qb', 'fb'].includes(firstCell) && row.some((cell, idx) =>
+        idx > 0 && String(cell ?? '').toLowerCase().trim() === 'total'
+      )) return true;
     }
 
     // Ross format summary indicators

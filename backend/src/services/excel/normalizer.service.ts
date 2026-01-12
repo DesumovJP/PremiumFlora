@@ -108,7 +108,8 @@ export class NormalizerService {
    */
   private readonly removableSuffixes = [
     ' Spray Rose', ' Garden Rose', ' Spray Roses', ' Garden Roses',
-    ' Rose', ' Roses', ' Spray', ' Garden', ' R'
+    ' Rose', ' Roses', ' Spray', ' Garden', ' R',
+    ' Hydrangea', ' Hydrangeas', ' Carnation', ' Carnations'
   ];
 
   /**
