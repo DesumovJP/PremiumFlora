@@ -12,6 +12,40 @@ import type { Core } from '@strapi/strapi';
 // Суфікси які видалялись при нормалізації
 const SUFFIXES_TO_REMOVE = [' Rose', ' Spray', ' Garden'];
 
+/**
+ * Фікс для квітів без publishedAt (щоб вони показувались на фронтенді)
+ */
+export async function fixUnpublishedFlowers(strapi: Core.Strapi): Promise<void> {
+  strapi.log.info('📢 Fixing unpublished flowers...');
+
+  try {
+    const flowers = await strapi.db.query('api::flower.flower').findMany({});
+
+    let fixedCount = 0;
+    const now = new Date().toISOString();
+
+    for (const flower of flowers) {
+      if (!flower.publishedAt) {
+        await strapi.db.query('api::flower.flower').update({
+          where: { id: flower.id },
+          data: { publishedAt: now },
+        });
+        strapi.log.info(`📢 Published: "${flower.name}"`);
+        fixedCount++;
+      }
+    }
+
+    if (fixedCount > 0) {
+      strapi.log.info(`✅ Fixed ${fixedCount} unpublished flowers`);
+    } else {
+      strapi.log.info('✅ All flowers are already published');
+    }
+  } catch (error) {
+    strapi.log.error('❌ Error fixing unpublished flowers:', error);
+    throw error;
+  }
+}
+
 export async function migrateFlowerImages(strapi: Core.Strapi): Promise<void> {
   strapi.log.info('🖼️ Starting flower images migration...');
 
@@ -57,11 +91,12 @@ export async function migrateFlowerImages(strapi: Core.Strapi): Promise<void> {
       }
 
       if (sourceFlower && sourceFlower.image) {
-        // Оновити квітку з image
+        // Оновити квітку з image, зберігаючи publishedAt
         await strapi.db.query('api::flower.flower').update({
           where: { id: flower.id },
           data: {
             image: sourceFlower.image.id,
+            publishedAt: flower.publishedAt || new Date().toISOString(),
           },
         });
 

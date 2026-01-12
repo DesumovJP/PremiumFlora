@@ -1,7 +1,7 @@
 import type { Core } from "@strapi/strapi";
 import { cleanupDuplicates } from "./scripts/cleanup-duplicates";
 import { resetFlowersAndVariants } from "./scripts/reset-flowers";
-import { migrateFlowerImages } from "./scripts/migrate-images";
+import { migrateFlowerImages, fixUnpublishedFlowers } from "./scripts/migrate-images";
 
 const flowersData = [
   {
@@ -272,6 +272,9 @@ export default async function bootstrap({ strapi }: { strapi: Core.Strapi }) {
     await migrateFlowerImages(strapi);
     strapi.log.info('🔔 Remember to remove MIGRATE_IMAGES env variable after migration!');
   }
+
+  // Fix unpublished flowers (safe to run always)
+  await fixUnpublishedFlowers(strapi);
 
   // Clean up duplicate records (run once to fix existing duplicates)
   await cleanupDuplicates(strapi);
