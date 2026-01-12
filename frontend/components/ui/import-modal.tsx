@@ -179,17 +179,29 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
         }
 
         if (res.data.rows && res.data.rows.length > 0) {
+          // Конвертація text grade в length (як в upserter)
+          const gradeToLength = (grade: string | null): number => {
+            if (!grade) return 0;
+            const gradeMap: Record<string, number> = {
+              mini: 10, standard: 40, select: 60,
+              premium: 80, jumbo: 100, xl: 110, xxl: 120,
+            };
+            return gradeMap[grade.toLowerCase()] ?? 0;
+          };
+
           // Групуємо рядки по slug + length для уникнення дублікатів (вони вже агреговані на бекенді)
           const processedKeys = new Set<string>();
 
           for (const row of res.data.rows) {
-            const key = `${row.slug}:${row.length}`;
+            // Враховуємо конвертацію grade в length
+            const effectiveLength = row.length ?? gradeToLength(row.grade);
+            const key = `${row.slug}:${effectiveLength}`;
             if (processedKeys.has(key)) continue;
             processedKeys.add(key);
 
-            // Шукаємо відповідну операцію для варіанту по slug + length
+            // Шукаємо відповідну операцію для варіанту по slug + effectiveLength
             const matchingOp = variantOps.find(op =>
-              op.data.length === row.length &&
+              op.data.length === effectiveLength &&
               op.data.slug === row.slug
             );
 
@@ -206,7 +218,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
               entries.push({
                 documentId: matchingOp.documentId,
                 flowerName: row.flowerName,
-                length: row.length,
+                length: effectiveLength, // Використовуємо конвертовану довжину (grade -> length)
                 costPrice: row.price, // price в NormalizedRow - це собівартість (середньозважена для агрегованих)
                 salePrice: '',
                 originalStock: row.stock, // Агрегована кількість з Excel
@@ -419,7 +431,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                   {priceEntries.reduce((sum, e) => sum + e.importedStock, 0)}
                 </td>
                 <td className="px-3 py-2 text-right text-slate-700 dark:text-slate-300">
-                  {priceEntries.reduce((sum, e) => sum + e.originalStock * e.costPrice, 0).toFixed(2)} ₴
+                  {priceEntries.reduce((sum, e) => sum + e.originalStock * e.costPrice, 0).toFixed(2)} €
                 </td>
                 <td></td>
               </tr>
