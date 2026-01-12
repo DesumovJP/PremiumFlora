@@ -934,16 +934,13 @@ function ActivityItem({ activity }: { activity: Activity }) {
             {/* Підсумок поставки */}
             {details.supplyItems && details.supplyItems.length > 0 && (
               <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex justify-between items-center">
                   <span className="text-blue-700 dark:text-blue-300 font-medium">
                     +{supplyTotals.totalQty.toLocaleString()} шт
                   </span>
                   <span className="text-blue-700 dark:text-blue-300 font-semibold">
                     +{Math.round(supplyTotals.totalValue).toLocaleString()} €
                   </span>
-                </div>
-                <div className="text-xs text-blue-600/70 dark:text-blue-400/70">
-                  Запаси: {Math.round(supplyTotals.balanceBefore).toLocaleString()} → {Math.round(supplyTotals.balanceAfter).toLocaleString()} €
                 </div>
               </div>
             )}
@@ -1544,12 +1541,12 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
             </div>
             {/* Поставки */}
             <div className="rounded-lg bg-blue-50 dark:bg-blue-900/30 p-2">
-              <p className="text-xs text-blue-600 dark:text-blue-400">Поставки</p>
+              <p className="text-xs text-blue-600 dark:text-blue-400">Собівартість поставок</p>
               <p className="font-bold text-blue-700 dark:text-blue-300">
                 {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} €
               </p>
               <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
-                {summary.totalSuppliesQty || 0} шт · {summary.totalSupplies || 0} поставок
+                {summary.totalSuppliesQty || 0} шт · {summary.totalSupplies || 0} пост.
               </p>
             </div>
           </div>
@@ -2061,23 +2058,23 @@ export function HistorySection({
 
                 {/* Поставки */}
                 <div className="rounded-xl border border-blue-100 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-900/20 p-3">
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Поставки</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Собівартість поставок</p>
                   <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
                     {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} €
                   </p>
                   <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
-                    {summary.totalSuppliesQty || 0} шт · {summary.totalSupplies || 0} поставок
+                    {summary.totalSuppliesQty || 0} шт · {summary.totalSupplies || 0} пост.
                   </p>
                 </div>
 
                 {/* Вартість запасів */}
                 <div className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/50 p-3">
-                  <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Вартість запасів</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Залишки (зараз)</p>
                   <p className="text-lg font-bold text-slate-700 dark:text-slate-300">
                     {Math.round(inventoryValue).toLocaleString()} ₴
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400/70">
-                    {totalStockItems.toLocaleString()} шт на складі
+                    {totalStockItems.toLocaleString()} шт · ціна продажу
                   </p>
                 </div>
               </div>
