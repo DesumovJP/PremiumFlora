@@ -1402,7 +1402,8 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
   let totalWriteOffsQty = 0;
   let totalWriteOffsAmount = 0;
   let totalSuppliesQty = 0;
-  let totalSuppliesAmount = 0;
+  let totalSuppliesAmount = 0; // Собівартість (€)
+  let totalSuppliesSaleValue = 0; // Ціна продажу (₴)
   let totalSalesAmount = 0;
 
   activities.forEach((a) => {
@@ -1431,17 +1432,23 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
       for (const item of a.details.supplyItems) {
         const suppliedQty = (item.stockAfter || 0) - (item.stockBefore || 0);
         totalSuppliesQty += suppliedQty;
-        // Використовуємо costPrice для вартості поставки
-        const unitCost = (item as { costPrice?: number }).costPrice ?? item.priceAfter ?? 0;
+        // Собівартість (€)
+        const unitCost = (item as { costPrice?: number }).costPrice ?? 0;
         totalSuppliesAmount += suppliedQty * unitCost;
+        // Ціна продажу (₴)
+        const salePrice = item.priceAfter ?? 0;
+        totalSuppliesSaleValue += suppliedQty * salePrice;
       }
     } else if (a.type === 'productCreate' && a.details.variants) {
       // Створення товару з варіантами зі складом - рахуємо як поставку
-      const variants = a.details.variants as Array<{ stock?: number; price?: number }>;
+      const variants = a.details.variants as Array<{ stock?: number; price?: number; costPrice?: number }>;
       const createdStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
       if (createdStock > 0) {
         totalSuppliesQty += createdStock;
-        totalSuppliesAmount += variants.reduce((sum, v) => sum + (v.stock || 0) * (v.price || 0), 0);
+        // Для створення товару використовуємо price як ціну продажу
+        totalSuppliesSaleValue += variants.reduce((sum, v) => sum + (v.stock || 0) * (v.price || 0), 0);
+        // Собівартість якщо є
+        totalSuppliesAmount += variants.reduce((sum, v) => sum + (v.stock || 0) * (v.costPrice || 0), 0);
       }
     }
   });
@@ -1461,6 +1468,7 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
     totalSupplies: totalSupplies,
     totalSuppliesQty: totalSuppliesQty,
     totalSuppliesAmount: totalSuppliesAmount,
+    totalSuppliesSaleValue: totalSuppliesSaleValue,
     activitiesCount: shift.summary?.activitiesCount ?? activities.length,
     productEdits: shift.summary?.productEdits ?? 0,
     customersCreated: shift.summary?.customersCreated ?? 0,
@@ -1541,12 +1549,17 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
             </div>
             {/* Поставки */}
             <div className="rounded-lg bg-blue-50 dark:bg-blue-900/30 p-2">
-              <p className="text-xs text-blue-600 dark:text-blue-400">Собівартість поставок</p>
-              <p className="font-bold text-blue-700 dark:text-blue-300">
-                {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} €
-              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-400">Поставки</p>
+              <div className="flex items-baseline gap-2">
+                <p className="font-bold text-blue-700 dark:text-blue-300">
+                  {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} €
+                </p>
+                <p className="text-sm text-blue-600/80 dark:text-blue-400/80">
+                  → {Math.round(summary.totalSuppliesSaleValue || 0).toLocaleString()} ₴
+                </p>
+              </div>
               <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
-                {summary.totalSuppliesQty || 0} шт · {summary.totalSupplies || 0} пост.
+                {summary.totalSuppliesQty || 0} шт · собівартість → ціна продажу
               </p>
             </div>
           </div>
@@ -1833,7 +1846,8 @@ export function HistorySection({
     let totalWriteOffsQty = 0;
     let totalWriteOffsAmount = 0;
     let totalSuppliesQty = 0;
-    let totalSuppliesAmount = 0;
+    let totalSuppliesAmount = 0; // Собівартість (€)
+    let totalSuppliesSaleValue = 0; // Ціна продажу (₴)
 
     shiftActivities.forEach((a) => {
       if (a.type === 'sale') {
@@ -1875,9 +1889,12 @@ export function HistorySection({
           for (const item of a.details.supplyItems) {
             const suppliedQty = (item.stockAfter || 0) - (item.stockBefore || 0);
             totalSuppliesQty += suppliedQty;
-            // Використовуємо costPrice для вартості поставки
-            const unitCost = (item as { costPrice?: number }).costPrice ?? item.priceAfter ?? 0;
+            // Собівартість (€)
+            const unitCost = (item as { costPrice?: number }).costPrice ?? 0;
             totalSuppliesAmount += suppliedQty * unitCost;
+            // Ціна продажу (₴)
+            const salePrice = item.priceAfter ?? 0;
+            totalSuppliesSaleValue += suppliedQty * salePrice;
           }
         }
       } else if (a.type === 'paymentConfirm') {
@@ -1896,11 +1913,12 @@ export function HistorySection({
         }
       } else if (a.type === 'productCreate' && a.details.variants) {
         // Створення товару з варіантами зі складом - рахуємо як поставку
-        const variants = a.details.variants as Array<{ stock?: number; price?: number }>;
+        const variants = a.details.variants as Array<{ stock?: number; price?: number; costPrice?: number }>;
         const createdStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
         if (createdStock > 0) {
           totalSuppliesQty += createdStock;
-          totalSuppliesAmount += variants.reduce((sum, v) => sum + (v.stock || 0) * (v.price || 0), 0);
+          totalSuppliesSaleValue += variants.reduce((sum, v) => sum + (v.stock || 0) * (v.price || 0), 0);
+          totalSuppliesAmount += variants.reduce((sum, v) => sum + (v.stock || 0) * (v.costPrice || 0), 0);
         }
       }
     });
@@ -1924,6 +1942,7 @@ export function HistorySection({
       totalSupplies: totalSupplies,
       totalSuppliesQty: totalSuppliesQty,
       totalSuppliesAmount: totalSuppliesAmount,
+      totalSuppliesSaleValue: totalSuppliesSaleValue,
       activitiesCount: shift.summary?.activitiesCount ?? shiftActivities.length,
       productEdits: shift.summary?.productEdits ?? 0,
       customersCreated: shift.summary?.customersCreated ?? 0,
@@ -2058,12 +2077,17 @@ export function HistorySection({
 
                 {/* Поставки */}
                 <div className="rounded-xl border border-blue-100 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-900/20 p-3">
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Собівартість поставок</p>
-                  <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                    {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} €
-                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Поставки</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                      {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} €
+                    </p>
+                    <p className="text-sm text-blue-600/80 dark:text-blue-400/80">
+                      → {Math.round(summary.totalSuppliesSaleValue || 0).toLocaleString()} ₴
+                    </p>
+                  </div>
                   <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
-                    {summary.totalSuppliesQty || 0} шт · {summary.totalSupplies || 0} пост.
+                    {summary.totalSuppliesQty || 0} шт · собівартість → ціна продажу
                   </p>
                 </div>
 

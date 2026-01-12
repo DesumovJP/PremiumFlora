@@ -33,6 +33,7 @@ export interface ShiftSummary {
   totalSupplies?: number;
   totalSuppliesQty?: number;
   totalSuppliesAmount?: number;
+  totalSuppliesSaleValue?: number;
   activitiesCount: number;
   productEdits: number;
   customersCreated: number;

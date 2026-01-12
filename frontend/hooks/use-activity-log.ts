@@ -148,7 +148,8 @@ export interface ShiftSummary {
   totalWriteOffsAmount: number; // Сума списань (грн)
   totalSupplies: number;       // Кількість поставок
   totalSuppliesQty: number;    // Кількість поставлених квіток (шт)
-  totalSuppliesAmount: number; // Сума поставок (грн)
+  totalSuppliesAmount: number; // Собівартість поставок (€)
+  totalSuppliesSaleValue?: number; // Вартість поставок по ціні продажу (₴)
   activitiesCount: number;
   productEdits: number;
   customersCreated: number;
