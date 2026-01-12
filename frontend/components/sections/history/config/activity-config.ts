@@ -15,6 +15,7 @@ import {
   Truck,
   XCircle,
   Wallet,
+  Undo2,
 } from 'lucide-react';
 import type { ActivityType } from '@/hooks/use-activity-log';
 
@@ -76,5 +77,10 @@ export const activityConfig: Record<
     icon: Truck,
     label: 'Поставка',
     color: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-900/30',
+  },
+  saleReturn: {
+    icon: Undo2,
+    label: 'Повернення',
+    color: 'text-orange-600 bg-orange-50 dark:bg-orange-900/30',
   },
 };
