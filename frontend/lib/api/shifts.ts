@@ -24,6 +24,9 @@ export interface ShiftSummary {
   totalSalesQty?: number;
   totalSalesPaid?: number;
   totalSalesExpected?: number;
+  totalReturns?: number;
+  totalReturnsAmount?: number;
+  totalReturnsQty?: number;
   totalWriteOffs: number;
   totalWriteOffsQty: number;
   totalWriteOffsAmount?: number;
