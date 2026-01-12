@@ -231,7 +231,7 @@ export function Sidebar({ navItems, active, onChange, brand, supplyCard, onOpenS
           >
             <CreditCard className="h-[18px] w-[18px] text-[var(--admin-text-muted)] group-hover:text-amber-500 transition-colors" />
             <span className="flex-1 text-[15px] font-medium text-[var(--admin-text-secondary)] group-hover:text-[var(--admin-text-primary)]">
-              Очікує оплати
+              Очікування
             </span>
             {pendingPaymentsAmount > 0 && (
               <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 tabular-nums">
