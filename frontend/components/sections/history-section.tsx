@@ -1435,8 +1435,11 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
         // Собівартість (€)
         const unitCost = (item as { costPrice?: number }).costPrice ?? 0;
         totalSuppliesAmount += suppliedQty * unitCost;
-        // Ціна продажу (₴)
-        const salePrice = item.priceAfter ?? 0;
+        // Ціна продажу (₴) - якщо відсутня, розраховуємо з costPrice
+        const EUR_RATE = 50.5; // Приблизний курс для старих записів
+        const salePrice = item.priceAfter && item.priceAfter > 0
+          ? item.priceAfter
+          : unitCost * 1.10 * EUR_RATE; // costPrice × 1.10 × курс
         totalSuppliesSaleValue += suppliedQty * salePrice;
       }
     } else if (a.type === 'productCreate' && a.details.variants) {
@@ -1892,8 +1895,11 @@ export function HistorySection({
             // Собівартість (€)
             const unitCost = (item as { costPrice?: number }).costPrice ?? 0;
             totalSuppliesAmount += suppliedQty * unitCost;
-            // Ціна продажу (₴)
-            const salePrice = item.priceAfter ?? 0;
+            // Ціна продажу (₴) - якщо відсутня, розраховуємо з costPrice
+            const EUR_RATE = 50.5; // Приблизний курс для старих записів
+            const salePrice = item.priceAfter && item.priceAfter > 0
+              ? item.priceAfter
+              : unitCost * 1.10 * EUR_RATE; // costPrice × 1.10 × курс
             totalSuppliesSaleValue += suppliedQty * salePrice;
           }
         }

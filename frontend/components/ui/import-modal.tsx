@@ -170,6 +170,14 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
         const variantOps = res.data.operations?.filter(op => op.entity === 'variant') || [];
         const flowerOps = res.data.operations?.filter(op => op.entity === 'flower') || [];
 
+        // DEBUG: логуємо variant operations з бекенду
+        console.log('📥 Backend variant operations:', {
+          count: variantOps.length,
+          opsWithPrice: variantOps.filter(op => op.data?.price !== undefined && op.data?.price !== null).length,
+          opsWithAfterPrice: variantOps.filter(op => op.after?.price !== undefined && op.after?.price !== null).length,
+          firstOp: variantOps[0],
+        });
+
         // Створюємо мапу slug → documentId для квіток
         const flowerDocIdBySlug = new Map<string, string>();
         for (const fOp of flowerOps) {
@@ -212,15 +220,15 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
               // Для create операцій ціна в data.price, для update - в after.price
               const priceAfter = matchingOp.after?.price ?? matchingOp.data?.price ?? 0;
 
-              // DEBUG: логуємо ціну для перших 3 записів
-              if (entries.length < 3) {
+              // DEBUG: логуємо коли priceAfter = 0 або для перших 3 записів
+              if (priceAfter === 0 || entries.length < 3) {
                 console.log('🔍 Import price debug:', {
                   flowerName: row.flowerName,
                   opType: matchingOp.type,
                   'after.price': matchingOp.after?.price,
                   'data.price': matchingOp.data?.price,
                   priceAfter,
-                  fullOp: JSON.stringify(matchingOp),
+                  fullOp: matchingOp,
                 });
               }
 
@@ -260,6 +268,18 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
             priceAfter: e.priceAfter,     // Ціна продажу для балансу
             isNew: e.isNew,
           }));
+
+          // DEBUG: логуємо підсумок supplyItems
+          const totalQty = supplyItems.reduce((sum, item) => sum + (item.stockAfter - item.stockBefore), 0);
+          const totalCost = supplyItems.reduce((sum, item) => sum + (item.stockAfter - item.stockBefore) * (item.costPrice || 0), 0);
+          const totalSaleValue = supplyItems.reduce((sum, item) => sum + (item.stockAfter - item.stockBefore) * (item.priceAfter || 0), 0);
+          console.log('📦 Supply activity summary:', {
+            itemsCount: supplyItems.length,
+            totalQty,
+            totalCost: totalCost.toFixed(2) + ' €',
+            totalSaleValue: totalSaleValue.toFixed(2) + ' ₴',
+            itemsWithZeroPrice: supplyItems.filter(i => !i.priceAfter || i.priceAfter === 0).length,
+          });
 
           onLogActivity('supply', {
             filename: file.name,

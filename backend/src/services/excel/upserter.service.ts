@@ -371,6 +371,9 @@ export class UpserterService {
       costPrice: costPrice,
     });
 
+    // DEBUG: логуємо ціну в operation для CREATE
+    this.strapi.log.info(`📤 CREATE operation return: price=${basePrice}, costPrice=${costPrice}, slug=${row.slug}`);
+
     return {
       created: true,
       operation: {
