@@ -296,17 +296,35 @@ export class UpserterService {
       // Оновити існуючий варіант
       const newStock = this.applyStockMode(existing.stock, row.stock, options.stockMode);
 
-      // Собівартість завжди оновлюється з нового імпорту
-      this.strapi.log.info(`🔄 Updating variant: ${flower.name} ${variantLength}cm - stock ${existing.stock}→${newStock}, costPrice ${existing.costPrice}→${costPrice}`);
+      // Якщо ціна продажу відсутня - розрахувати базову ціну
+      let salePrice = existing.price;
+      if (salePrice === null || salePrice === undefined || salePrice === 0) {
+        const eurRate = await getEurRate();
+        salePrice = Math.round(costPrice * 1.10 * eurRate * 100) / 100;
+        this.strapi.log.info(`💰 Calculating sale price for variant without price: ${costPrice}€ × 1.10 × ${eurRate} = ${salePrice}₴`);
 
-      await this.strapi.db.query('api::variant.variant').update({
-        where: { documentId: existing.documentId },
-        data: {
-          stock: newStock,
-          costPrice: costPrice,
-          // price (ціна продажу) НЕ оновлюється - адміністратор встановлює вручну
-        },
-      });
+        // Оновлюємо ціну в базі
+        await this.strapi.db.query('api::variant.variant').update({
+          where: { documentId: existing.documentId },
+          data: {
+            stock: newStock,
+            costPrice: costPrice,
+            price: salePrice,
+          },
+        });
+      } else {
+        // Собівартість завжди оновлюється з нового імпорту
+        this.strapi.log.info(`🔄 Updating variant: ${flower.name} ${variantLength}cm - stock ${existing.stock}→${newStock}, costPrice ${existing.costPrice}→${costPrice}`);
+
+        await this.strapi.db.query('api::variant.variant').update({
+          where: { documentId: existing.documentId },
+          data: {
+            stock: newStock,
+            costPrice: costPrice,
+            // price (ціна продажу) НЕ оновлюється - адміністратор встановлює вручну
+          },
+        });
+      }
 
       return {
         created: false,
@@ -314,9 +332,9 @@ export class UpserterService {
           type: 'update',
           entity: 'variant',
           documentId: existing.documentId,
-          data: { length: variantLength, stock: newStock, costPrice: costPrice, slug: row.slug },
+          data: { length: variantLength, stock: newStock, costPrice: costPrice, price: salePrice, slug: row.slug },
           before: { stock: existing.stock, costPrice: existing.costPrice, price: existing.price },
-          after: { stock: newStock, costPrice: costPrice, price: existing.price },
+          after: { stock: newStock, costPrice: costPrice, price: salePrice },
         },
       };
     }
