@@ -341,11 +341,11 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
       <div className="space-y-4">
         <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
           <Check className="h-5 w-5" />
-          <span className="font-medium">Імпорт завершено успішно!</span>
+          <span className="font-medium">Товари збережено в базу!</span>
         </div>
 
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Перевірте імпортовані дані та встановіть ціни продажу:
+          Кількість та собівартість оновлено. За бажанням встановіть ціни продажу або натисніть «Пропустити».
         </p>
 
         <div className="max-h-[400px] overflow-auto border border-slate-200 dark:border-slate-700 rounded-lg">
@@ -452,11 +452,25 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
     );
   };
 
+  // Динамічний заголовок модалки
+  const getModalTitle = () => {
+    switch (step) {
+      case 'upload':
+        return "Імпорт накладної";
+      case 'preview':
+        return "Крок 1: Перевірка даних";
+      case 'pricing':
+        return "Крок 2: Дані збережено";
+      default:
+        return "Імпорт накладної";
+    }
+  };
+
   return (
     <Modal
       open={open}
       onOpenChange={(v) => !v && handleClose()}
-      title={step === 'pricing' ? "Встановлення цін" : "Імпорт накладної"}
+      title={getModalTitle()}
     >
       <div className="space-y-4">
         {step === 'pricing' ? (
@@ -560,10 +574,16 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                           : "text-emerald-700 dark:text-emerald-300"
                       )}>
                         {result.data.status === "dry-run"
-                          ? "Попередній перегляд"
+                          ? "Файл прочитано та розпізнано"
                           : "Імпорт завершено"}
                       </span>
                     </div>
+
+                    {result.data.status === "dry-run" && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Перевірте дані нижче. Якщо все вірно - натисніть «Застосувати» для збереження в базу.
+                      </p>
+                    )}
 
                     <div className="grid grid-cols-3 gap-2 text-sm">
                       <div className="text-slate-600 dark:text-slate-400">
@@ -836,7 +856,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                   onClick={handleApplyImport}
                   disabled={loading || result.data.errors.length > 0}
                 >
-                  {loading ? "Застосування..." : "Застосувати"}
+                  {loading ? "Збереження..." : "Зберегти в базу"}
                 </Button>
               ) : result?.success === false &&
                 result.error.code === "DUPLICATE_CHECKSUM" &&
@@ -846,7 +866,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                 </Button>
               ) : (
                 <Button onClick={handleImport} disabled={!file || loading}>
-                  {loading ? "Обробка..." : "Перевірити"}
+                  {loading ? "Читання файлу..." : "Прочитати файл"}
                 </Button>
               )}
             </div>
