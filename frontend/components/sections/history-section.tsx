@@ -908,9 +908,9 @@ function ActivityItem({ activity }: { activity: Activity }) {
             const qty = (item.stockAfter || 0) - (item.stockBefore || 0);
             // Для вартості поставки використовуємо costPrice (собівартість)
             const unitCost = (item as { costPrice?: number }).costPrice ?? item.priceAfter ?? 0;
-            // Для балансу використовуємо ціну продажу (priceAfter)
-            const valueBefore = (item.stockBefore || 0) * (item.priceBefore || item.priceAfter || 0);
-            const valueAfter = (item.stockAfter || 0) * (item.priceAfter || 0);
+            // Для балансу запасів теж використовуємо собівартість (costPrice)
+            const valueBefore = (item.stockBefore || 0) * unitCost;
+            const valueAfter = (item.stockAfter || 0) * unitCost;
             return {
               totalQty: acc.totalQty + qty,
               totalValue: acc.totalValue + qty * unitCost,  // Вартість поставки по собівартості
@@ -938,11 +938,11 @@ function ActivityItem({ activity }: { activity: Activity }) {
                     +{supplyTotals.totalQty.toLocaleString()} шт
                   </span>
                   <span className="text-blue-700 dark:text-blue-300 font-semibold">
-                    +{Math.round(supplyTotals.totalValue).toLocaleString()} ₴
+                    +{Math.round(supplyTotals.totalValue).toLocaleString()} €
                   </span>
                 </div>
                 <div className="text-xs text-blue-600/70 dark:text-blue-400/70">
-                  Баланс: {Math.round(supplyTotals.balanceBefore).toLocaleString()} → {Math.round(supplyTotals.balanceAfter).toLocaleString()} ₴
+                  Запаси: {Math.round(supplyTotals.balanceBefore).toLocaleString()} → {Math.round(supplyTotals.balanceAfter).toLocaleString()} €
                 </div>
               </div>
             )}

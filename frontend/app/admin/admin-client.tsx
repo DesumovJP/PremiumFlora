@@ -67,6 +67,9 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
   const [clientsPendingTotal, setClientsPendingTotal] = useState(0);
   const [clientsPendingCount, setClientsPendingCount] = useState(0);
 
+  // Client history modal (when clicking balance in POS cart)
+  const [viewClientHistoryId, setViewClientHistoryId] = useState<string | null>(null);
+
   // Alerts
   const { alerts, showSuccess, showError, showWarning, dismiss } = useAlerts();
 
@@ -459,6 +462,12 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
     setTab('clients');
   };
 
+  // Handler to view client history (from POS cart balance click)
+  const handleViewClientHistory = (clientId: string) => {
+    setViewClientHistoryId(clientId);
+    setTab('clients');
+  };
+
   const cartCount = useMemo(
     () => cart.reduce((acc, item) => acc + item.qty, 0),
     [cart]
@@ -654,6 +663,8 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
             onDeleteCustomer={handleDeleteCustomer}
             onLogActivity={logActivity}
             onPendingPaymentsChange={setClientsPendingTotal}
+            initialSelectedClientId={viewClientHistoryId}
+            onInitialClientHandled={() => setViewClientHistoryId(null)}
           />
         </TabsContent>
 
@@ -719,6 +730,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
         comment={posComment}
         onCommentChange={setPosComment}
         onAddCustomer={handleAddCustomer}
+        onViewClientHistory={handleViewClientHistory}
       />
     </aside>
   );
@@ -828,6 +840,7 @@ export function AdminClient({ products: initialProducts }: AdminClientProps) {
                 comment={posComment}
                 onCommentChange={setPosComment}
                 onAddCustomer={handleAddCustomer}
+                onViewClientHistory={handleViewClientHistory}
               />
             </SheetContent>
           </Sheet>

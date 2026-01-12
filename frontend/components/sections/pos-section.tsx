@@ -69,6 +69,7 @@ type PosSectionProps = {
   comment?: string;
   onCommentChange?: (value: string) => void;
   onAddCustomer?: (data: { name: string; phone: string; email: string; address: string }) => Promise<void>;
+  onViewClientHistory?: (clientId: string) => void;
 };
 
 export function PosSection({
@@ -96,6 +97,7 @@ export function PosSection({
   comment = '',
   onCommentChange,
   onAddCustomer,
+  onViewClientHistory,
 }: PosSectionProps) {
   if (renderOnlyCart) {
     return (
@@ -118,6 +120,7 @@ export function PosSection({
         comment={comment}
         onCommentChange={onCommentChange}
         onAddCustomer={onAddCustomer}
+        onViewClientHistory={onViewClientHistory}
       />
     );
   }
@@ -229,6 +232,7 @@ function CartPanel({
   comment = '',
   onCommentChange,
   onAddCustomer,
+  onViewClientHistory,
 }: {
   clients: Client[];
   selectedClient?: string;
@@ -248,6 +252,7 @@ function CartPanel({
   comment?: string;
   onCommentChange?: (value: string) => void;
   onAddCustomer?: (data: { name: string; phone: string; email: string; address: string }) => Promise<void>;
+  onViewClientHistory?: (clientId: string) => void;
 }) {
   const [discount, setDiscount] = useState<number>(0);
   const [showDiscount, setShowDiscount] = useState(false);
@@ -341,16 +346,20 @@ function CartPanel({
             )}
           </button>
 
-          {/* Balance Row - shown when client selected */}
+          {/* Balance Row - shown when client selected, clickable to view history */}
           {selectedClientObj && (
-            <div className={cn(
-              "flex items-center justify-between px-4 py-2.5 border-t border-slate-100 dark:border-[var(--admin-border)]",
-              (selectedClientObj.balance ?? 0) < 0
-                ? "bg-rose-50/50 dark:bg-rose-900/10"
-                : (selectedClientObj.balance ?? 0) > 0
-                  ? "bg-emerald-50/50 dark:bg-emerald-900/10"
-                  : ""
-            )}>
+            <button
+              type="button"
+              onClick={() => onViewClientHistory?.(selectedClientObj.id)}
+              className={cn(
+                "w-full flex items-center justify-between px-4 py-2.5 border-t border-slate-100 dark:border-[var(--admin-border)] transition-colors",
+                (selectedClientObj.balance ?? 0) < 0
+                  ? "bg-rose-50/50 dark:bg-rose-900/10 hover:bg-rose-100/50 dark:hover:bg-rose-900/20"
+                  : (selectedClientObj.balance ?? 0) > 0
+                    ? "bg-emerald-50/50 dark:bg-emerald-900/10 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20"
+                    : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+              )}
+            >
               <div className="flex items-center gap-2">
                 <Wallet className={cn(
                   "h-3.5 w-3.5",
@@ -381,19 +390,19 @@ function CartPanel({
                 {(selectedClientObj.balance ?? 0) > 0 && "+"}
                 {Math.abs(selectedClientObj.balance ?? 0).toLocaleString('uk-UA')} ₴
               </span>
-            </div>
+            </button>
           )}
         </div>
       </CardHeader>
 
       {/* Cart Items */}
-      <CardContent className="flex-1 min-h-0 pt-0 p-0 flex flex-col overflow-hidden">
+      <CardContent className="flex-1 min-h-0 pt-0 p-0 overflow-hidden">
         {cart.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center bg-[var(--admin-bg)]">
+          <div className="h-full flex items-center justify-center bg-[var(--admin-bg)]">
             <EmptyCart />
           </div>
         ) : (
-          <ScrollArea className="flex-1 min-h-0 w-full max-w-full overflow-x-hidden bg-[var(--admin-bg)]">
+          <ScrollArea className="h-full w-full max-w-full overflow-x-hidden bg-[var(--admin-bg)]">
             <div className="p-4 pr-5 sm:p-5 sm:pr-6 space-y-3 w-full max-w-full overflow-hidden box-border">
               {groupedCart.map((group) => (
                 <CartGroupItem

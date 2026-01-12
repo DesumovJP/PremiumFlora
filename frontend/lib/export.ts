@@ -47,7 +47,7 @@ function downloadCsv(content: string, filename: string): void {
 // ============================================
 
 export function exportProducts(products: Product[]): void {
-  const headers = ['Назва', 'Розмір (см)', 'Собівартість', 'Ціна', 'Кількість', 'Вартість закупки', 'Вартість продажу'];
+  const headers = ['Назва', 'Розмір (см)', 'Собівартість (€)', 'Ціна (₴)', 'Кількість', 'Вартість закупки (€)', 'Вартість продажу (₴)'];
 
   const rows: string[] = [toCsvRow(headers)];
 
@@ -306,7 +306,7 @@ export function exportShift(
   const supplyActivities = activities.filter(a => a.type === 'supply');
   if (supplyActivities.length > 0) {
     rows.push(toCsvRow(['ПОСТАВКИ']));
-    rows.push(toCsvRow(['Час', 'Товар', 'Розмір', 'Було', 'Стало', 'Додано', 'Сума']));
+    rows.push(toCsvRow(['Час', 'Товар', 'Розмір', 'Було', 'Стало', 'Додано', 'Сума (€)']));
 
     supplyActivities.forEach(activity => {
       const { details, timestamp } = activity;
@@ -316,11 +316,14 @@ export function exportShift(
         length?: number;
         stockBefore?: number;
         stockAfter?: number;
+        costPrice?: number;
         priceAfter?: number;
       }>;
 
       items.forEach((item, idx) => {
         const qty = (item.stockAfter || 0) - (item.stockBefore || 0);
+        // Використовуємо costPrice (собівартість) для суми поставки
+        const unitCost = item.costPrice ?? item.priceAfter ?? 0;
         rows.push(toCsvRow([
           idx === 0 ? time : '',
           item.flowerName || '-',
@@ -328,7 +331,7 @@ export function exportShift(
           item.stockBefore || 0,
           item.stockAfter || 0,
           qty,
-          Math.round(qty * (item.priceAfter || 0)),
+          Math.round(qty * unitCost * 100) / 100,
         ]));
       });
     });

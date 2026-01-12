@@ -30,9 +30,11 @@ type ClientsSectionProps = {
   onLogActivity?: (type: ActivityType, details: ActivityDetails) => Promise<void>;
   onPendingPaymentsChange?: (total: number) => void;
   onCustomersUpdate?: () => void; // Callback to refresh customers list after balance change
+  initialSelectedClientId?: string | null; // Auto-open history for this client
+  onInitialClientHandled?: () => void; // Clear after handling
 };
 
-export function ClientsSection({ customers, isLoading = false, onOpenExport, onAddCustomer, onDeleteCustomer, onLogActivity, onPendingPaymentsChange, onCustomersUpdate }: ClientsSectionProps) {
+export function ClientsSection({ customers, isLoading = false, onOpenExport, onAddCustomer, onDeleteCustomer, onLogActivity, onPendingPaymentsChange, onCustomersUpdate, initialSelectedClientId, onInitialClientHandled }: ClientsSectionProps) {
   // State for payment confirmation
   const [confirmingPaymentId, setConfirmingPaymentId] = useState<string | null>(null);
   // State for confirmation dialog
@@ -173,6 +175,17 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
       setIsLoadingTransactions(false);
     }
   };
+
+  // Auto-select client when navigating from POS (e.g., clicking on balance)
+  useEffect(() => {
+    if (initialSelectedClientId && clients.length > 0) {
+      const clientToSelect = clients.find(c => c.id === initialSelectedClientId);
+      if (clientToSelect) {
+        handleSelect(clientToSelect);
+        onInitialClientHandled?.();
+      }
+    }
+  }, [initialSelectedClientId, clients]);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
