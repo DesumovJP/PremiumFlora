@@ -296,12 +296,19 @@ export class UpserterService {
       // Оновити існуючий варіант
       const newStock = this.applyStockMode(existing.stock, row.stock, options.stockMode);
 
-      // Якщо ціна продажу відсутня - розрахувати базову ціну
-      let salePrice = existing.price;
-      if (salePrice === null || salePrice === undefined || salePrice === 0) {
+      // Парсимо ціну (може бути string, null, undefined, 0)
+      const existingPrice = typeof existing.price === 'string'
+        ? parseFloat(existing.price)
+        : (existing.price ?? 0);
+
+      this.strapi.log.info(`🔍 Existing variant price check: raw=${existing.price}, parsed=${existingPrice}, type=${typeof existing.price}`);
+
+      // Якщо ціна продажу відсутня або 0 - розрахувати базову ціну
+      let salePrice: number;
+      if (!existingPrice || existingPrice <= 0 || isNaN(existingPrice)) {
         const eurRate = await getEurRate();
         salePrice = Math.round(costPrice * 1.10 * eurRate * 100) / 100;
-        this.strapi.log.info(`💰 Calculating sale price for variant without price: ${costPrice}€ × 1.10 × ${eurRate} = ${salePrice}₴`);
+        this.strapi.log.info(`💰 Calculating sale price: ${costPrice}€ × 1.10 × ${eurRate} = ${salePrice}₴`);
 
         // Оновлюємо ціну в базі
         await this.strapi.db.query('api::variant.variant').update({
@@ -313,18 +320,19 @@ export class UpserterService {
           },
         });
       } else {
-        // Собівартість завжди оновлюється з нового імпорту
-        this.strapi.log.info(`🔄 Updating variant: ${flower.name} ${variantLength}cm - stock ${existing.stock}→${newStock}, costPrice ${existing.costPrice}→${costPrice}`);
+        salePrice = existingPrice;
+        this.strapi.log.info(`🔄 Updating variant: ${flower.name} ${variantLength}cm - stock ${existing.stock}→${newStock}, costPrice ${existing.costPrice}→${costPrice}, keeping price=${salePrice}₴`);
 
         await this.strapi.db.query('api::variant.variant').update({
           where: { documentId: existing.documentId },
           data: {
             stock: newStock,
             costPrice: costPrice,
-            // price (ціна продажу) НЕ оновлюється - адміністратор встановлює вручну
           },
         });
       }
+
+      this.strapi.log.info(`✅ Returning operation with price=${salePrice}`);
 
       return {
         created: false,
@@ -333,7 +341,7 @@ export class UpserterService {
           entity: 'variant',
           documentId: existing.documentId,
           data: { length: variantLength, stock: newStock, costPrice: costPrice, price: salePrice, slug: row.slug },
-          before: { stock: existing.stock, costPrice: existing.costPrice, price: existing.price },
+          before: { stock: existing.stock, costPrice: existing.costPrice, price: existingPrice },
           after: { stock: newStock, costPrice: costPrice, price: salePrice },
         },
       };

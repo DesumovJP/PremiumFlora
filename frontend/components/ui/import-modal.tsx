@@ -212,6 +212,18 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
               // Для create операцій ціна в data.price, для update - в after.price
               const priceAfter = matchingOp.after?.price ?? matchingOp.data?.price ?? 0;
 
+              // DEBUG: логуємо ціну для перших 3 записів
+              if (entries.length < 3) {
+                console.log('🔍 Import price debug:', {
+                  flowerName: row.flowerName,
+                  opType: matchingOp.type,
+                  'after.price': matchingOp.after?.price,
+                  'data.price': matchingOp.data?.price,
+                  priceAfter,
+                  fullOp: JSON.stringify(matchingOp),
+                });
+              }
+
               // Для агрегованих рядків row.stock вже містить загальну кількість
               // stockAfter - stockBefore = кількість яку ми імпортували
               const importedQty = stockAfter - stockBefore;
