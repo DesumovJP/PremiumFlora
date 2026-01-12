@@ -205,10 +205,11 @@ function ActivityItem({ activity }: { activity: Activity }) {
                 <span className="text-slate-500 dark:text-admin-text-tertiary">Товари:</span>
                 <div className="ml-2 space-y-2">
                   {details.items.map((item, idx) => {
-                    const hasEditedPrice = item.originalPrice && item.originalPrice !== item.price;
-                    const isDiscount = hasEditedPrice && item.price < item.originalPrice;
-                    const isMarkup = hasEditedPrice && item.price > item.originalPrice;
-                    const priceDiff = hasEditedPrice ? Math.round((item.price - item.originalPrice) * item.qty) : 0;
+                    const origPrice = item.originalPrice ?? item.price;
+                    const hasEditedPrice = item.originalPrice != null && item.originalPrice !== item.price;
+                    const isDiscount = hasEditedPrice && item.price < origPrice;
+                    const isMarkup = hasEditedPrice && item.price > origPrice;
+                    const priceDiff = hasEditedPrice ? Math.round((item.price - origPrice) * item.qty) : 0;
 
                     return (
                       <div key={idx} className="rounded-lg bg-slate-50 dark:bg-admin-surface-elevated p-2">
