@@ -81,7 +81,6 @@ export const GET_FLOWERS = gql`
   query GetFlowers($pageSize: Int = 500) {
     flowers(
       pagination: { pageSize: $pageSize }
-      filters: { publishedAt: { notNull: true } }
     ) {
       ...FlowerFields
     }
@@ -95,7 +94,7 @@ export const GET_FLOWERS = gql`
 export const GET_FLOWER_BY_SLUG = gql`
   query GetFlowerBySlug($slug: String!) {
     flowers(
-      filters: { slug: { eq: $slug }, publishedAt: { notNull: true } }
+      filters: { slug: { eq: $slug } }
     ) {
       ...FlowerFields
     }
