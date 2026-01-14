@@ -3,14 +3,16 @@
 import { useState, useCallback, useEffect } from "react";
 import { Modal } from "./modal";
 import { Button } from "./button";
-import { importExcel, updateVariantPrices, getEurRate, type CurrencyRateInfo } from "@/lib/strapi";
+import { importExcel, updateVariantPrices, getUsdRate, setManualUsdRate, type CurrencyRateInfo } from "@/lib/strapi";
 import { cn } from "@/lib/utils";
-import { Upload, Check, AlertCircle, Info, RefreshCw } from "lucide-react";
+import { Upload, Check, AlertCircle, Info, RefreshCw, ChevronDown, ChevronRight, Calculator } from "lucide-react";
 import type {
   ImportOptions,
   ImportResponse,
   NormalizedRow,
   RowOverride,
+  CostCalculationMode,
+  FullCostParams,
 } from "@/lib/import-types";
 
 interface SupplyItem {
@@ -22,6 +24,15 @@ interface SupplyItem {
   priceBefore: number;
   priceAfter: number;   // Ціна продажу (для відображення балансу)
   isNew: boolean;
+  // Деталі повного розрахунку собівартості (якщо використовувався full mode)
+  costCalculation?: {
+    basePrice: number;
+    airPerStem: number;
+    truckPerStem: number;
+    transferFeePercent: number;
+    taxPerStem: number;
+    fullCost: number;
+  };
 }
 
 // Тип для редагованих цін
@@ -38,6 +49,15 @@ interface PriceEntry {
   stockAfter: number;
   priceAfter: number;
   isNew: boolean;
+  // Деталі повного розрахунку собівартості
+  costCalculation?: {
+    basePrice: number;
+    airPerStem: number;
+    truckPerStem: number;
+    transferFeePercent: number;
+    taxPerStem: number;
+    fullCost: number;
+  };
 }
 
 interface ImportModalProps {
@@ -50,6 +70,7 @@ interface ImportModalProps {
     flowersUpdated: number;
     variantsCreated: number;
     variantsUpdated: number;
+    costCalculationMode?: 'simple' | 'full';
     supplyItems?: SupplyItem[];
   }) => void;
 }
@@ -69,30 +90,84 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
   });
   // Стан для редагування нормалізації (hash -> { flowerName, length })
   const [rowEdits, setRowEdits] = useState<Record<string, RowOverride>>({});
-  // Курс EUR/UAH
-  const [eurRate, setEurRate] = useState<CurrencyRateInfo | null>(null);
-  const [eurRateLoading, setEurRateLoading] = useState(false);
+  // Курс USD/UAH
+  const [usdRate, setUsdRate] = useState<CurrencyRateInfo | null>(null);
+  const [usdRateLoading, setUsdRateLoading] = useState(false);
+  // Ручний ввід курсу
+  const [manualRateInput, setManualRateInput] = useState<string>('');
+  const [isEditingRate, setIsEditingRate] = useState(false);
+
+  // Розрахунок собівартості
+  const [costMode, setCostMode] = useState<CostCalculationMode>('simple');
+  const [costParamsExpanded, setCostParamsExpanded] = useState(false);
+  const [fullCostParams, setFullCostParams] = useState<FullCostParams>({
+    truckCostPerBox: 75,
+    transferFeePercent: 3.5,
+    taxPerStem: 0.05,
+  });
 
   // Завантажити курс при відкритті модалки
   useEffect(() => {
-    if (open && !eurRate) {
-      setEurRateLoading(true);
-      getEurRate()
-        .then(setEurRate)
+    if (open && !usdRate) {
+      setUsdRateLoading(true);
+      getUsdRate()
+        .then((rate) => {
+          setUsdRate(rate);
+          if (rate.isManual) {
+            setManualRateInput(rate.rate.toString());
+          }
+        })
         .catch(console.error)
-        .finally(() => setEurRateLoading(false));
+        .finally(() => setUsdRateLoading(false));
     }
-  }, [open, eurRate]);
+  }, [open, usdRate]);
 
-  const refreshEurRate = useCallback(async () => {
-    setEurRateLoading(true);
+  const refreshUsdRate = useCallback(async () => {
+    setUsdRateLoading(true);
     try {
-      const rate = await getEurRate();
-      setEurRate(rate);
+      const rate = await getUsdRate();
+      setUsdRate(rate);
+      if (rate.isManual) {
+        setManualRateInput(rate.rate.toString());
+      }
     } catch (error) {
-      console.error('Failed to refresh EUR rate:', error);
+      console.error('Failed to refresh USD rate:', error);
     } finally {
-      setEurRateLoading(false);
+      setUsdRateLoading(false);
+    }
+  }, []);
+
+  const handleSetManualRate = useCallback(async () => {
+    const rate = parseFloat(manualRateInput);
+    if (isNaN(rate) || rate <= 0) {
+      alert('Введіть коректний курс (позитивне число)');
+      return;
+    }
+    setUsdRateLoading(true);
+    try {
+      const newRate = await setManualUsdRate(rate);
+      setUsdRate(newRate);
+      setIsEditingRate(false);
+    } catch (error) {
+      console.error('Failed to set manual rate:', error);
+      alert('Помилка встановлення курсу');
+    } finally {
+      setUsdRateLoading(false);
+    }
+  }, [manualRateInput]);
+
+  const handleClearManualRate = useCallback(async () => {
+    setUsdRateLoading(true);
+    try {
+      const newRate = await setManualUsdRate(null);
+      setUsdRate(newRate);
+      setManualRateInput('');
+      setIsEditingRate(false);
+    } catch (error) {
+      console.error('Failed to clear manual rate:', error);
+      alert('Помилка скидання курсу');
+    } finally {
+      setUsdRateLoading(false);
     }
   }, []);
 
@@ -128,7 +203,13 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
     setResult(null);
 
     try {
-      const res = await importExcel(file, options);
+      // Додаємо опції розрахунку собівартості
+      const importOptions: ImportOptions = {
+        ...options,
+        costCalculationMode: costMode,
+        fullCostParams: costMode === 'full' ? fullCostParams : undefined,
+      };
+      const res = await importExcel(file, importOptions);
       setResult(res);
 
       if (res.success) {
@@ -155,11 +236,13 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
     setResult(null);
 
     try {
-      // Передаємо rowOverrides якщо є редагування
+      // Передаємо rowOverrides та опції розрахунку собівартості
       const importOptions: ImportOptions = {
         ...options,
         dryRun: false,
         rowOverrides: Object.keys(rowEdits).length > 0 ? rowEdits : undefined,
+        costCalculationMode: costMode,
+        fullCostParams: costMode === 'full' ? fullCostParams : undefined,
       };
       const res = await importExcel(file, importOptions);
       setResult(res);
@@ -236,6 +319,16 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
               // stockAfter - stockBefore = кількість яку ми імпортували
               const importedQty = stockAfter - stockBefore;
 
+              // Отримуємо деталі розрахунку собівартості якщо є
+              const fullCostCalc = (row.original as Record<string, unknown>)?._fullCostCalculation as {
+                basePrice: number;
+                airPerStem: number;
+                truckPerStem: number;
+                transferFeePercent: number;
+                taxPerStem: number;
+                fullCost: number;
+              } | undefined;
+
               entries.push({
                 documentId: matchingOp.documentId,
                 flowerName: row.flowerName,
@@ -248,6 +341,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                 stockAfter,
                 priceAfter,
                 isNew,
+                costCalculation: fullCostCalc,
               });
             }
           }
@@ -267,18 +361,21 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
             priceBefore: 0,               // Ціна продажу до = 0 для нових
             priceAfter: e.priceAfter,     // Ціна продажу для балансу
             isNew: e.isNew,
+            costCalculation: e.costCalculation,  // Деталі розрахунку собівартості
           }));
 
           // DEBUG: логуємо підсумок supplyItems
           const totalQty = supplyItems.reduce((sum, item) => sum + (item.stockAfter - item.stockBefore), 0);
           const totalCost = supplyItems.reduce((sum, item) => sum + (item.stockAfter - item.stockBefore) * (item.costPrice || 0), 0);
           const totalSaleValue = supplyItems.reduce((sum, item) => sum + (item.stockAfter - item.stockBefore) * (item.priceAfter || 0), 0);
+          const hasFullCostCalc = supplyItems.some(i => i.costCalculation);
           console.log('📦 Supply activity summary:', {
             itemsCount: supplyItems.length,
             totalQty,
-            totalCost: totalCost.toFixed(2) + ' €',
+            totalCost: totalCost.toFixed(2) + ' $',
             totalSaleValue: totalSaleValue.toFixed(2) + ' ₴',
             itemsWithZeroPrice: supplyItems.filter(i => !i.priceAfter || i.priceAfter === 0).length,
+            costCalculationMode: hasFullCostCalc ? 'full' : 'simple',
           });
 
           onLogActivity('supply', {
@@ -287,6 +384,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
             flowersUpdated: res.data.stats.flowersUpdated,
             variantsCreated: res.data.stats.variantsCreated,
             variantsUpdated: res.data.stats.variantsUpdated,
+            costCalculationMode: hasFullCostCalc ? 'full' : 'simple',
             supplyItems: supplyItems.length > 0 ? supplyItems : undefined,
           });
         }
@@ -352,6 +450,14 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
       stockMode: "add",
       forceImport: false,
     });
+    // Скидаємо налаштування собівартості
+    setCostMode('simple');
+    setCostParamsExpanded(false);
+    setFullCostParams({
+      truckCostPerBox: 75,
+      transferFeePercent: 3.5,
+      taxPerStem: 0.05,
+    });
     onOpenChange(false);
   };
 
@@ -399,8 +505,8 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                     <span className="text-xs font-normal text-slate-500">(додано)</span>
                   </div>
                 </th>
-                <th className="text-right px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-20">Ціна €</th>
-                <th className="text-right px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-24">Сума €</th>
+                <th className="text-right px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-20">Ціна $</th>
+                <th className="text-right px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-24">Сума $</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -511,40 +617,253 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
           </>
         ) : (
           <>
-            {/* EUR Rate Info */}
-            <div className="flex items-center justify-between rounded-lg bg-blue-50 dark:bg-blue-900/20 px-4 py-3 border border-blue-100 dark:border-blue-800">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-blue-700 dark:text-blue-300">
-                  Курс НБУ:
-                </span>
-                {eurRateLoading ? (
-                  <span className="text-sm text-blue-600 dark:text-blue-400 animate-pulse">
-                    Завантаження...
+            {/* USD Rate Info */}
+            <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 px-4 py-3 border border-blue-100 dark:border-blue-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-blue-700 dark:text-blue-300">
+                    Курс USD:
                   </span>
-                ) : eurRate ? (
-                  <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                    {eurRate.rate.toFixed(2)} ₴/€
-                  </span>
-                ) : (
-                  <span className="text-sm text-blue-600 dark:text-blue-400">
-                    Недоступно
-                  </span>
-                )}
-                {eurRate && (
-                  <span className="text-xs text-blue-500 dark:text-blue-400">
-                    ({eurRate.date})
-                  </span>
-                )}
+                  {usdRateLoading ? (
+                    <span className="text-sm text-blue-600 dark:text-blue-400 animate-pulse">
+                      Завантаження...
+                    </span>
+                  ) : usdRate ? (
+                    <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                      {usdRate.rate.toFixed(2)} ₴/$
+                    </span>
+                  ) : (
+                    <span className="text-sm text-blue-600 dark:text-blue-400">
+                      Недоступно
+                    </span>
+                  )}
+                  {usdRate && (
+                    <span className={cn(
+                      "text-xs px-1.5 py-0.5 rounded",
+                      usdRate.isManual
+                        ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
+                        : "text-blue-500 dark:text-blue-400"
+                    )}>
+                      {usdRate.isManual ? 'ручний' : usdRate.source === 'NBU' ? 'НБУ' : usdRate.source}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  {!isEditingRate && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditingRate(true);
+                          setManualRateInput(usdRate?.rate?.toString() || '');
+                        }}
+                        className="text-xs px-2 py-1 rounded hover:bg-blue-100 dark:hover:bg-blue-800 text-blue-600 dark:text-blue-400 transition-colors"
+                      >
+                        Змінити
+                      </button>
+                      <button
+                        type="button"
+                        onClick={refreshUsdRate}
+                        disabled={usdRateLoading}
+                        className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors disabled:opacity-50"
+                        title="Оновити курс з НБУ"
+                      >
+                        <RefreshCw className={cn("h-4 w-4 text-blue-600 dark:text-blue-400", usdRateLoading && "animate-spin")} />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
+
+              {/* Manual rate input */}
+              {isEditingRate && (
+                <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-blue-600 dark:text-blue-400">
+                      Ручний курс:
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={manualRateInput}
+                      onChange={(e) => setManualRateInput(e.target.value)}
+                      placeholder="41.50"
+                      className="w-24 px-2 py-1 text-sm border border-blue-200 dark:border-blue-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <span className="text-xs text-blue-500 dark:text-blue-400">₴/$</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleSetManualRate}
+                      disabled={usdRateLoading}
+                      className="text-xs h-7"
+                    >
+                      Зберегти
+                    </Button>
+                    {usdRate?.isManual && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleClearManualRate}
+                        disabled={usdRateLoading}
+                        className="text-xs h-7 text-amber-600 hover:text-amber-700"
+                      >
+                        Скинути на НБУ
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setIsEditingRate(false)}
+                      className="text-xs h-7"
+                    >
+                      Скасувати
+                    </Button>
+                  </div>
+                  <p className="text-[10px] text-blue-500 dark:text-blue-400 mt-1">
+                    Ручний курс буде використовуватись для розрахунку ціни продажу замість курсу НБУ
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Cost Calculation Mode */}
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
               <button
                 type="button"
-                onClick={refreshEurRate}
-                disabled={eurRateLoading}
-                className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors disabled:opacity-50"
-                title="Оновити курс"
+                onClick={() => setCostParamsExpanded(!costParamsExpanded)}
+                className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
               >
-                <RefreshCw className={cn("h-4 w-4 text-blue-600 dark:text-blue-400", eurRateLoading && "animate-spin")} />
+                <div className="flex items-center gap-2">
+                  <Calculator className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Розрахунок собівартості
+                  </span>
+                  <span className={cn(
+                    "text-xs px-1.5 py-0.5 rounded",
+                    costMode === 'full'
+                      ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                  )}>
+                    {costMode === 'full' ? 'Повний' : 'Простий'}
+                  </span>
+                </div>
+                {costParamsExpanded ? (
+                  <ChevronDown className="h-4 w-4 text-slate-400" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-slate-400" />
+                )}
               </button>
+
+              {costParamsExpanded && (
+                <div className="px-4 pb-4 pt-2 border-t border-slate-100 dark:border-slate-700 space-y-4">
+                  {/* Mode selector */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCostMode('simple')}
+                      className={cn(
+                        "flex-1 px-3 py-2 text-sm rounded-lg border transition-colors",
+                        costMode === 'simple'
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                          : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                      )}
+                    >
+                      <div className="font-medium">Простий</div>
+                      <div className="text-xs mt-0.5 opacity-70">Ціна з Excel = собівартість</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCostMode('full')}
+                      className={cn(
+                        "flex-1 px-3 py-2 text-sm rounded-lg border transition-colors",
+                        costMode === 'full'
+                          ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                          : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                      )}
+                    >
+                      <div className="font-medium">Повний</div>
+                      <div className="text-xs mt-0.5 opacity-70">+ авіа + трак + податки</div>
+                    </button>
+                  </div>
+
+                  {/* Full cost parameters */}
+                  {costMode === 'full' && (
+                    <div className="space-y-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                      <p className="text-xs text-emerald-700 dark:text-emerald-300 mb-2">
+                        Формула: (ціна + авіа/шт + трак/шт) × (1 + переказ%) + податок
+                      </p>
+
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs text-emerald-600 dark:text-emerald-400 mb-1">
+                            Трак за коробку
+                          </label>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              step="1"
+                              min="0"
+                              value={fullCostParams.truckCostPerBox}
+                              onChange={(e) => setFullCostParams(prev => ({
+                                ...prev,
+                                truckCostPerBox: parseFloat(e.target.value) || 0
+                              }))}
+                              className="w-full px-2 py-1.5 text-sm border border-emerald-200 dark:border-emerald-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                            />
+                            <span className="text-xs text-emerald-500">$</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs text-emerald-600 dark:text-emerald-400 mb-1">
+                            Переказ
+                          </label>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={fullCostParams.transferFeePercent}
+                              onChange={(e) => setFullCostParams(prev => ({
+                                ...prev,
+                                transferFeePercent: parseFloat(e.target.value) || 0
+                              }))}
+                              className="w-full px-2 py-1.5 text-sm border border-emerald-200 dark:border-emerald-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                            />
+                            <span className="text-xs text-emerald-500">%</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs text-emerald-600 dark:text-emerald-400 mb-1">
+                            Податок/шт
+                          </label>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={fullCostParams.taxPerStem}
+                              onChange={(e) => setFullCostParams(prev => ({
+                                ...prev,
+                                taxPerStem: parseFloat(e.target.value) || 0
+                              }))}
+                              className="w-full px-2 py-1.5 text-sm border border-emerald-200 dark:border-emerald-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                            />
+                            <span className="text-xs text-emerald-500">$</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
+                        Авіа доставка береться з Excel (Transport / кількість коробок / квіток в коробці)
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* File upload */}
@@ -631,6 +950,24 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                     {/* Preview table for dry-run - ПОВНА ТАБЛИЦЯ */}
                     {result.data.status === "dry-run" && result.data.rows && result.data.rows.length > 0 && (
                       <div className="mt-3 space-y-2">
+                        {/* Перевірка чи є full cost calculation */}
+                        {(() => {
+                          const hasFullCost = result.data.rows.some(
+                            r => (r.original as Record<string, unknown>)?._fullCostCalculation
+                          );
+                          return hasFullCost && (
+                            <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-xs">
+                              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 font-medium mb-1">
+                                <Calculator className="h-3.5 w-3.5" />
+                                Повний розрахунок собівартості
+                              </div>
+                              <p className="text-emerald-600 dark:text-emerald-400">
+                                Формула: (базова + авіа/шт + трак/шт) × (1 + переказ%) + податок
+                              </p>
+                            </div>
+                          );
+                        })()}
+
                         {/* Підсумок */}
                         <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 px-1">
                           <span>Всього рядків: <strong>{result.data.rows.length}</strong></span>
@@ -638,7 +975,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                             Загальна кількість: <strong>{result.data.rows.reduce((sum, r) => sum + r.stock, 0)}</strong> шт
                           </span>
                           <span>
-                            Загальна вартість: <strong>{result.data.rows.reduce((sum, r) => sum + r.stock * r.price, 0).toFixed(2)}</strong> ₴
+                            Загальна вартість: <strong>{result.data.rows.reduce((sum, r) => sum + r.stock * r.price, 0).toFixed(2)}</strong> $
                           </span>
                         </div>
 
@@ -658,8 +995,8 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                                 <th className="text-center px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-20">
                                   К-сть
                                 </th>
-                                <th className="text-right px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-16">Ціна</th>
-                                <th className="text-right px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-20">Сума</th>
+                                <th className="text-right px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-20">Ціна $</th>
+                                <th className="text-right px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-20">Сума $</th>
                                 <th className="text-left px-2 py-1.5 font-medium text-blue-700 dark:text-blue-300 w-24">Постачальник</th>
                               </tr>
                             </thead>
@@ -778,11 +1115,68 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                                       </div>
                                     </td>
 
-                                    {/* Ціна */}
+                                    {/* Ціна (з деталями розрахунку якщо є) */}
                                     <td className="px-2 py-1.5 text-right">
-                                      <span className="text-slate-700 dark:text-slate-300">
-                                        {row.price.toFixed(2)}
-                                      </span>
+                                      {(() => {
+                                        const fullCostCalc = (row.original as Record<string, unknown>)?._fullCostCalculation as {
+                                          basePrice: number;
+                                          airPerStem: number;
+                                          truckPerStem: number;
+                                          transferFeePercent: number;
+                                          taxPerStem: number;
+                                          fullCost: number;
+                                        } | undefined;
+
+                                        if (fullCostCalc) {
+                                          return (
+                                            <div className="group relative">
+                                              <span className="text-emerald-600 dark:text-emerald-400 font-medium cursor-help border-b border-dashed border-emerald-400">
+                                                {row.price.toFixed(2)}
+                                              </span>
+                                              {/* Детальний розрахунок у тултіпі */}
+                                              <div className="absolute right-0 top-full mt-1 z-20 hidden group-hover:block w-56 p-2 rounded-lg bg-slate-900 dark:bg-slate-700 text-white text-[10px] shadow-lg">
+                                                <div className="font-medium text-emerald-300 mb-1">Розрахунок собівартості:</div>
+                                                <div className="space-y-0.5">
+                                                  <div className="flex justify-between">
+                                                    <span className="text-slate-300">Базова ціна:</span>
+                                                    <span>{fullCostCalc.basePrice.toFixed(2)} $</span>
+                                                  </div>
+                                                  <div className="flex justify-between">
+                                                    <span className="text-slate-300">+ Авіа/шт:</span>
+                                                    <span>{fullCostCalc.airPerStem.toFixed(2)} $</span>
+                                                  </div>
+                                                  <div className="flex justify-between">
+                                                    <span className="text-slate-300">+ Трак/шт:</span>
+                                                    <span>{fullCostCalc.truckPerStem.toFixed(2)} $</span>
+                                                  </div>
+                                                  <div className="flex justify-between border-t border-slate-600 pt-0.5 mt-0.5">
+                                                    <span className="text-slate-300">Підсумок:</span>
+                                                    <span>{(fullCostCalc.basePrice + fullCostCalc.airPerStem + fullCostCalc.truckPerStem).toFixed(2)} $</span>
+                                                  </div>
+                                                  <div className="flex justify-between">
+                                                    <span className="text-slate-300">× Переказ ({fullCostCalc.transferFeePercent}%):</span>
+                                                    <span>×{(1 + fullCostCalc.transferFeePercent / 100).toFixed(4)}</span>
+                                                  </div>
+                                                  <div className="flex justify-between">
+                                                    <span className="text-slate-300">+ Податок/шт:</span>
+                                                    <span>{fullCostCalc.taxPerStem.toFixed(2)} $</span>
+                                                  </div>
+                                                  <div className="flex justify-between border-t border-emerald-500 pt-0.5 mt-0.5 font-medium text-emerald-300">
+                                                    <span>= Собівартість:</span>
+                                                    <span>{fullCostCalc.fullCost.toFixed(2)} $</span>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          );
+                                        }
+
+                                        return (
+                                          <span className="text-slate-700 dark:text-slate-300">
+                                            {row.price.toFixed(2)}
+                                          </span>
+                                        );
+                                      })()}
                                     </td>
 
                                     {/* Сума */}
@@ -815,7 +1209,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                                   -
                                 </td>
                                 <td className="px-2 py-2 text-right text-blue-700 dark:text-blue-300">
-                                  {result.data.rows.reduce((sum, r) => sum + r.stock * r.price, 0).toFixed(2)} ₴
+                                  {result.data.rows.reduce((sum, r) => sum + r.stock * r.price, 0).toFixed(2)} $
                                 </td>
                                 <td></td>
                               </tr>

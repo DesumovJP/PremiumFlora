@@ -25,6 +25,14 @@ interface ImportRequestBody {
   exchangeRate?: string | number;
   marginMultiplier?: string | number;
   rowOverrides?: string; // JSON string: Record<hash, RowOverride>
+  costCalculationMode?: 'simple' | 'full';
+  fullCostParams?: string; // JSON string: { truckCostPerBox, transferFeePercent, taxPerStem }
+}
+
+interface FullCostParams {
+  truckCostPerBox: number;
+  transferFeePercent: number;
+  taxPerStem: number;
 }
 
 interface ImportServiceOptions {
@@ -39,6 +47,8 @@ interface ImportServiceOptions {
   exchangeRate?: number;
   marginMultiplier?: number;
   rowOverrides?: Record<string, RowOverride>;
+  costCalculationMode?: 'simple' | 'full';
+  fullCostParams?: FullCostParams;
 }
 
 /**
@@ -184,6 +194,17 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         }
       }
 
+      // Парсимо fullCostParams з JSON
+      let parsedFullCostParams: FullCostParams | undefined;
+      if (body.fullCostParams) {
+        try {
+          parsedFullCostParams = JSON.parse(body.fullCostParams);
+          strapi.log.info('Parsed fullCostParams:', parsedFullCostParams);
+        } catch (e) {
+          strapi.log.warn('Failed to parse fullCostParams:', e);
+        }
+      }
+
       const options: ImportServiceOptions = {
         dryRun: body.dryRun === 'true' || body.dryRun === true,
         stockMode: body.stockMode || 'replace',
@@ -196,6 +217,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         exchangeRate: body.exchangeRate ? parseFloat(String(body.exchangeRate)) : undefined,
         marginMultiplier: body.marginMultiplier ? parseFloat(String(body.marginMultiplier)) : undefined,
         rowOverrides: parsedRowOverrides,
+        costCalculationMode: body.costCalculationMode || 'simple',
+        fullCostParams: parsedFullCostParams,
       };
 
       strapi.log.info('Import options:', {
@@ -203,6 +226,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         exchangeRate: options.exchangeRate,
         marginMultiplier: options.marginMultiplier,
         priceMode: options.priceMode,
+        costCalculationMode: options.costCalculationMode,
+        fullCostParams: options.fullCostParams,
       });
 
       // Читати файл - спробуємо різні способи

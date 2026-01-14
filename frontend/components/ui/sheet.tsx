@@ -38,14 +38,16 @@ const SheetOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Overlay
-    ref={ref}
-    className={cn(
-      "fixed inset-0 z-40 bg-slate-900/20 dark:bg-black/60 backdrop-blur-sm animate-overlay-in",
-      className
-    )}
-    {...props}
-  />
+  <DialogPrimitive.Close asChild>
+    <DialogPrimitive.Overlay
+      ref={ref}
+      className={cn(
+        "fixed inset-0 z-40 bg-slate-900/20 dark:bg-black/60 backdrop-blur-sm animate-overlay-in cursor-pointer",
+        className
+      )}
+      {...props}
+    />
+  </DialogPrimitive.Close>
 ));
 SheetOverlay.displayName = DialogPrimitive.Overlay.displayName;
 

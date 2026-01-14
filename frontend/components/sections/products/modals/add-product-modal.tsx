@@ -26,11 +26,11 @@ type AddProductModalProps = {
   onOpenImport: () => void;
   addVariant: () => void;
   removeVariant: (id: string) => void;
-  updateDraftVariant: (id: string, field: "length" | "price" | "stock", value: string) => void;
+  updateDraftVariant: (id: string, field: "length" | "price" | "stock" | "costPrice", value: string) => void;
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onLoadFlowers: () => void;
   selectExistingFlower: (flower: Product) => void;
-  updateExistingVariantQuantity: (documentId: string, addQuantity: number) => void;
+  updateExistingVariantQuantity: (documentId: string, addQuantity: number, addCostPrice?: string) => void;
 };
 
 export function AddProductModal({
@@ -234,32 +234,53 @@ export function AddProductModal({
                   {draft.existingVariants.map((variant) => (
                     <div
                       key={variant.documentId}
-                      className="flex items-center gap-3 rounded-lg border border-slate-200 dark:border-admin-border bg-slate-50 dark:bg-admin-surface p-3"
+                      className="rounded-lg border border-slate-200 dark:border-admin-border bg-slate-50 dark:bg-admin-surface p-3 space-y-2"
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-medium text-slate-900 dark:text-admin-text-primary">{variant.length} см</span>
-                          <span className="text-sm text-slate-500 dark:text-admin-text-muted">• {variant.price} грн</span>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-medium text-slate-900 dark:text-admin-text-primary">{variant.length} см</span>
+                            <span className="text-sm text-slate-500 dark:text-admin-text-muted">• {variant.price} грн</span>
+                            {variant.costPrice && (
+                              <span className="text-xs text-slate-400 dark:text-admin-text-muted">• {variant.costPrice}$ собів.</span>
+                            )}
+                          </div>
+                          <div className="text-xs text-slate-400 dark:text-admin-text-muted mt-0.5">
+                            Зараз на складі: <span className="font-medium">{variant.currentStock} шт</span>
+                          </div>
                         </div>
-                        <div className="text-xs text-slate-400 dark:text-admin-text-muted mt-0.5">
-                          Зараз на складі: <span className="font-medium">{variant.currentStock} шт</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-slate-500 dark:text-admin-text-muted">+</span>
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={variant.addQuantity || ""}
+                            onChange={(e) => updateExistingVariantQuantity(variant.documentId, parseInt(e.target.value) || 0, variant.addCostPrice)}
+                            className="w-20 text-center"
+                          />
+                          <span className="text-sm text-slate-500 dark:text-admin-text-muted">шт</span>
                         </div>
+                        {variant.addQuantity > 0 && (
+                          <div className="text-sm font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                            → {variant.currentStock + variant.addQuantity}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-slate-500 dark:text-admin-text-muted">+</span>
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={variant.addQuantity || ""}
-                          onChange={(e) => updateExistingVariantQuantity(variant.documentId, parseInt(e.target.value) || 0)}
-                          className="w-20 text-center"
-                        />
-                        <span className="text-sm text-slate-500 dark:text-admin-text-muted">шт</span>
-                      </div>
+                      {/* Cost price input for supply */}
                       {variant.addQuantity > 0 && (
-                        <div className="text-sm font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                          → {variant.currentStock + variant.addQuantity}
+                        <div className="flex items-center gap-2 pt-2 border-t border-slate-200/50 dark:border-admin-border/50">
+                          <label className="text-xs text-slate-500 dark:text-admin-text-muted whitespace-nowrap">Собівартість:</label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            value={variant.addCostPrice || ""}
+                            onChange={(e) => updateExistingVariantQuantity(variant.documentId, variant.addQuantity, e.target.value)}
+                            className="w-24"
+                          />
+                          <span className="text-xs text-slate-400 dark:text-admin-text-muted">$</span>
                         </div>
                       )}
                     </div>
@@ -298,38 +319,54 @@ export function AddProductModal({
                   {draft.variants.map((variant) => (
                     <div
                       key={variant.id}
-                      className="flex gap-2 rounded-lg border border-slate-200 dark:border-admin-border bg-slate-50 dark:bg-admin-surface p-3"
+                      className="rounded-lg border border-slate-200 dark:border-admin-border bg-slate-50 dark:bg-admin-surface p-3 space-y-2"
                     >
-                      <Input
-                        type="number"
-                        placeholder="Довжина (см)"
-                        value={variant.length}
-                        onChange={(e) => updateDraftVariant(variant.id, "length", e.target.value)}
-                        className="flex-1"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Ціна, грн"
-                        value={variant.price}
-                        onChange={(e) => updateDraftVariant(variant.id, "price", e.target.value)}
-                        className="flex-1"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Кількість"
-                        value={variant.stock}
-                        onChange={(e) => updateDraftVariant(variant.id, "stock", e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeVariant(variant.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          placeholder="Довжина (см)"
+                          value={variant.length}
+                          onChange={(e) => updateDraftVariant(variant.id, "length", e.target.value)}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Ціна, грн"
+                          value={variant.price}
+                          onChange={(e) => updateDraftVariant(variant.id, "price", e.target.value)}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Кількість"
+                          value={variant.stock}
+                          onChange={(e) => updateDraftVariant(variant.id, "stock", e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeVariant(variant.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {/* Собівартість */}
+                      <div className="flex items-center gap-2 pt-2 border-t border-slate-200/50 dark:border-admin-border/50">
+                        <label className="text-xs text-slate-500 dark:text-admin-text-muted whitespace-nowrap">Собівартість:</label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          value={variant.costPrice || ""}
+                          onChange={(e) => updateDraftVariant(variant.id, "costPrice", e.target.value)}
+                          className="w-24"
+                        />
+                        <span className="text-xs text-slate-400 dark:text-admin-text-muted">$</span>
+                      </div>
                     </div>
                   ))}
                 </div>

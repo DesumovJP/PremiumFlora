@@ -37,6 +37,14 @@ export async function importExcel(
     formData.append('rowOverrides', JSON.stringify(options.rowOverrides));
   }
 
+  // Передаємо параметри розрахунку собівартості
+  if (options.costCalculationMode) {
+    formData.append('costCalculationMode', options.costCalculationMode);
+  }
+  if (options.fullCostParams) {
+    formData.append('fullCostParams', JSON.stringify(options.fullCostParams));
+  }
+
   const authHeaders = getAuthHeaders();
   const headers: Record<string, string> = {};
   if (

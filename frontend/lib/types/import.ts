@@ -11,11 +11,22 @@
 export type StockMode = 'replace' | 'add' | 'skip';
 export type PriceMode = 'replace' | 'lower' | 'skip';  // Legacy, kept for compatibility
 export type SupplyStatus = 'success' | 'failed' | 'dry-run';
+export type CostCalculationMode = 'simple' | 'full';
 
 // Оверрайди для редагування нормалізації
 export interface RowOverride {
   flowerName?: string;
   length?: number;
+}
+
+/**
+ * Параметри для повного розрахунку собівартості
+ * Формула: (basePrice + airPerStem + truckPerStem) × (1 + transferFee) + taxPerStem
+ */
+export interface FullCostParams {
+  truckCostPerBox: number;     // Вартість доставки траком за коробку (default: 75$)
+  transferFeePercent: number;  // Відсоток за переказ (default: 3.5%)
+  taxPerStem: number;          // Податок за квітку (default: 0.05$)
 }
 
 export interface ImportOptions {
@@ -25,6 +36,10 @@ export interface ImportOptions {
   supplier?: string;
   forceImport?: boolean;
   rowOverrides?: Record<string, RowOverride>; // hash -> override values
+
+  // Розрахунок собівартості
+  costCalculationMode?: CostCalculationMode; // 'simple' | 'full' (default: 'simple')
+  fullCostParams?: FullCostParams;           // Параметри для повного розрахунку
 }
 
 // ============================================
@@ -82,6 +97,18 @@ export interface UpsertOperation {
     costPrice?: number;
     price?: number;
   };
+}
+
+/**
+ * Деталі повного розрахунку собівартості
+ */
+export interface FullCostCalculationDetails {
+  basePrice: number;           // Базова ціна з Excel
+  airPerStem: number;          // Авіа доставка за квітку
+  truckPerStem: number;        // Трак за квітку
+  transferFeePercent: number;  // Відсоток переказу
+  taxPerStem: number;          // Податок за квітку
+  fullCost: number;            // Фінальна собівартість
 }
 
 export interface NormalizedRow {

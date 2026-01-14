@@ -31,6 +31,7 @@ export type ProductsSectionProps = {
       length: number | null;
       stockBefore?: number;
       stockAfter: number;
+      costPrice?: number;    // Собівартість
       priceBefore?: number;
       priceAfter: number;
       isNew: boolean;
@@ -61,6 +62,7 @@ export type DraftVariant = {
   length: string;
   price: string;
   stock: string;
+  costPrice: string; // Собівартість (закупівельна ціна)
 };
 
 // Existing variant for supply (shows current stock + amount to add)
@@ -68,8 +70,10 @@ export type ExistingVariantSupply = {
   documentId: string;
   length: number;
   price: number;
+  costPrice?: number;   // Поточна собівартість
   currentStock: number;
-  addQuantity: number; // How much to add in this supply
+  addQuantity: number;  // How much to add in this supply
+  addCostPrice: string; // Собівартість нових одиниць
 };
 
 // Draft state for add product form

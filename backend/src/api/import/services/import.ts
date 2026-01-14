@@ -17,6 +17,7 @@ import {
   normalizerService,
   validatorService,
   UpserterService,
+  applyFullCostCalculation,
   type ImportOptions,
   type ImportResult,
   type SupplyRowData,
@@ -103,6 +104,14 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       normWarnings
     );
 
+    // 5.5. Застосувати повний розрахунок собівартості (для обох dry-run і реального імпорту)
+    // Це гарантує, що preview покаже ті ж ціни, що й остаточний результат
+    let processedValid = valid;
+    if (options.costCalculationMode === 'full' && detection.metadata) {
+      strapi.log.info('💰 Applying full cost calculation (pre-upsert)');
+      processedValid = applyFullCostCalculation(valid, options, detection.metadata, strapi.log);
+    }
+
     // Підготувати row outcomes для Supply
     const rowOutcomes = new Map<string, SupplyRowData['outcome']>();
 
@@ -115,15 +124,18 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       operations: [],
     };
 
-    strapi.log.info(`🔍 Checking upsert conditions: dryRun=${options.dryRun}, validRows=${valid.length}, willUpsert=${!options.dryRun && valid.length > 0}`);
+    strapi.log.info(`🔍 Checking upsert conditions: dryRun=${options.dryRun}, validRows=${processedValid.length}, willUpsert=${!options.dryRun && processedValid.length > 0}`);
 
     // Для повернення з API - використовуємо агреговані рядки після upsert
-    let rowsToReturn = normalized;
+    // Для dry-run використовуємо processedValid з розрахованими цінами
+    let rowsToReturn = options.dryRun ? processedValid : normalized;
 
-    if (!options.dryRun && valid.length > 0) {
+    if (!options.dryRun && processedValid.length > 0) {
       strapi.log.info('▶️ Starting upsert process...');
       const upserter = new UpserterService(strapi);
-      const { result, rowOutcomes: outcomes, aggregationWarnings, aggregatedRows } = await upserter.upsert(valid, options);
+      // Передаємо processedValid - вже з розрахованими цінами якщо full mode
+      // detection.metadata передаємо для агрегації (upsert може перерахувати якщо потрібно)
+      const { result, rowOutcomes: outcomes, aggregationWarnings, aggregatedRows } = await upserter.upsert(processedValid, options, detection.metadata);
       upsertResult = result;
       rowsToReturn = aggregatedRows; // Повертаємо агреговані рядки з правильними цінами
       strapi.log.info('✅ Upsert completed', { result });
@@ -136,8 +148,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         rowOutcomes.set(hash, outcome);
       }
     } else if (options.dryRun) {
-      // Для dry-run позначити всі як skipped
-      for (const row of valid) {
+      // Для dry-run позначити всі як skipped (вже з розрахованими цінами)
+      for (const row of processedValid) {
         rowOutcomes.set(row.hash, 'skipped');
       }
     }
@@ -161,14 +173,15 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     }
 
     // 8. Підготувати дані для Supply
-    const supplyRows: SupplyRowData[] = normalized.map((row) => ({
-      original: row.original,
+    // Використовуємо rowsToReturn для збереження розрахованих цін (processedValid для dry-run, aggregatedRows для import)
+    const supplyRows: SupplyRowData[] = rowsToReturn.map((row) => ({
+      original: row.original,  // Містить _fullCostCalculation якщо mode=full
       normalized: {
         flowerName: row.flowerName,
         length: row.length,
         grade: row.grade,
         stock: row.stock,
-        costPrice: row.price,  // Зберігаємо ціну з Excel як собівартість
+        costPrice: row.price,  // Розрахована ціна (full cost або оригінальна)
         supplier: row.supplier,
         awb: row.awb,
       },
@@ -205,6 +218,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         supplyErrors: errors as any, // JSON field
         supplyWarnings: allWarnings as any, // JSON field
         users_permissions_user: options.userId || null,
+        costCalculationMode: options.costCalculationMode || 'simple',
+        fullCostParams: options.fullCostParams as any || null,
       },
     });
 
@@ -228,7 +243,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     });
 
     // 10. Інвалідуємо кеш аналітики (якщо не dry-run і були зміни)
-    if (!options.dryRun && valid.length > 0) {
+    if (!options.dryRun && processedValid.length > 0) {
       invalidateAnalyticsCache();
     }
 
@@ -238,7 +253,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       status: supplyStatus,
       stats: {
         totalRows: parsedRows.length,
-        validRows: valid.length,
+        validRows: processedValid.length,
         flowersCreated: upsertResult.flowersCreated,
         flowersUpdated: upsertResult.flowersUpdated,
         variantsCreated: upsertResult.variantsCreated,

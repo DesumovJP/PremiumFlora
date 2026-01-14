@@ -126,5 +126,5 @@ export {
 } from './supply';
 
 // Currency API
-export { getEurRate } from './currency';
+export { getUsdRate, getEurRate, setManualUsdRate, getManualUsdRate } from './currency';
 export type { CurrencyRateInfo } from './currency';

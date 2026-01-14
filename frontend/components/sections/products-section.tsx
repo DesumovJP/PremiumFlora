@@ -108,13 +108,16 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       length: string;
       price: string;
       stock: string;
+      costPrice: string;
     }>;
     existingVariants: Array<{
       documentId: string;
       length: number;
       price: number;
+      costPrice?: number;
       currentStock: number;
       addQuantity: number;
+      addCostPrice: string;
     }>;
     isSupplyMode: boolean;
   }>({
@@ -255,8 +258,10 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       documentId: v.documentId || `temp-${idx}`,
       length: v.length,
       price: v.price,
+      costPrice: v.costPrice,
       currentStock: v.stock,
       addQuantity: 0,
+      addCostPrice: "",
     }));
 
     setDraft(prev => ({
@@ -270,13 +275,17 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
     setFlowerSearchQuery(flower.name);
   };
 
-  // Update supply quantity for existing variant by index (more reliable than documentId)
-  const updateExistingVariantQuantity = (index: number, addQuantity: number) => {
+  // Update supply quantity and cost price for existing variant by documentId or index
+  const updateExistingVariantQuantity = (documentIdOrIndex: string | number, addQuantity: number, addCostPrice?: string) => {
     setDraft(prev => ({
       ...prev,
-      existingVariants: prev.existingVariants.map((v, idx) =>
-        idx === index ? { ...v, addQuantity } : v
-      ),
+      existingVariants: prev.existingVariants.map((v, idx) => {
+        // Підтримуємо як documentId (string) так і index (number) для сумісності
+        const isMatch = typeof documentIdOrIndex === 'string'
+          ? v.documentId === documentIdOrIndex
+          : idx === documentIdOrIndex;
+        return isMatch ? { ...v, addQuantity, addCostPrice: addCostPrice ?? v.addCostPrice } : v;
+      }),
     }));
   };
 
@@ -290,6 +299,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
           length: "",
           price: "",
           stock: "",
+          costPrice: "",
         },
       ],
     }));
@@ -302,7 +312,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
     }));
   };
 
-  const updateDraftVariant = (id: string, field: "length" | "price" | "stock", value: string) => {
+  const updateDraftVariant = (id: string, field: "length" | "price" | "stock" | "costPrice", value: string) => {
     setDraft((prev) => ({
       ...prev,
       variants: prev.variants.map((v) =>
@@ -1003,12 +1013,21 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       }
 
       // Handle supply mode - update existing variants by ADDING quantity
-      const supplyDetails: Array<{ length: number; addedQty: number; newStock: number }> = [];
+      const supplyDetails: Array<{ length: number; addedQty: number; newStock: number; costPrice: number; price: number }> = [];
 
       if (draft.isSupplyMode) {
         for (const existingVariant of draft.existingVariants) {
           if (existingVariant.addQuantity > 0) {
             const newStock = existingVariant.currentStock + existingVariant.addQuantity;
+            const addCostPrice = existingVariant.addCostPrice ? parseFloat(existingVariant.addCostPrice) : undefined;
+
+            // Якщо вказано нову собівартість - оновлюємо і її
+            const updateData: Record<string, unknown> = {
+              stock: newStock,
+            };
+            if (addCostPrice !== undefined && addCostPrice > 0) {
+              updateData.costPrice = addCostPrice;
+            }
 
             const updateResponse = await fetch(`${API_URL}/variants/${existingVariant.documentId}`, {
               method: "PUT",
@@ -1017,9 +1036,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                data: {
-                  stock: newStock,
-                },
+                data: updateData,
               }),
             });
 
@@ -1031,8 +1048,10 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                 length: existingVariant.length,
                 addedQty: existingVariant.addQuantity,
                 newStock,
+                costPrice: addCostPrice ?? existingVariant.costPrice ?? 0,
+                price: existingVariant.price,
               });
-              console.log(`📦 Supply: ${existingVariant.length}cm +${existingVariant.addQuantity} → ${newStock}`);
+              console.log(`📦 Supply: ${existingVariant.length}cm +${existingVariant.addQuantity} → ${newStock} (cost: ${addCostPrice ?? 'unchanged'}$)`);
             }
           }
         }
@@ -1041,12 +1060,13 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
       }
 
       // 2. Створити/оновити варіанти з draft.variants
-      const newVariantsDetails: Array<{ length: number; stock: number; price: number }> = [];
+      const newVariantsDetails: Array<{ length: number; stock: number; price: number; costPrice: number }> = [];
 
       for (const variant of draft.variants) {
         const length = parseInt(variant.length);
         const price = parseFloat(variant.price);
         const stock = parseInt(variant.stock);
+        const costPrice = variant.costPrice ? parseFloat(variant.costPrice) : 0;
 
         if (isNaN(length) || isNaN(price) || isNaN(stock)) {
           continue;
@@ -1059,6 +1079,19 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
         );
         const existingVariantData = await existingVariantResponse.json();
 
+        // Дані для варіанту включаючи costPrice
+        const variantData: Record<string, unknown> = {
+          length,
+          price,
+          stock,
+          flower: {
+            connect: [{ documentId: flowerDocumentId }]
+          },
+        };
+        if (costPrice > 0) {
+          variantData.costPrice = costPrice;
+        }
+
         if (existingVariantData.data && existingVariantData.data.length > 0) {
           // Оновити існуючий варіант
           const variantDocumentId = existingVariantData.data[0].documentId;
@@ -1069,14 +1102,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              data: {
-                length,
-                price,
-                stock,
-                flower: {
-                  connect: [{ documentId: flowerDocumentId }]
-                },
-              },
+              data: variantData,
             }),
           });
           if (!updateResponse.ok) {
@@ -1092,23 +1118,16 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              data: {
-                length,
-                price,
-                stock,
-                flower: {
-                  connect: [{ documentId: flowerDocumentId }]
-                },
-              },
+              data: variantData,
             }),
           });
           if (!createResponse.ok) {
             const errorText = await createResponse.text();
             console.error("Помилка створення варіанту:", errorText);
           } else {
-            console.log(`✅ Variant created: ${length}cm for flower ${flowerDocumentId}`);
+            console.log(`✅ Variant created: ${length}cm for flower ${flowerDocumentId} (cost: ${costPrice}$)`);
             // Запам'ятовуємо для логування
-            newVariantsDetails.push({ length, stock, price });
+            newVariantsDetails.push({ length, stock, price, costPrice });
           }
         }
       }
@@ -1128,15 +1147,14 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
 
         // Додаємо існуючі варіанти з addQuantity
         for (const d of supplyDetails) {
-          const variant = draft.existingVariants.find(v => v.length === d.length);
           supplyItems.push({
             flowerName: draft.flowerName,
             length: d.length,
             stockBefore: d.newStock - d.addedQty,
             stockAfter: d.newStock,
-            costPrice: 0,
-            priceBefore: variant?.price || 0,
-            priceAfter: variant?.price || 0,
+            costPrice: d.costPrice,  // Використовуємо собівартість з supplyDetails
+            priceBefore: d.price,
+            priceAfter: d.price,
             isNew: false,
           });
         }
@@ -1148,7 +1166,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
             length: nv.length,
             stockBefore: 0,
             stockAfter: nv.stock,
-            costPrice: 0,
+            costPrice: nv.costPrice,  // Використовуємо собівартість з newVariantsDetails
             priceBefore: 0,
             priceAfter: nv.price,
             isNew: true,
@@ -1327,7 +1345,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                       <span className="flex-1 flex items-center gap-1.5">
                         {variant.costPrice !== undefined && variant.costPrice > 0 && (
                           <>
-                            <span className="text-slate-400 dark:text-slate-500">{variant.costPrice.toFixed(2)} €</span>
+                            <span className="text-slate-400 dark:text-slate-500">{variant.costPrice.toFixed(2)} $</span>
                             <span className="text-slate-300 dark:text-slate-600">→</span>
                           </>
                         )}
@@ -1413,7 +1431,7 @@ export function ProductsSection({ summary, products, onOpenSupply, onOpenExport,
                     </td>
                     {/* Cost price */}
                     <td className="py-2.5 pl-1 pr-2 text-right text-slate-500 dark:text-slate-400">
-                      {variant.costPrice !== undefined && variant.costPrice > 0 ? `${variant.costPrice.toFixed(2)} €` : '—'}
+                      {variant.costPrice !== undefined && variant.costPrice > 0 ? `${variant.costPrice.toFixed(2)} $` : '—'}
                     </td>
                     {/* Total - only on first variant row */}
                     {vIdx === 0 && (

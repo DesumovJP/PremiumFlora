@@ -13,8 +13,101 @@ import type {
   StockMode,
   SupplyRowData,
   ImportWarning,
+  FormatDetectionResult,
+  FullCostParams,
 } from './types';
-import { getEurRate } from '../currency/currency.service';
+import { getUsdRate } from '../currency/currency.service';
+
+/**
+ * Застосувати повний розрахунок собівартості (статична функція для використання в dry-run)
+ *
+ * Формула:
+ * costPrice = (basePrice + airPerStem + truckPerStem) × (1 + transferFeePercent/100) + taxPerStem
+ */
+export function applyFullCostCalculation(
+  rows: NormalizedRow[],
+  options: ImportOptions,
+  metadata: FormatDetectionResult['metadata'],
+  logger?: { info: (msg: string) => void; warn: (msg: string) => void; debug: (msg: string) => void }
+): NormalizedRow[] {
+  const { transport, totalBoxes } = metadata;
+
+  // Default параметри
+  const params: FullCostParams = {
+    truckCostPerBox: options.fullCostParams?.truckCostPerBox ?? 75,
+    transferFeePercent: options.fullCostParams?.transferFeePercent ?? 3.5,
+    taxPerStem: options.fullCostParams?.taxPerStem ?? 0.05,
+  };
+
+  // Якщо немає даних для розрахунку - повернути без змін
+  if (!transport || !totalBoxes || totalBoxes <= 0) {
+    logger?.warn('⚠️ Missing transport or box data for full cost calculation, using simple mode');
+    return rows;
+  }
+
+  // Вартість авіа доставки за коробку
+  const airPerBox = transport / totalBoxes;
+
+  logger?.info(`💰 Full cost calculation: transport=$${transport}, totalBoxes=${totalBoxes}, airPerBox=$${airPerBox.toFixed(2)}`);
+  logger?.info(`💰 Params: truckCostPerBox=$${params.truckCostPerBox}, transferFee=${params.transferFeePercent}%, taxPerStem=$${params.taxPerStem}`);
+
+  // Групуємо рядки по boxId для підрахунку stemsPerBox
+  const stemsPerBox = new Map<string, number>();
+  for (const row of rows) {
+    const boxId = (row.original as Record<string, unknown>)?.boxId as string || 'default';
+    const current = stemsPerBox.get(boxId) || 0;
+    stemsPerBox.set(boxId, current + row.stock);
+  }
+
+  logger?.info(`📦 Stems per box: ${Array.from(stemsPerBox.entries()).map(([id, stems]) => `${id}=${stems}`).join(', ')}`);
+
+  // Застосовуємо формулу до кожного рядка
+  return rows.map(row => {
+    const boxId = (row.original as Record<string, unknown>)?.boxId as string || 'default';
+    const stemsInBox = stemsPerBox.get(boxId) || row.stock;
+
+    // Розрахунок
+    const basePrice = row.price;
+    const airPerStem = airPerBox / stemsInBox;
+    const truckPerStem = params.truckCostPerBox / stemsInBox;
+
+    // Собівартість = (basePrice + airPerStem + truckPerStem) × (1 + transferFeePercent/100) + taxPerStem
+    const subtotal = (basePrice + airPerStem + truckPerStem) * (1 + params.transferFeePercent / 100);
+    const fullCost = Math.round((subtotal + params.taxPerStem) * 100) / 100;
+
+    logger?.debug(
+      `📊 ${row.flowerName}: base=$${basePrice.toFixed(2)} + air=$${airPerStem.toFixed(2)} + truck=$${truckPerStem.toFixed(2)} ` +
+      `= $${(basePrice + airPerStem + truckPerStem).toFixed(2)} × 1.${params.transferFeePercent.toString().replace('.', '')} + $${params.taxPerStem} = $${fullCost.toFixed(2)}`
+    );
+
+    return {
+      ...row,
+      price: fullCost, // Оновлюємо собівартість
+      original: {
+        ...row.original,
+        _fullCostCalculation: {
+          basePrice,
+          airPerStem: Math.round(airPerStem * 100) / 100,
+          truckPerStem: Math.round(truckPerStem * 100) / 100,
+          transferFeePercent: params.transferFeePercent,
+          taxPerStem: params.taxPerStem,
+          fullCost,
+        },
+      },
+    };
+  });
+}
+
+/**
+ * Метадані для розрахунку собівартості
+ */
+interface CostCalculationContext {
+  transport?: number;       // Загальна вартість авіа доставки
+  totalBoxes?: number;      // Загальна кількість коробок
+  totalFB?: number;         // Сума FB
+  totalStems?: number;      // Загальна кількість квіток
+  stemsPerBox: Map<string, number>; // Квіток на коробку
+}
 
 interface FlowerRecord {
   id: number;
@@ -41,14 +134,19 @@ export class UpserterService {
    */
   async upsert(
     rows: NormalizedRow[],
-    options: ImportOptions
+    options: ImportOptions,
+    detectionMetadata?: FormatDetectionResult['metadata']
   ): Promise<{
     result: UpsertResult;
     rowOutcomes: Map<string, SupplyRowData['outcome']>;
     aggregationWarnings: ImportWarning[];
     aggregatedRows: NormalizedRow[];
   }> {
-    this.strapi.log.info(`🚀 Starting upsert: ${rows.length} rows, stockMode=${options.stockMode}`);
+    this.strapi.log.info(`🚀 Starting upsert: ${rows.length} rows, stockMode=${options.stockMode}, costMode=${options.costCalculationMode || 'simple'}`);
+
+    // Примітка: повний розрахунок собівартості (applyFullCostCalculation)
+    // тепер викликається ЦЕНТРАЛІЗОВАНО в import.ts ДО виклику upsert
+    // Це забезпечує однакові ціни для dry-run preview та реального імпорту
 
     const result: UpsertResult = {
       flowersCreated: 0,
@@ -306,9 +404,9 @@ export class UpserterService {
       // Якщо ціна продажу відсутня або 0 - розрахувати базову ціну
       let salePrice: number;
       if (!existingPrice || existingPrice <= 0 || isNaN(existingPrice)) {
-        const eurRate = await getEurRate();
-        salePrice = Math.round(costPrice * 1.10 * eurRate * 100) / 100;
-        this.strapi.log.info(`💰 Calculating sale price: ${costPrice}€ × 1.10 × ${eurRate} = ${salePrice}₴`);
+        const usdRate = await getUsdRate();
+        salePrice = Math.round(costPrice * 1.10 * usdRate * 100) / 100;
+        this.strapi.log.info(`💰 Calculating sale price: ${costPrice}$ × 1.10 × ${usdRate} = ${salePrice}₴`);
 
         // Оновлюємо ціну в базі
         await this.strapi.db.query('api::variant.variant').update({
@@ -348,10 +446,10 @@ export class UpserterService {
     }
 
     // Створити новий варіант
-    // Базова ціна продажу = собівартість (EUR) × 1.10 × курс EUR/UAH
-    const eurRate = await getEurRate();
-    const basePrice = Math.round(costPrice * 1.10 * eurRate * 100) / 100;
-    this.strapi.log.info(`🌱 Creating variant: ${flower.name} ${variantLength}cm - stock ${row.stock}, costPrice ${costPrice}€, basePrice ${basePrice}₴ (+10% × ${eurRate} EUR/UAH)`);
+    // Базова ціна продажу = собівартість (USD) × 1.10 × курс USD/UAH
+    const usdRate = await getUsdRate();
+    const basePrice = Math.round(costPrice * 1.10 * usdRate * 100) / 100;
+    this.strapi.log.info(`🌱 Creating variant: ${flower.name} ${variantLength}cm - stock ${row.stock}, costPrice ${costPrice}$, basePrice ${basePrice}₴ (+10% × ${usdRate} USD/UAH)`);
 
     const created = await this.strapi.db.query('api::variant.variant').create({
       data: {

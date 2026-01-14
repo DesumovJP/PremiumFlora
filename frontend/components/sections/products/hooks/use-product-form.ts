@@ -106,8 +106,10 @@ export function useProductForm({ onRefresh, onLogActivity, notify }: UseProductF
       documentId: v.documentId || '',
       length: v.length,
       price: v.price,
+      costPrice: v.costPrice,
       currentStock: v.stock,
       addQuantity: 0,
+      addCostPrice: "",
     }));
 
     setDraft(prev => ({
@@ -122,11 +124,11 @@ export function useProductForm({ onRefresh, onLogActivity, notify }: UseProductF
   };
 
   // Update supply quantity for existing variant
-  const updateExistingVariantQuantity = (documentId: string, addQuantity: number) => {
+  const updateExistingVariantQuantity = (documentId: string, addQuantity: number, addCostPrice?: string) => {
     setDraft(prev => ({
       ...prev,
       existingVariants: prev.existingVariants.map(v =>
-        v.documentId === documentId ? { ...v, addQuantity } : v
+        v.documentId === documentId ? { ...v, addQuantity, addCostPrice: addCostPrice ?? v.addCostPrice } : v
       ),
     }));
   };
@@ -141,6 +143,7 @@ export function useProductForm({ onRefresh, onLogActivity, notify }: UseProductF
           length: "",
           price: "",
           stock: "",
+          costPrice: "",
         },
       ],
     }));

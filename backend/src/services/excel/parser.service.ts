@@ -26,7 +26,7 @@ export class ParserService {
     units: ['units', 'qty', 'quantity', 'tallos', 'stems', 'кількість', 'шт', 'stock'],
     price: ['price', 'precio', 'ціна', 'цена', 'cost', 'uah', 'usd', 'eur'],
     total: ['total', 'suma', 'сума', 'сумма', 'amount'],
-    supplier: ['supplier', 'farm', 'cultivos', 'постачальник', 'ферма', 'fb'],
+    supplier: ['supplier', 'farm', 'cultivos', 'постачальник', 'ферма'],  // FB видалено - це Full Box, не supplier
     awb: ['awb', 'waybill', 'накладна'],
     recipient: ['recipient', 'client', 'отримувач', 'клієнт'],
   };
@@ -252,6 +252,51 @@ export class ParserService {
       }
     }
 
+    // Шукати Transport та FB total у підсумкових рядках (після даних)
+    for (let rowIdx = headerRowIdx + 1; rowIdx < data.length; rowIdx++) {
+      const row = data[rowIdx];
+      if (!row) continue;
+
+      const firstCell = String(row[0] ?? '').toLowerCase().trim();
+
+      // Шукати "Transport" в будь-якій колонці рядка
+      for (let colIdx = 0; colIdx < row.length; colIdx++) {
+        const cellValue = String(row[colIdx] ?? '').toLowerCase().trim();
+        if (cellValue === 'transport' || cellValue.includes('transport')) {
+          // Transport значення - шукаємо число праворуч від "Transport" або в кінці рядка
+          for (let i = colIdx + 1; i < row.length; i++) {
+            const val = row[i];
+            if (typeof val === 'number' && val > 0) {
+              metadata.transport = val;
+              break;
+            }
+          }
+          // Якщо не знайшли праворуч, шукаємо з кінця
+          if (!metadata.transport) {
+            for (let i = row.length - 1; i >= 0; i--) {
+              const val = row[i];
+              if (typeof val === 'number' && val > 0) {
+                metadata.transport = val;
+                break;
+              }
+            }
+          }
+          break;
+        }
+      }
+
+      // Рахувати FB total - шукати рядок де є "total" або підсумковий рядок
+      // FB total знаходиться в колонці FB (індекс 1 зазвичай) для підсумкового рядка
+      if (firstCell.includes('total') || firstCell === '' || firstCell === 'rosa' || firstCell === 'rosas') {
+        // Перевірити чи є значення FB в колонці 1
+        const fbValue = row[1];
+        if (typeof fbValue === 'number' && fbValue > 0 && fbValue < 100) {
+          metadata.totalFB = fbValue;
+          metadata.totalBoxes = Math.round(fbValue * 2); // 0.5 FB = 1 коробка
+        }
+      }
+    }
+
     return metadata;
   }
 
@@ -303,6 +348,9 @@ export class ParserService {
     const { mapping, dataStartRow, format } = detection;
 
     let currentSupplier: string | null = null;
+    // Для Ross формату: трекінг поточної коробки
+    let currentBoxId: string | null = null;
+    let currentBoxFB: number | undefined = undefined;
 
     for (let rowIdx = dataStartRow; rowIdx < data.length; rowIdx++) {
       const row = data[rowIdx];
@@ -327,6 +375,14 @@ export class ParserService {
         const supplierValue = row[mapping.supplier];
         if (supplierValue && String(supplierValue).trim() !== '') {
           currentSupplier = String(supplierValue).trim();
+          // CULTIVOS - це ідентифікатор коробки
+          currentBoxId = currentSupplier;
+          // FB значення коробки знаходиться в колонці 1 (FB колонка)
+          // Для Ross формату: колонка supplier (CULTIVOS) = 0, FB = 1
+          const fbValue = row[1];
+          if (typeof fbValue === 'number' && fbValue > 0 && fbValue <= 1) {
+            currentBoxFB = fbValue;
+          }
         }
       }
 
@@ -338,9 +394,16 @@ export class ParserService {
         }
       }
 
+      // Оригінальні дані рядка з додаванням boxId/boxFB для розрахунку собівартості
+      const originalData = this.rowToObject(row, mapping);
+      if (format === 'ross' && currentBoxId) {
+        originalData.boxId = currentBoxId;
+        originalData.boxFB = currentBoxFB;
+      }
+
       const parsed: ParsedRow = {
         rowIndex: rowIdx + 1, // 1-based для користувача
-        original: this.rowToObject(row, mapping),
+        original: originalData,
         variety: String(varietyValue ?? '').trim(),
         type: mapping.type !== undefined && mapping.type >= 0
           ? String(row[mapping.type] ?? '').trim() || null
@@ -361,6 +424,9 @@ export class ParserService {
         recipient: mapping.recipient !== undefined && mapping.recipient >= 0
           ? String(row[mapping.recipient] ?? '').trim() || null
           : null,
+        // Дані для розрахунку собівартості (Ross формат)
+        boxId: format === 'ross' ? currentBoxId ?? undefined : undefined,
+        boxFB: format === 'ross' ? currentBoxFB : undefined,
       };
 
       // Валідація: пропустити рядки без кількості або ціни

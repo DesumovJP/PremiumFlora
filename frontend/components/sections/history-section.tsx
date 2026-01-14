@@ -46,6 +46,7 @@ import {
   Calendar,
   CalendarDays,
   Warehouse,
+  Calculator,
 } from 'lucide-react';
 
 // ============================================
@@ -939,7 +940,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
                     +{supplyTotals.totalQty.toLocaleString()} шт
                   </span>
                   <span className="text-blue-700 dark:text-blue-300 font-semibold">
-                    +{Math.round(supplyTotals.totalValue).toLocaleString()} €
+                    +{Math.round(supplyTotals.totalValue).toLocaleString()} $
                   </span>
                 </div>
               </div>
@@ -957,60 +958,101 @@ function ActivityItem({ activity }: { activity: Activity }) {
               </div>
             )}
 
+            {/* Режим розрахунку собівартості */}
+            {details.costCalculationMode === 'full' && (
+              <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-300 font-medium">
+                  <Calculator className="h-3.5 w-3.5" />
+                  Повний розрахунок: база + авіа + трак × переказ + податок
+                </div>
+              </div>
+            )}
+
             {/* Детальний список товарів */}
             {details.supplyItems && details.supplyItems.length > 0 && (
               <div className="mt-3 pt-3 border-t border-slate-100 dark:border-admin-border">
                 <div className="text-xs font-medium text-slate-500 dark:text-admin-text-tertiary mb-2">
                   Деталі по товарах ({details.supplyItems.length})
                 </div>
-                <div className="max-h-48 overflow-y-auto space-y-1.5">
-                  {details.supplyItems.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className={cn(
-                        "flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg text-xs",
-                        item.isNew
-                          ? "bg-emerald-50 dark:bg-emerald-900/20"
-                          : "bg-slate-50 dark:bg-admin-surface"
-                      )}
-                    >
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        {item.isNew && (
-                          <span className="shrink-0 px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-800/50 text-emerald-700 dark:text-emerald-400 text-[10px] font-medium">
-                            NEW
-                          </span>
+                <div className="max-h-80 overflow-y-auto space-y-1.5">
+                  {details.supplyItems.map((item, idx) => {
+                    const costCalc = (item as { costCalculation?: {
+                      basePrice: number;
+                      airPerStem: number;
+                      truckPerStem: number;
+                      transferFeePercent: number;
+                      taxPerStem: number;
+                      fullCost: number;
+                    } }).costCalculation;
+
+                    return (
+                      <div
+                        key={idx}
+                        className={cn(
+                          "px-2 py-1.5 rounded-lg text-xs",
+                          item.isNew
+                            ? "bg-emerald-50 dark:bg-emerald-900/20"
+                            : "bg-slate-50 dark:bg-admin-surface"
                         )}
-                        <span className="truncate font-medium dark:text-admin-text-primary">
-                          {item.flowerName}
-                        </span>
-                        {item.length && (
-                          <span className="shrink-0 text-slate-400 dark:text-admin-text-muted">
-                            {item.length}см
-                          </span>
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            {item.isNew && (
+                              <span className="shrink-0 px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-800/50 text-emerald-700 dark:text-emerald-400 text-[10px] font-medium">
+                                NEW
+                              </span>
+                            )}
+                            <span className="truncate font-medium dark:text-admin-text-primary">
+                              {item.flowerName}
+                            </span>
+                            {item.length && (
+                              <span className="shrink-0 text-slate-400 dark:text-admin-text-muted">
+                                {item.length}см
+                              </span>
+                            )}
+                          </div>
+                          <div className="shrink-0 text-right flex items-center gap-2">
+                            <span className="text-slate-500 dark:text-admin-text-tertiary">
+                              {item.stockBefore !== undefined ? (
+                                <>
+                                  <span className="text-slate-400">{item.stockBefore}</span>
+                                  <span className="mx-1">→</span>
+                                </>
+                              ) : null}
+                              <span className="font-medium text-slate-700 dark:text-admin-text-primary">
+                                {item.stockAfter}
+                              </span>
+                              <span className="text-slate-400 ml-0.5">шт</span>
+                            </span>
+                            {/* Показуємо costPrice (собівартість в USD) */}
+                            {((item as { costPrice?: number }).costPrice ?? 0) > 0 && (
+                              <span className={cn(
+                                "font-medium",
+                                costCalc
+                                  ? "text-emerald-600 dark:text-emerald-400"
+                                  : "text-slate-500 dark:text-slate-400"
+                              )} title="Собівартість (закупка)">
+                                {(item as { costPrice?: number }).costPrice?.toFixed(2)} $
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {/* Деталі розрахунку собівартості */}
+                        {costCalc && (
+                          <div className="mt-1.5 pt-1.5 border-t border-emerald-200/50 dark:border-emerald-700/30 text-[10px] text-emerald-700 dark:text-emerald-400">
+                            <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                              <span>База: {costCalc.basePrice.toFixed(2)}$</span>
+                              <span>+ Авіа: {costCalc.airPerStem.toFixed(2)}$</span>
+                              <span>+ Трак: {costCalc.truckPerStem.toFixed(2)}$</span>
+                              <span>× {(1 + costCalc.transferFeePercent / 100).toFixed(3)}</span>
+                              <span>+ Под: {costCalc.taxPerStem.toFixed(2)}$</span>
+                              <span className="font-medium">= {costCalc.fullCost.toFixed(2)}$</span>
+                            </div>
+                          </div>
                         )}
                       </div>
-                      <div className="shrink-0 text-right flex items-center gap-2">
-                        <span className="text-slate-500 dark:text-admin-text-tertiary">
-                          {item.stockBefore !== undefined ? (
-                            <>
-                              <span className="text-slate-400">{item.stockBefore}</span>
-                              <span className="mx-1">→</span>
-                            </>
-                          ) : null}
-                          <span className="font-medium text-slate-700 dark:text-admin-text-primary">
-                            {item.stockAfter}
-                          </span>
-                          <span className="text-slate-400 ml-0.5">шт</span>
-                        </span>
-                        {/* Показуємо costPrice (собівартість в EUR) */}
-                        {((item as { costPrice?: number }).costPrice ?? 0) > 0 && (
-                          <span className="font-medium text-slate-500 dark:text-slate-400" title="Собівартість (закупка)">
-                            {(item as { costPrice?: number }).costPrice?.toFixed(2)} €
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -1402,7 +1444,7 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
   let totalWriteOffsQty = 0;
   let totalWriteOffsAmount = 0;
   let totalSuppliesQty = 0;
-  let totalSuppliesAmount = 0; // Собівартість (€)
+  let totalSuppliesAmount = 0; // Собівартість ($)
   let totalSuppliesSaleValue = 0; // Ціна продажу (₴)
   let totalSalesAmount = 0;
 
@@ -1432,14 +1474,14 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
       for (const item of a.details.supplyItems) {
         const suppliedQty = (item.stockAfter || 0) - (item.stockBefore || 0);
         totalSuppliesQty += suppliedQty;
-        // Собівартість (€)
+        // Собівартість ($)
         const unitCost = (item as { costPrice?: number }).costPrice ?? 0;
         totalSuppliesAmount += suppliedQty * unitCost;
         // Ціна продажу (₴) - якщо відсутня, розраховуємо з costPrice
-        const EUR_RATE = 50.5; // Приблизний курс для старих записів
+        const USD_RATE = 41.5; // Приблизний курс для старих записів
         const salePrice = item.priceAfter && item.priceAfter > 0
           ? item.priceAfter
-          : unitCost * 1.10 * EUR_RATE; // costPrice × 1.10 × курс
+          : unitCost * 1.10 * USD_RATE; // costPrice × 1.10 × курс
         totalSuppliesSaleValue += suppliedQty * salePrice;
       }
     } else if (a.type === 'productCreate' && a.details.variants) {
@@ -1555,7 +1597,7 @@ function ShiftDetailModal({ shift, open, onOpenChange, onExport }: ShiftDetailMo
               <p className="text-xs text-blue-600 dark:text-blue-400">Поставки</p>
               <div className="flex items-baseline gap-2">
                 <p className="font-bold text-blue-700 dark:text-blue-300">
-                  {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} €
+                  {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} $
                 </p>
                 <p className="text-sm text-blue-600/80 dark:text-blue-400/80">
                   → {Math.round(summary.totalSuppliesSaleValue || 0).toLocaleString()} ₴
@@ -1849,7 +1891,7 @@ export function HistorySection({
     let totalWriteOffsQty = 0;
     let totalWriteOffsAmount = 0;
     let totalSuppliesQty = 0;
-    let totalSuppliesAmount = 0; // Собівартість (€)
+    let totalSuppliesAmount = 0; // Собівартість ($)
     let totalSuppliesSaleValue = 0; // Ціна продажу (₴)
 
     shiftActivities.forEach((a) => {
@@ -1892,14 +1934,14 @@ export function HistorySection({
           for (const item of a.details.supplyItems) {
             const suppliedQty = (item.stockAfter || 0) - (item.stockBefore || 0);
             totalSuppliesQty += suppliedQty;
-            // Собівартість (€)
+            // Собівартість ($)
             const unitCost = (item as { costPrice?: number }).costPrice ?? 0;
             totalSuppliesAmount += suppliedQty * unitCost;
             // Ціна продажу (₴) - якщо відсутня, розраховуємо з costPrice
-            const EUR_RATE = 50.5; // Приблизний курс для старих записів
+            const USD_RATE = 41.5; // Приблизний курс для старих записів
             const salePrice = item.priceAfter && item.priceAfter > 0
               ? item.priceAfter
-              : unitCost * 1.10 * EUR_RATE; // costPrice × 1.10 × курс
+              : unitCost * 1.10 * USD_RATE; // costPrice × 1.10 × курс
             totalSuppliesSaleValue += suppliedQty * salePrice;
           }
         }
@@ -2086,7 +2128,7 @@ export function HistorySection({
                   <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Поставки</p>
                   <div className="flex items-baseline gap-2">
                     <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                      {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} €
+                      {Math.round(summary.totalSuppliesAmount || 0).toLocaleString()} $
                     </p>
                     <p className="text-sm text-blue-600/80 dark:text-blue-400/80">
                       → {Math.round(summary.totalSuppliesSaleValue || 0).toLocaleString()} ₴

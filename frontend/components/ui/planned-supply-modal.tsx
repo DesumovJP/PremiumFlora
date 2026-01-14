@@ -7,11 +7,10 @@ import { Input } from "./input";
 import { cn } from "@/lib/utils";
 import { Plus, X, Search, Download, Package, Eraser, Check } from "lucide-react";
 import {
-  getLowStockVariants,
+  getAllFlowersForSupply,
   searchFlowersForSupply,
 } from "@/lib/strapi";
 import type {
-  LowStockVariant,
   PlannedSupplyItem,
   FlowerSearchResult,
 } from "@/lib/planned-supply-types";
@@ -112,33 +111,39 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
   const loadAllItems = async () => {
     setLoading(true);
     try {
-      const result = await getLowStockVariants(9999); // Завантажити всі
+      // Використовуємо getAllFlowersForSupply щоб отримати ВСІ квіти, включаючи з stock=0
+      const result = await getAllFlowersForSupply();
       if (result.success && result.data) {
         const savedData = loadSavedItems();
 
-        const allItems: PlannedSupplyItem[] = result.data.map((variant: LowStockVariant) => {
-          const id = `${variant.flowerId}-${variant.variantId}`;
-          const saved = savedData[id];
-          return {
-            id,
-            flowerId: variant.flowerId,
-            flowerDocumentId: variant.flowerDocumentId,
-            variantId: variant.variantId,
-            variantDocumentId: variant.variantDocumentId,
-            flowerName: variant.flowerName,
-            flowerSlug: variant.flowerSlug,
-            imageUrl: variant.imageUrl,
-            length: variant.length,
-            currentStock: variant.currentStock,
-            plannedQuantity: saved?.qty || 0,
-            price: variant.price,
-            isNew: false,
-            isManual: false,
-            isActive: saved?.active || false,
-          };
-        });
+        const allItems: PlannedSupplyItem[] = [];
 
-        // Sort: active first, then by stock ascending
+        // Конвертуємо формат FlowerSearchResult[] в PlannedSupplyItem[]
+        for (const flower of result.data) {
+          for (const variant of flower.variants) {
+            const id = `${flower.id}-${variant.id}`;
+            const saved = savedData[id];
+            allItems.push({
+              id,
+              flowerId: flower.id,
+              flowerDocumentId: flower.documentId,
+              variantId: variant.id,
+              variantDocumentId: variant.documentId,
+              flowerName: flower.name,
+              flowerSlug: flower.slug,
+              imageUrl: flower.imageUrl,
+              length: variant.length,
+              currentStock: variant.stock,
+              plannedQuantity: saved?.qty || 0,
+              price: variant.price,
+              isNew: false,
+              isManual: false,
+              isActive: saved?.active || false,
+            });
+          }
+        }
+
+        // Sort: active first, then by stock ascending (0 will be at the top)
         const sorted = allItems.sort((a, b) => {
           if (a.isActive && !b.isActive) return -1;
           if (!a.isActive && b.isActive) return 1;

@@ -49,6 +49,17 @@
     },
     "supplyWarnings": {
       "type": "json"
+    },
+    "costCalculationMode": {
+      "type": "enumeration",
+      "enum": [
+        "simple",
+        "full"
+      ],
+      "default": "simple"
+    },
+    "fullCostParams": {
+      "type": "json"
     }
   }
 }

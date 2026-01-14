@@ -12,4 +12,4 @@ export { ChecksumService, checksumService } from './checksum.service';
 export { ParserService, parserService } from './parser.service';
 export { NormalizerService, normalizerService } from './normalizer.service';
 export { ValidatorService, validatorService } from './validator.service';
-export { UpserterService } from './upserter.service';
+export { UpserterService, applyFullCostCalculation } from './upserter.service';

@@ -11,6 +11,17 @@
 export type StockMode = 'replace' | 'add' | 'skip';
 export type PriceMode = 'replace' | 'lower' | 'skip';
 export type SupplyStatus = 'success' | 'failed' | 'dry-run';
+export type CostCalculationMode = 'simple' | 'full';
+
+/**
+ * Параметри для повного розрахунку собівартості
+ * Формула: (basePrice + airPerStem + truckPerStem) × (1 + transferFee) + taxPerStem
+ */
+export interface FullCostParams {
+  truckCostPerBox: number;     // Вартість доставки траком за коробку (default: 75$)
+  transferFeePercent: number;  // Відсоток за переказ (default: 3.5 = 3.5%)
+  taxPerStem: number;          // Податок за квітку (default: 0.05$)
+}
 
 // Оверрайди для редагування нормалізації під час імпорту
 export interface RowOverride {
@@ -32,6 +43,10 @@ export interface ImportOptions {
   exchangeRate?: number; // Курс USD → UAH (наприклад, 41.5)
   marginMultiplier?: number; // Множник маржі (наприклад, 1.3 для 30% маржі)
   applyPriceCalculation?: boolean; // Чи застосовувати розрахунок ціни (курс * маржа)
+
+  // Розрахунок собівартості
+  costCalculationMode?: CostCalculationMode; // 'simple' | 'full' (default: 'simple')
+  fullCostParams?: FullCostParams;           // Параметри для повного розрахунку
 }
 
 // ============================================
@@ -63,6 +78,10 @@ export interface FormatDetectionResult {
     date?: Date;
     awb?: string;
     supplier?: string;
+    // Дані для повного розрахунку собівартості (Ross формат)
+    transport?: number;       // Вартість авіа доставки (Transport)
+    totalBoxes?: number;      // Загальна кількість коробок (FB * 2)
+    totalFB?: number;         // Сума FB з таблиці
   };
 }
 
@@ -98,6 +117,9 @@ export interface ParsedRow {
   awb: string | null;
   qbCode: string | null;
   recipient: string | null;
+  // Дані для групування по коробках (Ross формат)
+  boxId?: string;         // Ідентифікатор коробки (CULTIVOS)
+  boxFB?: number;         // FB значення коробки (0.5 = 1 коробка)
 }
 
 // ============================================

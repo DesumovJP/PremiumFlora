@@ -106,6 +106,7 @@ export interface ActivityDetails {
   flowersUpdated?: number;
   variantsCreated?: number;
   variantsUpdated?: number;
+  costCalculationMode?: 'simple' | 'full';  // Режим розрахунку собівартості
   // Детальний список змін по товарах
   supplyItems?: Array<{
     flowerName: string;
@@ -116,6 +117,15 @@ export interface ActivityDetails {
     priceBefore?: number;
     priceAfter: number;    // Ціна продажу (для балансу)
     isNew: boolean;
+    // Деталі повного розрахунку собівартості (якщо використовувався full mode)
+    costCalculation?: {
+      basePrice: number;           // Базова ціна з Excel
+      airPerStem: number;          // Авіа доставка за квітку
+      truckPerStem: number;        // Трак за квітку
+      transferFeePercent: number;  // Відсоток переказу
+      taxPerStem: number;          // Податок за квітку
+      fullCost: number;            // Фінальна собівартість
+    };
   }>;
 
   // Sale Return (повернення)
@@ -148,7 +158,7 @@ export interface ShiftSummary {
   totalWriteOffsAmount: number; // Сума списань (грн)
   totalSupplies: number;       // Кількість поставок
   totalSuppliesQty: number;    // Кількість поставлених квіток (шт)
-  totalSuppliesAmount: number; // Собівартість поставок (€)
+  totalSuppliesAmount: number; // Собівартість поставок ($)
   totalSuppliesSaleValue?: number; // Вартість поставок по ціні продажу (₴)
   activitiesCount: number;
   productEdits: number;

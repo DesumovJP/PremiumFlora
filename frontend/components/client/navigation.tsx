@@ -360,6 +360,16 @@ export function Navigation() {
                   <Clock className="h-3.5 w-3.5" strokeWidth={1.5} />
                   <span className="text-[11px]">{contacts.workHours}</span>
                 </div>
+
+                {/* Admin link for PWA mode */}
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-center mt-4 pt-3 border-t border-dashed border-slate-200 dark:border-white/10 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors opacity-0 animate-[slideUpFade_0.3s_ease-out_forwards]"
+                  style={{ animationDelay: "350ms" }}
+                >
+                  <span className="text-[10px] font-medium">Адмін панель</span>
+                </Link>
               </div>
             </div>
           </SheetContent>

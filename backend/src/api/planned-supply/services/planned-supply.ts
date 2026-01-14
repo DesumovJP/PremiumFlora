@@ -91,7 +91,20 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
    * Пошук квітів за назвою або slug
    * @param query - пошуковий запит
    */
-  async searchFlowers(query: string): Promise<FlowerWithVariants[]> {
+  async searchFlowers(query: string): Promise<Array<{
+    id: number;
+    documentId: string;
+    name: string;
+    slug: string;
+    imageUrl: string | null;
+    variants: Array<{
+      id: number;
+      documentId: string;
+      length: number;
+      stock: number;
+      price: number;
+    }>;
+  }>> {
     strapi.log.info(`🔍 Searching flowers: "${query}"`);
 
     const flowers = await strapi.entityService.findMany('api::flower.flower', {
@@ -103,19 +116,49 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         locale: 'en',
       },
       populate: {
+        image: true,
         variants: true,
       },
       limit: 20,
     }) as unknown as FlowerWithVariants[];
 
+    // Конвертуємо у формат FlowerSearchResult для фронтенду
+    const result = flowers.map(flower => ({
+      id: flower.id,
+      documentId: flower.documentId,
+      name: flower.name,
+      slug: flower.slug,
+      imageUrl: flower.image?.url || null,
+      variants: (flower.variants || []).map(v => ({
+        id: v.id,
+        documentId: v.documentId,
+        length: v.length,
+        stock: v.stock,
+        price: v.price,
+      })),
+    }));
+
     strapi.log.info(`✅ Found ${flowers.length} flowers matching "${query}"`);
-    return flowers;
+    return result;
   },
 
   /**
-   * Отримати всі квіти з варіантами
+   * Отримати всі квіти з варіантами (включаючи з stock=0)
    */
-  async getAllFlowersWithVariants(): Promise<FlowerWithVariants[]> {
+  async getAllFlowersWithVariants(): Promise<Array<{
+    id: number;
+    documentId: string;
+    name: string;
+    slug: string;
+    imageUrl: string | null;
+    variants: Array<{
+      id: number;
+      documentId: string;
+      length: number;
+      stock: number;
+      price: number;
+    }>;
+  }>> {
     strapi.log.info('🔍 Fetching all flowers with variants');
 
     const flowers = await strapi.entityService.findMany('api::flower.flower', {
@@ -123,11 +166,28 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         locale: 'en',
       },
       populate: {
+        image: true,
         variants: true,
       },
     }) as unknown as FlowerWithVariants[];
 
-    strapi.log.info(`✅ Found ${flowers.length} flowers`);
-    return flowers;
+    // Конвертуємо у формат FlowerSearchResult для фронтенду
+    const result = flowers.map(flower => ({
+      id: flower.id,
+      documentId: flower.documentId,
+      name: flower.name,
+      slug: flower.slug,
+      imageUrl: flower.image?.url || null,
+      variants: (flower.variants || []).map(v => ({
+        id: v.id,
+        documentId: v.documentId,
+        length: v.length,
+        stock: v.stock,
+        price: v.price,
+      })),
+    }));
+
+    strapi.log.info(`✅ Found ${flowers.length} flowers with ${result.reduce((sum, f) => sum + f.variants.length, 0)} variants`);
+    return result;
   },
 });

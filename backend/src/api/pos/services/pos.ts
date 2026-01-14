@@ -13,9 +13,9 @@ import type { Core } from '@strapi/strapi';
 import type { Knex } from 'knex';
 import { invalidateAnalyticsCache } from '../../analytics/services/analytics';
 
-// Курс EUR/UAH для конвертації costPrice (EUR) в UAH при розрахунку прибутку
-// TODO: Реалізувати динамічний курс через NBU API
-const EUR_UAH_RATE = 45.5;
+// Курс USD/UAH для конвертації costPrice (USD) в UAH при розрахунку прибутку
+// TODO: Реалізувати динамічний курс через NBU API або ручний курс
+const USD_UAH_RATE = 41.5;
 
 // Types
 interface SaleItem {
@@ -320,12 +320,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           amount,
           paid_amount: paidAmount,
           items: JSON.stringify(data.items.map(item => {
-            // Отримуємо costPrice з варіанту та конвертуємо EUR → UAH
+            // Отримуємо costPrice з варіанту та конвертуємо USD → UAH
             const key = `${item.flowerSlug}-${item.length}`;
             const variant = variants.get(key);
-            // costPrice в варіанті зберігається в EUR, конвертуємо в UAH
-            const costPriceEur = item.isCustom ? 0 : (variant?.costPrice ?? 0);
-            const costPriceUah = Math.round(costPriceEur * EUR_UAH_RATE * 100) / 100;
+            // costPrice в варіанті зберігається в USD, конвертуємо в UAH
+            const costPriceUsd = item.isCustom ? 0 : (variant?.costPrice ?? 0);
+            const costPriceUah = Math.round(costPriceUsd * USD_UAH_RATE * 100) / 100;
 
             return {
               flowerSlug: item.flowerSlug,
@@ -333,7 +333,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
               qty: item.qty,
               price: item.price,
               costPrice: costPriceUah, // Собівартість в UAH для розрахунку прибутку
-              costPriceEur, // Оригінальна собівартість в EUR
+              costPriceUsd, // Оригінальна собівартість в USD
               name: item.name,
               subtotal: item.price * item.qty,
               profit: Math.round((item.price - costPriceUah) * item.qty), // Прибуток по позиції в UAH
