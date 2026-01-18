@@ -713,61 +713,60 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
               description={selected?.isVip ? 'VIP клієнт' : 'Клієнт'}
               size="lg"
               fullscreenOnMobile
+              headerActions={
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-700">
+                      <MoreHorizontal className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        const customer = customers.find(c => c.documentId === selected.id);
+                        if (customer) {
+                          exportClientTransactions(customer, transactions, customer.balance || 0);
+                        }
+                      }}
+                      disabled={isLoadingTransactions}
+                      className="text-slate-700 dark:text-slate-200 focus:bg-slate-100 dark:focus:bg-slate-700"
+                    >
+                      <FileDown className="h-4 w-4 mr-2 text-slate-500 dark:text-slate-400" />
+                      Експорт історії
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-700" />
+                    <DropdownMenuItem
+                      className="text-rose-600 dark:text-rose-400 focus:text-rose-600 dark:focus:text-rose-400 focus:bg-rose-50 dark:focus:bg-rose-900/30"
+                      onClick={() => {
+                        handleDeleteClick(new MouseEvent('click') as unknown as React.MouseEvent, selected);
+                        setSelected(null);
+                      }}
+                    >
+                      <UserX className="h-4 w-4 mr-2" />
+                      Видалити клієнта
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              }
             >
               <div className="flex flex-col max-h-[calc(100vh-6rem)] overflow-hidden -mt-2">
                 {/* Tabs */}
                 <Tabs value={clientModalTab} onValueChange={(v) => setClientModalTab(v as 'info' | 'history')} className="flex flex-col flex-1 min-h-0">
-                  <div className="flex items-center justify-between gap-3 mb-4">
-                    <TabsList className="flex-1 bg-slate-100 dark:bg-slate-800/80 p-1">
-                      <TabsTrigger value="info" className="flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm">
-                        <CreditCard className="h-4 w-4 mr-2" />
-                        Інформація
-                      </TabsTrigger>
-                      <TabsTrigger value="history" className="flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm">
-                        <Receipt className="h-4 w-4 mr-2" />
-                        Історія
-                        {transactions.length > 0 && (
-                          <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-medium">
-                            {transactions.length}
-                          </span>
-                        )}
-                      </TabsTrigger>
-                    </TabsList>
-                    {/* Actions dropdown */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="shrink-0 h-9 w-9 p-0 border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700">
-                          <MoreHorizontal className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            const customer = customers.find(c => c.documentId === selected.id);
-                            if (customer) {
-                              exportClientTransactions(customer, transactions, customer.balance || 0);
-                            }
-                          }}
-                          disabled={isLoadingTransactions}
-                          className="text-slate-700 dark:text-slate-200 focus:bg-slate-100 dark:focus:bg-slate-700"
-                        >
-                          <FileDown className="h-4 w-4 mr-2 text-slate-500 dark:text-slate-400" />
-                          Експорт історії
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-700" />
-                        <DropdownMenuItem
-                          className="text-rose-600 dark:text-rose-400 focus:text-rose-600 dark:focus:text-rose-400 focus:bg-rose-50 dark:focus:bg-rose-900/30"
-                          onClick={() => {
-                            handleDeleteClick(new MouseEvent('click') as unknown as React.MouseEvent, selected);
-                            setSelected(null);
-                          }}
-                        >
-                          <UserX className="h-4 w-4 mr-2" />
-                          Видалити клієнта
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+                  <TabsList className="w-full bg-slate-100 dark:bg-slate-800/80 p-1 mb-4">
+                    <TabsTrigger value="info" className="flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm">
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Інформація
+                    </TabsTrigger>
+                    <TabsTrigger value="history" className="flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm">
+                      <Receipt className="h-4 w-4 mr-2" />
+                      Історія
+                      {transactions.length > 0 && (
+                        <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-medium">
+                          {transactions.length}
+                        </span>
+                      )}
+                    </TabsTrigger>
+                  </TabsList>
 
                   {/* Info Tab */}
                   <TabsContent value="info" className="flex-1 mt-0 data-[state=inactive]:hidden overflow-y-auto">
