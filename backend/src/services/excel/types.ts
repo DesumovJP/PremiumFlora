@@ -50,6 +50,9 @@ export interface ImportOptions {
 
   // Маржа для ціни продажу
   salePriceMarginPercent?: number;           // Маржа у % (default: 10%)
+
+  // Оновлення цін існуючих товарів
+  updateExistingPrices?: boolean;            // Замінити ціни існуючих товарів (default: false)
 }
 
 // ============================================

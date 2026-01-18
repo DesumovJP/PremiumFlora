@@ -110,6 +110,9 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
   const [marginInput, setMarginInput] = useState('10');
   const marginPercent = marginInput === '' ? 0 : (parseFloat(marginInput) || 0);
 
+  // Оновлення цін існуючих товарів
+  const [updateExistingPrices, setUpdateExistingPrices] = useState(false);
+
   // Завантажити курс при відкритті модалки
   useEffect(() => {
     if (open && !usdRate) {
@@ -213,6 +216,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
         costCalculationMode: costMode,
         fullCostParams: costMode === 'full' ? fullCostParams : undefined,
         salePriceMarginPercent: marginPercent,
+        updateExistingPrices,
       };
       const res = await importExcel(file, importOptions);
       setResult(res);
@@ -249,6 +253,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
         costCalculationMode: costMode,
         fullCostParams: costMode === 'full' ? fullCostParams : undefined,
         salePriceMarginPercent: marginPercent,
+        updateExistingPrices,
       };
       const res = await importExcel(file, importOptions);
       setResult(res);
@@ -465,6 +470,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
       taxPerStem: 0.05,
     });
     setMarginInput('10');
+    setUpdateExistingPrices(false);
     onOpenChange(false);
   };
 
@@ -499,20 +505,31 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
             <thead className="bg-slate-50 dark:bg-slate-800 sticky top-0">
               <tr>
                 <th className="text-left px-3 py-2 font-medium text-slate-700 dark:text-slate-300">Назва</th>
-                <th className="text-center px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-16">См</th>
-                <th className="text-center px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-20">
+                <th className="text-center px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-14">См</th>
+                <th className="text-center px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-16">
                   <div className="flex flex-col">
                     <span>К-сть</span>
                     <span className="text-xs font-normal text-slate-500">(Excel)</span>
                   </div>
                 </th>
-                <th className="text-center px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-20">
+                <th className="text-center px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-16">
                   <div className="flex flex-col">
                     <span>К-сть</span>
                     <span className="text-xs font-normal text-slate-500">(додано)</span>
                   </div>
                 </th>
-                <th className="text-right px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-20">Ціна $</th>
+                <th className="text-right px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-20">
+                  <div className="flex flex-col">
+                    <span>Собів.</span>
+                    <span className="text-xs font-normal text-slate-500">$</span>
+                  </div>
+                </th>
+                <th className="text-right px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-20">
+                  <div className="flex flex-col">
+                    <span>Ціна</span>
+                    <span className="text-xs font-normal text-slate-500">₴</span>
+                  </div>
+                </th>
                 <th className="text-right px-3 py-2 font-medium text-slate-700 dark:text-slate-300 w-24">Сума $</th>
               </tr>
             </thead>
@@ -549,6 +566,9 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                     <td className="px-3 py-2 text-right text-slate-600 dark:text-slate-400">
                       {entry.costPrice.toFixed(2)}
                     </td>
+                    <td className="px-3 py-2 text-right text-emerald-600 dark:text-emerald-400 font-medium">
+                      {entry.priceAfter ? entry.priceAfter.toFixed(2) : '-'}
+                    </td>
                     <td className="px-3 py-2 text-right text-slate-700 dark:text-slate-300 font-medium">
                       {(entry.originalStock * entry.costPrice).toFixed(2)}
                     </td>
@@ -567,6 +587,9 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                 </td>
                 <td className="px-3 py-2 text-center text-slate-700 dark:text-slate-300">
                   {priceEntries.reduce((sum, e) => sum + e.importedStock, 0)}
+                </td>
+                <td className="px-3 py-2 text-right text-slate-500 dark:text-slate-400">
+                  -
                 </td>
                 <td className="px-3 py-2 text-right text-slate-500 dark:text-slate-400">
                   -
@@ -747,9 +770,6 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                     <span className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
                       Формула ціни продажу
                     </span>
-                    <span className="text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 rounded">
-                      для нових товарів
-                    </span>
                   </div>
                   <div className="text-sm text-emerald-700 dark:text-emerald-300 font-mono bg-white/50 dark:bg-slate-900/30 rounded px-2 py-1.5">
                     Ціна = Собівартість × (1 + <span className="font-bold text-emerald-600 dark:text-emerald-400">{marginPercent}%</span>) × {usdRate?.rate?.toFixed(2) || '??'} ₴/$
@@ -771,8 +791,21 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                       <span className="text-sm text-emerald-600 dark:text-emerald-400">%</span>
                     </div>
                   </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={updateExistingPrices}
+                      onChange={(e) => setUpdateExistingPrices(e.target.checked)}
+                      className="h-4 w-4 rounded border-emerald-300 dark:border-emerald-700 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0"
+                    />
+                    <span className="text-xs text-emerald-700 dark:text-emerald-300">
+                      Оновити ціни існуючих товарів
+                    </span>
+                  </label>
                   <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
-                    Ціна продажу розраховується автоматично для нових товарів. Існуючі ціни не змінюються.
+                    {updateExistingPrices
+                      ? 'Ціни будуть перераховані для всіх товарів (нових та існуючих).'
+                      : 'Ціни розраховуються тільки для нових товарів. Існуючі ціни не змінюються.'}
                   </p>
                 </div>
               </div>

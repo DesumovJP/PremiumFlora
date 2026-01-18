@@ -399,11 +399,12 @@ export class UpserterService {
         ? parseFloat(existing.price)
         : (existing.price ?? 0);
 
-      this.strapi.log.info(`🔍 Existing variant price check: raw=${existing.price}, parsed=${existingPrice}, type=${typeof existing.price}`);
+      this.strapi.log.info(`🔍 Existing variant price check: raw=${existing.price}, parsed=${existingPrice}, type=${typeof existing.price}, updateExistingPrices=${options.updateExistingPrices}`);
 
-      // Якщо ціна продажу відсутня або 0 - розрахувати базову ціну
+      // Якщо ціна продажу відсутня або 0, або примусово оновлюємо ціни - розрахувати базову ціну
       let salePrice: number;
-      if (!existingPrice || existingPrice <= 0 || isNaN(existingPrice)) {
+      const shouldUpdatePrice = !existingPrice || existingPrice <= 0 || isNaN(existingPrice) || options.updateExistingPrices;
+      if (shouldUpdatePrice) {
         const usdRate = await getUsdRate();
         const marginPercent = options.salePriceMarginPercent ?? 10;
         const marginMultiplier = 1 + marginPercent / 100;
