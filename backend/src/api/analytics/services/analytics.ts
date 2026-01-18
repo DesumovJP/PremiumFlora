@@ -320,38 +320,84 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   /**
-   * Отримати топ клієнтів
+   * Отримати топ клієнтів за вказаний місяць
+   * @param limit - кількість клієнтів
+   * @param year - рік (опційно)
+   * @param month - місяць 0-11 (опційно)
    */
-  async getTopCustomers(limit: number = 10): Promise<TopCustomer[]> {
-    const customers = await strapi.db.query('api::customer.customer').findMany({
-      orderBy: { totalSpent: 'desc' },
-      limit,
-      populate: ['transactions'],
+  async getTopCustomers(limit: number = 10, year?: number, month?: number): Promise<TopCustomer[]> {
+    const now = new Date();
+    const targetYear = year ?? now.getFullYear();
+    const targetMonth = month ?? now.getMonth();
+
+    const startOfMonth = new Date(targetYear, targetMonth, 1);
+    const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
+
+    // Отримуємо транзакції за вказаний місяць
+    const transactions = await strapi.db.query('api::transaction.transaction').findMany({
+      where: {
+        type: 'sale',
+        paymentStatus: { $ne: 'cancelled' },
+        date: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
+      },
+      populate: ['customer'],
     });
 
-    return customers.map((c: {
-      id: number;
+    // Групуємо по клієнтах
+    const customerMap = new Map<string, {
+      id: string;
       documentId: string;
       name: string;
       type: string;
       totalSpent: number;
       orderCount: number;
-      transactions?: Array<{ date: string }>;
-    }) => {
-      const lastOrder = (c.transactions || [])
-        .map(t => new Date(t.date))
-        .sort((a, b) => b.getTime() - a.getTime())[0];
+      lastOrderDate: Date | null;
+    }>();
 
-      return {
-        id: String(c.id),
-        documentId: c.documentId,
-        name: c.name,
-        type: c.type || 'Regular',
-        totalSpent: Number(c.totalSpent) || 0,
-        orderCount: c.orderCount || 0,
-        lastOrderDate: lastOrder?.toISOString() || null,
-      };
+    transactions.forEach((tx: {
+      amount: number;
+      date: string;
+      customer?: { id: number; documentId: string; name: string; type: string };
+    }) => {
+      if (!tx.customer) return;
+
+      const customerId = tx.customer.documentId;
+      const existing = customerMap.get(customerId);
+      const txDate = new Date(tx.date);
+
+      if (existing) {
+        existing.totalSpent += tx.amount || 0;
+        existing.orderCount += 1;
+        if (!existing.lastOrderDate || txDate > existing.lastOrderDate) {
+          existing.lastOrderDate = txDate;
+        }
+      } else {
+        customerMap.set(customerId, {
+          id: String(tx.customer.id),
+          documentId: tx.customer.documentId,
+          name: tx.customer.name,
+          type: tx.customer.type || 'Regular',
+          totalSpent: tx.amount || 0,
+          orderCount: 1,
+          lastOrderDate: txDate,
+        });
+      }
     });
+
+    // Сортуємо по сумі та беремо топ
+    const sorted = Array.from(customerMap.values())
+      .sort((a, b) => b.totalSpent - a.totalSpent)
+      .slice(0, limit);
+
+    return sorted.map((c) => ({
+      id: c.id,
+      documentId: c.documentId,
+      name: c.name,
+      type: c.type,
+      totalSpent: c.totalSpent,
+      orderCount: c.orderCount,
+      lastOrderDate: c.lastOrderDate?.toISOString() || null,
+    }));
   },
 
   /**
@@ -775,9 +821,23 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   /**
    * Отримати розподіл по категоріях (топ квіти за продажами)
    * Використовує дані з shifts як єдине джерело правди
+   * @param year - рік (опційно)
+   * @param month - місяць 0-11 (опційно)
    */
-  async getCategorySplit(): Promise<CategorySplit[]> {
-    const shifts = await strapi.db.query('api::shift.shift').findMany({});
+  async getCategorySplit(year?: number, month?: number): Promise<CategorySplit[]> {
+    const now = new Date();
+    const targetYear = year ?? now.getFullYear();
+    const targetMonth = month ?? now.getMonth();
+
+    // Отримуємо зміни за вказаний місяць
+    const startOfMonth = new Date(targetYear, targetMonth, 1);
+    const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
+
+    const shifts = await strapi.db.query('api::shift.shift').findMany({
+      where: {
+        startedAt: { $gte: startOfMonth.toISOString(), $lte: endOfMonth.toISOString() },
+      },
+    });
 
     // Агрегувати по квіткам
     const flowerSales = new Map<string, number>();
@@ -789,17 +849,21 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       price?: number;
     }
 
-    shifts.forEach((shift: { activities: Array<{ type: string; details: { items?: SaleItem[] } }> }) => {
+    shifts.forEach((shift: { activities: Array<{ type: string; timestamp: string; details: { items?: SaleItem[] } }> }) => {
       const activities = shift.activities || [];
       activities.forEach((activity) => {
         if (activity.type === 'sale') {
-          const items = activity.details.items || [];
-          items.forEach((item) => {
-            const name = item.name || 'Unknown';
-            const amount = (item.qty || 0) * (item.price || 0);
-            flowerSales.set(name, (flowerSales.get(name) || 0) + amount);
-            totalSales += amount;
-          });
+          // Перевіряємо чи активність в потрібному місяці
+          const activityDate = new Date(activity.timestamp);
+          if (activityDate >= startOfMonth && activityDate <= endOfMonth) {
+            const items = activity.details.items || [];
+            items.forEach((item) => {
+              const name = item.name || 'Unknown';
+              const amount = (item.qty || 0) * (item.price || 0);
+              flowerSales.set(name, (flowerSales.get(name) || 0) + amount);
+              totalSales += amount;
+            });
+          }
         }
       });
     });
@@ -820,9 +884,11 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
   /**
    * Отримати топ продуктів
+   * @param year - рік (опційно)
+   * @param month - місяць 0-11 (опційно)
    */
-  async getTopProducts(): Promise<Array<{ name: string; share: number }>> {
-    const categorySplit = await this.getCategorySplit();
+  async getTopProducts(year?: number, month?: number): Promise<Array<{ name: string; share: number }>> {
+    const categorySplit = await this.getCategorySplit(year, month);
     return categorySplit.map((c: { name: string; value: number }) => ({
       name: c.name,
       share: c.value,
@@ -1077,13 +1143,13 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       this.getKpis(year, month),
       this.getWeeklyRevenue(year, month),
       this.getOrdersPerWeek(year, month),
-      this.getCategorySplit(),
-      this.getTopProducts(),
+      this.getCategorySplit(year, month),
+      this.getTopProducts(year, month),
       this.getSupplyPlan(),
       this.getDailySales(year, month),
       this.getStockLevels(),
       this.getWriteOffSummary(),
-      this.getTopCustomers(5),
+      this.getTopCustomers(5, year, month),
       this.getTopWriteOffFlowers(),
       this.getPaymentSummary(year, month),
       this.getTotalPendingPayments(),
