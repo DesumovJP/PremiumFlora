@@ -405,8 +405,10 @@ export class UpserterService {
       let salePrice: number;
       if (!existingPrice || existingPrice <= 0 || isNaN(existingPrice)) {
         const usdRate = await getUsdRate();
-        salePrice = Math.round(costPrice * 1.10 * usdRate * 100) / 100;
-        this.strapi.log.info(`💰 Calculating sale price: ${costPrice}$ × 1.10 × ${usdRate} = ${salePrice}₴`);
+        const marginPercent = options.salePriceMarginPercent ?? 10;
+        const marginMultiplier = 1 + marginPercent / 100;
+        salePrice = Math.round(costPrice * marginMultiplier * usdRate * 100) / 100;
+        this.strapi.log.info(`💰 Calculating sale price: ${costPrice}$ × ${marginMultiplier.toFixed(2)} (+${marginPercent}%) × ${usdRate} = ${salePrice}₴`);
 
         // Оновлюємо ціну в базі
         await this.strapi.db.query('api::variant.variant').update({
@@ -446,17 +448,19 @@ export class UpserterService {
     }
 
     // Створити новий варіант
-    // Базова ціна продажу = собівартість (USD) × 1.10 × курс USD/UAH
+    // Базова ціна продажу = собівартість (USD) × (1 + маржа%) × курс USD/UAH
     const usdRate = await getUsdRate();
-    const basePrice = Math.round(costPrice * 1.10 * usdRate * 100) / 100;
-    this.strapi.log.info(`🌱 Creating variant: ${flower.name} ${variantLength}cm - stock ${row.stock}, costPrice ${costPrice}$, basePrice ${basePrice}₴ (+10% × ${usdRate} USD/UAH)`);
+    const marginPercent = options.salePriceMarginPercent ?? 10;
+    const marginMultiplier = 1 + marginPercent / 100;
+    const basePrice = Math.round(costPrice * marginMultiplier * usdRate * 100) / 100;
+    this.strapi.log.info(`🌱 Creating variant: ${flower.name} ${variantLength}cm - stock ${row.stock}, costPrice ${costPrice}$, basePrice ${basePrice}₴ (+${marginPercent}% × ${usdRate} USD/UAH)`);
 
     const created = await this.strapi.db.query('api::variant.variant').create({
       data: {
         length: variantLength,
         stock: row.stock,
         costPrice: costPrice,
-        price: basePrice, // Базова ціна продажу = собівартість + 10%
+        price: basePrice, // Базова ціна продажу = собівартість × (1 + маржа%) × курс
         flower: flower.id,
         locale: 'en',
       },

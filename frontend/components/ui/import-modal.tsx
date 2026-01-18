@@ -106,6 +106,9 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
     taxPerStem: 0.05,
   });
 
+  // Маржа для ціни продажу
+  const [marginPercent, setMarginPercent] = useState<number>(10);
+
   // Завантажити курс при відкритті модалки
   useEffect(() => {
     if (open && !usdRate) {
@@ -203,11 +206,12 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
     setResult(null);
 
     try {
-      // Додаємо опції розрахунку собівартості
+      // Додаємо опції розрахунку собівартості та маржі
       const importOptions: ImportOptions = {
         ...options,
         costCalculationMode: costMode,
         fullCostParams: costMode === 'full' ? fullCostParams : undefined,
+        salePriceMarginPercent: marginPercent,
       };
       const res = await importExcel(file, importOptions);
       setResult(res);
@@ -236,13 +240,14 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
     setResult(null);
 
     try {
-      // Передаємо rowOverrides та опції розрахунку собівартості
+      // Передаємо rowOverrides та опції розрахунку собівартості та маржі
       const importOptions: ImportOptions = {
         ...options,
         dryRun: false,
         rowOverrides: Object.keys(rowEdits).length > 0 ? rowEdits : undefined,
         costCalculationMode: costMode,
         fullCostParams: costMode === 'full' ? fullCostParams : undefined,
+        salePriceMarginPercent: marginPercent,
       };
       const res = await importExcel(file, importOptions);
       setResult(res);
@@ -450,7 +455,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
       stockMode: "add",
       forceImport: false,
     });
-    // Скидаємо налаштування собівартості
+    // Скидаємо налаштування собівартості та маржі
     setCostMode('simple');
     setCostParamsExpanded(false);
     setFullCostParams({
@@ -458,6 +463,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
       transferFeePercent: 3.5,
       taxPerStem: 0.05,
     });
+    setMarginPercent(10);
     onOpenChange(false);
   };
 
@@ -729,6 +735,63 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* Sale Price Calculation - prominent info box */}
+            <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 border border-emerald-200 dark:border-emerald-800">
+              <div className="flex items-start gap-3">
+                <Calculator className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                      Формула ціни продажу
+                    </span>
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 rounded">
+                      для нових товарів
+                    </span>
+                  </div>
+                  <div className="text-sm text-emerald-700 dark:text-emerald-300 font-mono bg-white/50 dark:bg-slate-900/30 rounded px-2 py-1.5">
+                    Ціна = Собівартість × (1 + <span className="font-bold text-emerald-600 dark:text-emerald-400">{marginPercent}%</span>) × {usdRate?.rate?.toFixed(2) || '??'} ₴/$
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs text-emerald-600 dark:text-emerald-400">
+                      Маржа:
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        max="100"
+                        value={marginPercent}
+                        onChange={(e) => setMarginPercent(parseFloat(e.target.value) || 0)}
+                        className="w-16 px-2 py-1 text-sm border border-emerald-300 dark:border-emerald-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-center font-medium"
+                      />
+                      <span className="text-sm text-emerald-600 dark:text-emerald-400">%</span>
+                    </div>
+                    <div className="flex gap-1 ml-2">
+                      {[5, 10, 15, 20].map((val) => (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setMarginPercent(val)}
+                          className={cn(
+                            "px-2 py-0.5 text-xs rounded transition-colors",
+                            marginPercent === val
+                              ? "bg-emerald-600 text-white"
+                              : "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-800/60"
+                          )}
+                        >
+                          {val}%
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
+                    Ціна продажу розраховується автоматично для нових товарів. Існуючі ціни не змінюються.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Cost Calculation Mode */}

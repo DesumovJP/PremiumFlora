@@ -47,6 +47,9 @@ export interface ImportOptions {
   // Розрахунок собівартості
   costCalculationMode?: CostCalculationMode; // 'simple' | 'full' (default: 'simple')
   fullCostParams?: FullCostParams;           // Параметри для повного розрахунку
+
+  // Маржа для ціни продажу
+  salePriceMarginPercent?: number;           // Маржа у % (default: 10%)
 }
 
 // ============================================
