@@ -5,7 +5,7 @@ import { Modal } from "./modal";
 import { Button } from "./button";
 import { Input } from "./input";
 import { cn } from "@/lib/utils";
-import { Plus, X, Search, Download, Package, Eraser, Check } from "lucide-react";
+import { Plus, Minus, X, Search, Download, Package, Eraser, Check, ShoppingCart, Loader2, Sparkles } from "lucide-react";
 import {
   getAllFlowersForSupply,
   searchFlowersForSupply,
@@ -300,181 +300,258 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
       description="Оберіть товари для замовлення"
       size="2xl"
     >
-      <div className="space-y-3">
-        {/* Header */}
-        <div className="flex items-center gap-2">
-          {!showSearch ? (
-            <>
-              <button
-                onClick={() => setShowSearch(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
-              >
-                <Search className="h-4 w-4" />
-                Пошук
-              </button>
-              {activeItems.length > 0 && (
-                <button
-                  onClick={clearAll}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-stone-500 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-600 dark:hover:text-rose-400 transition-colors ml-auto"
-                >
-                  <Eraser className="h-3.5 w-3.5" />
-                  Скинути
-                </button>
-              )}
-            </>
-          ) : (
-            <div className="flex-1 flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-                <Input
-                  type="text"
-                  placeholder="Пошук квітки..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    handleSearch(e.target.value);
-                  }}
-                  className="pl-9 h-9"
-                  autoFocus
-                />
-              </div>
-              <button
-                onClick={() => {
-                  setShowSearch(false);
-                  setSearchQuery("");
-                  setSearchResults([]);
-                }}
-                className="p-2 text-stone-400 hover:text-stone-600"
-              >
-                <X className="h-4 w-4" />
-              </button>
+      <div className="space-y-4">
+        {/* Summary pills */}
+        {activeItems.length > 0 && (
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-900/20 border border-emerald-200/60 dark:border-emerald-800/50">
+            <div className="h-9 w-9 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
+              <ShoppingCart className="h-4 w-4 text-white" />
             </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                {activeItems.length} {activeItems.length === 1 ? 'позиція' : activeItems.length < 5 ? 'позиції' : 'позицій'} в замовленні
+              </p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                Загалом: <span className="font-semibold tabular-nums">{totalQty.toLocaleString('uk-UA')}</span> шт
+              </p>
+            </div>
+            <button
+              onClick={clearAll}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors shrink-0"
+            >
+              <Eraser className="h-3.5 w-3.5" />
+              Очистити
+            </button>
+          </div>
+        )}
+
+        {/* Search bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+          <Input
+            type="text"
+            placeholder="Пошук квітки за назвою..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              handleSearch(e.target.value);
+              if (e.target.value.length >= 2) {
+                setShowSearch(true);
+              }
+            }}
+            onFocus={() => searchQuery.length >= 2 && setShowSearch(true)}
+            className="pl-10 h-10"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setSearchResults([]);
+                setShowSearch(false);
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
           )}
         </div>
 
         {/* Search results */}
         {showSearch && searchResults.length > 0 && (
-          <div className="rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 max-h-40 overflow-y-auto">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 max-h-48 overflow-y-auto shadow-lg">
+            <div className="p-2 text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500 font-medium border-b border-slate-100 dark:border-slate-700">
+              Результати пошуку
+            </div>
             {searchResults.map(flower =>
-              flower.variants.map(variant => (
-                <button
-                  key={`${flower.id}-${variant.id}`}
-                  onClick={() => addFromSearch(flower, variant)}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-stone-50 dark:hover:bg-slate-700/50 border-b border-stone-100 dark:border-slate-700 last:border-0"
-                >
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-stone-900 dark:text-white">{flower.name}</div>
-                    <div className="text-xs text-stone-500">{variant.length} см • {variant.stock} шт</div>
-                  </div>
-                  <Plus className="h-4 w-4 text-emerald-500" />
-                </button>
-              ))
+              flower.variants.map(variant => {
+                const isAlreadyAdded = items.some(
+                  item => item.flowerId === flower.id && item.variantId === variant.id && item.isActive
+                );
+                return (
+                  <button
+                    key={`${flower.id}-${variant.id}`}
+                    onClick={() => !isAlreadyAdded && addFromSearch(flower, variant)}
+                    disabled={isAlreadyAdded}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors border-b border-slate-100 dark:border-slate-700 last:border-0",
+                      isAlreadyAdded
+                        ? "bg-emerald-50/50 dark:bg-emerald-900/10 cursor-default"
+                        : "hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                    )}
+                  >
+                    <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0">
+                      {flower.imageUrl ? (
+                        <img src={flower.imageUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <Package className="h-4 w-4 text-slate-400" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-slate-800 dark:text-white truncate">{flower.name}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {variant.length} см • <span className={variant.stock === 0 ? "text-rose-500" : ""}>{variant.stock} шт</span>
+                      </div>
+                    </div>
+                    {isAlreadyAdded ? (
+                      <div className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                        <Check className="h-4 w-4" />
+                        <span>Додано</span>
+                      </div>
+                    ) : (
+                      <div className="h-7 w-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                        <Plus className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })
             )}
+          </div>
+        )}
+
+        {/* Searching indicator */}
+        {searching && searchQuery.length >= 2 && (
+          <div className="flex items-center justify-center gap-2 py-3 text-sm text-slate-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Пошук...</span>
           </div>
         )}
 
         {/* Items list */}
         {loading ? (
-          <div className="py-8 text-center text-sm text-stone-500">Завантаження...</div>
+          <div className="flex flex-col items-center justify-center py-12 gap-3">
+            <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
+            <p className="text-sm text-slate-500 dark:text-slate-400">Завантаження товарів...</p>
+          </div>
         ) : items.length === 0 ? (
-          <div className="py-8 text-center text-sm text-stone-500">Немає товарів</div>
+          <div className="flex flex-col items-center justify-center py-12 gap-3">
+            <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+              <Package className="h-6 w-6 text-slate-400" />
+            </div>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Немає товарів для поставки</p>
+          </div>
         ) : (
-          <div className="max-h-[450px] overflow-y-auto space-y-2">
+          <div className="max-h-[400px] overflow-y-auto space-y-2 scrollbar-thin">
             {groupSupplyItems(items).map(group => (
               <div
                 key={group.groupKey}
                 className={cn(
-                  "rounded-lg border overflow-hidden transition-colors",
+                  "rounded-xl border overflow-hidden transition-colors",
                   group.hasActiveItems
-                    ? "border-emerald-200 dark:border-emerald-800/50 bg-emerald-50/30 dark:bg-emerald-900/10"
-                    : "border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800/30"
+                    ? "border-emerald-200 dark:border-emerald-800/50 ring-1 ring-emerald-100 dark:ring-emerald-900/30"
+                    : "border-slate-200 dark:border-slate-700"
                 )}
               >
                 {/* Group header */}
                 <div className={cn(
-                  "flex items-center gap-3 px-3 py-2",
+                  "flex items-center gap-3 px-3 py-2.5",
                   group.hasActiveItems
-                    ? "bg-emerald-50 dark:bg-emerald-900/20"
-                    : "bg-stone-50 dark:bg-slate-800/50"
+                    ? "bg-emerald-50/70 dark:bg-emerald-900/20"
+                    : "bg-slate-50/70 dark:bg-slate-800/50"
                 )}>
-                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-stone-100 dark:bg-slate-700">
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white dark:bg-slate-700 ring-1 ring-slate-200/60 dark:ring-slate-600/50">
                     {group.imageUrl ? (
                       <img src={group.imageUrl} alt="" className="h-full w-full object-cover" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-stone-400">
-                        <Package className="h-4 w-4" />
+                      <div className="flex h-full w-full items-center justify-center text-slate-400">
+                        <Package className="h-5 w-5" />
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="font-medium text-sm text-stone-900 dark:text-white truncate block">
+                    <span className="font-semibold text-sm text-slate-800 dark:text-white truncate block">
                       {group.flowerName}
                     </span>
-                    <span className="text-xs text-stone-500 dark:text-slate-400">
-                      {group.items.length} {group.items.length === 1 ? 'варіант' : 'варіанти'}
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {group.items.length} {group.items.length === 1 ? 'варіант' : group.items.length < 5 ? 'варіанти' : 'варіантів'}
                     </span>
                   </div>
                   {group.totalPlanned > 0 && (
-                    <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                      {group.totalPlanned} шт
-                    </span>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500 text-white">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      <span className="text-sm font-semibold tabular-nums">{group.totalPlanned}</span>
+                    </div>
                   )}
                 </div>
 
                 {/* Variants */}
-                <div className="divide-y divide-stone-100 dark:divide-slate-700">
+                <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
                   {group.items.map(item => (
                     <div
                       key={item.id}
                       className={cn(
-                        "flex items-center gap-2 px-3 py-2 transition-colors",
-                        item.isActive ? "bg-emerald-50/50 dark:bg-emerald-900/10" : ""
+                        "flex items-center gap-3 px-3 py-2.5 transition-colors",
+                        item.isActive
+                          ? "bg-emerald-50/40 dark:bg-emerald-900/10"
+                          : "bg-white dark:bg-slate-800/30"
                       )}
                     >
                       {/* Checkbox */}
                       <button
                         onClick={() => toggleActive(item.id)}
                         className={cn(
-                          "h-5 w-5 rounded border-2 flex items-center justify-center transition-colors shrink-0",
+                          "h-5 w-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0",
                           item.isActive
-                            ? "bg-emerald-500 border-emerald-500 text-white"
-                            : "border-stone-300 dark:border-slate-600 hover:border-emerald-400"
+                            ? "bg-emerald-500 border-emerald-500 text-white scale-105"
+                            : "border-slate-300 dark:border-slate-600 hover:border-emerald-400 dark:hover:border-emerald-500"
                         )}
                       >
-                        {item.isActive && <Check className="h-3 w-3" />}
+                        {item.isActive && <Check className="h-3 w-3" strokeWidth={3} />}
                       </button>
 
                       {/* Info */}
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span className="text-xs px-2 py-0.5 rounded bg-stone-100 dark:bg-slate-700 text-stone-600 dark:text-slate-300">
+                        <span className={cn(
+                          "text-xs px-2 py-0.5 rounded-md font-medium",
+                          item.isActive
+                            ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
+                            : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                        )}>
                           {item.length} см
                         </span>
-                        <span className="text-xs text-stone-500 dark:text-slate-400">
-                          {item.currentStock} шт
+                        <span className={cn(
+                          "text-xs tabular-nums",
+                          item.currentStock === 0
+                            ? "text-rose-500 font-medium"
+                            : item.currentStock < 50
+                            ? "text-amber-600 dark:text-amber-400"
+                            : "text-slate-500 dark:text-slate-400"
+                        )}>
+                          {item.currentStock === 0 ? "Нема в наявності" : `${item.currentStock} шт`}
                         </span>
                       </div>
 
                       {/* Quantity controls */}
                       {item.isActive && (
-                        <div className="flex items-center gap-1">
-                          <div className="flex gap-0.5">
-                            {[25, 100].map(qty => (
-                              <button
-                                key={qty}
-                                onClick={() => updateQuantity(item.id, item.plannedQuantity + qty)}
-                                className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/60"
-                              >
-                                +{qty}
-                              </button>
-                            ))}
-                          </div>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => updateQuantity(item.id, item.plannedQuantity - 25)}
+                            disabled={item.plannedQuantity <= 0}
+                            className="h-7 w-7 rounded-md flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          >
+                            <Minus className="h-3.5 w-3.5" />
+                          </button>
                           <Input
                             type="number"
                             value={item.plannedQuantity}
                             onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)}
                             min="0"
-                            className="w-16 h-7 text-xs text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="w-16 h-7 text-sm text-center font-semibold tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
+                          <button
+                            onClick={() => updateQuantity(item.id, item.plannedQuantity + 25)}
+                            className="h-7 w-7 rounded-md flex items-center justify-center bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 transition-colors"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => updateQuantity(item.id, item.plannedQuantity + 100)}
+                            className="px-2 h-7 rounded-md text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 transition-colors"
+                          >
+                            +100
+                          </button>
                         </div>
                       )}
                     </div>
@@ -486,23 +563,32 @@ export function PlannedSupplyModal({ open, onOpenChange }: PlannedSupplyModalPro
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-stone-100 dark:border-slate-800">
-          {activeItems.length > 0 ? (
-            <div className="text-sm">
-              <span className="text-stone-500 dark:text-slate-400">Обрано: {activeItems.length}</span>
-              <span className="mx-2 text-stone-300">•</span>
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">{totalQty} шт</span>
-            </div>
-          ) : (
-            <span className="text-sm text-stone-400">Оберіть товари</span>
-          )}
+        <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-4">
+            {activeItems.length > 0 ? (
+              <>
+                <div className="text-sm text-slate-600 dark:text-slate-400">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">{activeItems.length}</span> {activeItems.length === 1 ? 'товар' : activeItems.length < 5 ? 'товари' : 'товарів'}
+                </div>
+                <div className="h-4 w-px bg-slate-200 dark:bg-slate-700" />
+                <div className="text-sm">
+                  <span className="text-slate-500 dark:text-slate-400">Всього:</span>{' '}
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{totalQty.toLocaleString('uk-UA')}</span> шт
+                </div>
+              </>
+            ) : (
+              <span className="text-sm text-slate-400 dark:text-slate-500">
+                Оберіть товари для замовлення
+              </span>
+            )}
+          </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleClose} size="sm">
+            <Button variant="outline" onClick={handleClose}>
               Закрити
             </Button>
-            <Button onClick={handleExport} disabled={activeItems.length === 0} size="sm">
-              <Download className="mr-1.5 h-4 w-4" />
-              Експорт
+            <Button onClick={handleExport} disabled={activeItems.length === 0}>
+              <Download className="mr-2 h-4 w-4" />
+              Експорт CSV
             </Button>
           </div>
         </div>

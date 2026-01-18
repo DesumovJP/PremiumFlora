@@ -487,7 +487,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
           Кількість та собівартість оновлено. Перегляньте результат імпорту нижче.
         </p>
 
-        <div className="max-h-[400px] overflow-auto border border-slate-200 dark:border-slate-700 rounded-lg">
+        <div className="max-h-[50vh] overflow-auto border border-slate-200 dark:border-slate-700 rounded-lg">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 dark:bg-slate-800 sticky top-0">
               <tr>
@@ -604,6 +604,9 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
       open={open}
       onOpenChange={(v) => !v && handleClose()}
       title={getModalTitle()}
+      size="3xl"
+      allowHorizontalScroll
+      fullscreenOnMobile
     >
       <div className="space-y-4">
         {step === 'pricing' ? (
@@ -980,7 +983,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                         </div>
 
                         {/* Таблиця з усіма деталями */}
-                        <div className="max-h-[400px] overflow-auto border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <div className="max-h-[50vh] overflow-auto border border-blue-200 dark:border-blue-800 rounded-lg">
                           <table className="w-full text-xs">
                             <thead className="bg-blue-100 dark:bg-blue-900/40 sticky top-0 z-10">
                               <tr>

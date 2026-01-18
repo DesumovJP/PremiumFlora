@@ -12,7 +12,15 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Client } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Mail, MapPin, Phone, Plus, X, Loader2, Trash, Download, Check, ChevronDown, Wallet, FileSpreadsheet } from "lucide-react";
+import { Mail, MapPin, Phone, Plus, Minus, X, Loader2, Trash, Download, Check, ChevronDown, Wallet, FileSpreadsheet, ShoppingBag, CreditCard, Calendar, ArrowUpRight, ArrowDownRight, Clock, MoreHorizontal, Edit3, FileDown, UserX, TrendingUp, TrendingDown, RotateCcw, Receipt } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useMemo, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import type { Customer, Transaction } from "@/lib/api-types";
@@ -42,8 +50,11 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
   // State for balance modal
   const [balanceModalOpen, setBalanceModalOpen] = useState(false);
   const [balanceAmount, setBalanceAmount] = useState<string>("");
+  const [balanceOperation, setBalanceOperation] = useState<'add' | 'subtract' | 'set'>('add');
   const [isUpdatingBalance, setIsUpdatingBalance] = useState(false);
   const [selectedCustomerForBalance, setSelectedCustomerForBalance] = useState<Customer | null>(null);
+  // State for client modal tab
+  const [clientModalTab, setClientModalTab] = useState<'info' | 'history'>('info');
   // State for return sale modal
   const [transactionToReturn, setTransactionToReturn] = useState<Transaction | null>(null);
   const [isReturning, setIsReturning] = useState(false);
@@ -536,10 +547,10 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
               <div
                 key={client.id}
                 className={cn(
-                  "border rounded-xl cursor-pointer transition-all duration-200 group bg-white dark:bg-slate-800/60 overflow-hidden",
-                  "hover:shadow-md active:scale-[0.99]",
+                  "border rounded-xl cursor-pointer transition-colors duration-200 group bg-white dark:bg-slate-800/60 overflow-hidden",
+                  "hover:border-slate-300 dark:hover:border-slate-500 active:scale-[0.99]",
                   selected?.id === client.id
-                    ? "border-emerald-400 dark:border-emerald-500 shadow-md ring-1 ring-emerald-200 dark:ring-emerald-500/30"
+                    ? "border-emerald-400 dark:border-emerald-500 shadow-sm ring-1 ring-emerald-200 dark:ring-emerald-500/30"
                     : "border-[var(--admin-border)]"
                 )}
                 onClick={() => handleSelect(client)}
@@ -693,110 +704,260 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
             <Modal
               open={!!selected}
               onOpenChange={(v) => {
-                if (!v) setSelected(null);
+                if (!v) {
+                  setSelected(null);
+                  setClientModalTab('info');
+                }
               }}
-              title="Історія замовлень"
-              description={selected?.name}
+              title={selected?.name}
+              description={selected?.isVip ? 'VIP клієнт' : 'Клієнт'}
               size="lg"
               fullscreenOnMobile
             >
-              <div className="flex flex-col max-h-[calc(100vh-6rem)] overflow-hidden">
-                <div className="space-y-3">
-                  <div className="rounded-2xl bg-white dark:bg-admin-surface p-3 text-sm text-slate-700 dark:text-admin-text-secondary">
-                    <div className="grid grid-cols-2 gap-2">
-                      <p className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-emerald-600 shrink-0" />
-                        <span className="truncate">{selected.contact}</span>
-                      </p>
-                      <p className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-emerald-600 shrink-0" />
-                        <span className="truncate">{selected.email}</span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-sm">
-                    <MetricBox label="Замовлень" value={selected.orders.toString()} />
-                    <MetricBox label="Витрачено" value={`${selected.spent.toLocaleString("uk-UA")} грн`} />
-                    <MetricBox label="Останнє" value={selected.lastOrder} />
+              <div className="flex flex-col max-h-[calc(100vh-6rem)] overflow-hidden -mt-2">
+                {/* Tabs */}
+                <Tabs value={clientModalTab} onValueChange={(v) => setClientModalTab(v as 'info' | 'history')} className="flex flex-col flex-1 min-h-0">
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <TabsList className="flex-1 bg-slate-100 dark:bg-slate-800/80 p-1">
+                      <TabsTrigger value="info" className="flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm">
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Інформація
+                      </TabsTrigger>
+                      <TabsTrigger value="history" className="flex-1 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm">
+                        <Receipt className="h-4 w-4 mr-2" />
+                        Історія
+                        {transactions.length > 0 && (
+                          <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-medium">
+                            {transactions.length}
+                          </span>
+                        )}
+                      </TabsTrigger>
+                    </TabsList>
+                    {/* Actions dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="shrink-0 h-9 w-9 p-0 border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700">
+                          <MoreHorizontal className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            const customer = customers.find(c => c.documentId === selected.id);
+                            if (customer) {
+                              exportClientTransactions(customer, transactions, customer.balance || 0);
+                            }
+                          }}
+                          disabled={isLoadingTransactions}
+                          className="text-slate-700 dark:text-slate-200 focus:bg-slate-100 dark:focus:bg-slate-700"
+                        >
+                          <FileDown className="h-4 w-4 mr-2 text-slate-500 dark:text-slate-400" />
+                          Експорт історії
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-700" />
+                        <DropdownMenuItem
+                          className="text-rose-600 dark:text-rose-400 focus:text-rose-600 dark:focus:text-rose-400 focus:bg-rose-50 dark:focus:bg-rose-900/30"
+                          onClick={() => {
+                            handleDeleteClick(new MouseEvent('click') as unknown as React.MouseEvent, selected);
+                            setSelected(null);
+                          }}
+                        >
+                          <UserX className="h-4 w-4 mr-2" />
+                          Видалити клієнта
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
-                  {/* Balance section */}
-                  <div className={cn(
-                    "rounded-xl border p-3",
-                    (selected.balance || 0) > 0
-                      ? "border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/70 dark:bg-emerald-900/20"
-                      : (selected.balance || 0) < 0
-                      ? "border-rose-200 dark:border-rose-900/50 bg-rose-50/70 dark:bg-rose-900/20"
-                      : "border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50"
-                  )}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium flex items-center gap-2">
-                        <Wallet className="h-4 w-4" />
-                        Баланс
-                      </span>
-                      <span className={cn(
-                        "text-lg font-bold",
+                  {/* Info Tab */}
+                  <TabsContent value="info" className="flex-1 mt-0 data-[state=inactive]:hidden overflow-y-auto">
+                    <div className="space-y-6">
+                      {/* Balance Card - Hero section */}
+                      <div className={cn(
+                        "rounded-2xl p-5 relative overflow-hidden",
                         (selected.balance || 0) > 0
-                          ? "text-emerald-700 dark:text-emerald-400"
+                          ? "bg-gradient-to-br from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700"
                           : (selected.balance || 0) < 0
-                          ? "text-rose-700 dark:text-rose-400"
-                          : "text-slate-600 dark:text-slate-400"
+                          ? "bg-gradient-to-br from-rose-500 to-rose-600 dark:from-rose-600 dark:to-rose-700"
+                          : "bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-600 dark:to-slate-700"
                       )}>
-                        {(selected.balance || 0) > 0 ? '+' : ''}{(selected.balance || 0).toLocaleString('uk-UA')} грн
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                      {(selected.balance || 0) > 0 ? 'Клієнт має переплату' : (selected.balance || 0) < 0 ? 'Клієнт має заборгованість' : 'Баланс по нулях'}
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        const customer = customers.find(c => c.documentId === selected.id);
-                        if (customer) {
-                          setSelectedCustomerForBalance(customer);
-                          setBalanceAmount((customer.balance || 0).toString());
-                          setBalanceModalOpen(true);
-                        }
-                      }}
-                    >
-                      <Wallet className="h-4 w-4 mr-2" />
-                      Змінити баланс
-                    </Button>
-                  </div>
+                        {/* Background pattern */}
+                        <div className="absolute inset-0 opacity-10">
+                          <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/20" />
+                          <div className="absolute -left-4 -bottom-4 w-24 h-24 rounded-full bg-white/10" />
+                        </div>
 
-                  {/* Export client transactions button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      const customer = customers.find(c => c.documentId === selected.id);
-                      if (customer) {
-                        exportClientTransactions(customer, transactions, customer.balance || 0);
-                      }
-                    }}
-                    disabled={isLoadingTransactions}
-                  >
-                    <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    Експортувати історію
-                  </Button>
+                        <div className="relative">
+                          {(() => {
+                            const balance = selected.balance || 0;
+                            const isNeutral = balance === 0;
+                            const textColor = isNeutral ? "text-slate-700 dark:text-white" : "text-white";
+                            const textMuted = isNeutral ? "text-slate-500 dark:text-white/80" : "text-white/80";
+                            const bgButton = isNeutral ? "bg-slate-300/60 hover:bg-slate-300 dark:bg-white/20 dark:hover:bg-white/30" : "bg-white/20 hover:bg-white/30";
+                            const iconBg = isNeutral ? "bg-slate-300/60 dark:bg-white/20" : "bg-white/20";
+
+                            return (
+                              <>
+                                <div className="flex items-center justify-between mb-4">
+                                  <div className="flex items-center gap-2">
+                                    <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", iconBg)}>
+                                      <Wallet className={cn("h-4 w-4", textColor)} />
+                                    </div>
+                                    <span className={cn("text-sm font-medium", textMuted)}>Баланс клієнта</span>
+                                  </div>
+                                  {balance !== 0 && (
+                                    <span className="text-xs font-semibold text-white/90 bg-white/20 px-2.5 py-1 rounded-full">
+                                      {balance > 0 ? 'Переплата' : 'Борг'}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <p className={cn("text-4xl font-bold tabular-nums tracking-tight mb-5", textColor)}>
+                                  {balance > 0 ? '+' : ''}{balance.toLocaleString('uk-UA')} ₴
+                                </p>
+
+                                {/* Balance action */}
+                                <button
+                                  className={cn("w-full h-10 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors", bgButton, textColor)}
+                                  onClick={() => {
+                                    const customer = customers.find(c => c.documentId === selected.id);
+                                    if (customer) {
+                                      setSelectedCustomerForBalance(customer);
+                                      setBalanceOperation('add');
+                                      setBalanceAmount("");
+                                      setBalanceModalOpen(true);
+                                    }
+                                  }}
+                                >
+                                  <Edit3 className="h-4 w-4" />
+                                  Редагувати баланс
+                                </button>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      </div>
+
+                      {/* Stats Grid */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 text-center">
+                          <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
+                            {selected.orders}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Замовлень</p>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 text-center">
+                          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                            {selected.spent.toLocaleString("uk-UA")}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Витрачено ₴</p>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 text-center">
+                          <p className="text-lg font-bold text-slate-900 dark:text-white">
+                            {selected.lastOrder !== '-' ? selected.lastOrder : '—'}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Останнє</p>
+                        </div>
+                      </div>
+
+                      {/* Contact Info */}
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1 mb-3">
+                          Контактна інформація
+                        </p>
+                        <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl divide-y divide-slate-100 dark:divide-slate-700/50 overflow-hidden">
+                          {/* Phone */}
+                          <div className="flex items-center gap-4 px-4 py-3.5">
+                            <div className="h-10 w-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0">
+                              <Phone className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-slate-400 dark:text-slate-500">Телефон</p>
+                              <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                                {selected.contact !== '-' ? selected.contact : 'Не вказано'}
+                              </p>
+                            </div>
+                          </div>
+                          {/* Email */}
+                          <div className="flex items-center gap-4 px-4 py-3.5">
+                            <div className="h-10 w-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
+                              <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-slate-400 dark:text-slate-500">Email</p>
+                              <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                                {selected.email !== '-' ? selected.email : 'Не вказано'}
+                              </p>
+                            </div>
+                          </div>
+                          {/* City */}
+                          <div className="flex items-center gap-4 px-4 py-3.5">
+                            <div className="h-10 w-10 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center shrink-0">
+                              <MapPin className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-slate-400 dark:text-slate-500">Місто / Адреса</p>
+                              <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                                {selected.city !== '-' ? selected.city : 'Не вказано'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  {/* History Tab */}
+                  <TabsContent value="history" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden">
+                    <div className="flex flex-col h-full">
+                      {/* Header */}
+                      <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                          {transactions.length > 0 ? `${transactions.length} транзакцій` : 'Немає транзакцій'}
+                        </p>
+                        {transactions.length > 0 && (
+                          <button
+                            onClick={() => {
+                              const customer = customers.find(c => c.documentId === selected.id);
+                              if (customer) {
+                                exportClientTransactions(customer, transactions, customer.balance || 0);
+                              }
+                            }}
+                            disabled={isLoadingTransactions}
+                            className="text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 flex items-center gap-1.5 disabled:opacity-50 transition-colors"
+                          >
+                            <FileDown className="h-4 w-4" />
+                            Експорт
+                          </button>
+                        )}
+                      </div>
                   <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide">
                   {isLoadingTransactions ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-5 w-5 animate-spin text-emerald-600" />
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-emerald-600 dark:text-emerald-400" />
                     </div>
                   ) : Array.isArray(transactions) && transactions.length > 0 ? (
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       {transactions.map((transaction) => {
                         const itemsCount = Array.isArray(transaction.items) ? transaction.items.length : 0;
                         const isExpanded = expandedTransactions.has(transaction.documentId);
 
+                        const isPaid = transaction.paymentStatus === 'paid';
+                        const isCancelled = transaction.paymentStatus === 'cancelled';
+                        const isPending = transaction.paymentStatus === 'expected' || transaction.paymentStatus === 'pending';
+                        const debtAmount = (transaction.amount || 0) - (transaction.paidAmount || 0);
+
                         return (
                           <div
                             key={transaction.documentId}
-                            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden transition-all"
+                            className={cn(
+                              "rounded-xl border overflow-hidden transition-all",
+                              isCancelled
+                                ? "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 opacity-60"
+                                : isPending
+                                ? "border-amber-300 dark:border-amber-700/60 bg-white dark:bg-slate-800/60"
+                                : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60"
+                            )}
                           >
                             {/* Кликабельний заголовок */}
                             <button
@@ -811,53 +972,66 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                                   return next;
                                 });
                               }}
-                              className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                              className="w-full p-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors"
                             >
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex-1">
-                                <p className="font-medium text-slate-900 dark:text-white text-sm">
-                                  {new Date(transaction.date).toLocaleDateString('uk-UA', {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                  })}
-                                </p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                  {new Date(transaction.date).toLocaleTimeString('uk-UA', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })} · {itemsCount} позицій
-                                </p>
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                {/* Status indicator */}
+                                <div className={cn(
+                                  "h-10 w-10 rounded-xl flex items-center justify-center shrink-0",
+                                  isCancelled
+                                    ? "bg-slate-100 dark:bg-slate-700"
+                                    : isPending
+                                    ? "bg-amber-100 dark:bg-amber-900/40"
+                                    : "bg-emerald-100 dark:bg-emerald-900/40"
+                                )}>
+                                  {isCancelled ? (
+                                    <X className="h-5 w-5 text-slate-400 dark:text-slate-500" />
+                                  ) : isPending ? (
+                                    <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                                  ) : (
+                                    <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                                    {new Date(transaction.date).toLocaleDateString('uk-UA', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric',
+                                    })}
+                                  </p>
+                                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                    {new Date(transaction.date).toLocaleTimeString('uk-UA', {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })} · {itemsCount} {itemsCount === 1 ? 'позиція' : itemsCount < 5 ? 'позиції' : 'позицій'}
+                                  </p>
+                                </div>
                               </div>
                               <div className="flex items-center gap-3">
                                 <div className="text-right">
-                                  {transaction.paymentStatus === 'cancelled' ? (
-                                    <p className="font-medium text-slate-400 line-through text-sm">
-                                      {transaction.amount?.toLocaleString('uk-UA') || '—'} грн
+                                  {isCancelled ? (
+                                    <p className="font-medium text-slate-400 dark:text-slate-500 line-through text-sm tabular-nums">
+                                      {transaction.amount?.toLocaleString('uk-UA') || '—'} ₴
                                     </p>
-                                  ) : transaction.paymentStatus === 'paid' ? (
-                                    <p className="font-medium text-emerald-600 dark:text-emerald-400 text-sm">
-                                      {transaction.amount?.toLocaleString('uk-UA') || '—'} грн
+                                  ) : isPaid ? (
+                                    <p className="font-bold text-emerald-600 dark:text-emerald-400 text-base tabular-nums">
+                                      {transaction.amount?.toLocaleString('uk-UA') || '—'} ₴
                                     </p>
                                   ) : (
-                                    // Очікується оплата - показуємо деталізацію
-                                    <div className="space-y-0.5">
-                                      <p className="font-medium text-slate-900 dark:text-white text-sm">
-                                        {transaction.amount?.toLocaleString('uk-UA') || '—'} грн
+                                    <div className="text-right">
+                                      <p className="font-bold text-slate-900 dark:text-white text-base tabular-nums">
+                                        {transaction.amount?.toLocaleString('uk-UA') || '—'} ₴
                                       </p>
-                                      {(transaction.paidAmount || 0) > 0 && (
-                                        <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                                          Сплачено: {transaction.paidAmount?.toLocaleString('uk-UA')} грн
-                                        </p>
-                                      )}
-                                      <p className="text-xs text-rose-600 dark:text-rose-400">
-                                        В борг: {((transaction.amount || 0) - (transaction.paidAmount || 0)).toLocaleString('uk-UA')} грн
+                                      <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold tabular-nums">
+                                        борг: {debtAmount.toLocaleString('uk-UA')} ₴
                                       </p>
                                     </div>
                                   )}
                                 </div>
                                 <ChevronDown className={cn(
-                                  "h-5 w-5 text-slate-400 transition-transform shrink-0",
+                                  "h-5 w-5 text-slate-400 dark:text-slate-500 transition-transform shrink-0",
                                   isExpanded && "rotate-180"
                                 )} />
                               </div>
@@ -866,19 +1040,34 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
 
                             {/* Розгорнутий контент */}
                             {isExpanded && (
-                              <div className="border-t border-slate-100 dark:border-slate-700 p-3 space-y-3 bg-slate-50/50 dark:bg-slate-800/50">
+                              <div className="border-t border-slate-100 dark:border-slate-700 px-3.5 pb-3.5 pt-3 space-y-3 bg-slate-50/50 dark:bg-slate-900/30">
+                                {/* Payment details for pending */}
+                                {isPending && (transaction.paidAmount || 0) > 0 && (
+                                  <div className="flex items-center gap-2 text-sm bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/60 rounded-lg px-3 py-2">
+                                    <CreditCard className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                    <span className="text-amber-800 dark:text-amber-200">
+                                      Внесено: <span className="font-bold tabular-nums">{(transaction.paidAmount || 0).toLocaleString('uk-UA')} ₴</span>
+                                    </span>
+                                  </div>
+                                )}
+
                                 {/* Позиції замовлення */}
                                 {Array.isArray(transaction.items) && transaction.items.length > 0 && (
                                   <div>
-                                    <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Позиції:</p>
-                                    <div className="space-y-1">
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Позиції</p>
+                                    <div className="space-y-1.5">
                                       {transaction.items.map((item, idx) => (
-                                        <div key={idx} className="flex items-start justify-between gap-2 text-sm bg-white dark:bg-slate-800 rounded-lg p-2">
-                                          <span className="text-slate-700 dark:text-slate-300 flex-1">
-                                            {item.name} {item.length ? `(${item.length}см)` : ''} × {item.qty}
-                                          </span>
-                                          <span className="text-slate-900 dark:text-white font-medium">
-                                            {((item.subtotal || item.price * item.qty) || 0)?.toLocaleString('uk-UA') || '—'} грн
+                                        <div key={idx} className="flex items-center justify-between gap-2 text-sm bg-white dark:bg-slate-800 rounded-lg px-3 py-2.5 border border-slate-100 dark:border-slate-700">
+                                          <div className="flex-1 min-w-0">
+                                            <span className="text-slate-900 dark:text-slate-100 font-medium text-sm">
+                                              {item.name}
+                                            </span>
+                                            <span className="text-slate-400 dark:text-slate-500 text-xs ml-2">
+                                              {item.length ? `${item.length}см` : ''} × {item.qty}
+                                            </span>
+                                          </div>
+                                          <span className="text-slate-900 dark:text-white font-bold tabular-nums shrink-0">
+                                            {((item.subtotal || item.price * item.qty) || 0)?.toLocaleString('uk-UA') || '—'} ₴
                                           </span>
                                         </div>
                                       ))}
@@ -889,17 +1078,17 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                                 {/* Коментар */}
                                 {transaction.notes && (
                                   <div>
-                                    <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Коментар:</p>
-                                    <p className="text-sm text-slate-700 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-lg p-2">{transaction.notes}</p>
+                                    <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Коментар:</p>
+                                    <p className="text-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-100 dark:border-slate-700">{transaction.notes}</p>
                                   </div>
                                 )}
 
                                 {/* Action buttons */}
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 pt-1">
                                   {(transaction.paymentStatus === 'expected' || transaction.paymentStatus === 'pending') && (
                                     <Button
                                       size="sm"
-                                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setPaymentToConfirm(transaction);
@@ -912,7 +1101,10 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className={transaction.paymentStatus === 'cancelled' ? 'w-full' : ''}
+                                    className={cn(
+                                      "border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700",
+                                      transaction.paymentStatus === 'cancelled' ? 'w-full' : ''
+                                    )}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       exportSaleInvoice(transaction);
@@ -923,7 +1115,7 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                                   </Button>
                                   {transaction.paymentStatus !== 'cancelled' && (
                                     <button
-                                      className="text-xs text-slate-400 hover:text-rose-500 dark:text-slate-500 dark:hover:text-rose-400 transition-colors px-2"
+                                      className="text-sm font-medium text-slate-400 hover:text-rose-500 dark:text-slate-500 dark:hover:text-rose-400 transition-colors px-3"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setTransactionToReturn(transaction);
@@ -940,28 +1132,19 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
                       })}
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center py-8 text-center">
-                      <p className="text-sm text-slate-400">
-                        Немає замовлень
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+                        <Receipt className="h-7 w-7 text-slate-300 dark:text-slate-600" />
+                      </div>
+                      <p className="text-sm font-medium text-slate-400 dark:text-slate-500">
+                        Немає транзакцій
                       </p>
                     </div>
                   )}
                   </div>
-
-                  {/* Delete client button */}
-                  <div className="border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
-                    <button
-                      className="text-xs text-slate-400 hover:text-rose-500 dark:text-slate-500 dark:hover:text-rose-400 transition-colors flex items-center gap-1"
-                      onClick={() => {
-                        handleDeleteClick(new MouseEvent('click') as unknown as React.MouseEvent, selected);
-                        setSelected(null);
-                      }}
-                    >
-                      <Trash className="h-3 w-3" />
-                      Видалити
-                    </button>
-                  </div>
-                </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </div>
             </Modal>
           )}
@@ -1232,156 +1415,141 @@ export function ClientsSection({ customers, isLoading = false, onOpenExport, onA
           setBalanceAmount("");
         }
       }}
-      title="Змінити баланс клієнта"
+      title="Редагувати баланс"
       description={selectedCustomerForBalance?.name}
       size="sm"
-      footer={
-        <>
-          <Button variant="outline" onClick={() => setBalanceModalOpen(false)} disabled={isUpdatingBalance}>
-            Скасувати
-          </Button>
-          <Button
-            onClick={async () => {
-              if (!selectedCustomerForBalance) return;
-              const newBalance = parseFloat(balanceAmount) || 0;
-              setIsUpdatingBalance(true);
-              try {
-                const balanceBefore = selectedCustomerForBalance.balance || 0;
-                const result = await updateCustomerBalance(selectedCustomerForBalance.documentId, newBalance);
-                if (result.success) {
-                  // Log activity for shift history
-                  if (onLogActivity) {
-                    onLogActivity('balanceEdit', {
-                      customerName: selectedCustomerForBalance.name,
-                      customerId: selectedCustomerForBalance.documentId,
-                      balanceBefore,
-                      balanceAfter: newBalance,
-                    });
-                  }
-                  // Update local state
-                  setUpdatedClients((prev) => ({
-                    ...prev,
-                    [selectedCustomerForBalance.documentId]: {
-                      ...prev[selectedCustomerForBalance.documentId],
-                      balance: newBalance,
-                    },
-                  }));
-                  // Update selected client if it's the same
-                  if (selected?.id === selectedCustomerForBalance.documentId) {
-                    setSelected((prev) => prev ? { ...prev, balance: newBalance } : null);
-                  }
-                  // Refresh customers list if callback provided
-                  if (onCustomersUpdate) {
-                    onCustomersUpdate();
-                  }
-                  setBalanceModalOpen(false);
-                  setSelectedCustomerForBalance(null);
-                  setBalanceAmount("");
-                }
-              } catch (error) {
-                console.error('Failed to update balance:', error);
-              } finally {
-                setIsUpdatingBalance(false);
-              }
-            }}
-            disabled={isUpdatingBalance}
-            className="bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-200"
-          >
-            {isUpdatingBalance ? <Loader2 className="h-4 w-4 animate-spin" /> : "Зберегти"}
-          </Button>
-        </>
-      }
     >
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700 dark:text-admin-text-secondary">
-            Баланс (грн)
-          </label>
-          <Input
-            type="number"
-            step="0.01"
-            placeholder="0"
-            value={balanceAmount}
-            onChange={(e) => setBalanceAmount(e.target.value)}
-            autoFocus
-          />
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Додатнє значення = переплата клієнта, від'ємне = борг клієнта
-          </p>
-        </div>
+      {selectedCustomerForBalance && (() => {
+        const currentBalance = selectedCustomerForBalance.balance || 0;
+        const newBalance = parseFloat(balanceAmount) || 0;
+        const hasChange = balanceAmount !== "" && newBalance !== currentBalance;
+        const difference = newBalance - currentBalance;
 
-        <div className="grid grid-cols-3 gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const current = parseFloat(balanceAmount) || 0;
-              setBalanceAmount((current + 100).toString());
-            }}
-          >
-            +100
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const current = parseFloat(balanceAmount) || 0;
-              setBalanceAmount((current + 500).toString());
-            }}
-          >
-            +500
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const current = parseFloat(balanceAmount) || 0;
-              setBalanceAmount((current + 1000).toString());
-            }}
-          >
-            +1000
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const current = parseFloat(balanceAmount) || 0;
-              setBalanceAmount((current - 100).toString());
-            }}
-          >
-            -100
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const current = parseFloat(balanceAmount) || 0;
-              setBalanceAmount((current - 500).toString());
-            }}
-          >
-            -500
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const current = parseFloat(balanceAmount) || 0;
-              setBalanceAmount((current - 1000).toString());
-            }}
-          >
-            -1000
-          </Button>
-        </div>
+        return (
+          <div className="space-y-5">
+            {/* Current balance display */}
+            <div className="rounded-xl bg-slate-100 dark:bg-slate-800/60 p-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Поточний баланс</p>
+              <p className={cn(
+                "text-2xl font-bold tabular-nums",
+                currentBalance > 0 ? "text-emerald-600 dark:text-emerald-400" :
+                currentBalance < 0 ? "text-rose-600 dark:text-rose-400" :
+                "text-slate-700 dark:text-slate-200"
+              )}>
+                {currentBalance > 0 ? '+' : ''}{currentBalance.toLocaleString('uk-UA')} ₴
+              </p>
+            </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full text-slate-500"
-          onClick={() => setBalanceAmount("0")}
-        >
-          Скинути на 0
-        </Button>
-      </div>
+            {/* New balance input */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                Новий баланс
+              </label>
+              <div className="relative">
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder={currentBalance.toString()}
+                  value={balanceAmount}
+                  onChange={(e) => setBalanceAmount(e.target.value)}
+                  className="text-xl font-bold tabular-nums pr-12 h-14 bg-white dark:bg-slate-800"
+                  autoFocus
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-medium text-lg">₴</span>
+              </div>
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Введіть нове значення балансу. Від'ємне значення = борг клієнта.
+              </p>
+            </div>
+
+            {/* Change preview */}
+            {hasChange && (
+              <div className={cn(
+                "rounded-xl p-4 flex items-center justify-between",
+                difference > 0
+                  ? "bg-emerald-50 dark:bg-emerald-900/20"
+                  : difference < 0
+                  ? "bg-rose-50 dark:bg-rose-900/20"
+                  : "bg-slate-50 dark:bg-slate-800/30"
+              )}>
+                <span className="text-sm text-slate-600 dark:text-slate-300">Зміна</span>
+                <span className={cn(
+                  "text-lg font-bold tabular-nums",
+                  difference > 0 ? "text-emerald-600 dark:text-emerald-400" :
+                  difference < 0 ? "text-rose-600 dark:text-rose-400" :
+                  "text-slate-600 dark:text-slate-300"
+                )}>
+                  {difference > 0 ? '+' : ''}{difference.toLocaleString('uk-UA')} ₴
+                </span>
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1 h-11 border-slate-200 dark:border-slate-700"
+                onClick={() => setBalanceModalOpen(false)}
+                disabled={isUpdatingBalance}
+              >
+                Скасувати
+              </Button>
+              <Button
+                className="flex-1 h-11 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900"
+                onClick={async () => {
+                  if (!selectedCustomerForBalance) return;
+                  setIsUpdatingBalance(true);
+                  try {
+                    const balanceBefore = currentBalance;
+                    const result = await updateCustomerBalance(selectedCustomerForBalance.documentId, newBalance);
+                    if (result.success) {
+                      // Log activity for shift history
+                      if (onLogActivity) {
+                        onLogActivity('balanceEdit', {
+                          customerName: selectedCustomerForBalance.name,
+                          customerId: selectedCustomerForBalance.documentId,
+                          balanceBefore,
+                          balanceAfter: newBalance,
+                        });
+                      }
+                      // Update local state
+                      setUpdatedClients((prev) => ({
+                        ...prev,
+                        [selectedCustomerForBalance.documentId]: {
+                          ...prev[selectedCustomerForBalance.documentId],
+                          balance: newBalance,
+                        },
+                      }));
+                      // Update selected client if it's the same
+                      if (selected?.id === selectedCustomerForBalance.documentId) {
+                        setSelected((prev) => prev ? { ...prev, balance: newBalance } : null);
+                      }
+                      // Refresh customers list if callback provided
+                      if (onCustomersUpdate) {
+                        onCustomersUpdate();
+                      }
+                      setBalanceModalOpen(false);
+                      setSelectedCustomerForBalance(null);
+                      setBalanceAmount("");
+                    }
+                  } catch (error) {
+                    console.error('Failed to update balance:', error);
+                  } finally {
+                    setIsUpdatingBalance(false);
+                  }
+                }}
+                disabled={isUpdatingBalance || !hasChange}
+              >
+                {isUpdatingBalance ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Зберегти"
+                )}
+              </Button>
+            </div>
+          </div>
+        );
+      })()}
     </Modal>
 
     </>
@@ -1407,11 +1575,42 @@ function ClientMetric({
   );
 }
 
-function MetricBox({ label, value }: { label: string; value: string }) {
+function MetricBox({ label, value, icon: Icon, tone = "default" }: {
+  label: string;
+  value: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  tone?: "default" | "emerald" | "amber" | "rose";
+}) {
+  const toneStyles = {
+    default: "border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50",
+    emerald: "border-emerald-200/60 dark:border-emerald-900/40 bg-emerald-50/50 dark:bg-emerald-900/20",
+    amber: "border-amber-200/60 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-900/20",
+    rose: "border-rose-200/60 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-900/20",
+  };
+
+  const iconStyles = {
+    default: "text-slate-400 dark:text-slate-500",
+    emerald: "text-emerald-500 dark:text-emerald-400",
+    amber: "text-amber-500 dark:text-amber-400",
+    rose: "text-rose-500 dark:text-rose-400",
+  };
+
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-admin-border bg-white/80 dark:bg-admin-surface p-2 sm:p-3">
-      <p className="text-xs uppercase text-slate-400 dark:text-admin-text-muted">{label}</p>
-      <p className="text-xs font-semibold text-slate-900 dark:text-admin-text-primary sm:text-sm">{value}</p>
+    <div className={cn(
+      "rounded-xl border p-2.5 sm:p-3 transition-colors",
+      toneStyles[tone]
+    )}>
+      <div className="flex items-center gap-1.5 mb-0.5">
+        {Icon && <Icon className={cn("h-3 w-3", iconStyles[tone])} />}
+        <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</p>
+      </div>
+      <p className={cn(
+        "text-sm font-semibold tabular-nums",
+        tone === "emerald" ? "text-emerald-700 dark:text-emerald-400" :
+        tone === "amber" ? "text-amber-700 dark:text-amber-400" :
+        tone === "rose" ? "text-rose-700 dark:text-rose-400" :
+        "text-slate-800 dark:text-slate-200"
+      )}>{value}</p>
     </div>
   );
 }

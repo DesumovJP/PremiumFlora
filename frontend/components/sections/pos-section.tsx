@@ -950,8 +950,8 @@ function ProductCard({
                   isAdded
                     ? "bg-emerald-500 shadow-md shadow-emerald-500/25 ring-1 ring-emerald-400/50"
                     : isOutOfStock
-                    ? "bg-slate-50 dark:bg-slate-800/30 opacity-50 cursor-not-allowed"
-                    : "bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 active:scale-[0.98] cursor-pointer"
+                    ? "bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600/50 opacity-50 cursor-not-allowed"
+                    : "bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-500/60 hover:border-emerald-300 dark:hover:border-emerald-500/70 hover:bg-slate-50 dark:hover:bg-slate-700/70 active:scale-[0.98] cursor-pointer"
                 )}
                 onClick={() => variant && !isOutOfStock && handleAdd(variant)}
               >
@@ -965,14 +965,14 @@ function ProductCard({
                     {/* Розмір - головний акцент */}
                     <span className={cn(
                       "text-sm font-semibold whitespace-nowrap",
-                      isOutOfStock ? "text-slate-400" : "text-slate-800 dark:text-white"
+                      isOutOfStock ? "text-slate-400 dark:text-slate-500" : "text-slate-800 dark:text-slate-100"
                     )}>{size}</span>
                     {/* Ціна · кількість - один рядок */}
                     <span className={cn(
                       "text-[11px] whitespace-nowrap",
-                      isOutOfStock ? "text-slate-400" : "text-slate-400 dark:text-slate-500"
+                      isOutOfStock ? "text-slate-400 dark:text-slate-500" : "text-slate-500 dark:text-slate-400"
                     )}>
-                      {price}₴ <span className="text-slate-300 dark:text-slate-600">·</span> {stock} шт
+                      {price}₴ <span className="text-slate-300 dark:text-slate-500">·</span> {stock} шт
                     </span>
                   </div>
                 )}
@@ -1027,8 +1027,8 @@ function ProductCard({
                 isAdded
                   ? "bg-emerald-500 shadow-lg shadow-emerald-500/25 ring-2 ring-emerald-400/50"
                   : isOutOfStock
-                  ? "bg-slate-50 dark:bg-slate-800/30 opacity-50 cursor-not-allowed"
-                  : "bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm active:scale-[0.98] cursor-pointer"
+                  ? "bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600/50 opacity-50 cursor-not-allowed"
+                  : "bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-500/60 hover:border-emerald-300 dark:hover:border-emerald-500/70 hover:bg-slate-50 dark:hover:bg-slate-700/70 active:scale-[0.98] cursor-pointer"
               )}
               onClick={() => variant && !isOutOfStock && handleAdd(variant)}
             >
@@ -1042,14 +1042,14 @@ function ProductCard({
                   {/* Розмір - головний акцент */}
                   <span className={cn(
                     "text-base font-semibold whitespace-nowrap tracking-tight",
-                    isOutOfStock ? "text-slate-400" : "text-slate-800 dark:text-white"
+                    isOutOfStock ? "text-slate-400 dark:text-slate-500" : "text-slate-800 dark:text-slate-100"
                   )}>{size}</span>
                   {/* Ціна · кількість - один рядок */}
                   <span className={cn(
                     "text-xs whitespace-nowrap",
-                    isOutOfStock ? "text-slate-400" : "text-slate-400 dark:text-slate-500"
+                    isOutOfStock ? "text-slate-400 dark:text-slate-500" : "text-slate-500 dark:text-slate-400"
                   )}>
-                    {price}₴ <span className="text-slate-300 dark:text-slate-600">·</span> {stock} шт
+                    {price}₴ <span className="text-slate-300 dark:text-slate-500">·</span> {stock} шт
                   </span>
                 </div>
               )}
@@ -1140,10 +1140,10 @@ function CartGroupItem({
 
   return (
     <div className={cn(
-      "rounded-xl border overflow-hidden shadow-sm hover:shadow-md transition-shadow w-full max-w-full",
+      "rounded-xl border overflow-hidden shadow-sm transition-colors w-full max-w-full",
       isCustomGroup
-        ? "border-amber-200/80 dark:border-amber-800/50 bg-amber-50/30 dark:bg-amber-900/10"
-        : "border-slate-200/80 dark:border-[var(--admin-border)] bg-white dark:bg-admin-surface"
+        ? "border-amber-200/80 dark:border-amber-800/50 bg-amber-50/30 dark:bg-amber-900/10 hover:border-amber-300 dark:hover:border-amber-700"
+        : "border-slate-200/80 dark:border-[var(--admin-border)] bg-white dark:bg-admin-surface hover:border-slate-300 dark:hover:border-slate-600"
     )}>
       {/* Product Header */}
       <div className={cn(

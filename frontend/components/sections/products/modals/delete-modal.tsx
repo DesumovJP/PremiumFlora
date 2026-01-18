@@ -1,9 +1,13 @@
 /**
  * Delete Product Modal
+ *
+ * Premium delete confirmation with animated icon and clear warnings
  */
 
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { Trash2, Loader2, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 
 type DeleteModalProps = {
@@ -30,20 +34,39 @@ export function DeleteModal({
         }
       }}
       title="Видалити товар?"
-      description={product ? `Ви впевнені, що хочете видалити "${product.name}"? Цю дію не можна скасувати.` : ""}
+      size="sm"
       footer={
-        <>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isDeleting}>
+        <div className="flex gap-3 w-full">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isDeleting}
+            className="flex-1"
+          >
             Скасувати
           </Button>
           <Button
             onClick={onDelete}
             disabled={isDeleting || !product}
-            className="bg-rose-600 hover:bg-rose-700 text-white"
+            className={cn(
+              "flex-1",
+              "bg-rose-600 hover:bg-rose-700 text-white border-rose-600",
+              "transition-all duration-200"
+            )}
           >
-            {isDeleting ? "Видалення..." : "Видалити"}
+            {isDeleting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Видалення...</span>
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4" />
+                <span>Видалити</span>
+              </>
+            )}
           </Button>
-        </>
+        </div>
       }
     >
       {product && (() => {

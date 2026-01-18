@@ -325,8 +325,8 @@ export function TodoSection() {
     return (
       <div
         className={cn(
-          "relative group rounded-lg border p-4 transition-all duration-200 shadow-sm",
-          "hover:shadow-lg hover:-translate-y-1",
+          "relative group rounded-lg border p-4 transition-colors duration-200 shadow-sm",
+          "hover:border-slate-300 dark:hover:border-slate-600",
           // Pin effect - slight rotation
           `hover:rotate-0`,
           isCompleted

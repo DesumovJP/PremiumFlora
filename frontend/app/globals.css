@@ -129,34 +129,34 @@
 /* Dark Theme - GitHub Style */
 /* Apply dark background to html in dark mode (fixes viewport jitter) */
 html.dark {
-  background: #0d1117;
+  background: #111318;
 }
 
 .dark {
-  /* Base Colors - Dark Theme */
-  --background: #0d1117;
-  --foreground: #c9d1d9;
-  --muted: #8b949e;
+  /* Base Colors - Dark Theme (better contrast) */
+  --background: #141821;
+  --foreground: #f1f5f9;
+  --muted: #94a3b8;
   --brand: #10b981;
   --brand-soft: rgba(16, 185, 129, 0.15);
-  --border: #1c2128;
+  --border: #3d4654;
 
-  /* Surface Colors - Dark Theme (GitHub style) */
-  --surface: #161b22;
-  --surface-elevated: rgba(22, 27, 34, 0.95);
-  --surface-overlay: rgba(22, 27, 34, 0.85);
+  /* Surface Colors - Dark Theme (more visible) */
+  --surface: #1e2430;
+  --surface-elevated: rgba(35, 42, 54, 0.98);
+  --surface-overlay: rgba(35, 42, 54, 0.95);
 
-  /* Admin Panel Colors - Dark Theme */
-  --admin-bg: #0d1117;
-  --admin-surface: #161b22;
-  --admin-surface-elevated: rgba(22, 27, 34, 0.95);
-  --admin-surface-overlay: rgba(22, 27, 34, 0.85);
-  --admin-border: #30363d;
-  --admin-border-subtle: #21262d;
-  --admin-text-primary: #c9d1d9;
-  --admin-text-secondary: #b1bac4;
-  --admin-text-tertiary: #8b949e;
-  --admin-text-muted: #6e7681;
+  /* Admin Panel Colors - Dark Theme (cards stand out from background) */
+  --admin-bg: #111318;
+  --admin-surface: #1c2128;
+  --admin-surface-elevated: #232a35;
+  --admin-surface-overlay: rgba(35, 42, 53, 0.95);
+  --admin-border: #3d4654;
+  --admin-border-subtle: #2a3140;
+  --admin-text-primary: #f1f5f9;
+  --admin-text-secondary: #e2e8f0;
+  --admin-text-tertiary: #cbd5e1;
+  --admin-text-muted: #94a3b8;
   
   /* Brand Colors - Dark Theme */
   --brand-primary: #10b981;
@@ -1135,6 +1135,289 @@ p:not([class*="text-xs"]):not([class*="text-sm"]):not([class*="text-base"]):not(
   100% {
     transform: scale(1);
   }
+}
+
+/* ============================================
+   TOAST NOTIFICATION ANIMATIONS
+   Premium toast with spring physics
+   ============================================ */
+
+/* Toast slide in from right with spring */
+@keyframes toastIn {
+  0% {
+    opacity: 0;
+    transform: translateX(100%) scale(0.9);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(-5%) scale(1.02);
+  }
+  80% {
+    transform: translateX(2%) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Toast slide out to right */
+@keyframes toastOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%) scale(0.9);
+  }
+}
+
+/* Icon pop animation for toasts */
+@keyframes iconPop {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(-45deg);
+  }
+  50% {
+    transform: scale(1.2) rotate(5deg);
+  }
+  70% {
+    transform: scale(0.9) rotate(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* Success checkmark draw animation */
+@keyframes checkmarkDraw {
+  0% {
+    stroke-dashoffset: 24;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Shake animation for errors */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-2px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(2px);
+  }
+}
+
+/* Toast animation classes */
+.animate-toast-in {
+  animation: toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-toast-out {
+  animation: toastOut 0.2s ease-out forwards;
+}
+
+.animate-icon-pop {
+  animation: iconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-checkmark {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: checkmarkDraw 0.4s ease-out 0.2s forwards;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* ============================================
+   MICRO-INTERACTION ANIMATIONS
+   Subtle, premium interactions
+   ============================================ */
+
+/* Button press effect */
+@keyframes buttonPress {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.97);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-press {
+  animation: buttonPress 0.15s ease-out;
+}
+
+/* Subtle pulse for active states */
+@keyframes subtlePulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  50% {
+    opacity: 0.9;
+    box-shadow: 0 0 0 4px transparent;
+  }
+}
+
+.animate-subtle-pulse {
+  animation: subtlePulse 2s ease-in-out infinite;
+}
+
+/* Loading dots animation */
+@keyframes loadingDots {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-loading-dot {
+  animation: loadingDots 1.4s ease-in-out infinite;
+}
+
+.animate-loading-dot:nth-child(1) { animation-delay: 0s; }
+.animate-loading-dot:nth-child(2) { animation-delay: 0.16s; }
+.animate-loading-dot:nth-child(3) { animation-delay: 0.32s; }
+
+/* Rotate animation for loading states */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Circle draw animation for animated icons */
+@keyframes circleDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Checkmark draw animation */
+@keyframes checkmarkDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Pulse ring for active/recording states */
+@keyframes pulseRing {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* Particle animations for success celebration */
+@keyframes particleUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0);
+  }
+}
+
+@keyframes particleDown {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(10px) scale(0);
+  }
+}
+
+@keyframes particleLeft {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-10px) scale(0);
+  }
+}
+
+@keyframes particleRight {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(10px) scale(0);
+  }
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   Premium thin scrollbars
+   ============================================ */
+
+/* Custom thin scrollbar for tables and scroll areas */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.dark .scrollbar-thin {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Utility Classes for Animations */

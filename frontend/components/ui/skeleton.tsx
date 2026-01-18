@@ -1,13 +1,24 @@
+/**
+ * Skeleton Component
+ *
+ * Premium loading placeholders with shimmer animation
+ */
+
 import { cn } from "@/lib/utils";
 import * as React from "react";
 
-type SkeletonProps = React.HTMLAttributes<HTMLDivElement>;
+interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Animation type */
+  animation?: "shimmer" | "pulse" | "none";
+}
 
-function Skeleton({ className, ...props }: SkeletonProps) {
+function Skeleton({ className, animation = "shimmer", ...props }: SkeletonProps) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-md bg-stone-200/60 dark:bg-slate-700/50",
+        "rounded-md bg-slate-200/80 dark:bg-slate-700/60",
+        animation === "shimmer" && "skeleton",
+        animation === "pulse" && "animate-pulse",
         className
       )}
       {...props}

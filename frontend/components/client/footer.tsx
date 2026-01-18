@@ -1,4 +1,4 @@
-import { Leaf, Phone, MapPin } from "lucide-react";
+import { Leaf, Phone, MapPin, Instagram, Send, Code2 } from "lucide-react";
 
 export function Footer() {
   return (
@@ -60,9 +60,28 @@ export function Footer() {
                 </div>
               </div>
             </div>
-            <p className="text-base text-slate-500 dark:text-admin-text-secondary leading-relaxed">
-              Преміальні квіти для вашого бізнесу
+            <p className="text-sm text-slate-500 dark:text-admin-text-secondary leading-relaxed max-w-xs">
+              Преміальні квіти для вашого бізнесу. Свіжі поставки щодня, доставка по всій Україні.
             </p>
+            {/* Social links */}
+            <div className="flex items-center gap-3 pt-1">
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-all hover:bg-emerald-50 hover:text-emerald-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400"
+              >
+                <Instagram className="h-4 w-4" strokeWidth={1.5} />
+              </a>
+              <a
+                href="https://t.me"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-all hover:bg-emerald-50 hover:text-emerald-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400"
+              >
+                <Send className="h-4 w-4" strokeWidth={1.5} />
+              </a>
+            </div>
           </div>
 
           {/* Contact Info - 20% */}
@@ -97,36 +116,54 @@ export function Footer() {
         </div>
 
         {/* Desktop Bottom bar */}
-        <div className="hidden sm:flex justify-between items-center mt-8 pt-5 border-t border-slate-200/50 dark:border-admin-border text-slate-400 dark:text-admin-text-muted" style={{ fontSize: '9px' }}>
-          <p>© {new Date().getFullYear()} Premium Flora</p>
-          <p>
-            Створено{" "}
+        <div className="hidden sm:flex gap-8 lg:gap-12 mt-8 pt-5 border-t border-slate-200/50 dark:border-admin-border text-slate-400 dark:text-admin-text-muted">
+          <p className="w-[60%] text-xs">© {new Date().getFullYear()} Premium Flora</p>
+          <div className="w-[20%]"></div>
+          <a
+            href="https://webbie.team"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-[20%] flex items-center gap-1.5 text-xs text-slate-400 hover:text-emerald-600 transition-colors group"
+          >
+            <span>Розробка сайту</span>
+            <Code2 className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity" strokeWidth={1.5} />
+            <span>Webbie.team</span>
+          </a>
+        </div>
+
+        {/* Mobile Social links */}
+        <div className="sm:hidden flex justify-center gap-3 mt-6">
+          <a
+            href="https://instagram.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-all hover:bg-emerald-50 hover:text-emerald-600 dark:bg-slate-800 dark:text-slate-400"
+          >
+            <Instagram className="h-4 w-4" strokeWidth={1.5} />
+          </a>
+          <a
+            href="https://t.me"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-all hover:bg-emerald-50 hover:text-emerald-600 dark:bg-slate-800 dark:text-slate-400"
+          >
+            <Send className="h-4 w-4" strokeWidth={1.5} />
+          </a>
+        </div>
+
+        {/* Mobile Bottom bar */}
+        <div className="sm:hidden mt-4 pt-4 border-t border-slate-200/50 dark:border-admin-border">
+          <div className="flex flex-col items-center gap-0.5 text-[11px] text-slate-400 dark:text-admin-text-muted">
+            <span>© {new Date().getFullYear()} Premium Flora</span>
             <a
               href="https://webbie.team"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-emerald-600/60 hover:text-emerald-600 transition-colors"
+              className="flex items-center gap-1 hover:text-emerald-600 transition-colors"
             >
-              Webbie.team
+              <Code2 className="h-2.5 w-2.5 opacity-50" strokeWidth={1.5} />
+              <span>Webbie.team</span>
             </a>
-          </p>
-        </div>
-
-        {/* Mobile Bottom bar */}
-        <div className="sm:hidden mt-6 pt-4 border-t border-slate-200/50 dark:border-admin-border">
-          <div className="flex flex-col items-center gap-0.5 text-[11px] text-slate-400 dark:text-admin-text-muted">
-            <span>© {new Date().getFullYear()} Premium Flora</span>
-            <span>
-              Створено{" "}
-              <a
-                href="https://webbie.team"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-emerald-600/60 hover:text-emerald-600 transition-colors"
-              >
-                Webbie.team
-              </a>
-            </span>
           </div>
         </div>
       </div>

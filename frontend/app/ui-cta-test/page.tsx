@@ -26,7 +26,7 @@ export default function CtaTestPage() {
 
       {/* Current CTA for comparison */}
       <section className="relative overflow-hidden py-16 lg:py-24">
-        <div className="absolute inset-0 bg-[url('/bg.webp')] bg-cover bg-center" />
+        <div className="absolute inset-0 bg-[url('/bg.png')] bg-cover bg-center" />
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a7a56]/90 via-[#0f9c6e]/85 to-[#0d8a5f]/90" />
         <div className="relative z-10 mx-auto max-w-4xl px-4 text-center">
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 text-white/90 text-sm font-medium mb-6 border border-white/20">

@@ -12,9 +12,8 @@ export function StatPill({ label, value, className }: StatPillProps) {
     <div
       className={cn(
         "rounded-2xl border border-slate-100 dark:border-admin-border bg-white/80 dark:bg-admin-surface px-4 py-3 shadow-sm",
-        "transition-all duration-200 ease-out",
-        "hover:shadow-md hover:border-slate-200 dark:hover:border-slate-600",
-        "hover:-translate-y-0.5",
+        "transition-colors duration-200 ease-out",
+        "hover:border-slate-200 dark:hover:border-slate-600",
         className
       )}
     >
