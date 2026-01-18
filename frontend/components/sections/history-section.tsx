@@ -471,18 +471,15 @@ function ActivityItem({ activity }: { activity: Activity }) {
                               <span>{item.size} см</span>
                             )}
                             <span>×{item.qty} шт</span>
-                            {!item.isCustom && (
-                              item.stockBefore !== undefined && item.stockAfter !== undefined ? (
-                                <span className="text-emerald-600">
-                                  (склад: {item.stockBefore}→{item.stockAfter})
-                                </span>
-                              ) : (
-                                <span className="text-emerald-600">
-                                  (повернено на склад)
-                                </span>
-                              )
-                            )}
                           </div>
+                          {/* Stock change - prominent display */}
+                          {!item.isCustom && item.stockBefore !== undefined && item.stockAfter !== undefined && (
+                            <div className="mt-1.5 inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-xs">
+                              <span className="text-slate-500 dark:text-slate-400">{item.stockBefore}</span>
+                              <span className="text-emerald-600 dark:text-emerald-400">→</span>
+                              <span className="font-semibold text-emerald-700 dark:text-emerald-300">{item.stockAfter}</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Price section */}
