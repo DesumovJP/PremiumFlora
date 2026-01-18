@@ -946,18 +946,6 @@ function ActivityItem({ activity }: { activity: Activity }) {
               </div>
             )}
 
-            {/* Показуємо статистику квітів/варіантів тільки для імпорту з файлу */}
-            {details.filename && (
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="text-slate-600 dark:text-admin-text-tertiary">
-                  Квіти: <span className="font-medium text-emerald-600 dark:text-emerald-400">+{details.flowersCreated || 0}</span>, <span className="font-medium dark:text-admin-text-primary">{details.flowersUpdated || 0} онов.</span>
-                </div>
-                <div className="text-slate-600 dark:text-admin-text-tertiary">
-                  Варіанти: <span className="font-medium text-emerald-600 dark:text-emerald-400">+{details.variantsCreated || 0}</span>, <span className="font-medium dark:text-admin-text-primary">{details.variantsUpdated || 0} онов.</span>
-                </div>
-              </div>
-            )}
-
             {/* Режим розрахунку собівартості */}
             {details.costCalculationMode === 'full' && (
               <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
