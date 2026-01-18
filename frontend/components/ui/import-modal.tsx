@@ -106,8 +106,9 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
     taxPerStem: 0.05,
   });
 
-  // Маржа для ціни продажу
-  const [marginPercent, setMarginPercent] = useState<number>(10);
+  // Маржа для ціни продажу (string для дозволу пустого інпуту)
+  const [marginInput, setMarginInput] = useState('10');
+  const marginPercent = marginInput === '' ? 0 : (parseFloat(marginInput) || 0);
 
   // Завантажити курс при відкритті модалки
   useEffect(() => {
@@ -463,7 +464,7 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
       transferFeePercent: 3.5,
       taxPerStem: 0.05,
     });
-    setMarginPercent(10);
+    setMarginInput('10');
     onOpenChange(false);
   };
 
@@ -763,28 +764,11 @@ export function ImportModal({ open, onOpenChange, onSuccess, onLogActivity }: Im
                         step="1"
                         min="0"
                         max="100"
-                        value={marginPercent}
-                        onChange={(e) => setMarginPercent(parseFloat(e.target.value) || 0)}
-                        className="w-16 px-2 py-1 text-sm border border-emerald-300 dark:border-emerald-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-center font-medium"
+                        value={marginInput}
+                        onChange={(e) => setMarginInput(e.target.value)}
+                        className="w-16 px-2 py-1 text-sm border border-emerald-300 dark:border-emerald-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-center font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       <span className="text-sm text-emerald-600 dark:text-emerald-400">%</span>
-                    </div>
-                    <div className="flex gap-1 ml-2">
-                      {[5, 10, 15, 20].map((val) => (
-                        <button
-                          key={val}
-                          type="button"
-                          onClick={() => setMarginPercent(val)}
-                          className={cn(
-                            "px-2 py-0.5 text-xs rounded transition-colors",
-                            marginPercent === val
-                              ? "bg-emerald-600 text-white"
-                              : "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-800/60"
-                          )}
-                        >
-                          {val}%
-                        </button>
-                      ))}
                     </div>
                   </div>
                   <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
